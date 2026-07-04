@@ -83,7 +83,9 @@ export function parseRun(strategyDir) {
     netPnlPct: trades ? +netPnlPct.toFixed(3) : null,
     winRatePct: trades ? +((wins / trades) * 100).toFixed(1) : null,
     avgTradePct: trades ? +mean(returns).toFixed(3) : null,
-    perTradeSharpe: std ? +(mean(returns) / std).toFixed(3) : null, // наивный, не Pooled
+    // epsilon-guard: при std≈0 (напр. 2 одинаковые сделки) Sharpe взрывается в 1e14 —
+    // это ровно «фейковая Sharpe 10 000 000», о которой предупреждает README движка.
+    perTradeSharpe: std && std > 1e-6 ? +(mean(returns) / std).toFixed(3) : null, // наивный, не Pooled
     maxDrawdownPct: trades ? +maxDrawdownPct(returns).toFixed(3) : null,
     closeReasons,
     buyHoldPct: bh ? +bh.pct.toFixed(3) : null,
