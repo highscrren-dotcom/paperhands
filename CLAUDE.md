@@ -102,3 +102,18 @@ Pine: `npm start -- --pine ./math/<f>.pine --timeframe 15m --limit 500 --when "<
 Evidence-first, без хайпа: benchmark + fees/slippage + drawdown всегда на виду; к
 цифрам бэктеста скептически до форварда. **Инвариант look-ahead абсолютен** — любая
 правка, дающая коду стратегии прямой доступ к данным/часам, — стоп и флаг владельцу.
+
+## Состояние и решения (обновлять в конце сессии)
+
+Полный лог решений и точка входа для новой сессии — [agent/DECISIONS.md](agent/DECISIONS.md);
+итоги первого прогона — [MORNING-SUMMARY.md](MORNING-SUMMARY.md). Ключевое:
+
+- **Синхронизация с upstream:** `git fetch upstream && git rebase upstream/master` (наши
+  правки только в `agent/`+доки, с ядром не конфликтуют). `upstream` = оригинал автора.
+  Push в origin — только по запросу владельца.
+- **OOS-вердикт (наш гейт):** OVERFIT, если out-of-sample Sharpe<0 ИЛИ return<0 ИЛИ
+  проигрыш buy&hold. Инструменты — [agent/tools/](agent/tools/) (`parse-report.mjs`, `oos-gate.mjs`).
+- **AI:** Ollama Cloud (`minimax-m2.7:cloud`) + Tavily Free; ключи в `example/.env` (проверены).
+  Claude не используем (дорого). Healthcheck: `example/scripts/ai-healthcheck.mjs`.
+- **Binance trade-ключи — только перед live** (Phase 5); backtest/paper ключей не требуют.
+- **Следующий шаг:** Phase 3 — стратегия июнь-2026 ETHUSDT (трендследящий SHORT).
