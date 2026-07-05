@@ -1,0 +1,81 @@
+{
+  "disclaimer": "pnl СЫРОЙ (без fees/slippage/funding/спреда). Один канал → mode=single. Один сплит — не полный walk-forward.",
+  "split": {
+    "trainRange": "2025-04..2026-03",
+    "oosRange": "2026-04..2026-04",
+    "trainItems": 389,
+    "oosItems": 25
+  },
+  "authorGate": {
+    "certified": false,
+    "dsr": 0.880080879202984,
+    "pbo": 0.6666666666666666,
+    "spaPValue": 0.000999000999000999,
+    "reasons": [
+      "DSR 0.880 < 0.95 — эдж не переживает поправку на 139968 испытаний",
+      "PBO 0.667 > 0.1 — конфиг оверфитнут (CSCV)"
+    ],
+    "reliable": true
+  },
+  "inSample": {
+    "n": 380,
+    "winRatePct": 83.95,
+    "meanPct": 1.82,
+    "medianPct": 1.57,
+    "stdPct": 2.43,
+    "perTradeSharpe": 0.75,
+    "sumPct": 690.29,
+    "maxDDPct": -6.36
+  },
+  "oos": {
+    "n": 24,
+    "winRatePct": 75,
+    "meanPct": 0.78,
+    "medianPct": 0.84,
+    "stdPct": 1.75,
+    "perTradeSharpe": 0.45,
+    "sumPct": 18.69,
+    "maxDDPct": -3.36
+  },
+  "oosAfterFriction04": {
+    "n": 24,
+    "winRatePct": 70.83,
+    "meanPct": 0.38,
+    "medianPct": 0.44,
+    "stdPct": 1.75,
+    "perTradeSharpe": 0.22,
+    "sumPct": 9.09,
+    "maxDDPct": -4.16
+  },
+  "oosMonthly": {
+    "2026-04": {
+      "n": 24,
+      "winRatePct": 75,
+      "meanPct": 0.78,
+      "medianPct": 0.84,
+      "stdPct": 1.75,
+      "perTradeSharpe": 0.45,
+      "sumPct": 18.69,
+      "maxDDPct": -3.36
+    }
+  },
+  "oosNetMeanPctAfterFriction": 0.38,
+  "buyHold": {
+    "HYPEUSDT": 13.83,
+    "MONUSDT": 25.62,
+    "PENGUUSDT": 30.12,
+    "POLUSDT": -1.28,
+    "SOLUSDT": 3.14,
+    "TRXUSDT": 2.41,
+    "EQUAL_WEIGHT_BASKET": 12.31
+  },
+  "ourGate": {
+    "rule": "OVERFIT если OOS Sharpe<0 ИЛИ return<0 ИЛИ проигрыш buy&hold корзине",
+    "oosSharpe": 0.45,
+    "oosReturnPct": 18.69,
+    "basketHoldPct": 12.31,
+    "beatsHold": true,
+    "degradation": "0.78% vs in-sample 1.82% (ок)",
+    "verdict": "HOLDS UP (на этом сплите; не доказательство эджа)"
+  }
+}

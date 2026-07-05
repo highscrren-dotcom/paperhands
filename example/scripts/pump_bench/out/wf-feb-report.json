@@ -1,0 +1,83 @@
+{
+  "disclaimer": "pnl СЫРОЙ (без fees/slippage/funding/спреда). Один канал → mode=single. Один сплит — не полный walk-forward.",
+  "split": {
+    "trainRange": "2025-04..2026-01",
+    "oosRange": "2026-02..2026-02",
+    "trainItems": 310,
+    "oosItems": 44
+  },
+  "authorGate": {
+    "certified": false,
+    "dsr": 0.8126457727682741,
+    "pbo": 0.3333333333333333,
+    "spaPValue": 0.000999000999000999,
+    "reasons": [
+      "DSR 0.813 < 0.95 — эдж не переживает поправку на 139968 испытаний",
+      "PBO 0.333 > 0.1 — конфиг оверфитнут (CSCV)"
+    ],
+    "reliable": true
+  },
+  "inSample": {
+    "n": 304,
+    "winRatePct": 81.91,
+    "meanPct": 1.89,
+    "medianPct": 1.6,
+    "stdPct": 2.6,
+    "perTradeSharpe": 0.73,
+    "sumPct": 573.87,
+    "maxDDPct": -6.36
+  },
+  "oos": {
+    "n": 42,
+    "winRatePct": 69.05,
+    "meanPct": 1.2,
+    "medianPct": 1.4,
+    "stdPct": 2.24,
+    "perTradeSharpe": 0.54,
+    "sumPct": 50.28,
+    "maxDDPct": -5
+  },
+  "oosAfterFriction04": {
+    "n": 42,
+    "winRatePct": 66.67,
+    "meanPct": 0.8,
+    "medianPct": 1,
+    "stdPct": 2.24,
+    "perTradeSharpe": 0.36,
+    "sumPct": 33.48,
+    "maxDDPct": -6.2
+  },
+  "oosMonthly": {
+    "2026-02": {
+      "n": 42,
+      "winRatePct": 69.05,
+      "meanPct": 1.2,
+      "medianPct": 1.4,
+      "stdPct": 2.24,
+      "perTradeSharpe": 0.54,
+      "sumPct": 50.28,
+      "maxDDPct": -5
+    }
+  },
+  "oosNetMeanPctAfterFriction": 0.8,
+  "buyHold": {
+    "ASTERUSDT": 26.1,
+    "BTCUSDT": -15.06,
+    "HYPEUSDT": -6.1,
+    "PENGUUSDT": -12.03,
+    "POLUSDT": -2.44,
+    "SOLUSDT": -19.17,
+    "TRXUSDT": -0.88,
+    "ZECUSDT": -25.89,
+    "EQUAL_WEIGHT_BASKET": -6.93
+  },
+  "ourGate": {
+    "rule": "OVERFIT если OOS Sharpe<0 ИЛИ return<0 ИЛИ проигрыш buy&hold корзине",
+    "oosSharpe": 0.54,
+    "oosReturnPct": 50.28,
+    "basketHoldPct": -6.93,
+    "beatsHold": true,
+    "degradation": "1.2% vs in-sample 1.89% (ок)",
+    "verdict": "HOLDS UP (на этом сплите; не доказательство эджа)"
+  }
+}
