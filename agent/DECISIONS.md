@@ -4,6 +4,38 @@
 > и [../CLAUDE.md](../CLAUDE.md)). Кратко: где мы, все решения владельца, проверенные
 > факты, что делать дальше. Обновлять в конце каждой сессии.
 
+## Session 2 (2026-07-05) — paper-прогон запущен
+
+- **Решение владельца: paper на стратегиях автора (свою пока не пишем).** Выбрано:
+  **feb_2026 (AI-news sentiment) на BTCUSDT** — «активный проект», AI-стек живой.
+- **`example/content/feb_2026.strategy/modules/paper.module.ts`** создан — переносит
+  `CC_MAX_STOPLOSS_DISTANCE_PERCENT:100` + exchange в `--paper` (в paper грузится только
+  `paper.module`, не `backtest.module`; без него дистанц-гейт режет moonbag-сигналы).
+  Ядро `src/**` не тронуто.
+- **Smoke-тест пройден:** boot, живые BTCUSDT-свечи, live-часы, forecast (Tavily+Ollama),
+  look-ahead безопасен. feb_2026 корректно вернула `null` на `sideways/not_reliable`.
+- **Запущен 5-часовой paper** (`--paper --symbol BTCUSDT`, self-stop по SIGINT). Нюанс:
+  forecast кэш 1d → в «тихий» новостной день сделок нет до смены суток UTC.
+- **Находка:** feb_2026 захардкожена на Bitcoin (запрос Tavily = константа «Bitcoin
+  market sentiment», символ в поиск не идёт) → стратегия BTC-only by construction.
+
+### Решения владельца (session 2)
+10. **GRAM — отложен, остаёмся на BTC.** GRAM/USDT торгуется на Binance (~$45M/24ч,
+    данные paper тянет), но новостной путь бесполезен (баг запроса + мелкий токен), а
+    идентичность токена под вопросом (не заблокированный SEC gram TON).
+11. **X API — отложен на неопределённый срок** (дорого $200–5000/мес + botted/пампы;
+    рекомендация «не внедрять»). Быстрый путь (домены в allowlist) — тоже no-op.
+12. **Новостные EDIT 1/2 под GRAM — НЕ делаем** (не меняем предмет теста).
+- Полный разбор GRAM/x.com — [agent/notes/gram-xcom-feasibility.md](notes/gram-xcom-feasibility.md).
+
+### Следующие шаги (session 2)
+1. Дать BTC-paper доработать; для реальной сделки нужен многодневный прогон (смена суток
+   UTC → forecast пересчитается) или Docker (durable, переживёт рестарт).
+2. Опц.: разведочный **GRAM TA-смоук** (dec_2025, ноль правок, read-only) — но Pine
+   BTC-tuned → out-of-distribution, цифрам не верить до OOS.
+3. Направление сместилось: **paper-тест стратегий автора на BTC**, а не своя jun_2026 ETH
+   (Phase-3 ниже — отложена).
+
 ## Где мы сейчас (конец сессии 1, 2026-07-05)
 - Репозиторий = форк `tripolskypetr/backtest-kit`; локальный минимальный движок «paperhands»
   из первой сессии — в бэкапе scratchpad (не в git).
