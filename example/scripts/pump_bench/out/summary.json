@@ -1,0 +1,166 @@
+{
+  "disclaimer": "IN-SAMPLE (модель обучена на этих же 32 постах). pnl СЫРОЙ: без комиссии/слиппеджа/фандинга/спреда.",
+  "items": 32,
+  "planSignals": 32,
+  "planActions": {
+    "enter": 28,
+    "invert": 4
+  },
+  "backtestSignals": 32,
+  "entered": 32,
+  "skipped": 0,
+  "truncated": 0,
+  "exitReasons": {
+    "life-cap": 19,
+    "hard-stop": 4,
+    "trailing-take": 5,
+    "peak-staleness": 4
+  },
+  "raw": {
+    "n": 32,
+    "winRatePct": 62.5,
+    "meanPct": 0.86,
+    "medianPct": 0.42,
+    "stdPct": 1.74,
+    "perTradeSharpe": 0.5,
+    "sumPct": 27.57,
+    "maxDDPct": -3.05
+  },
+  "afterFriction": {
+    "0.2%_за_раундтрип": {
+      "n": 32,
+      "winRatePct": 56.25,
+      "meanPct": 0.66,
+      "medianPct": 0.22,
+      "stdPct": 1.74,
+      "perTradeSharpe": 0.38,
+      "sumPct": 21.17,
+      "maxDDPct": -3.85
+    },
+    "0.4%_за_раундтрип": {
+      "n": 32,
+      "winRatePct": 50,
+      "meanPct": 0.46,
+      "medianPct": 0.02,
+      "stdPct": 1.74,
+      "perTradeSharpe": 0.27,
+      "sumPct": 14.77,
+      "maxDDPct": -4.65
+    }
+  },
+  "bySymbol": {
+    "BTCUSDT": {
+      "n": 1,
+      "winRatePct": 0,
+      "meanPct": -0.03,
+      "medianPct": -0.03,
+      "stdPct": 0,
+      "perTradeSharpe": "N/A (std≈0)",
+      "sumPct": -0.03,
+      "maxDDPct": -0.03
+    },
+    "ENAUSDT": {
+      "n": 1,
+      "winRatePct": 0,
+      "meanPct": -0.51,
+      "medianPct": -0.51,
+      "stdPct": 0,
+      "perTradeSharpe": "N/A (std≈0)",
+      "sumPct": -0.51,
+      "maxDDPct": -0.51
+    },
+    "ETHUSDT": {
+      "n": 1,
+      "winRatePct": 100,
+      "meanPct": 0.73,
+      "medianPct": 0.73,
+      "stdPct": 0,
+      "perTradeSharpe": "N/A (std≈0)",
+      "sumPct": 0.73,
+      "maxDDPct": 0
+    },
+    "FARTCOINUSDT": {
+      "n": 2,
+      "winRatePct": 50,
+      "meanPct": 0.74,
+      "medianPct": 0.74,
+      "stdPct": 2.46,
+      "perTradeSharpe": 0.3,
+      "sumPct": 1.47,
+      "maxDDPct": -1
+    },
+    "HYPEUSDT": {
+      "n": 2,
+      "winRatePct": 50,
+      "meanPct": -0.27,
+      "medianPct": -0.27,
+      "stdPct": 1.03,
+      "perTradeSharpe": -0.27,
+      "sumPct": -0.55,
+      "maxDDPct": -1
+    },
+    "NEARUSDT": {
+      "n": 4,
+      "winRatePct": 75,
+      "meanPct": 1.83,
+      "medianPct": 2.2,
+      "stdPct": 2.3,
+      "perTradeSharpe": 0.8,
+      "sumPct": 7.32,
+      "maxDDPct": -1
+    },
+    "POLUSDT": {
+      "n": 4,
+      "winRatePct": 100,
+      "meanPct": 3.68,
+      "medianPct": 3.62,
+      "stdPct": 0.72,
+      "perTradeSharpe": 5.14,
+      "sumPct": 14.74,
+      "maxDDPct": 0
+    },
+    "PUMPUSDT": {
+      "n": 1,
+      "winRatePct": 0,
+      "meanPct": -0.08,
+      "medianPct": -0.08,
+      "stdPct": 0,
+      "perTradeSharpe": "N/A (std≈0)",
+      "sumPct": -0.08,
+      "maxDDPct": -0.08
+    },
+    "SOLUSDT": {
+      "n": 5,
+      "winRatePct": 80,
+      "meanPct": 0.06,
+      "medianPct": 0.12,
+      "stdPct": 0.39,
+      "perTradeSharpe": 0.15,
+      "sumPct": 0.28,
+      "maxDDPct": -0.6
+    },
+    "TRXUSDT": {
+      "n": 11,
+      "winRatePct": 54.55,
+      "meanPct": 0.38,
+      "medianPct": 0.68,
+      "stdPct": 1.44,
+      "perTradeSharpe": 0.26,
+      "sumPct": 4.19,
+      "maxDDPct": -3.12
+    }
+  },
+  "buyHold": {
+    "BTCUSDT": -8.9,
+    "ENAUSDT": -35.96,
+    "ETHUSDT": -14.26,
+    "FARTCOINUSDT": -34.04,
+    "HYPEUSDT": 16.36,
+    "NEARUSDT": -24.31,
+    "POLUSDT": -6.98,
+    "PUMPUSDT": 26.89,
+    "SOLUSDT": -13.3,
+    "TRXUSDT": -0.17,
+    "EQUAL_WEIGHT_BASKET": -9.47
+  }
+}
