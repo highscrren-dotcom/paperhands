@@ -82,9 +82,28 @@ paper-форварда pump-пути (вопрос №1 ниже). Плюс: `ba
 `backtest-kit-skills`, onboarding-сайт. Твоя цель зафиксирована в DECISIONS №16:
 **повторить экосистему → live** (порядок и гейты сохраняем).
 
-**План следующей сессии (после ресета токенов):** (1) backtest-ollama-crontab —
-клон/разбор/стыковка с нашим парсером и pump-стендом; (2) onboarding-сайт автора;
-(3) redis-mongo-docker для durable paper; (4) решение по mongod для UZSE.
+**✅ Выполнено после ресета токенов (04:30–05:30): вся экосистема разобрана,
+деливерабл готов — [agent/notes/fork-map.md](agent/notes/fork-map.md).**
+
+## ЧТО ФОРКАТЬ (твой деливерабл — детали и команды в fork-map.md)
+
+**Форкать на GitHub + клонировать (3):**
+1. `backtest-kit/backtest-ollama-crontab` — Telegram-ingest (MTProto + regex +
+   Mongo + опц. Ollama-гейт). Недостающее звено live-фида. ⚠️ внутри захардкожены
+   ЧУЖИЕ Telegram-креды автора (заменить), их «--live» — без исполнения ордеров.
+2. `backtest-kit/backtest-kit-redis-mongo-docker` — durable-персистенция (позиции
+   переживают рестарт — без этого многодневный paper хрупок). 14.1.0-совместим.
+3. `backtest-kit/backtest-monorepo-parallel` — каркас продакшн-раннера
+   (мульти-символ, пре-кэш). ⚠️ **БЕЗ LICENSE → форк сделать ПРИВАТНЫМ**.
+
+**Вендорить с правкой (не форк):** backtest-kit-skills → `paperhands/.claude/skills/`
+(перед этим вырезать маркетинг «example генерит профит» — противоречит доктрине).
+
+**Не форкать:** сайт (генерированный TypeDoc), backtest-kit-docs (дубль),
+PineTS/garch/agent-swarm-kit и пр. (npm). Read-only клоны лежат в `_reference/`.
+
+Бонус с сайта: **go-live чеклист автора** — WR>60% и Sharpe>1.0 на 100+ сигналов,
+≥30 дней paper, maxDD<20%, SIGINT-хендлер. Наш OOS-гейт его дополняет.
 
 ## Что нужно от тебя (решения)
 
