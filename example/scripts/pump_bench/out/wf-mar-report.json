@@ -1,0 +1,85 @@
+{
+  "disclaimer": "pnl СЫРОЙ (без fees/slippage/funding/спреда). Один канал → mode=single. Один сплит — не полный walk-forward.",
+  "split": {
+    "trainRange": "2025-04..2026-02",
+    "oosRange": "2026-03..2026-03",
+    "trainItems": 354,
+    "oosItems": 35
+  },
+  "authorGate": {
+    "certified": false,
+    "dsr": 0.8319893132382776,
+    "pbo": 0.6666666666666666,
+    "spaPValue": 0.000999000999000999,
+    "reasons": [
+      "DSR 0.832 < 0.95 — эдж не переживает поправку на 139968 испытаний",
+      "PBO 0.667 > 0.1 — конфиг оверфитнут (CSCV)"
+    ],
+    "reliable": true
+  },
+  "inSample": {
+    "n": 346,
+    "winRatePct": 84.39,
+    "meanPct": 1.89,
+    "medianPct": 1.61,
+    "stdPct": 2.47,
+    "perTradeSharpe": 0.77,
+    "sumPct": 654.24,
+    "maxDDPct": -6.36
+  },
+  "oos": {
+    "n": 34,
+    "winRatePct": 67.65,
+    "meanPct": 0.78,
+    "medianPct": 0.85,
+    "stdPct": 2,
+    "perTradeSharpe": 0.39,
+    "sumPct": 26.37,
+    "maxDDPct": -3
+  },
+  "oosAfterFriction04": {
+    "n": 34,
+    "winRatePct": 61.76,
+    "meanPct": 0.38,
+    "medianPct": 0.45,
+    "stdPct": 2,
+    "perTradeSharpe": 0.19,
+    "sumPct": 12.77,
+    "maxDDPct": -4.8
+  },
+  "oosMonthly": {
+    "2026-03": {
+      "n": 34,
+      "winRatePct": 67.65,
+      "meanPct": 0.78,
+      "medianPct": 0.85,
+      "stdPct": 2,
+      "perTradeSharpe": 0.39,
+      "sumPct": 26.37,
+      "maxDDPct": -3
+    }
+  },
+  "oosNetMeanPctAfterFriction": 0.38,
+  "buyHold": {
+    "BTCUSDT": 0.55,
+    "ETHUSDT": 4.1,
+    "FARTCOINUSDT": 6.9,
+    "HYPEUSDT": 16.79,
+    "POLUSDT": -12.01,
+    "RIVERUSDT": 17.93,
+    "SOLUSDT": -2.72,
+    "TAOUSDT": 68.39,
+    "TRXUSDT": 13.54,
+    "XAUTUSDT": 3.16,
+    "EQUAL_WEIGHT_BASKET": 11.66
+  },
+  "ourGate": {
+    "rule": "OVERFIT если OOS Sharpe<0 ИЛИ return<0 ИЛИ проигрыш buy&hold корзине",
+    "oosSharpe": 0.39,
+    "oosReturnPct": 26.37,
+    "basketHoldPct": 11.66,
+    "beatsHold": true,
+    "degradation": "0.78% vs in-sample 1.89% (ок)",
+    "verdict": "HOLDS UP (на этом сплите; не доказательство эджа)"
+  }
+}
