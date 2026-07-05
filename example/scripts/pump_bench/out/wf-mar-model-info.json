@@ -1,0 +1,42 @@
+{
+  "mode": "single",
+  "modeReason": "auto → single: один канал — корреляция невозможна",
+  "reliable": true,
+  "confidence": 0.756863,
+  "historySize": 342,
+  "effectiveTrials": 139968,
+  "fitAttempts": 1,
+  "labeling": {
+    "candidates": 354,
+    "outcomes": {
+      "ok": 346,
+      "no-entry": 8
+    },
+    "errors": {}
+  },
+  "exitGlobal": {
+    "trailingTake": 2,
+    "hardStop": 3,
+    "stalenessSinceProfit": 0.5,
+    "stalenessSinceMinutes": 240,
+    "staleMinutes": 720,
+    "volZThreshold": 1.5,
+    "squeezePolicy": "invert",
+    "squeezeThreshold": 0.55,
+    "volBaselineWindow": 20,
+    "cascadeWindowMinutes": 60
+  },
+  "certification": {
+    "certified": false,
+    "dsr": 0.8319893132382776,
+    "pbo": 0.6666666666666666,
+    "spaPValue": 0.000999000999000999,
+    "minTRL": 7.851056719459345,
+    "actualN": 272,
+    "nestedScore": 0.012269,
+    "reasons": [
+      "DSR 0.832 < 0.95 — эдж не переживает поправку на 139968 испытаний",
+      "PBO 0.667 > 0.1 — конфиг оверфитнут (CSCV)"
+    ]
+  }
+}
