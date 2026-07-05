@@ -21,8 +21,9 @@
 правок, поиск символов) сначала MCP **codebase-memory**
 (`get_architecture` / `search_graph` / `trace_path` / `query_graph`), а не массовое
 чтение файлов. Read/Grep — когда графа мало (точная строка/функция) или для не-кода.
-Проект в графе: `home-s1dd1-dev-paperhands` (уже проиндексирован). Переиндексация:
-`codebase-memory-mcp cli index_repository '{"repo_path":"/home/s1dd1/dev/paperhands"}'`.
+Проект в графе: `home-s1dd1-dev-quant-paperhands` (репо живёт в умбрелле `/dev/quant/`).
+Переиндексация:
+`codebase-memory-mcp cli index_repository '{"repo_path":"/home/s1dd1/dev/quant/paperhands"}'`.
 
 ## Где ведём работу
 
