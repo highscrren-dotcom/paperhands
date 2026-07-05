@@ -1,0 +1,7453 @@
+[
+  {
+    "id": "8fc8a7325f0bb873d5e69e76",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1743498188000,
+    "entryFromPrice": 128.5,
+    "entryToPrice": 129.9,
+    "targets": [
+      131,
+      131.5,
+      132.6,
+      133.9,
+      135.9
+    ],
+    "stoploss": 124.2,
+    "publishedAt": "2025-04-01T14:03:08"
+  },
+  {
+    "id": "7c74b258fa796fcfb8cd2703",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1743501849000,
+    "entryFromPrice": 2.416,
+    "entryToPrice": 2.443,
+    "targets": [
+      2.462,
+      2.472,
+      2.493,
+      2.517,
+      2.554
+    ],
+    "stoploss": 2.335,
+    "publishedAt": "2025-04-01T15:04:09"
+  },
+  {
+    "id": "08316616ba393e2a5665c2e8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1743512626000,
+    "entryFromPrice": 1340.8,
+    "entryToPrice": 1355.7,
+    "targets": [
+      1366.5,
+      1371.9,
+      1383.8,
+      1397.3,
+      1417.8
+    ],
+    "stoploss": 1296.3,
+    "publishedAt": "2025-04-01T18:03:46"
+  },
+  {
+    "id": "089bfc2db8afe816a21568b1",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1743592907000,
+    "entryFromPrice": 125.2,
+    "entryToPrice": 126.6,
+    "targets": [
+      124.2,
+      123.7,
+      122.6,
+      121.4,
+      119.4
+    ],
+    "stoploss": 130.8,
+    "publishedAt": "2025-04-02T16:21:47"
+  },
+  {
+    "id": "c1233e201946bba3b702b58a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1743609962000,
+    "entryFromPrice": 1387,
+    "entryToPrice": 1402.4,
+    "targets": [
+      1413.6,
+      1419.1,
+      1431.4,
+      1445.4,
+      1466.6
+    ],
+    "stoploss": 1340.9,
+    "publishedAt": "2025-04-02T21:06:02"
+  },
+  {
+    "id": "5ee47e7ce77cf17004313329",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1743613383000,
+    "entryFromPrice": 2.146,
+    "entryToPrice": 2.17,
+    "targets": [
+      2.187,
+      2.196,
+      2.215,
+      2.236,
+      2.269
+    ],
+    "stoploss": 2.075,
+    "publishedAt": "2025-04-02T22:03:03"
+  },
+  {
+    "id": "11752f55aca65e54f9ffcb1b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1743613690000,
+    "entryFromPrice": 2.451,
+    "entryToPrice": 2.478,
+    "targets": [
+      2.498,
+      2.507,
+      2.529,
+      2.554,
+      2.591
+    ],
+    "stoploss": 2.369,
+    "publishedAt": "2025-04-02T22:08:10"
+  },
+  {
+    "id": "bb737ba1a251c0ac531e09fc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "short",
+    "ts": 1743758466000,
+    "entryFromPrice": 1320.6,
+    "entryToPrice": 1335.2,
+    "targets": [
+      1310,
+      1304.7,
+      1293,
+      1279.8,
+      1259.6
+    ],
+    "stoploss": 1378.9,
+    "publishedAt": "2025-04-04T14:21:06"
+  },
+  {
+    "id": "7ac55ea3561271887517f82e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1743759216000,
+    "entryFromPrice": 2.082,
+    "entryToPrice": 2.105,
+    "targets": [
+      2.065,
+      2.057,
+      2.039,
+      2.018,
+      1.986
+    ],
+    "stoploss": 2.174,
+    "publishedAt": "2025-04-04T14:33:36"
+  },
+  {
+    "id": "5e88ee8cc9a62aa9bbfc0a8d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1743779094000,
+    "entryFromPrice": 81000,
+    "entryToPrice": 82700,
+    "targets": [
+      83500,
+      84200,
+      85100,
+      86200,
+      87400
+    ],
+    "stoploss": 80200,
+    "publishedAt": "2025-04-04T20:04:54"
+  },
+  {
+    "id": "690c4f6a317dc2575e28db06",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1744110717000,
+    "entryFromPrice": 108.1,
+    "entryToPrice": 109.3,
+    "targets": [
+      110.1,
+      110.6,
+      111.5,
+      112.6,
+      114.3
+    ],
+    "stoploss": 104.5,
+    "publishedAt": "2025-04-08T16:11:57"
+  },
+  {
+    "id": "39b99928af00fc4699672552",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1744113759000,
+    "entryFromPrice": 1.946,
+    "entryToPrice": 1.967,
+    "targets": [
+      1.983,
+      1.991,
+      2.008,
+      2.028,
+      2.057
+    ],
+    "stoploss": 1.881,
+    "publishedAt": "2025-04-08T17:02:39"
+  },
+  {
+    "id": "b8ad93374a47cad23fbb7960",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "long",
+    "ts": 1744131534000,
+    "entryFromPrice": 1440,
+    "entryToPrice": 1500,
+    "targets": [
+      1570,
+      1640,
+      1700,
+      1760,
+      1830
+    ],
+    "stoploss": 1380,
+    "publishedAt": "2025-04-08T21:58:54"
+  },
+  {
+    "id": "4b717619b07fef518aff4385",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1744132002000,
+    "entryFromPrice": 1.965,
+    "entryToPrice": 1.987,
+    "targets": [
+      2.003,
+      2.01,
+      2.028,
+      2.048,
+      2.078
+    ],
+    "stoploss": 1.9,
+    "publishedAt": "2025-04-08T22:06:42"
+  },
+  {
+    "id": "ed382e06f0d3a5c6f280aee4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1744195981000,
+    "entryFromPrice": 106.2,
+    "entryToPrice": 107.4,
+    "targets": [
+      105.4,
+      104.9,
+      104,
+      102.9,
+      101.3
+    ],
+    "stoploss": 110.9,
+    "publishedAt": "2025-04-09T15:53:01"
+  },
+  {
+    "id": "eb9e8393b96fc8eeefd5bd56",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1744221721000,
+    "entryFromPrice": 2.231,
+    "entryToPrice": 2.256,
+    "targets": [
+      2.274,
+      2.283,
+      2.303,
+      2.325,
+      2.359
+    ],
+    "stoploss": 2.157,
+    "publishedAt": "2025-04-09T23:02:01"
+  },
+  {
+    "id": "00afc3e024e33f40896a74c0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1744365258000,
+    "entryFromPrice": 1.993,
+    "entryToPrice": 2.015,
+    "targets": [
+      2.031,
+      2.039,
+      2.057,
+      2.077,
+      2.107
+    ],
+    "stoploss": 1.927,
+    "publishedAt": "2025-04-11T14:54:18"
+  },
+  {
+    "id": "19639026c345445960a13b53",
+    "channel": "crypto_yoda_channel",
+    "symbol": "KERNELUSDT",
+    "direction": "long",
+    "ts": 1744661829000,
+    "entryFromPrice": 0.27,
+    "entryToPrice": 0.33,
+    "targets": [
+      0.36,
+      0.4,
+      0.44,
+      0.48,
+      0.52
+    ],
+    "stoploss": 0.24,
+    "publishedAt": "2025-04-15T01:17:09"
+  },
+  {
+    "id": "052f45e6ed5953792f9b8679",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1744716688000,
+    "entryFromPrice": 2.154,
+    "entryToPrice": 2.178,
+    "targets": [
+      2.195,
+      2.204,
+      2.223,
+      2.245,
+      2.278
+    ],
+    "stoploss": 2.083,
+    "publishedAt": "2025-04-15T16:31:28"
+  },
+  {
+    "id": "9b781ad80a7798ba3e060dd8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1744718998000,
+    "entryFromPrice": 131.2,
+    "entryToPrice": 132.7,
+    "targets": [
+      133.7,
+      134.3,
+      135.4,
+      136.8,
+      138.8
+    ],
+    "stoploss": 126.9,
+    "publishedAt": "2025-04-15T17:09:58"
+  },
+  {
+    "id": "4a447ac7c6151684e1ae2308",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1744719066000,
+    "entryFromPrice": 1374.7,
+    "entryToPrice": 1389.9,
+    "targets": [
+      1401,
+      1406.6,
+      1418.7,
+      1432.6,
+      1453.6
+    ],
+    "stoploss": 1329,
+    "publishedAt": "2025-04-15T17:11:06"
+  },
+  {
+    "id": "522c8d9e47af08c07888da26",
+    "channel": "crypto_yoda_channel",
+    "symbol": "KERNELUSDT",
+    "direction": "long",
+    "ts": 1744787815000,
+    "entryFromPrice": 0.22,
+    "entryToPrice": 0.25,
+    "targets": [
+      0.28,
+      0.3,
+      0.33,
+      0.36,
+      0.39
+    ],
+    "publishedAt": "2025-04-16T12:16:55"
+  },
+  {
+    "id": "01a6d946c5164352b6127a43",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1744889314000,
+    "entryFromPrice": 2.09,
+    "entryToPrice": 2.113,
+    "targets": [
+      2.073,
+      2.064,
+      2.046,
+      2.025,
+      1.993
+    ],
+    "stoploss": 2.182,
+    "publishedAt": "2025-04-17T16:28:34"
+  },
+  {
+    "id": "ecb0cf5f6da581fd888b7f30",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1744895164000,
+    "entryFromPrice": 2.1,
+    "entryToPrice": 2.124,
+    "targets": [
+      2.084,
+      2.075,
+      2.057,
+      2.036,
+      2.003
+    ],
+    "stoploss": 2.193,
+    "publishedAt": "2025-04-17T18:06:04"
+  },
+  {
+    "id": "a86aee6cb546f0f0eb62371f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "short",
+    "ts": 1744974126000,
+    "entryFromPrice": 1338.1,
+    "entryToPrice": 1352.9,
+    "targets": [
+      1327.4,
+      1322,
+      1310.2,
+      1296.7,
+      1276.3
+    ],
+    "stoploss": 1397.2,
+    "publishedAt": "2025-04-18T16:02:06"
+  },
+  {
+    "id": "1940977982a816fc48db48ff",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1745004492000,
+    "entryFromPrice": 2.075,
+    "entryToPrice": 2.098,
+    "targets": [
+      2.058,
+      2.05,
+      2.032,
+      2.011,
+      1.979
+    ],
+    "stoploss": 2.167,
+    "publishedAt": "2025-04-19T00:28:12"
+  },
+  {
+    "id": "950f02a53d8074323b45b91e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "IOTAUSDT",
+    "direction": "long",
+    "ts": 1745242647000,
+    "entryFromPrice": 0.162,
+    "entryToPrice": 0.173,
+    "targets": [
+      0.178,
+      0.184,
+      0.189,
+      0.194,
+      0.201
+    ],
+    "stoploss": 0.155,
+    "publishedAt": "2025-04-21T18:37:27"
+  },
+  {
+    "id": "0e68319c67b2c9e0aa6ab0ee",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1745255354000,
+    "entryFromPrice": 135,
+    "entryToPrice": 136.5,
+    "targets": [
+      133.9,
+      133.4,
+      132.2,
+      130.8,
+      128.8
+    ],
+    "stoploss": 141,
+    "publishedAt": "2025-04-21T22:09:14"
+  },
+  {
+    "id": "e2ef0665021171d7caa340ca",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "short",
+    "ts": 1745415820000,
+    "entryFromPrice": 1800,
+    "entryToPrice": 1850,
+    "targets": [
+      1770,
+      1735,
+      1695,
+      1655,
+      1620
+    ],
+    "stoploss": 1900,
+    "publishedAt": "2025-04-23T18:43:40"
+  },
+  {
+    "id": "fd814d83d5cb65e2cd44bcdd",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1745467678000,
+    "entryFromPrice": 2.159,
+    "entryToPrice": 2.183,
+    "targets": [
+      2.201,
+      2.209,
+      2.229,
+      2.25,
+      2.283
+    ],
+    "stoploss": 2.088,
+    "publishedAt": "2025-04-24T09:07:58"
+  },
+  {
+    "id": "72c407f29c5bdcfa8acafb19",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1745518247000,
+    "entryFromPrice": 1478.7,
+    "entryToPrice": 1495.1,
+    "targets": [
+      1507,
+      1512.9,
+      1526,
+      1540.9,
+      1563.6
+    ],
+    "stoploss": 1429.5,
+    "publishedAt": "2025-04-24T23:10:47"
+  },
+  {
+    "id": "2be182e7ae2e81ac9d6416bf",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1745597500000,
+    "entryFromPrice": 1468.2,
+    "entryToPrice": 1484.5,
+    "targets": [
+      1496.3,
+      1502.3,
+      1515.3,
+      1530.1,
+      1552.5
+    ],
+    "stoploss": 1419.5,
+    "publishedAt": "2025-04-25T21:11:40"
+  },
+  {
+    "id": "514f193438389ff1e2942bad",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1745838745000,
+    "entryFromPrice": 151.4,
+    "entryToPrice": 153,
+    "targets": [
+      154.3,
+      154.9,
+      156.2,
+      157.7,
+      160.1
+    ],
+    "stoploss": 146.3,
+    "publishedAt": "2025-04-28T16:12:25"
+  },
+  {
+    "id": "f7a7e006abfcaef7582b2a44",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1745855586000,
+    "entryFromPrice": 3.577,
+    "entryToPrice": 3.617,
+    "targets": [
+      3.645,
+      3.66,
+      3.691,
+      3.727,
+      3.782
+    ],
+    "stoploss": 3.458,
+    "publishedAt": "2025-04-28T20:53:06"
+  },
+  {
+    "id": "ac07b54ff8c970e76405f60d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1745932975000,
+    "entryFromPrice": 147.2,
+    "entryToPrice": 148.8,
+    "targets": [
+      146,
+      145.4,
+      144.1,
+      142.6,
+      140.4
+    ],
+    "stoploss": 153.7,
+    "publishedAt": "2025-04-29T18:22:55"
+  },
+  {
+    "id": "f3e2e52dac12dbca36e7e548",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "short",
+    "ts": 1746092393000,
+    "entryFromPrice": 1508.7,
+    "entryToPrice": 1525.4,
+    "targets": [
+      1496.6,
+      1490.6,
+      1477.2,
+      1462.1,
+      1439.1
+    ],
+    "stoploss": 1575.4,
+    "publishedAt": "2025-05-01T14:39:53"
+  },
+  {
+    "id": "e1c8464a914006ce67d65096",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1746173277000,
+    "entryFromPrice": 2.197,
+    "entryToPrice": 2.222,
+    "targets": [
+      2.239,
+      2.248,
+      2.268,
+      2.29,
+      2.323
+    ],
+    "stoploss": 2.124,
+    "publishedAt": "2025-05-02T13:07:57"
+  },
+  {
+    "id": "ba7938a49429015c24402890",
+    "channel": "crypto_yoda_channel",
+    "symbol": "FARTCOINUSDT",
+    "direction": "short",
+    "ts": 1746193003000,
+    "entryFromPrice": 1.2,
+    "entryToPrice": 1.3,
+    "targets": [
+      1.13,
+      1.07,
+      1.01,
+      0.91,
+      0.82
+    ],
+    "stoploss": 1.38,
+    "publishedAt": "2025-05-02T18:36:43"
+  },
+  {
+    "id": "a5e0a334b194ed416bb4b961",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1746213198000,
+    "entryFromPrice": 148.5,
+    "entryToPrice": 150.1,
+    "targets": [
+      151.3,
+      151.9,
+      153.2,
+      154.7,
+      157
+    ],
+    "stoploss": 143.5,
+    "publishedAt": "2025-05-03T00:13:18"
+  },
+  {
+    "id": "3a9ae813803f6403995c1c94",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1746446520000,
+    "entryFromPrice": 1520,
+    "entryToPrice": 1536.8,
+    "targets": [
+      1549.1,
+      1555.2,
+      1568.7,
+      1584,
+      1607.2
+    ],
+    "stoploss": 1469.5,
+    "publishedAt": "2025-05-05T17:02:00"
+  },
+  {
+    "id": "a5328d6b75d71a2df6d22a7a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1746470484000,
+    "entryFromPrice": 144.4,
+    "entryToPrice": 146,
+    "targets": [
+      143.3,
+      142.7,
+      141.4,
+      139.9,
+      137.7
+    ],
+    "stoploss": 150.8,
+    "publishedAt": "2025-05-05T23:41:24"
+  },
+  {
+    "id": "6a7cdc8f99469032cd750319",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1747036930000,
+    "entryFromPrice": 1832.9,
+    "entryToPrice": 1853.2,
+    "targets": [
+      1867.9,
+      1875.3,
+      1891.6,
+      1910,
+      1938.1
+    ],
+    "stoploss": 1772,
+    "publishedAt": "2025-05-12T13:02:10"
+  },
+  {
+    "id": "f6a438f13d7aedf1e6713167",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1747044112000,
+    "entryFromPrice": 2.403,
+    "entryToPrice": 2.43,
+    "targets": [
+      2.449,
+      2.459,
+      2.48,
+      2.505,
+      2.541
+    ],
+    "stoploss": 2.324,
+    "publishedAt": "2025-05-12T15:01:52"
+  },
+  {
+    "id": "02929db57d7e66126a68505c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1747130255000,
+    "entryFromPrice": 102000,
+    "entryToPrice": 103500,
+    "targets": [
+      104300,
+      105200,
+      106100,
+      107300,
+      108400
+    ],
+    "stoploss": 101000,
+    "publishedAt": "2025-05-13T14:57:35"
+  },
+  {
+    "id": "7b445bccad0695f5911908b5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1747140277000,
+    "entryFromPrice": 173.3,
+    "entryToPrice": 175.2,
+    "targets": [
+      171.9,
+      171.2,
+      169.7,
+      167.9,
+      165.3
+    ],
+    "stoploss": 180.9,
+    "publishedAt": "2025-05-13T17:44:37"
+  },
+  {
+    "id": "2e4e5a15b7f267fe2031bde5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1747216167000,
+    "entryFromPrice": 3.883,
+    "entryToPrice": 3.926,
+    "targets": [
+      3.852,
+      3.836,
+      3.802,
+      3.763,
+      3.704
+    ],
+    "stoploss": 4.055,
+    "publishedAt": "2025-05-14T14:49:27"
+  },
+  {
+    "id": "ca92b6b2f968d60ea676137b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "WIFUSDT",
+    "direction": "long",
+    "ts": 1747252058000,
+    "entryFromPrice": 1.06,
+    "entryToPrice": 1.12,
+    "targets": [
+      1.16,
+      1.21,
+      1.27,
+      1.35,
+      1.43
+    ],
+    "stoploss": 1.02,
+    "publishedAt": "2025-05-15T00:47:38"
+  },
+  {
+    "id": "b2f40e8a7b163843561d3b54",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "short",
+    "ts": 1747328647000,
+    "entryFromPrice": 1838,
+    "entryToPrice": 1858.3,
+    "targets": [
+      1823.3,
+      1815.9,
+      1799.6,
+      1781.2,
+      1753.1
+    ],
+    "stoploss": 1919.2,
+    "publishedAt": "2025-05-15T22:04:07"
+  },
+  {
+    "id": "a9bfc1a27fbe0595a24ebce0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1747404133000,
+    "entryFromPrice": 3.9,
+    "entryToPrice": 3.943,
+    "targets": [
+      3.974,
+      3.99,
+      4.024,
+      4.064,
+      4.123
+    ],
+    "stoploss": 3.77,
+    "publishedAt": "2025-05-16T19:02:13"
+  },
+  {
+    "id": "53ba639ca466432e2ebb835d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MKRUSDT",
+    "direction": "long",
+    "ts": 1747408906000,
+    "entryFromPrice": 1838.5,
+    "entryToPrice": 1858.9,
+    "targets": [
+      1873.7,
+      1881.1,
+      1897.4,
+      1915.9,
+      1944.1
+    ],
+    "stoploss": 1777.4,
+    "publishedAt": "2025-05-16T20:21:46"
+  },
+  {
+    "id": "f12de65df083a1ece077dc19",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1747677778000,
+    "entryFromPrice": 3.768,
+    "entryToPrice": 3.809,
+    "targets": [
+      3.738,
+      3.722,
+      3.689,
+      3.651,
+      3.594
+    ],
+    "stoploss": 3.934,
+    "publishedAt": "2025-05-19T23:02:58"
+  },
+  {
+    "id": "effe5feea549447433cf53ba",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1747732330000,
+    "entryFromPrice": 167.1,
+    "entryToPrice": 168.9,
+    "targets": [
+      165.7,
+      165.1,
+      163.6,
+      161.9,
+      159.4
+    ],
+    "stoploss": 174.5,
+    "publishedAt": "2025-05-20T14:12:10"
+  },
+  {
+    "id": "423321c1685d09690f527b61",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1747742879000,
+    "entryFromPrice": 3.798,
+    "entryToPrice": 3.84,
+    "targets": [
+      3.87,
+      3.886,
+      3.919,
+      3.957,
+      4.016
+    ],
+    "stoploss": 3.671,
+    "publishedAt": "2025-05-20T17:07:59"
+  },
+  {
+    "id": "b7fba52e026d42abd4f13009",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1747822066000,
+    "entryFromPrice": 3.796,
+    "entryToPrice": 3.838,
+    "targets": [
+      3.869,
+      3.884,
+      3.918,
+      3.956,
+      4.014
+    ],
+    "stoploss": 3.67,
+    "publishedAt": "2025-05-21T15:07:46"
+  },
+  {
+    "id": "0040a668c93343a22957d502",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1747835092000,
+    "entryFromPrice": 2.345,
+    "entryToPrice": 2.371,
+    "targets": [
+      2.326,
+      2.317,
+      2.296,
+      2.272,
+      2.237
+    ],
+    "stoploss": 2.449,
+    "publishedAt": "2025-05-21T18:44:52"
+  },
+  {
+    "id": "fab802d2a91d98ca8c96009b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "LTCUSDT",
+    "direction": "long",
+    "ts": 1747905824000,
+    "entryFromPrice": 96,
+    "entryToPrice": 99,
+    "targets": [
+      103,
+      106,
+      110,
+      114,
+      118
+    ],
+    "stoploss": 92,
+    "publishedAt": "2025-05-22T14:23:44"
+  },
+  {
+    "id": "a7977853930cc61114c403a3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1747933890000,
+    "entryFromPrice": 3.843,
+    "entryToPrice": 3.886,
+    "targets": [
+      3.917,
+      3.932,
+      3.966,
+      4.005,
+      4.064
+    ],
+    "stoploss": 3.716,
+    "publishedAt": "2025-05-22T22:11:30"
+  },
+  {
+    "id": "b3e3897bdf5fa7ef772d1f67",
+    "channel": "crypto_yoda_channel",
+    "symbol": "1000PEPEUSDT",
+    "direction": "long",
+    "ts": 1748004872000,
+    "entryFromPrice": 0.014,
+    "entryToPrice": 0.0147,
+    "targets": [
+      0.0152,
+      0.0157,
+      0.0163,
+      0.0168,
+      0.0175
+    ],
+    "stoploss": 0.0135,
+    "publishedAt": "2025-05-23T17:54:32"
+  },
+  {
+    "id": "498dbc9a5b4890616fc0b0cf",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1748034139000,
+    "entryFromPrice": 0.7615,
+    "entryToPrice": 0.77,
+    "targets": [
+      0.7554,
+      0.7524,
+      0.7456,
+      0.738,
+      0.7264
+    ],
+    "stoploss": 0.7952,
+    "publishedAt": "2025-05-24T02:02:19"
+  },
+  {
+    "id": "6b845f09d08f3c096a1896df",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1748262482000,
+    "entryFromPrice": 3.566,
+    "entryToPrice": 3.605,
+    "targets": [
+      3.537,
+      3.523,
+      3.491,
+      3.456,
+      3.401
+    ],
+    "stoploss": 3.723,
+    "publishedAt": "2025-05-26T17:28:02"
+  },
+  {
+    "id": "5c1656d76e540bce99eddcb9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1748340113000,
+    "entryFromPrice": 3.546,
+    "entryToPrice": 3.585,
+    "targets": [
+      3.518,
+      3.503,
+      3.472,
+      3.436,
+      3.382
+    ],
+    "stoploss": 3.703,
+    "publishedAt": "2025-05-27T15:01:53"
+  },
+  {
+    "id": "970a2463553564a48a727e78",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1748347379000,
+    "entryFromPrice": 0.7643,
+    "entryToPrice": 0.7728,
+    "targets": [
+      0.7789,
+      0.782,
+      0.7888,
+      0.7965,
+      0.8082
+    ],
+    "stoploss": 0.7389,
+    "publishedAt": "2025-05-27T17:02:59"
+  },
+  {
+    "id": "f88ca7d6e2bf396f57ff3db8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1748440921000,
+    "entryFromPrice": 2.273,
+    "entryToPrice": 2.298,
+    "targets": [
+      2.255,
+      2.246,
+      2.226,
+      2.203,
+      2.168
+    ],
+    "stoploss": 2.374,
+    "publishedAt": "2025-05-28T19:02:01"
+  },
+  {
+    "id": "bda7b65759c0bc76ea68b7d2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1748503988000,
+    "entryFromPrice": 3.63,
+    "entryToPrice": 3.67,
+    "targets": [
+      3.7,
+      3.714,
+      3.746,
+      3.783,
+      3.839
+    ],
+    "stoploss": 3.51,
+    "publishedAt": "2025-05-29T12:33:08"
+  },
+  {
+    "id": "06c82c0ddacd0c4c39afd182",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1748530927000,
+    "entryFromPrice": 0.74,
+    "entryToPrice": 0.7482,
+    "targets": [
+      0.7341,
+      0.7311,
+      0.7246,
+      0.7171,
+      0.7059
+    ],
+    "stoploss": 0.7727,
+    "publishedAt": "2025-05-29T20:02:07"
+  },
+  {
+    "id": "c20a1d07ae6bbe5cff9ac944",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1748842054000,
+    "entryFromPrice": 0.6751,
+    "entryToPrice": 0.6825,
+    "targets": [
+      0.6697,
+      0.667,
+      0.661,
+      0.6542,
+      0.6439
+    ],
+    "stoploss": 0.7049,
+    "publishedAt": "2025-06-02T10:27:34"
+  },
+  {
+    "id": "0684de1b051e7a7eb037457b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1748865903000,
+    "entryFromPrice": 152.8,
+    "entryToPrice": 154.5,
+    "targets": [
+      151.6,
+      151,
+      149.6,
+      148.1,
+      145.8
+    ],
+    "stoploss": 159.6,
+    "publishedAt": "2025-06-02T17:05:03"
+  },
+  {
+    "id": "3df7c6ccbf67f545e37f5d37",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1749026446000,
+    "entryFromPrice": 0.6884,
+    "entryToPrice": 0.6961,
+    "targets": [
+      0.7016,
+      0.7044,
+      0.7105,
+      0.7174,
+      0.728
+    ],
+    "stoploss": 0.6656,
+    "publishedAt": "2025-06-04T13:40:46"
+  },
+  {
+    "id": "a50085ae1a3411590a63c057",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1749038644000,
+    "entryFromPrice": 155.3,
+    "entryToPrice": 157,
+    "targets": [
+      154.1,
+      153.4,
+      152.1,
+      150.5,
+      148.1
+    ],
+    "stoploss": 162.2,
+    "publishedAt": "2025-06-04T17:04:04"
+  },
+  {
+    "id": "0b7dcbe2bbc969b264be6df0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1749218539000,
+    "entryFromPrice": 3.151,
+    "entryToPrice": 3.186,
+    "targets": [
+      3.126,
+      3.113,
+      3.085,
+      3.054,
+      3.006
+    ],
+    "stoploss": 3.29,
+    "publishedAt": "2025-06-06T19:02:19"
+  },
+  {
+    "id": "6b3919389d71aa8c28660061",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ONDOUSDT",
+    "direction": "long",
+    "ts": 1749380055000,
+    "entryFromPrice": 0.75,
+    "entryToPrice": 0.82,
+    "targets": [
+      0.88,
+      0.94,
+      1.02,
+      1.11,
+      1.18
+    ],
+    "stoploss": 0.64,
+    "publishedAt": "2025-06-08T15:54:15"
+  },
+  {
+    "id": "13edf724879eb399346d213e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1749453835000,
+    "entryFromPrice": 148.8,
+    "entryToPrice": 150.4,
+    "targets": [
+      151.6,
+      152.2,
+      153.5,
+      155,
+      157.3
+    ],
+    "stoploss": 143.8,
+    "publishedAt": "2025-06-09T12:23:55"
+  },
+  {
+    "id": "b5258be9cabc27a25a9351ae",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1749610512000,
+    "entryFromPrice": 2.267,
+    "entryToPrice": 2.292,
+    "targets": [
+      2.311,
+      2.32,
+      2.34,
+      2.363,
+      2.397
+    ],
+    "stoploss": 2.192,
+    "publishedAt": "2025-06-11T07:55:12"
+  },
+  {
+    "id": "2e5a5ed94919cf0a07aa0a1e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1749726888000,
+    "entryFromPrice": 0.6843,
+    "entryToPrice": 0.6918,
+    "targets": [
+      0.6788,
+      0.676,
+      0.67,
+      0.6631,
+      0.6527
+    ],
+    "stoploss": 0.7145,
+    "publishedAt": "2025-06-12T16:14:48"
+  },
+  {
+    "id": "601f91e541b366c9309c057b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1749735395000,
+    "entryFromPrice": 157.1,
+    "entryToPrice": 158.8,
+    "targets": [
+      155.8,
+      155.2,
+      153.8,
+      152.3,
+      149.9
+    ],
+    "stoploss": 164,
+    "publishedAt": "2025-06-12T18:36:35"
+  },
+  {
+    "id": "a8650b54ff3fa09612b62a65",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "short",
+    "ts": 1750016609000,
+    "entryFromPrice": 105300,
+    "entryToPrice": 107000,
+    "targets": [
+      105000,
+      104700,
+      104400,
+      104000,
+      103600
+    ],
+    "stoploss": 107500,
+    "publishedAt": "2025-06-16T00:43:29"
+  },
+  {
+    "id": "c5739f5d93d56fdecedca80d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1750148803000,
+    "entryFromPrice": 151.6,
+    "entryToPrice": 153.3,
+    "targets": [
+      154.5,
+      155.1,
+      156.5,
+      158,
+      160.3
+    ],
+    "stoploss": 146.6,
+    "publishedAt": "2025-06-17T13:26:43"
+  },
+  {
+    "id": "088c5a7064c6b95648e50bf7",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "short",
+    "ts": 1750235986000,
+    "entryFromPrice": 104900,
+    "entryToPrice": 105500,
+    "targets": [
+      104600,
+      104200,
+      103800,
+      103300,
+      102700
+    ],
+    "stoploss": 105900,
+    "publishedAt": "2025-06-18T13:39:46"
+  },
+  {
+    "id": "1137b11e41a51e8da56a6c27",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1750338319000,
+    "entryFromPrice": 2.793,
+    "entryToPrice": 2.824,
+    "targets": [
+      2.771,
+      2.759,
+      2.735,
+      2.707,
+      2.664
+    ],
+    "stoploss": 2.916,
+    "publishedAt": "2025-06-19T18:05:19"
+  },
+  {
+    "id": "d67d8de6a6951eb21fd4e7c1",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1750352511000,
+    "entryFromPrice": 2.148,
+    "entryToPrice": 2.172,
+    "targets": [
+      2.131,
+      2.122,
+      2.103,
+      2.082,
+      2.049
+    ],
+    "stoploss": 2.243,
+    "publishedAt": "2025-06-19T22:01:51"
+  },
+  {
+    "id": "5637ff4414963ca2b3141257",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1750411819000,
+    "entryFromPrice": 0.6001,
+    "entryToPrice": 0.6067,
+    "targets": [
+      0.5953,
+      0.5929,
+      0.5876,
+      0.5815,
+      0.5724
+    ],
+    "stoploss": 0.6266,
+    "publishedAt": "2025-06-20T14:30:19"
+  },
+  {
+    "id": "b03e422f10c32b6e60f5ecd6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1750683701000,
+    "entryFromPrice": 135,
+    "entryToPrice": 136.5,
+    "targets": [
+      133.9,
+      133.4,
+      132.2,
+      130.8,
+      128.8
+    ],
+    "stoploss": 141,
+    "publishedAt": "2025-06-23T18:01:41"
+  },
+  {
+    "id": "efa935fba5225cbecb3a6e74",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1750845894000,
+    "entryFromPrice": 2.76,
+    "entryToPrice": 2.791,
+    "targets": [
+      2.813,
+      2.824,
+      2.849,
+      2.876,
+      2.919
+    ],
+    "stoploss": 2.668,
+    "publishedAt": "2025-06-25T15:04:54"
+  },
+  {
+    "id": "6985d869d258b6e8ae99a848",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1750860629000,
+    "entryFromPrice": 2.208,
+    "entryToPrice": 2.233,
+    "targets": [
+      2.25,
+      2.259,
+      2.279,
+      2.301,
+      2.335
+    ],
+    "stoploss": 2.135,
+    "publishedAt": "2025-06-25T19:10:29"
+  },
+  {
+    "id": "f0ad73ffa528912160ee96b0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1750942910000,
+    "entryFromPrice": 2.613,
+    "entryToPrice": 2.642,
+    "targets": [
+      2.592,
+      2.582,
+      2.559,
+      2.532,
+      2.493
+    ],
+    "stoploss": 2.729,
+    "publishedAt": "2025-06-26T18:01:50"
+  },
+  {
+    "id": "d766f6ee9069a713d1128d49",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1750950999000,
+    "entryFromPrice": 143,
+    "entryToPrice": 146,
+    "targets": [
+      140,
+      137,
+      134,
+      131,
+      128
+    ],
+    "stoploss": 149,
+    "publishedAt": "2025-06-26T20:16:39"
+  },
+  {
+    "id": "40fb57ebddad129812ae4f35",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1751287649000,
+    "entryFromPrice": 0.5589,
+    "entryToPrice": 0.5651,
+    "targets": [
+      0.5696,
+      0.5718,
+      0.5768,
+      0.5824,
+      0.5909
+    ],
+    "stoploss": 0.5403,
+    "publishedAt": "2025-06-30T17:47:29"
+  },
+  {
+    "id": "9d8c48bdbca2e0f6542385c4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1751289389000,
+    "entryFromPrice": 148.9,
+    "entryToPrice": 150.5,
+    "targets": [
+      151.7,
+      152.3,
+      153.7,
+      155.2,
+      157.4
+    ],
+    "stoploss": 143.9,
+    "publishedAt": "2025-06-30T18:16:29"
+  },
+  {
+    "id": "2f625c4ea7c6154a13d41fbc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1751310156000,
+    "entryFromPrice": 2.774,
+    "entryToPrice": 2.805,
+    "targets": [
+      2.827,
+      2.838,
+      2.863,
+      2.891,
+      2.933
+    ],
+    "stoploss": 2.682,
+    "publishedAt": "2025-07-01T00:02:36"
+  },
+  {
+    "id": "5beef7d2ed0c988f87daa724",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BCHUSDT",
+    "direction": "short",
+    "ts": 1751373221000,
+    "entryFromPrice": 518,
+    "entryToPrice": 525,
+    "targets": [
+      515,
+      511,
+      506,
+      500,
+      493
+    ],
+    "stoploss": 530,
+    "publishedAt": "2025-07-01T17:33:41"
+  },
+  {
+    "id": "cba979f4a3487db65517ede2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1751461215000,
+    "entryFromPrice": 2.736,
+    "entryToPrice": 2.766,
+    "targets": [
+      2.714,
+      2.703,
+      2.678,
+      2.651,
+      2.609
+    ],
+    "stoploss": 2.856,
+    "publishedAt": "2025-07-02T18:00:15"
+  },
+  {
+    "id": "1ebcaec611ba13a5d4d48b14",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1751468691000,
+    "entryFromPrice": 0.5667,
+    "entryToPrice": 0.573,
+    "targets": [
+      0.5622,
+      0.5599,
+      0.5549,
+      0.5492,
+      0.5406
+    ],
+    "stoploss": 0.5918,
+    "publishedAt": "2025-07-02T20:04:51"
+  },
+  {
+    "id": "0c69715bc088342e313e9a39",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MEUSDT",
+    "direction": "long",
+    "ts": 1751535641000,
+    "entryFromPrice": 0.76,
+    "entryToPrice": 0.79,
+    "targets": [
+      0.81,
+      0.83,
+      0.85,
+      0.88,
+      0.91
+    ],
+    "stoploss": 0.7,
+    "publishedAt": "2025-07-03T14:40:41"
+  },
+  {
+    "id": "dd97312969eb40c3e6fba57a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1751558331000,
+    "entryFromPrice": 151.2,
+    "entryToPrice": 152.9,
+    "targets": [
+      154.1,
+      154.7,
+      156.1,
+      157.6,
+      159.9
+    ],
+    "stoploss": 146.2,
+    "publishedAt": "2025-07-03T20:58:51"
+  },
+  {
+    "id": "23acbd81022fe7371325130f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1751612766000,
+    "entryFromPrice": 2.219,
+    "entryToPrice": 2.244,
+    "targets": [
+      2.262,
+      2.271,
+      2.291,
+      2.313,
+      2.347
+    ],
+    "stoploss": 2.146,
+    "publishedAt": "2025-07-04T12:06:06"
+  },
+  {
+    "id": "866f8062627fe016acd3921e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1751645267000,
+    "entryFromPrice": 0.569,
+    "entryToPrice": 0.5753,
+    "targets": [
+      0.5644,
+      0.5622,
+      0.5571,
+      0.5514,
+      0.5427
+    ],
+    "stoploss": 0.5942,
+    "publishedAt": "2025-07-04T21:07:47"
+  },
+  {
+    "id": "86cd9de332320670ff74882c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1751890078000,
+    "entryFromPrice": 2.88,
+    "entryToPrice": 2.912,
+    "targets": [
+      2.935,
+      2.947,
+      2.972,
+      3.001,
+      3.046
+    ],
+    "stoploss": 2.784,
+    "publishedAt": "2025-07-07T17:07:58"
+  },
+  {
+    "id": "fafb9eb52b0a972dcf0255d8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1751912802000,
+    "entryFromPrice": 0.5758,
+    "entryToPrice": 0.5822,
+    "targets": [
+      0.5869,
+      0.5892,
+      0.5943,
+      0.6001,
+      0.6089
+    ],
+    "stoploss": 0.5567,
+    "publishedAt": "2025-07-07T23:26:42"
+  },
+  {
+    "id": "a94133db279070dd818400ac",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1751983003000,
+    "entryFromPrice": 108600,
+    "entryToPrice": 109000,
+    "targets": [
+      109700,
+      110500,
+      111200,
+      111900,
+      112800
+    ],
+    "stoploss": 108000,
+    "publishedAt": "2025-07-08T18:56:43"
+  },
+  {
+    "id": "8848f6811e58f5e87df29aab",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1751984101000,
+    "entryFromPrice": 2.895,
+    "entryToPrice": 2.927,
+    "targets": [
+      2.871,
+      2.86,
+      2.834,
+      2.805,
+      2.761
+    ],
+    "stoploss": 3.023,
+    "publishedAt": "2025-07-08T19:15:01"
+  },
+  {
+    "id": "e550914b905b9410df7d11d8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1752070742000,
+    "entryFromPrice": 108900,
+    "entryToPrice": 109400,
+    "targets": [
+      109800,
+      110200,
+      110700,
+      111300,
+      112000
+    ],
+    "stoploss": 108300,
+    "publishedAt": "2025-07-09T19:19:02"
+  },
+  {
+    "id": "535f93170f852ea31a8af4a4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "DOGEUSDT",
+    "direction": "long",
+    "ts": 1752480635000,
+    "entryFromPrice": 0.198,
+    "entryToPrice": 0.208,
+    "targets": [
+      0.218,
+      0.229,
+      0.243,
+      0.258,
+      0.275
+    ],
+    "stoploss": 0.18,
+    "publishedAt": "2025-07-14T13:10:35"
+  },
+  {
+    "id": "a7b8b3d4c8bd62a1658855b1",
+    "channel": "crypto_yoda_channel",
+    "symbol": "VIRTUALUSDT",
+    "direction": "long",
+    "ts": 1752481017000,
+    "entryFromPrice": 1.65,
+    "entryToPrice": 1.8,
+    "targets": [
+      1.88,
+      1.98,
+      2.12,
+      2.25,
+      2.4
+    ],
+    "stoploss": 1.55,
+    "publishedAt": "2025-07-14T13:16:57"
+  },
+  {
+    "id": "a3c6bc5ef5acd96ff83c6ac3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1752553318000,
+    "entryFromPrice": 0.7155,
+    "entryToPrice": 0.7234,
+    "targets": [
+      0.7098,
+      0.7069,
+      0.7006,
+      0.6934,
+      0.6825
+    ],
+    "stoploss": 0.7471,
+    "publishedAt": "2025-07-15T09:21:58"
+  },
+  {
+    "id": "a6bfdbe87a5a07a7dc482065",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1752646632000,
+    "entryFromPrice": 2.897,
+    "entryToPrice": 2.93,
+    "targets": [
+      2.953,
+      2.965,
+      2.99,
+      3.019,
+      3.064
+    ],
+    "stoploss": 2.801,
+    "publishedAt": "2025-07-16T11:17:12"
+  },
+  {
+    "id": "bf73575c466908fb0e4949bc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "LTCUSDT",
+    "direction": "long",
+    "ts": 1752767030000,
+    "entryFromPrice": 98,
+    "entryToPrice": 101,
+    "targets": [
+      103,
+      105,
+      107,
+      109,
+      111
+    ],
+    "stoploss": 96,
+    "publishedAt": "2025-07-17T20:43:50"
+  },
+  {
+    "id": "ba73cb7d489a505d3c53e705",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1753010331000,
+    "entryFromPrice": 0.029,
+    "entryToPrice": 0.031,
+    "targets": [
+      0.033,
+      0.035,
+      0.038,
+      0.042,
+      0.046
+    ],
+    "stoploss": 0.026,
+    "publishedAt": "2025-07-20T16:18:51"
+  },
+  {
+    "id": "84d6f40e0b4b53665f501ddc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1753185360000,
+    "entryFromPrice": 3.872,
+    "entryToPrice": 3.915,
+    "targets": [
+      3.841,
+      3.825,
+      3.791,
+      3.752,
+      3.693
+    ],
+    "stoploss": 4.043,
+    "publishedAt": "2025-07-22T16:56:00"
+  },
+  {
+    "id": "9ececa77c90e71fcd631e239",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1753264907000,
+    "entryFromPrice": 0.8584,
+    "entryToPrice": 0.8678,
+    "targets": [
+      0.8515,
+      0.848,
+      0.8404,
+      0.8318,
+      0.8187
+    ],
+    "stoploss": 0.8963,
+    "publishedAt": "2025-07-23T15:01:47"
+  },
+  {
+    "id": "57dd2772fd01cd556be54529",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1753279465000,
+    "entryFromPrice": 188.4,
+    "entryToPrice": 190.5,
+    "targets": [
+      186.9,
+      186.1,
+      184.5,
+      182.6,
+      179.7
+    ],
+    "stoploss": 196.7,
+    "publishedAt": "2025-07-23T19:04:25"
+  },
+  {
+    "id": "5e33479d9be3061c6bfafb93",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1753344703000,
+    "entryFromPrice": 117000,
+    "entryToPrice": 118500,
+    "targets": [
+      119200,
+      119900,
+      121000,
+      123100,
+      125400
+    ],
+    "stoploss": 116300,
+    "publishedAt": "2025-07-24T13:11:43"
+  },
+  {
+    "id": "567418c56d873d7c16b6b9fc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1753430498000,
+    "entryFromPrice": 0.7915,
+    "entryToPrice": 0.8003,
+    "targets": [
+      0.7852,
+      0.782,
+      0.775,
+      0.767,
+      0.755
+    ],
+    "stoploss": 0.8265,
+    "publishedAt": "2025-07-25T13:01:38"
+  },
+  {
+    "id": "43ff33b8c90cae4e6377d5f4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1753455894000,
+    "entryFromPrice": 3.636,
+    "entryToPrice": 3.676,
+    "targets": [
+      3.606,
+      3.592,
+      3.56,
+      3.523,
+      3.468
+    ],
+    "stoploss": 3.796,
+    "publishedAt": "2025-07-25T20:04:54"
+  },
+  {
+    "id": "8f5df96a3f1340f53ca11b23",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "long",
+    "ts": 1753522777000,
+    "entryFromPrice": 3600,
+    "entryToPrice": 3770,
+    "targets": [
+      3900,
+      4000,
+      4100,
+      4200,
+      4400
+    ],
+    "stoploss": 3460,
+    "publishedAt": "2025-07-26T14:39:37"
+  },
+  {
+    "id": "a0428f60609fc215709f440b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ARPAUSDT",
+    "direction": "long",
+    "ts": 1753531379000,
+    "entryFromPrice": 0.0245,
+    "entryToPrice": 0.0248,
+    "targets": [
+      0.0258,
+      0.0264,
+      0.027,
+      0.0278,
+      0.0288
+    ],
+    "stoploss": 0.0236,
+    "publishedAt": "2025-07-26T17:02:59"
+  },
+  {
+    "id": "03dcc06e0e677307d26857eb",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1753707905000,
+    "entryFromPrice": 4.173,
+    "entryToPrice": 4.22,
+    "targets": [
+      4.253,
+      4.27,
+      4.307,
+      4.349,
+      4.413
+    ],
+    "stoploss": 4.035,
+    "publishedAt": "2025-07-28T18:05:05"
+  },
+  {
+    "id": "7825981fba871edc3fee6623",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1753713185000,
+    "entryFromPrice": 3.169,
+    "entryToPrice": 3.204,
+    "targets": [
+      3.23,
+      3.243,
+      3.271,
+      3.303,
+      3.351
+    ],
+    "stoploss": 3.064,
+    "publishedAt": "2025-07-28T19:33:05"
+  },
+  {
+    "id": "9458e95d10507765ad8968ad",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1753877188000,
+    "entryFromPrice": 3.04,
+    "entryToPrice": 3.073,
+    "targets": [
+      3.015,
+      3.003,
+      2.976,
+      2.946,
+      2.899
+    ],
+    "stoploss": 3.174,
+    "publishedAt": "2025-07-30T17:06:28"
+  },
+  {
+    "id": "c9532255fd294969f482b1c9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1753949379000,
+    "entryFromPrice": 180.5,
+    "entryToPrice": 182.5,
+    "targets": [
+      179.1,
+      178.4,
+      176.8,
+      174.9,
+      172.2
+    ],
+    "stoploss": 188.5,
+    "publishedAt": "2025-07-31T13:09:39"
+  },
+  {
+    "id": "294ff7a57bcba58bcaa6cc88",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1753958308000,
+    "entryFromPrice": 0.7836,
+    "entryToPrice": 0.7922,
+    "targets": [
+      0.7773,
+      0.7741,
+      0.7672,
+      0.7593,
+      0.7474
+    ],
+    "stoploss": 0.8182,
+    "publishedAt": "2025-07-31T15:38:28"
+  },
+  {
+    "id": "3d91c8b27a01090edf1bb2c8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BBUSDT",
+    "direction": "long",
+    "ts": 1753972144000,
+    "entryFromPrice": 0.112,
+    "entryToPrice": 0.116,
+    "targets": [
+      0.121,
+      0.125,
+      0.129,
+      0.134,
+      0.139
+    ],
+    "stoploss": 0.106,
+    "publishedAt": "2025-07-31T19:29:04"
+  },
+  {
+    "id": "6d0a946f00e8d207c0f510f9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1754077574000,
+    "entryFromPrice": 114500,
+    "entryToPrice": 116000,
+    "targets": [
+      117000,
+      118000,
+      119000,
+      120000,
+      121200
+    ],
+    "stoploss": 113800,
+    "publishedAt": "2025-08-02T00:46:14"
+  },
+  {
+    "id": "4ee44b0a524cc0642636823c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1754406239000,
+    "entryFromPrice": 0.7211,
+    "entryToPrice": 0.7291,
+    "targets": [
+      0.7349,
+      0.7378,
+      0.7442,
+      0.7515,
+      0.7625
+    ],
+    "stoploss": 0.6972,
+    "publishedAt": "2025-08-05T20:03:59"
+  },
+  {
+    "id": "842ee09bfb50ce2a2870be43",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1754412686000,
+    "entryFromPrice": 162.6,
+    "entryToPrice": 164.4,
+    "targets": [
+      165.7,
+      166.4,
+      167.8,
+      169.5,
+      172
+    ],
+    "stoploss": 157.2,
+    "publishedAt": "2025-08-05T21:51:26"
+  },
+  {
+    "id": "fededf00363f92a2cc71580e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1754481345000,
+    "entryFromPrice": 2.919,
+    "entryToPrice": 2.951,
+    "targets": [
+      2.895,
+      2.884,
+      2.858,
+      2.829,
+      2.784
+    ],
+    "stoploss": 3.048,
+    "publishedAt": "2025-08-06T16:55:45"
+  },
+  {
+    "id": "97460bb475f32ad58ca6b04f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1754555278000,
+    "entryFromPrice": 3.475,
+    "entryToPrice": 3.513,
+    "targets": [
+      3.541,
+      3.555,
+      3.586,
+      3.621,
+      3.674
+    ],
+    "stoploss": 3.36,
+    "publishedAt": "2025-08-07T13:27:58"
+  },
+  {
+    "id": "292e7621cf40aa91cd165f43",
+    "channel": "crypto_yoda_channel",
+    "symbol": "1000BONKUSDT",
+    "direction": "long",
+    "ts": 1754729625000,
+    "entryFromPrice": 0.026,
+    "entryToPrice": 0.0273,
+    "targets": [
+      0.028,
+      0.0285,
+      0.0292,
+      0.0298,
+      0.0308
+    ],
+    "stoploss": 0.025,
+    "publishedAt": "2025-08-09T13:53:45"
+  },
+  {
+    "id": "0f112a5ea2c5fdb3c4c1ecde",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1754900044000,
+    "entryFromPrice": 0.8214,
+    "entryToPrice": 0.8305,
+    "targets": [
+      0.8371,
+      0.8404,
+      0.8477,
+      0.856,
+      0.8686
+    ],
+    "stoploss": 0.7941,
+    "publishedAt": "2025-08-11T13:14:04"
+  },
+  {
+    "id": "f6c0de853e3c5d5906cfa5bc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1754917200000,
+    "entryFromPrice": 180.6,
+    "entryToPrice": 182.6,
+    "targets": [
+      184.1,
+      184.8,
+      186.4,
+      188.2,
+      191
+    ],
+    "stoploss": 174.6,
+    "publishedAt": "2025-08-11T18:00:00"
+  },
+  {
+    "id": "322ab9d1376ee05f1bf6f922",
+    "channel": "crypto_yoda_channel",
+    "symbol": "LTCUSDT",
+    "direction": "long",
+    "ts": 1754917831000,
+    "entryFromPrice": 124,
+    "entryToPrice": 126,
+    "targets": [
+      129,
+      132,
+      135,
+      139,
+      144
+    ],
+    "stoploss": 121,
+    "publishedAt": "2025-08-11T18:10:31"
+  },
+  {
+    "id": "1d79aebb950601051286914f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1755018181000,
+    "entryFromPrice": 3.823,
+    "entryToPrice": 3.865,
+    "targets": [
+      3.793,
+      3.777,
+      3.743,
+      3.705,
+      3.647
+    ],
+    "stoploss": 3.992,
+    "publishedAt": "2025-08-12T22:03:01"
+  },
+  {
+    "id": "2723e2e20ba240aa51ef2dec",
+    "channel": "crypto_yoda_channel",
+    "symbol": "WUSDT",
+    "direction": "long",
+    "ts": 1755182301000,
+    "entryFromPrice": 0.081,
+    "entryToPrice": 0.0835,
+    "targets": [
+      0.086,
+      0.089,
+      0.092,
+      0.096,
+      0.101
+    ],
+    "stoploss": 0.078,
+    "publishedAt": "2025-08-14T19:38:21"
+  },
+  {
+    "id": "59507d9ff7e45eea90b1f282",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1755239712000,
+    "entryFromPrice": 3.796,
+    "entryToPrice": 3.838,
+    "targets": [
+      3.765,
+      3.75,
+      3.717,
+      3.679,
+      3.621
+    ],
+    "stoploss": 3.964,
+    "publishedAt": "2025-08-15T11:35:12"
+  },
+  {
+    "id": "ffc51b0e22d7e7abe73bc2fa",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1755267498000,
+    "entryFromPrice": 189.7,
+    "entryToPrice": 191.8,
+    "targets": [
+      188.2,
+      187.4,
+      185.7,
+      183.8,
+      180.9
+    ],
+    "stoploss": 198.1,
+    "publishedAt": "2025-08-15T19:18:18"
+  },
+  {
+    "id": "8f95a63c617cdced529199bc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1755540092000,
+    "entryFromPrice": 3.058,
+    "entryToPrice": 3.092,
+    "targets": [
+      3.034,
+      3.021,
+      2.994,
+      2.964,
+      2.917
+    ],
+    "stoploss": 3.193,
+    "publishedAt": "2025-08-18T23:01:32"
+  },
+  {
+    "id": "01bb3e7f91ca2ffd1070fe3b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1755617755000,
+    "entryFromPrice": 0.03,
+    "entryToPrice": 0.032,
+    "targets": [
+      0.033,
+      0.035,
+      0.038,
+      0.042,
+      0.046
+    ],
+    "stoploss": 0.027,
+    "publishedAt": "2025-08-19T20:35:55"
+  },
+  {
+    "id": "7703ea7c9c7e973de11e2d21",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1755678652000,
+    "entryFromPrice": 179.8,
+    "entryToPrice": 181.8,
+    "targets": [
+      178.4,
+      177.7,
+      176.1,
+      174.3,
+      171.5
+    ],
+    "stoploss": 187.8,
+    "publishedAt": "2025-08-20T13:30:52"
+  },
+  {
+    "id": "9d0d1c710008f779d30f9e7b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1755777834000,
+    "entryFromPrice": 2.891,
+    "entryToPrice": 2.923,
+    "targets": [
+      2.867,
+      2.856,
+      2.83,
+      2.801,
+      2.757
+    ],
+    "stoploss": 3.018,
+    "publishedAt": "2025-08-21T17:03:54"
+  },
+  {
+    "id": "c22c70a249835066cf2fe055",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1755783991000,
+    "entryFromPrice": 3.407,
+    "entryToPrice": 3.445,
+    "targets": [
+      3.38,
+      3.366,
+      3.336,
+      3.302,
+      3.25
+    ],
+    "stoploss": 3.558,
+    "publishedAt": "2025-08-21T18:46:31"
+  },
+  {
+    "id": "43d318e189cdd1de5eb69554",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1755787615000,
+    "entryFromPrice": 0.8644,
+    "entryToPrice": 0.874,
+    "targets": [
+      0.8575,
+      0.854,
+      0.8464,
+      0.8377,
+      0.8245
+    ],
+    "stoploss": 0.9026,
+    "publishedAt": "2025-08-21T19:46:55"
+  },
+  {
+    "id": "871883e2e5fc815565dad94f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1756108764000,
+    "entryFromPrice": 0.8684,
+    "entryToPrice": 0.878,
+    "targets": [
+      0.8614,
+      0.8579,
+      0.8503,
+      0.8416,
+      0.8283
+    ],
+    "stoploss": 0.9068,
+    "publishedAt": "2025-08-25T12:59:24"
+  },
+  {
+    "id": "0fcb9b95f74cc281e73a14d9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "short",
+    "ts": 1756134528000,
+    "entryFromPrice": 4640,
+    "entryToPrice": 4700,
+    "targets": [
+      4570,
+      4490,
+      4410,
+      4320,
+      4200
+    ],
+    "stoploss": 4750,
+    "publishedAt": "2025-08-25T20:08:48"
+  },
+  {
+    "id": "f808c9fe3945c50348addfe5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1756235165000,
+    "entryFromPrice": 2.969,
+    "entryToPrice": 3.001,
+    "targets": [
+      2.945,
+      2.933,
+      2.907,
+      2.877,
+      2.832
+    ],
+    "stoploss": 3.1,
+    "publishedAt": "2025-08-27T00:06:05"
+  },
+  {
+    "id": "d3935a8aa391ab2a0ac9c685",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1756392125000,
+    "entryFromPrice": 3.474,
+    "entryToPrice": 3.513,
+    "targets": [
+      3.541,
+      3.555,
+      3.585,
+      3.62,
+      3.674
+    ],
+    "stoploss": 3.359,
+    "publishedAt": "2025-08-28T19:42:05"
+  },
+  {
+    "id": "7e45841035c8ef64252d951a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1756394651000,
+    "entryFromPrice": 0.8616,
+    "entryToPrice": 0.8712,
+    "targets": [
+      0.8781,
+      0.8816,
+      0.8892,
+      0.8979,
+      0.9111
+    ],
+    "stoploss": 0.833,
+    "publishedAt": "2025-08-28T20:24:11"
+  },
+  {
+    "id": "061a484be8bab28d564ecb65",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1756396940000,
+    "entryFromPrice": 2.961,
+    "entryToPrice": 2.994,
+    "targets": [
+      3.017,
+      3.029,
+      3.056,
+      3.085,
+      3.131
+    ],
+    "stoploss": 2.862,
+    "publishedAt": "2025-08-28T21:02:20"
+  },
+  {
+    "id": "0d01973d32113b4b705d3c63",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1756454634000,
+    "entryFromPrice": 3.343,
+    "entryToPrice": 3.38,
+    "targets": [
+      3.316,
+      3.303,
+      3.273,
+      3.24,
+      3.189
+    ],
+    "stoploss": 3.491,
+    "publishedAt": "2025-08-29T13:03:54"
+  },
+  {
+    "id": "06762214a76887e01a7418a2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1756461907000,
+    "entryFromPrice": 205.4,
+    "entryToPrice": 207.7,
+    "targets": [
+      209.3,
+      210.1,
+      212,
+      214,
+      217.2
+    ],
+    "stoploss": 198.6,
+    "publishedAt": "2025-08-29T15:05:07"
+  },
+  {
+    "id": "cc64ea7e0d9337dd90437517",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1756717503000,
+    "entryFromPrice": 3.309,
+    "entryToPrice": 3.346,
+    "targets": [
+      3.283,
+      3.269,
+      3.24,
+      3.207,
+      3.156
+    ],
+    "stoploss": 3.456,
+    "publishedAt": "2025-09-01T14:05:03"
+  },
+  {
+    "id": "69d0adab894ca1c67b85c9ff",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1756722091000,
+    "entryFromPrice": 2.797,
+    "entryToPrice": 2.828,
+    "targets": [
+      2.775,
+      2.764,
+      2.739,
+      2.711,
+      2.668
+    ],
+    "stoploss": 2.921,
+    "publishedAt": "2025-09-01T15:21:31"
+  },
+  {
+    "id": "a908076c6066b3d4d6def12e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1756822728000,
+    "entryFromPrice": 3.263,
+    "entryToPrice": 3.299,
+    "targets": [
+      3.326,
+      3.339,
+      3.368,
+      3.4,
+      3.45
+    ],
+    "stoploss": 3.155,
+    "publishedAt": "2025-09-02T19:18:48"
+  },
+  {
+    "id": "83f96a67ff71c651fce1e43b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1756843560000,
+    "entryFromPrice": 0.8149,
+    "entryToPrice": 0.8239,
+    "targets": [
+      0.8084,
+      0.8051,
+      0.7979,
+      0.7897,
+      0.7773
+    ],
+    "stoploss": 0.8509,
+    "publishedAt": "2025-09-03T01:06:00"
+  },
+  {
+    "id": "e2614ec010cf4ca2799aacfa",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1756972122000,
+    "entryFromPrice": 205.3,
+    "entryToPrice": 207.6,
+    "targets": [
+      209.3,
+      210.1,
+      211.9,
+      214,
+      217.1
+    ],
+    "stoploss": 198.5,
+    "publishedAt": "2025-09-04T12:48:42"
+  },
+  {
+    "id": "73b0b9e76f9f2773c4639f00",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1756972895000,
+    "entryFromPrice": 2.795,
+    "entryToPrice": 2.826,
+    "targets": [
+      2.848,
+      2.86,
+      2.885,
+      2.913,
+      2.955
+    ],
+    "stoploss": 2.702,
+    "publishedAt": "2025-09-04T13:01:35"
+  },
+  {
+    "id": "948267f5df2a5b379afdf2d4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1756995755000,
+    "entryFromPrice": 3.275,
+    "entryToPrice": 3.311,
+    "targets": [
+      3.337,
+      3.351,
+      3.38,
+      3.413,
+      3.463
+    ],
+    "stoploss": 3.166,
+    "publishedAt": "2025-09-04T19:22:35"
+  },
+  {
+    "id": "fe5b4919fb97816a05cfe487",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1757052280000,
+    "entryFromPrice": 0.8136,
+    "entryToPrice": 0.8226,
+    "targets": [
+      0.8071,
+      0.8038,
+      0.7966,
+      0.7885,
+      0.7761
+    ],
+    "stoploss": 0.8496,
+    "publishedAt": "2025-09-05T11:04:40"
+  },
+  {
+    "id": "b36d8f7ebfba9f302d03554f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1757088754000,
+    "entryFromPrice": 0.8191,
+    "entryToPrice": 0.8282,
+    "targets": [
+      0.8348,
+      0.8381,
+      0.8454,
+      0.8536,
+      0.8661
+    ],
+    "stoploss": 0.7919,
+    "publishedAt": "2025-09-05T21:12:34"
+  },
+  {
+    "id": "66bf1134b740805bc87d5fe5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1757684505000,
+    "entryFromPrice": 3.592,
+    "entryToPrice": 3.632,
+    "targets": [
+      3.661,
+      3.675,
+      3.707,
+      3.743,
+      3.798
+    ],
+    "stoploss": 3.473,
+    "publishedAt": "2025-09-12T18:41:45"
+  },
+  {
+    "id": "f3d6d2809ce2d85a052bf691",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1757684590000,
+    "entryFromPrice": 0.8841,
+    "entryToPrice": 0.8939,
+    "targets": [
+      0.901,
+      0.9045,
+      0.9124,
+      0.9213,
+      0.9348
+    ],
+    "stoploss": 0.8547,
+    "publishedAt": "2025-09-12T18:43:10"
+  },
+  {
+    "id": "2a751af23e2dcb0316a5e5c0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1758027460000,
+    "entryFromPrice": 3.01,
+    "entryToPrice": 3.043,
+    "targets": [
+      2.986,
+      2.974,
+      2.947,
+      2.917,
+      2.871
+    ],
+    "stoploss": 3.143,
+    "publishedAt": "2025-09-16T17:57:40"
+  },
+  {
+    "id": "fc482eed3b5709f4d81ff462",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1758031375000,
+    "entryFromPrice": 3.637,
+    "entryToPrice": 3.677,
+    "targets": [
+      3.608,
+      3.593,
+      3.561,
+      3.525,
+      3.469
+    ],
+    "stoploss": 3.798,
+    "publishedAt": "2025-09-16T19:02:55"
+  },
+  {
+    "id": "9c28d2eb989554fc6da9ee59",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1758044821000,
+    "entryFromPrice": 237.3,
+    "entryToPrice": 239.9,
+    "targets": [
+      235.4,
+      234.4,
+      232.3,
+      229.9,
+      226.3
+    ],
+    "stoploss": 247.8,
+    "publishedAt": "2025-09-16T22:47:01"
+  },
+  {
+    "id": "caf5146ec94ea2cb333fa115",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1758045794000,
+    "entryFromPrice": 0.8731,
+    "entryToPrice": 0.8827,
+    "targets": [
+      0.8661,
+      0.8626,
+      0.8549,
+      0.8461,
+      0.8328
+    ],
+    "stoploss": 0.9117,
+    "publishedAt": "2025-09-16T23:03:14"
+  },
+  {
+    "id": "fd143da91dc553be20320363",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1758108189000,
+    "entryFromPrice": 234.2,
+    "entryToPrice": 236.8,
+    "targets": [
+      232.4,
+      231.4,
+      229.4,
+      227,
+      223.4
+    ],
+    "stoploss": 244.6,
+    "publishedAt": "2025-09-17T16:23:09"
+  },
+  {
+    "id": "8af733f45a075ffc0cd53e3e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1758125186000,
+    "entryFromPrice": 3.546,
+    "entryToPrice": 3.585,
+    "targets": [
+      3.518,
+      3.503,
+      3.472,
+      3.436,
+      3.382
+    ],
+    "stoploss": 3.703,
+    "publishedAt": "2025-09-17T21:06:26"
+  },
+  {
+    "id": "324c2e5ba298ad328993d3e4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1758139440000,
+    "entryFromPrice": 3.011,
+    "entryToPrice": 3.044,
+    "targets": [
+      3.068,
+      3.08,
+      3.107,
+      3.137,
+      3.183
+    ],
+    "stoploss": 2.911,
+    "publishedAt": "2025-09-18T01:04:00"
+  },
+  {
+    "id": "91186992c776556fa38b5db8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1758280035000,
+    "entryFromPrice": 3.731,
+    "entryToPrice": 3.773,
+    "targets": [
+      3.803,
+      3.818,
+      3.851,
+      3.888,
+      3.946
+    ],
+    "stoploss": 3.607,
+    "publishedAt": "2025-09-19T16:07:15"
+  },
+  {
+    "id": "457a06bf2bd5c7aef2583934",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1758283302000,
+    "entryFromPrice": 0.896,
+    "entryToPrice": 0.9059,
+    "targets": [
+      0.9131,
+      0.9167,
+      0.9247,
+      0.9337,
+      0.9474
+    ],
+    "stoploss": 0.8662,
+    "publishedAt": "2025-09-19T17:01:42"
+  },
+  {
+    "id": "9a38e5b824cecc7361c7e10f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1758306166000,
+    "entryFromPrice": 236.6,
+    "entryToPrice": 239.2,
+    "targets": [
+      234.7,
+      233.7,
+      231.7,
+      229.3,
+      225.7
+    ],
+    "stoploss": 247.1,
+    "publishedAt": "2025-09-19T23:22:46"
+  },
+  {
+    "id": "4e5c2c485a674b207ae17da6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1758632527000,
+    "entryFromPrice": 2.845,
+    "entryToPrice": 2.877,
+    "targets": [
+      2.9,
+      2.911,
+      2.936,
+      2.965,
+      3.008
+    ],
+    "stoploss": 2.751,
+    "publishedAt": "2025-09-23T18:02:07"
+  },
+  {
+    "id": "89ec7bcc864fedaa771fe037",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1758646921000,
+    "entryFromPrice": 3.403,
+    "entryToPrice": 3.441,
+    "targets": [
+      3.376,
+      3.362,
+      3.332,
+      3.298,
+      3.246
+    ],
+    "stoploss": 3.553,
+    "publishedAt": "2025-09-23T22:02:01"
+  },
+  {
+    "id": "d58d268ab157ed75f55e28ee",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1758647079000,
+    "entryFromPrice": 0.8231,
+    "entryToPrice": 0.8322,
+    "targets": [
+      0.8165,
+      0.8132,
+      0.8059,
+      0.7976,
+      0.7851
+    ],
+    "stoploss": 0.8595,
+    "publishedAt": "2025-09-23T22:04:39"
+  },
+  {
+    "id": "bd09eb0ccb8050cbd9208988",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1758773117000,
+    "entryFromPrice": 0.7976,
+    "entryToPrice": 0.8064,
+    "targets": [
+      0.7912,
+      0.788,
+      0.7809,
+      0.7729,
+      0.7608
+    ],
+    "stoploss": 0.8328,
+    "publishedAt": "2025-09-25T09:05:17"
+  },
+  {
+    "id": "25254d99ed5d351f1d9e5d66",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1758773404000,
+    "entryFromPrice": 206.5,
+    "entryToPrice": 208.8,
+    "targets": [
+      204.8,
+      204,
+      202.2,
+      200.1,
+      196.9
+    ],
+    "stoploss": 215.6,
+    "publishedAt": "2025-09-25T09:10:04"
+  },
+  {
+    "id": "46a616ad21a0d49e7c4f38bc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1758780160000,
+    "entryFromPrice": 2.846,
+    "entryToPrice": 2.877,
+    "targets": [
+      2.9,
+      2.911,
+      2.937,
+      2.965,
+      3.009
+    ],
+    "stoploss": 2.751,
+    "publishedAt": "2025-09-25T11:02:40"
+  },
+  {
+    "id": "21abeee0e9a4e78988b47b10",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1758912536000,
+    "entryFromPrice": 3.227,
+    "entryToPrice": 3.263,
+    "targets": [
+      3.201,
+      3.188,
+      3.16,
+      3.127,
+      3.078
+    ],
+    "stoploss": 3.369,
+    "publishedAt": "2025-09-26T23:48:56"
+  },
+  {
+    "id": "7d81af3cb8cd2e5cce99574e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "short",
+    "ts": 1758914035000,
+    "entryFromPrice": 0.7897,
+    "entryToPrice": 0.7985,
+    "targets": [
+      0.7834,
+      0.7802,
+      0.7732,
+      0.7653,
+      0.7533
+    ],
+    "stoploss": 0.8246,
+    "publishedAt": "2025-09-27T00:13:55"
+  },
+  {
+    "id": "7210833246ba4d80f002b083",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1758924195000,
+    "entryFromPrice": 201.5,
+    "entryToPrice": 203.7,
+    "targets": [
+      199.9,
+      199.1,
+      197.3,
+      195.3,
+      192.2
+    ],
+    "stoploss": 210.4,
+    "publishedAt": "2025-09-27T03:03:15"
+  },
+  {
+    "id": "5362b5bffc35f38ee9f24d3e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1759186928000,
+    "entryFromPrice": 3.267,
+    "entryToPrice": 3.303,
+    "targets": [
+      3.329,
+      3.343,
+      3.372,
+      3.404,
+      3.455
+    ],
+    "stoploss": 3.158,
+    "publishedAt": "2025-09-30T04:02:08"
+  },
+  {
+    "id": "bb48590df4da68919c4feb4f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1759230099000,
+    "entryFromPrice": 2.82,
+    "entryToPrice": 2.851,
+    "targets": [
+      2.874,
+      2.885,
+      2.91,
+      2.938,
+      2.981
+    ],
+    "stoploss": 2.726,
+    "publishedAt": "2025-09-30T16:01:39"
+  },
+  {
+    "id": "22a3804b69049176823e2210",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1759503303000,
+    "entryFromPrice": 0.8497,
+    "entryToPrice": 0.8591,
+    "targets": [
+      0.866,
+      0.8694,
+      0.8769,
+      0.8855,
+      0.8985
+    ],
+    "stoploss": 0.8215,
+    "publishedAt": "2025-10-03T19:55:03"
+  },
+  {
+    "id": "8a625f77557334b0e133ba1e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1759726889000,
+    "entryFromPrice": 2.956,
+    "entryToPrice": 2.988,
+    "targets": [
+      2.932,
+      2.92,
+      2.894,
+      2.864,
+      2.819
+    ],
+    "stoploss": 3.086,
+    "publishedAt": "2025-10-06T10:01:29"
+  },
+  {
+    "id": "692dc7d0a70b5815f915f895",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1759752729000,
+    "entryFromPrice": 3.587,
+    "entryToPrice": 3.626,
+    "targets": [
+      3.655,
+      3.67,
+      3.701,
+      3.738,
+      3.792
+    ],
+    "stoploss": 3.467,
+    "publishedAt": "2025-10-06T17:12:09"
+  },
+  {
+    "id": "297d9284d8aa1747261f5f79",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ADAUSDT",
+    "direction": "long",
+    "ts": 1759845715000,
+    "entryFromPrice": 0.8512,
+    "entryToPrice": 0.8606,
+    "targets": [
+      0.8675,
+      0.8709,
+      0.8785,
+      0.887,
+      0.9001
+    ],
+    "stoploss": 0.8229,
+    "publishedAt": "2025-10-07T19:01:55"
+  },
+  {
+    "id": "c7dc350b921461494cce10a0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1759945097000,
+    "entryFromPrice": 46.73,
+    "entryToPrice": 47.24,
+    "targets": [
+      46.35,
+      46.17,
+      45.75,
+      45.28,
+      44.57
+    ],
+    "stoploss": 48.79,
+    "publishedAt": "2025-10-08T22:38:17"
+  },
+  {
+    "id": "4df002f8a90e648f138b2d9c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1760005789000,
+    "entryFromPrice": 221.1,
+    "entryToPrice": 223.5,
+    "targets": [
+      219.3,
+      218.4,
+      216.5,
+      214.3,
+      210.9
+    ],
+    "stoploss": 230.9,
+    "publishedAt": "2025-10-09T15:29:49"
+  },
+  {
+    "id": "0ddb756e338655e96d833d4a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "short",
+    "ts": 1760108466000,
+    "entryFromPrice": 2.815,
+    "entryToPrice": 2.846,
+    "targets": [
+      2.792,
+      2.781,
+      2.756,
+      2.728,
+      2.685
+    ],
+    "stoploss": 2.939,
+    "publishedAt": "2025-10-10T20:01:06"
+  },
+  {
+    "id": "562f7c532bb13defe57af823",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1760112142000,
+    "entryFromPrice": 3.29,
+    "entryToPrice": 3.326,
+    "targets": [
+      3.263,
+      3.25,
+      3.221,
+      3.188,
+      3.138
+    ],
+    "stoploss": 3.435,
+    "publishedAt": "2025-10-10T21:02:22"
+  },
+  {
+    "id": "abb4928cc387fc8d86dba77d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1760374902000,
+    "entryFromPrice": 198.7,
+    "entryToPrice": 200.9,
+    "targets": [
+      202.5,
+      203.3,
+      205,
+      207,
+      210.1
+    ],
+    "stoploss": 192.1,
+    "publishedAt": "2025-10-13T22:01:42"
+  },
+  {
+    "id": "78a354c92330346c9dba547e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XRPUSDT",
+    "direction": "long",
+    "ts": 1760423060000,
+    "entryFromPrice": 2.488,
+    "entryToPrice": 2.516,
+    "targets": [
+      2.536,
+      2.546,
+      2.568,
+      2.593,
+      2.631
+    ],
+    "stoploss": 2.406,
+    "publishedAt": "2025-10-14T11:24:20"
+  },
+  {
+    "id": "72009fa30fc8ed47b2117c29",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1760425570000,
+    "entryFromPrice": 38.89,
+    "entryToPrice": 39.32,
+    "targets": [
+      39.64,
+      39.79,
+      40.14,
+      40.53,
+      41.13
+    ],
+    "stoploss": 37.6,
+    "publishedAt": "2025-10-14T12:06:10"
+  },
+  {
+    "id": "d2543a6d981fd74c6f043b3b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1760551861000,
+    "entryFromPrice": 38.6,
+    "entryToPrice": 39.02,
+    "targets": [
+      38.29,
+      38.13,
+      37.79,
+      37.4,
+      36.81
+    ],
+    "stoploss": 40.3,
+    "publishedAt": "2025-10-15T23:11:01"
+  },
+  {
+    "id": "31ce50c553dcd9ed52b2c96d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1760553604000,
+    "entryFromPrice": 2.705,
+    "entryToPrice": 2.735,
+    "targets": [
+      2.684,
+      2.673,
+      2.649,
+      2.622,
+      2.58
+    ],
+    "stoploss": 2.825,
+    "publishedAt": "2025-10-15T23:40:04"
+  },
+  {
+    "id": "d52399000fc7d1ec3b1f039a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1760612672000,
+    "entryFromPrice": 109500,
+    "entryToPrice": 112000,
+    "targets": [
+      114000,
+      116000,
+      118000,
+      120000,
+      122000
+    ],
+    "stoploss": 108000,
+    "publishedAt": "2025-10-16T16:04:32"
+  },
+  {
+    "id": "dbed11570dba9e797513f41e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1760980218000,
+    "entryFromPrice": 186.3,
+    "entryToPrice": 188.3,
+    "targets": [
+      189.8,
+      190.6,
+      192.2,
+      194.1,
+      197
+    ],
+    "stoploss": 180.1,
+    "publishedAt": "2025-10-20T22:10:18"
+  },
+  {
+    "id": "c626e647319743f84978f20d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1760983618000,
+    "entryFromPrice": 2.55,
+    "entryToPrice": 2.578,
+    "targets": [
+      2.599,
+      2.609,
+      2.631,
+      2.657,
+      2.696
+    ],
+    "stoploss": 2.465,
+    "publishedAt": "2025-10-20T23:06:58"
+  },
+  {
+    "id": "bc9d4d9a7d7b5af4e0537294",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1761070437000,
+    "entryFromPrice": 2.301,
+    "entryToPrice": 2.326,
+    "targets": [
+      2.345,
+      2.354,
+      2.374,
+      2.398,
+      2.433
+    ],
+    "stoploss": 2.224,
+    "publishedAt": "2025-10-21T23:13:57"
+  },
+  {
+    "id": "0f526d9f6f18f3f18a90b50b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1761072113000,
+    "entryFromPrice": 2.604,
+    "entryToPrice": 2.633,
+    "targets": [
+      2.654,
+      2.664,
+      2.687,
+      2.713,
+      2.753
+    ],
+    "stoploss": 2.517,
+    "publishedAt": "2025-10-21T23:41:53"
+  },
+  {
+    "id": "8c93c555d009070e74ef4fea",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1761073779000,
+    "entryFromPrice": 36.95,
+    "entryToPrice": 37.36,
+    "targets": [
+      36.65,
+      36.5,
+      36.18,
+      35.81,
+      35.24
+    ],
+    "stoploss": 38.58,
+    "publishedAt": "2025-10-22T00:09:39"
+  },
+  {
+    "id": "140892b578d6ca987c099f63",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1761134184000,
+    "entryFromPrice": 107000,
+    "entryToPrice": 108000,
+    "targets": [
+      108500,
+      109200,
+      109900,
+      111000,
+      112300
+    ],
+    "stoploss": 106500,
+    "publishedAt": "2025-10-22T16:56:24"
+  },
+  {
+    "id": "3f4851d24ffae4fb7c110c93",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1761140582000,
+    "entryFromPrice": 185,
+    "entryToPrice": 187.1,
+    "targets": [
+      183.6,
+      182.8,
+      181.2,
+      179.3,
+      176.5
+    ],
+    "stoploss": 193.2,
+    "publishedAt": "2025-10-22T18:43:02"
+  },
+  {
+    "id": "a25c493828268383049c6d6f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1761213677000,
+    "entryFromPrice": 187.6,
+    "entryToPrice": 189.7,
+    "targets": [
+      186.1,
+      185.3,
+      183.7,
+      181.8,
+      178.9
+    ],
+    "stoploss": 195.9,
+    "publishedAt": "2025-10-23T15:01:17"
+  },
+  {
+    "id": "94090959c18a4b4c1d7da299",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1761228674000,
+    "entryFromPrice": 189,
+    "entryToPrice": 191.1,
+    "targets": [
+      192.6,
+      193.4,
+      195.1,
+      197,
+      199.9
+    ],
+    "stoploss": 182.7,
+    "publishedAt": "2025-10-23T19:11:14"
+  },
+  {
+    "id": "116704c648434874af43007c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1761242546000,
+    "entryFromPrice": 2.228,
+    "entryToPrice": 2.253,
+    "targets": [
+      2.21,
+      2.201,
+      2.182,
+      2.159,
+      2.125
+    ],
+    "stoploss": 2.326,
+    "publishedAt": "2025-10-23T23:02:26"
+  },
+  {
+    "id": "47343200b89a9c9b533e507e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1761322216000,
+    "entryFromPrice": 2.216,
+    "entryToPrice": 2.241,
+    "targets": [
+      2.259,
+      2.268,
+      2.287,
+      2.31,
+      2.344
+    ],
+    "stoploss": 2.143,
+    "publishedAt": "2025-10-24T21:10:16"
+  },
+  {
+    "id": "4eb5e2e5962fd81e23351482",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1761664091000,
+    "entryFromPrice": 201.3,
+    "entryToPrice": 203.5,
+    "targets": [
+      205.2,
+      206,
+      207.8,
+      209.8,
+      212.9
+    ],
+    "stoploss": 194.6,
+    "publishedAt": "2025-10-28T20:08:11"
+  },
+  {
+    "id": "79cf0a3f69c8fb41d8c1c367",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1761676064000,
+    "entryFromPrice": 2.313,
+    "entryToPrice": 2.338,
+    "targets": [
+      2.294,
+      2.285,
+      2.264,
+      2.241,
+      2.206
+    ],
+    "stoploss": 2.415,
+    "publishedAt": "2025-10-28T23:27:44"
+  },
+  {
+    "id": "502da43d42f03f725779042d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1761679451000,
+    "entryFromPrice": 47.4,
+    "entryToPrice": 47.93,
+    "targets": [
+      48.31,
+      48.5,
+      48.92,
+      49.4,
+      50.12
+    ],
+    "stoploss": 45.83,
+    "publishedAt": "2025-10-29T00:24:11"
+  },
+  {
+    "id": "50d3cb08c8fb60f301aef909",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1761733116000,
+    "entryFromPrice": 47.05,
+    "entryToPrice": 47.57,
+    "targets": [
+      47.95,
+      48.14,
+      48.56,
+      49.03,
+      49.75
+    ],
+    "stoploss": 45.49,
+    "publishedAt": "2025-10-29T15:18:36"
+  },
+  {
+    "id": "f3c779c4d59aad4f9b12e2f0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRUMPUSDT",
+    "direction": "long",
+    "ts": 1761733575000,
+    "entryFromPrice": 7.5,
+    "entryToPrice": 7.9,
+    "targets": [
+      8.2,
+      8.5,
+      8.8,
+      9.2,
+      9.7
+    ],
+    "stoploss": 6.9,
+    "publishedAt": "2025-10-29T15:26:15"
+  },
+  {
+    "id": "0c27503bfb948c390bc99a1f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ZECUSDT",
+    "direction": "long",
+    "ts": 1761841969000,
+    "entryFromPrice": 320,
+    "entryToPrice": 335,
+    "targets": [
+      350,
+      370,
+      390,
+      420,
+      455
+    ],
+    "stoploss": 310,
+    "publishedAt": "2025-10-30T21:32:49"
+  },
+  {
+    "id": "151d2920c647aec748bed599",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1761942163000,
+    "entryFromPrice": 2.38,
+    "entryToPrice": 2.407,
+    "targets": [
+      2.361,
+      2.352,
+      2.331,
+      2.307,
+      2.27
+    ],
+    "stoploss": 2.485,
+    "publishedAt": "2025-11-01T01:22:43"
+  },
+  {
+    "id": "89b762106213d7d128da80b2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1762177339000,
+    "entryFromPrice": 39,
+    "entryToPrice": 42,
+    "targets": [
+      45,
+      47,
+      50,
+      53,
+      56
+    ],
+    "stoploss": 36,
+    "publishedAt": "2025-11-03T18:42:19"
+  },
+  {
+    "id": "44b14d8d846d83a30fa81a39",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1762338653000,
+    "entryFromPrice": 40.2,
+    "entryToPrice": 40.64,
+    "targets": [
+      40.97,
+      41.13,
+      41.48,
+      41.89,
+      42.5
+    ],
+    "stoploss": 38.86,
+    "publishedAt": "2025-11-05T15:30:53"
+  },
+  {
+    "id": "cfc7486bdfdd9d93a879ff46",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1762359390000,
+    "entryFromPrice": 1.901,
+    "entryToPrice": 1.922,
+    "targets": [
+      1.886,
+      1.878,
+      1.862,
+      1.843,
+      1.814
+    ],
+    "stoploss": 1.985,
+    "publishedAt": "2025-11-05T21:16:30"
+  },
+  {
+    "id": "3ec5c5c55c5c1629ea0178cf",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1762369309000,
+    "entryFromPrice": 162.4,
+    "entryToPrice": 164.2,
+    "targets": [
+      161.1,
+      160.5,
+      159.1,
+      157.4,
+      154.9
+    ],
+    "stoploss": 169.6,
+    "publishedAt": "2025-11-06T00:01:49"
+  },
+  {
+    "id": "574e699f0039330743dc4960",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XPLUSDT",
+    "direction": "long",
+    "ts": 1762432624000,
+    "entryFromPrice": 0.25,
+    "entryToPrice": 0.28,
+    "targets": [
+      0.31,
+      0.34,
+      0.37,
+      0.41,
+      0.45
+    ],
+    "stoploss": 0.23,
+    "publishedAt": "2025-11-06T17:37:04"
+  },
+  {
+    "id": "dec4380d17a97b86d949bfb2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1762440817000,
+    "entryFromPrice": 1.957,
+    "entryToPrice": 1.979,
+    "targets": [
+      1.942,
+      1.934,
+      1.917,
+      1.897,
+      1.867
+    ],
+    "stoploss": 2.044,
+    "publishedAt": "2025-11-06T19:53:37"
+  },
+  {
+    "id": "6059877ceea731bc73ab9c43",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1762444991000,
+    "entryFromPrice": 155.3,
+    "entryToPrice": 157,
+    "targets": [
+      154.1,
+      153.5,
+      152.1,
+      150.5,
+      148.2
+    ],
+    "stoploss": 162.2,
+    "publishedAt": "2025-11-06T21:03:11"
+  },
+  {
+    "id": "f62bea6ad78c26c51a363bd6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1762531299000,
+    "entryFromPrice": 2.046,
+    "entryToPrice": 2.069,
+    "targets": [
+      2.085,
+      2.093,
+      2.112,
+      2.132,
+      2.164
+    ],
+    "stoploss": 1.978,
+    "publishedAt": "2025-11-07T21:01:39"
+  },
+  {
+    "id": "c350dc3384ddbb25f197daa2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1762812337000,
+    "entryFromPrice": 2.756,
+    "entryToPrice": 2.786,
+    "targets": [
+      2.734,
+      2.723,
+      2.698,
+      2.671,
+      2.629
+    ],
+    "stoploss": 2.878,
+    "publishedAt": "2025-11-11T03:05:37"
+  },
+  {
+    "id": "11dd0c82a3fb893e12c7d9cf",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1763020949000,
+    "entryFromPrice": 39.27,
+    "entryToPrice": 39.7,
+    "targets": [
+      38.95,
+      38.8,
+      38.45,
+      38.05,
+      37.45
+    ],
+    "stoploss": 41,
+    "publishedAt": "2025-11-13T13:02:29"
+  },
+  {
+    "id": "44c43962f051615b67309c98",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1763388753000,
+    "entryFromPrice": 37.55,
+    "entryToPrice": 37.97,
+    "targets": [
+      37.25,
+      37.1,
+      36.77,
+      36.39,
+      35.82
+    ],
+    "stoploss": 39.21,
+    "publishedAt": "2025-11-17T19:12:33"
+  },
+  {
+    "id": "b15d5bd5e585c0becacad1c0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1763479569000,
+    "entryFromPrice": 2.204,
+    "entryToPrice": 2.228,
+    "targets": [
+      2.186,
+      2.178,
+      2.158,
+      2.136,
+      2.102
+    ],
+    "stoploss": 2.302,
+    "publishedAt": "2025-11-18T20:26:09"
+  },
+  {
+    "id": "e0f67ac3a089f9e073163e5f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1763479749000,
+    "entryFromPrice": 137,
+    "entryToPrice": 138.5,
+    "targets": [
+      135.9,
+      135.3,
+      134.1,
+      132.7,
+      130.6
+    ],
+    "stoploss": 143,
+    "publishedAt": "2025-11-18T20:29:09"
+  },
+  {
+    "id": "e01bb407096e26f70a86c43b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1763561008000,
+    "entryFromPrice": 1.624,
+    "entryToPrice": 1.642,
+    "targets": [
+      1.611,
+      1.605,
+      1.591,
+      1.574,
+      1.549
+    ],
+    "stoploss": 1.696,
+    "publishedAt": "2025-11-19T19:03:28"
+  },
+  {
+    "id": "d8d4ff108b39f15dabde265a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1763614888000,
+    "entryFromPrice": 39.19,
+    "entryToPrice": 39.62,
+    "targets": [
+      38.87,
+      38.72,
+      38.37,
+      37.98,
+      37.38
+    ],
+    "stoploss": 40.92,
+    "publishedAt": "2025-11-20T10:01:28"
+  },
+  {
+    "id": "bbf7369afb6f172f351d9ffd",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1763662165000,
+    "entryFromPrice": 132.3,
+    "entryToPrice": 133.7,
+    "targets": [
+      131.2,
+      130.7,
+      129.5,
+      128.2,
+      126.2
+    ],
+    "stoploss": 138.1,
+    "publishedAt": "2025-11-20T23:09:25"
+  },
+  {
+    "id": "8bed4a82c179578ec2fff3ca",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1763979289000,
+    "entryFromPrice": 128,
+    "entryToPrice": 129.4,
+    "targets": [
+      130.4,
+      131,
+      132.1,
+      133.4,
+      135.3
+    ],
+    "stoploss": 123.7,
+    "publishedAt": "2025-11-24T15:14:49"
+  },
+  {
+    "id": "dfd9b01a56b6235acb14045b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1763980037000,
+    "entryFromPrice": 1.353,
+    "entryToPrice": 1.368,
+    "targets": [
+      1.342,
+      1.336,
+      1.324,
+      1.311,
+      1.29
+    ],
+    "stoploss": 1.412,
+    "publishedAt": "2025-11-24T15:27:17"
+  },
+  {
+    "id": "dea68e9f2b3652f38c081d08",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1763989349000,
+    "entryFromPrice": 30.42,
+    "entryToPrice": 30.76,
+    "targets": [
+      30.18,
+      30.06,
+      29.79,
+      29.48,
+      29.02
+    ],
+    "stoploss": 31.77,
+    "publishedAt": "2025-11-24T18:02:29"
+  },
+  {
+    "id": "0623a78dc8404a56bec9fbf0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1764058058000,
+    "entryFromPrice": 31.9,
+    "entryToPrice": 32.26,
+    "targets": [
+      32.51,
+      32.64,
+      32.92,
+      33.25,
+      33.73
+    ],
+    "stoploss": 30.84,
+    "publishedAt": "2025-11-25T13:07:38"
+  },
+  {
+    "id": "9fa42bc59b7b0ea409705ba2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1764084206000,
+    "entryFromPrice": 31.94,
+    "entryToPrice": 32.29,
+    "targets": [
+      32.55,
+      32.68,
+      32.96,
+      33.28,
+      33.77
+    ],
+    "stoploss": 30.87,
+    "publishedAt": "2025-11-25T20:23:26"
+  },
+  {
+    "id": "11471a86d382b89beea530a9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1764139235000,
+    "entryFromPrice": 1.883,
+    "entryToPrice": 1.904,
+    "targets": [
+      1.868,
+      1.861,
+      1.844,
+      1.825,
+      1.796
+    ],
+    "stoploss": 1.967,
+    "publishedAt": "2025-11-26T11:40:35"
+  },
+  {
+    "id": "8c7c04d4252a8110cdc6d5a2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1764155531000,
+    "entryFromPrice": 1.501,
+    "entryToPrice": 1.517,
+    "targets": [
+      1.529,
+      1.535,
+      1.549,
+      1.564,
+      1.587
+    ],
+    "stoploss": 1.451,
+    "publishedAt": "2025-11-26T16:12:11"
+  },
+  {
+    "id": "8c9b7fd15ce9b3fc5f79f3f2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1764255308000,
+    "entryFromPrice": 1.895,
+    "entryToPrice": 1.916,
+    "targets": [
+      1.931,
+      1.939,
+      1.955,
+      1.974,
+      2.003
+    ],
+    "stoploss": 1.832,
+    "publishedAt": "2025-11-27T19:55:08"
+  },
+  {
+    "id": "8da85c46549e2341eee727b3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1764255704000,
+    "entryFromPrice": 1.519,
+    "entryToPrice": 1.536,
+    "targets": [
+      1.548,
+      1.554,
+      1.568,
+      1.583,
+      1.606
+    ],
+    "stoploss": 1.469,
+    "publishedAt": "2025-11-27T20:01:44"
+  },
+  {
+    "id": "92fd75aeb5e465dba930cf5c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1764319722000,
+    "entryFromPrice": 1.51,
+    "entryToPrice": 1.527,
+    "targets": [
+      1.498,
+      1.492,
+      1.478,
+      1.463,
+      1.44
+    ],
+    "stoploss": 1.577,
+    "publishedAt": "2025-11-28T13:48:42"
+  },
+  {
+    "id": "0ea498703f5fcd8947668f3e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1764339570000,
+    "entryFromPrice": 141.5,
+    "entryToPrice": 143.1,
+    "targets": [
+      144.2,
+      144.8,
+      146,
+      147.5,
+      149.6
+    ],
+    "stoploss": 136.8,
+    "publishedAt": "2025-11-28T19:19:30"
+  },
+  {
+    "id": "f61d593a2c0fe322ab9df05b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1764346231000,
+    "entryFromPrice": 1.573,
+    "entryToPrice": 1.59,
+    "targets": [
+      1.603,
+      1.609,
+      1.623,
+      1.639,
+      1.663
+    ],
+    "stoploss": 1.52,
+    "publishedAt": "2025-11-28T21:10:31"
+  },
+  {
+    "id": "5dc7eebcd91bc789c2a417cd",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MONUSDT",
+    "direction": "long",
+    "ts": 1764410424000,
+    "entryFromPrice": 0.035,
+    "entryToPrice": 0.038,
+    "targets": [
+      0.04,
+      0.042,
+      0.044,
+      0.046,
+      0.048
+    ],
+    "stoploss": 0.033,
+    "publishedAt": "2025-11-29T15:00:24"
+  },
+  {
+    "id": "e565ab94b5684c2677eed742",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1764673284000,
+    "entryFromPrice": 31.75,
+    "entryToPrice": 32.1,
+    "targets": [
+      31.5,
+      31.37,
+      31.09,
+      30.77,
+      30.29
+    ],
+    "stoploss": 33.16,
+    "publishedAt": "2025-12-02T16:01:24"
+  },
+  {
+    "id": "91e9685910f6b4913d5fcfc7",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1764677419000,
+    "entryFromPrice": 1.715,
+    "entryToPrice": 1.734,
+    "targets": [
+      1.701,
+      1.694,
+      1.679,
+      1.662,
+      1.636
+    ],
+    "stoploss": 1.791,
+    "publishedAt": "2025-12-02T17:10:19"
+  },
+  {
+    "id": "be2a4b76f958f3b5485fcf8c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1764686757000,
+    "entryFromPrice": 130,
+    "entryToPrice": 131.5,
+    "targets": [
+      129,
+      128.5,
+      127.3,
+      126,
+      124
+    ],
+    "stoploss": 135.8,
+    "publishedAt": "2025-12-02T19:45:57"
+  },
+  {
+    "id": "14901a78dba0a36cb679b443",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1764686812000,
+    "entryFromPrice": 1.411,
+    "entryToPrice": 1.426,
+    "targets": [
+      1.399,
+      1.394,
+      1.381,
+      1.367,
+      1.346
+    ],
+    "stoploss": 1.473,
+    "publishedAt": "2025-12-02T19:46:52"
+  },
+  {
+    "id": "078c45de6c3bea4a05085053",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PUMPUSDT",
+    "direction": "long",
+    "ts": 1764778060000,
+    "entryFromPrice": 0.003,
+    "entryToPrice": 0.0032,
+    "targets": [
+      0.0034,
+      0.0036,
+      0.0038,
+      0.004,
+      0.0043
+    ],
+    "stoploss": 0.0028,
+    "publishedAt": "2025-12-03T21:07:40"
+  },
+  {
+    "id": "e2807086abf594152814e503",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1764779305000,
+    "entryFromPrice": 135,
+    "entryToPrice": 142,
+    "targets": [
+      146,
+      150,
+      154,
+      158,
+      162
+    ],
+    "stoploss": 129,
+    "publishedAt": "2025-12-03T21:28:25"
+  },
+  {
+    "id": "aabb2227228095015bacaba3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1764867971000,
+    "entryFromPrice": 1.684,
+    "entryToPrice": 1.703,
+    "targets": [
+      1.717,
+      1.723,
+      1.738,
+      1.755,
+      1.781
+    ],
+    "stoploss": 1.628,
+    "publishedAt": "2025-12-04T22:06:11"
+  },
+  {
+    "id": "b7cb109ffc718db4cb4f9ba6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1764934092000,
+    "entryFromPrice": 1.728,
+    "entryToPrice": 1.747,
+    "targets": [
+      1.714,
+      1.707,
+      1.692,
+      1.675,
+      1.648
+    ],
+    "stoploss": 1.804,
+    "publishedAt": "2025-12-05T16:28:12"
+  },
+  {
+    "id": "8d031d9c0190f9e9db75747e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1764943717000,
+    "entryFromPrice": 135.4,
+    "entryToPrice": 136.9,
+    "targets": [
+      134.3,
+      133.8,
+      132.6,
+      131.2,
+      129.2
+    ],
+    "stoploss": 141.4,
+    "publishedAt": "2025-12-05T19:08:37"
+  },
+  {
+    "id": "1dca3245c504d35121319aa6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1765194726000,
+    "entryFromPrice": 30.42,
+    "entryToPrice": 30.76,
+    "targets": [
+      30.18,
+      30.05,
+      29.78,
+      29.48,
+      29.01
+    ],
+    "stoploss": 31.76,
+    "publishedAt": "2025-12-08T16:52:06"
+  },
+  {
+    "id": "b35bd2739a264905e9c22104",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1765210206000,
+    "entryFromPrice": 1.601,
+    "entryToPrice": 1.619,
+    "targets": [
+      1.632,
+      1.638,
+      1.652,
+      1.668,
+      1.693
+    ],
+    "stoploss": 1.548,
+    "publishedAt": "2025-12-08T21:10:06"
+  },
+  {
+    "id": "146afd411b40915e47483282",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1765276249000,
+    "entryFromPrice": 1.708,
+    "entryToPrice": 1.727,
+    "targets": [
+      1.694,
+      1.688,
+      1.672,
+      1.655,
+      1.629
+    ],
+    "stoploss": 1.784,
+    "publishedAt": "2025-12-09T15:30:49"
+  },
+  {
+    "id": "01fb892d40329a91fc09f02b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "long",
+    "ts": 1765365360000,
+    "entryFromPrice": 1.602,
+    "entryToPrice": 1.62,
+    "targets": [
+      1.632,
+      1.639,
+      1.653,
+      1.669,
+      1.694
+    ],
+    "stoploss": 1.549,
+    "publishedAt": "2025-12-10T16:16:00"
+  },
+  {
+    "id": "f6fa3ef004efa499e311cc08",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1765390007000,
+    "entryFromPrice": 1.769,
+    "entryToPrice": 1.788,
+    "targets": [
+      1.802,
+      1.809,
+      1.825,
+      1.843,
+      1.87
+    ],
+    "stoploss": 1.71,
+    "publishedAt": "2025-12-10T23:06:47"
+  },
+  {
+    "id": "0060eb8347b65c46cc6d5df8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1765440347000,
+    "entryFromPrice": 27.87,
+    "entryToPrice": 28.18,
+    "targets": [
+      27.65,
+      27.54,
+      27.29,
+      27.01,
+      26.58
+    ],
+    "stoploss": 29.1,
+    "publishedAt": "2025-12-11T13:05:47"
+  },
+  {
+    "id": "d063d566e6e7eeca4646a270",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1765553602000,
+    "entryFromPrice": 28,
+    "entryToPrice": 30,
+    "targets": [
+      31.5,
+      33,
+      34.5,
+      36,
+      37.5
+    ],
+    "stoploss": 26,
+    "publishedAt": "2025-12-12T20:33:22"
+  },
+  {
+    "id": "92d1fe6e5b13cec78f8d25c1",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1765555741000,
+    "entryFromPrice": 1.604,
+    "entryToPrice": 1.621,
+    "targets": [
+      1.591,
+      1.584,
+      1.57,
+      1.554,
+      1.53
+    ],
+    "stoploss": 1.674,
+    "publishedAt": "2025-12-12T21:09:01"
+  },
+  {
+    "id": "f13271d664c06de074ca9a99",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1765732485000,
+    "entryFromPrice": 87000,
+    "entryToPrice": 89000,
+    "targets": [
+      91000,
+      93000,
+      95000,
+      97500,
+      101000
+    ],
+    "stoploss": 86000,
+    "publishedAt": "2025-12-14T22:14:45"
+  },
+  {
+    "id": "89053e957beacbfa9a1e88b0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1765803904000,
+    "entryFromPrice": 132.2,
+    "entryToPrice": 133.7,
+    "targets": [
+      131.2,
+      130.7,
+      129.5,
+      128.2,
+      126.1
+    ],
+    "stoploss": 138.1,
+    "publishedAt": "2025-12-15T18:05:04"
+  },
+  {
+    "id": "812443a7f7f4629fd7d18bd3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1765807494000,
+    "entryFromPrice": 28.58,
+    "entryToPrice": 28.9,
+    "targets": [
+      28.35,
+      28.24,
+      27.99,
+      27.7,
+      27.26
+    ],
+    "stoploss": 29.84,
+    "publishedAt": "2025-12-15T19:04:54"
+  },
+  {
+    "id": "bdf4c29c01909fea56ee4171",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1765973228000,
+    "entryFromPrice": 126.1,
+    "entryToPrice": 127.5,
+    "targets": [
+      125.1,
+      124.6,
+      123.5,
+      122.2,
+      120.3
+    ],
+    "stoploss": 131.7,
+    "publishedAt": "2025-12-17T17:07:08"
+  },
+  {
+    "id": "e03bede9f80de25526ad4afc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1766072642000,
+    "entryFromPrice": 125.4,
+    "entryToPrice": 126.7,
+    "targets": [
+      124.3,
+      123.8,
+      122.7,
+      121.5,
+      119.6
+    ],
+    "stoploss": 130.9,
+    "publishedAt": "2025-12-18T20:44:02"
+  },
+  {
+    "id": "6a67d59504c16c0b57586087",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1766148202000,
+    "entryFromPrice": 124.5,
+    "entryToPrice": 125.9,
+    "targets": [
+      123.5,
+      123,
+      121.9,
+      120.6,
+      118.7
+    ],
+    "stoploss": 130,
+    "publishedAt": "2025-12-19T17:43:22"
+  },
+  {
+    "id": "c2c65504523d859d96c4cd3f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SUIUSDT",
+    "direction": "short",
+    "ts": 1766150356000,
+    "entryFromPrice": 1.428,
+    "entryToPrice": 1.444,
+    "targets": [
+      1.417,
+      1.411,
+      1.398,
+      1.384,
+      1.362
+    ],
+    "stoploss": 1.491,
+    "publishedAt": "2025-12-19T18:19:16"
+  },
+  {
+    "id": "5c84e88a09ad06f164e722bd",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1766150874000,
+    "entryFromPrice": 1.487,
+    "entryToPrice": 1.503,
+    "targets": [
+      1.475,
+      1.469,
+      1.456,
+      1.441,
+      1.418
+    ],
+    "stoploss": 1.553,
+    "publishedAt": "2025-12-19T18:27:54"
+  },
+  {
+    "id": "16fb43927f2ddc0684cb3373",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1766407205000,
+    "entryFromPrice": 88000,
+    "entryToPrice": 90000,
+    "targets": [
+      91500,
+      93000,
+      95000,
+      97000,
+      99000
+    ],
+    "stoploss": 86000,
+    "publishedAt": "2025-12-22T17:40:05"
+  },
+  {
+    "id": "87fbb3fbd45c3ddbf2c91f4c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1766509604000,
+    "entryFromPrice": 0.282,
+    "entryToPrice": 0.2851,
+    "targets": [
+      0.2797,
+      0.2786,
+      0.2761,
+      0.2733,
+      0.269
+    ],
+    "stoploss": 0.2944,
+    "publishedAt": "2025-12-23T22:06:44"
+  },
+  {
+    "id": "6afe4ccd914fd3b58236f91f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1766631710000,
+    "entryFromPrice": 1.494,
+    "entryToPrice": 1.511,
+    "targets": [
+      1.482,
+      1.476,
+      1.463,
+      1.448,
+      1.425
+    ],
+    "stoploss": 1.56,
+    "publishedAt": "2025-12-25T08:01:50"
+  },
+  {
+    "id": "e70c136e6ca244e78145fb6a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1766668266000,
+    "entryFromPrice": 24.52,
+    "entryToPrice": 24.79,
+    "targets": [
+      24.99,
+      25.09,
+      25.3,
+      25.55,
+      25.92
+    ],
+    "stoploss": 23.7,
+    "publishedAt": "2025-12-25T18:11:06"
+  },
+  {
+    "id": "f597ca460e4867493d1e8d7d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1766671613000,
+    "entryFromPrice": 121.6,
+    "entryToPrice": 122.9,
+    "targets": [
+      120.6,
+      120.1,
+      119,
+      117.8,
+      116
+    ],
+    "stoploss": 127,
+    "publishedAt": "2025-12-25T19:06:53"
+  },
+  {
+    "id": "1ec3648829cf8d4209aead6c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1766772572000,
+    "entryFromPrice": 0.2766,
+    "entryToPrice": 0.2796,
+    "targets": [
+      0.2744,
+      0.2733,
+      0.2708,
+      0.268,
+      0.2638
+    ],
+    "stoploss": 0.2888,
+    "publishedAt": "2025-12-26T23:09:32"
+  },
+  {
+    "id": "a2016ac778f88a265ba20fe3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1766991088000,
+    "entryFromPrice": 25.24,
+    "entryToPrice": 25.52,
+    "targets": [
+      25.04,
+      24.94,
+      24.71,
+      24.46,
+      24.07
+    ],
+    "stoploss": 26.36,
+    "publishedAt": "2025-12-29T11:51:28"
+  },
+  {
+    "id": "2b3595a88933139977264f30",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1766991670000,
+    "entryFromPrice": 1.572,
+    "entryToPrice": 1.589,
+    "targets": [
+      1.602,
+      1.608,
+      1.622,
+      1.638,
+      1.662
+    ],
+    "stoploss": 1.52,
+    "publishedAt": "2025-12-29T12:01:10"
+  },
+  {
+    "id": "c54e33644793ed633eb69970",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1766998870000,
+    "entryFromPrice": 0.2811,
+    "entryToPrice": 0.2842,
+    "targets": [
+      0.2864,
+      0.2876,
+      0.2901,
+      0.2929,
+      0.2972
+    ],
+    "stoploss": 0.2717,
+    "publishedAt": "2025-12-29T14:01:10"
+  },
+  {
+    "id": "2a0b0488ae07fde0a83cba5b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1767013500000,
+    "entryFromPrice": 122.9,
+    "entryToPrice": 124.2,
+    "targets": [
+      125.2,
+      125.7,
+      126.8,
+      128,
+      129.9
+    ],
+    "stoploss": 118.8,
+    "publishedAt": "2025-12-29T18:05:00"
+  },
+  {
+    "id": "783352d3621c787feb8c8a43",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1767087625000,
+    "entryFromPrice": 1.539,
+    "entryToPrice": 1.556,
+    "targets": [
+      1.526,
+      1.52,
+      1.507,
+      1.491,
+      1.468
+    ],
+    "stoploss": 1.607,
+    "publishedAt": "2025-12-30T14:40:25"
+  },
+  {
+    "id": "feadfc3750d32bd6eb81dc7b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1767100134000,
+    "entryFromPrice": 25.52,
+    "entryToPrice": 25.8,
+    "targets": [
+      26.01,
+      26.11,
+      26.34,
+      26.59,
+      26.98
+    ],
+    "stoploss": 24.67,
+    "publishedAt": "2025-12-30T18:08:54"
+  },
+  {
+    "id": "9260a6e146ed365775956b41",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1767597130000,
+    "entryFromPrice": 134.7,
+    "entryToPrice": 136.2,
+    "targets": [
+      137.3,
+      137.9,
+      139.1,
+      140.4,
+      142.5
+    ],
+    "stoploss": 130.3,
+    "publishedAt": "2026-01-05T12:12:10"
+  },
+  {
+    "id": "e9210bd27f74a4eccb97a778",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1767688576000,
+    "entryFromPrice": 26.2,
+    "entryToPrice": 26.49,
+    "targets": [
+      26.7,
+      26.8,
+      27.04,
+      27.3,
+      27.7
+    ],
+    "stoploss": 25.33,
+    "publishedAt": "2026-01-06T13:36:16"
+  },
+  {
+    "id": "5d81179b0d017aee8cce6d3f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1767689094000,
+    "entryFromPrice": 1.746,
+    "entryToPrice": 1.765,
+    "targets": [
+      1.779,
+      1.786,
+      1.802,
+      1.819,
+      1.846
+    ],
+    "stoploss": 1.688,
+    "publishedAt": "2026-01-06T13:44:54"
+  },
+  {
+    "id": "13bebc3b8f746a7a5d39b3f1",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1767694576000,
+    "entryFromPrice": 0.2898,
+    "entryToPrice": 0.293,
+    "targets": [
+      0.2875,
+      0.2864,
+      0.2838,
+      0.2809,
+      0.2765
+    ],
+    "stoploss": 0.3027,
+    "publishedAt": "2026-01-06T15:16:16"
+  },
+  {
+    "id": "70802edc5ad2bef42d96eac2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "FARTCOINUSDT",
+    "direction": "short",
+    "ts": 1767696138000,
+    "entryFromPrice": 0.44,
+    "entryToPrice": 0.46,
+    "targets": [
+      0.43,
+      0.39,
+      0.35,
+      0.32,
+      0.29
+    ],
+    "stoploss": 0.48,
+    "publishedAt": "2026-01-06T15:42:18"
+  },
+  {
+    "id": "6b9cc9a002d1b17b4f603e32",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1767725229000,
+    "entryFromPrice": 0.2903,
+    "entryToPrice": 0.2936,
+    "targets": [
+      0.288,
+      0.2868,
+      0.2843,
+      0.2814,
+      0.2769
+    ],
+    "stoploss": 0.3032,
+    "publishedAt": "2026-01-06T23:47:09"
+  },
+  {
+    "id": "952efc3fb0c2b591c75c427e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1767726556000,
+    "entryFromPrice": 1.741,
+    "entryToPrice": 1.76,
+    "targets": [
+      1.774,
+      1.781,
+      1.796,
+      1.814,
+      1.841
+    ],
+    "stoploss": 1.683,
+    "publishedAt": "2026-01-07T00:09:16"
+  },
+  {
+    "id": "770fe77853edaa57915b164f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "long",
+    "ts": 1767792430000,
+    "entryFromPrice": 1.75,
+    "entryToPrice": 1.769,
+    "targets": [
+      1.783,
+      1.79,
+      1.806,
+      1.823,
+      1.85
+    ],
+    "stoploss": 1.692,
+    "publishedAt": "2026-01-07T18:27:10"
+  },
+  {
+    "id": "b9119de4dbeebdd8296e458d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "long",
+    "ts": 1767888090000,
+    "entryFromPrice": 3040,
+    "entryToPrice": 3090,
+    "targets": [
+      3150,
+      3250,
+      3350,
+      3450,
+      3600
+    ],
+    "stoploss": 2950,
+    "publishedAt": "2026-01-08T21:01:30"
+  },
+  {
+    "id": "72afda80b0008ab1abc779ba",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1767967605000,
+    "entryFromPrice": 0.2938,
+    "entryToPrice": 0.2971,
+    "targets": [
+      0.2915,
+      0.2903,
+      0.2877,
+      0.2848,
+      0.2803
+    ],
+    "stoploss": 0.3068,
+    "publishedAt": "2026-01-09T19:06:45"
+  },
+  {
+    "id": "e01d89352cd0a635eef323fb",
+    "channel": "crypto_yoda_channel",
+    "symbol": "NEARUSDT",
+    "direction": "short",
+    "ts": 1767967857000,
+    "entryFromPrice": 1.697,
+    "entryToPrice": 1.716,
+    "targets": [
+      1.684,
+      1.677,
+      1.662,
+      1.645,
+      1.619
+    ],
+    "stoploss": 1.772,
+    "publishedAt": "2026-01-09T19:10:57"
+  },
+  {
+    "id": "eed56d19022d2fb181113223",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PUMPUSDT",
+    "direction": "long",
+    "ts": 1768054356000,
+    "entryFromPrice": 0.0023,
+    "entryToPrice": 0.0024,
+    "targets": [
+      0.00255,
+      0.00275,
+      0.00293,
+      0.00315,
+      0.00335
+    ],
+    "stoploss": 0.00215,
+    "publishedAt": "2026-01-10T19:12:36"
+  },
+  {
+    "id": "b732b6b4c5d422a4cd1bbe4c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1768223282000,
+    "entryFromPrice": 0.2968,
+    "entryToPrice": 0.3001,
+    "targets": [
+      0.2944,
+      0.2932,
+      0.2906,
+      0.2876,
+      0.2831
+    ],
+    "stoploss": 0.3099,
+    "publishedAt": "2026-01-12T18:08:02"
+  },
+  {
+    "id": "4e468b4c4175e8e546dfe1f8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1768302318000,
+    "entryFromPrice": 0.2991,
+    "entryToPrice": 0.3024,
+    "targets": [
+      0.2967,
+      0.2955,
+      0.2929,
+      0.2899,
+      0.2853
+    ],
+    "stoploss": 0.3124,
+    "publishedAt": "2026-01-13T16:05:18"
+  },
+  {
+    "id": "8d9c04a187229a0c54275591",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1768303803000,
+    "entryFromPrice": 91400,
+    "entryToPrice": 92200,
+    "targets": [
+      92600,
+      93000,
+      93400,
+      93900,
+      94500
+    ],
+    "stoploss": 90700,
+    "publishedAt": "2026-01-13T16:30:03"
+  },
+  {
+    "id": "07766f7d7c06d081d3d6e84f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1768324848000,
+    "entryFromPrice": 24.41,
+    "entryToPrice": 24.68,
+    "targets": [
+      24.87,
+      24.97,
+      25.19,
+      25.43,
+      25.81
+    ],
+    "stoploss": 23.6,
+    "publishedAt": "2026-01-13T22:20:48"
+  },
+  {
+    "id": "3646805ee87f8bcdd0889671",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1768479039000,
+    "entryFromPrice": 0.3027,
+    "entryToPrice": 0.3061,
+    "targets": [
+      0.3085,
+      0.3097,
+      0.3124,
+      0.3155,
+      0.3201
+    ],
+    "stoploss": 0.2927,
+    "publishedAt": "2026-01-15T17:10:39"
+  },
+  {
+    "id": "434d0f4ce0822c5b43542195",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1768484769000,
+    "entryFromPrice": 0.1574,
+    "entryToPrice": 0.1591,
+    "targets": [
+      0.1561,
+      0.1555,
+      0.1541,
+      0.1525,
+      0.1501
+    ],
+    "stoploss": 0.1643,
+    "publishedAt": "2026-01-15T18:46:09"
+  },
+  {
+    "id": "d4fa2fd3a9f8fadbd098b3cf",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1768485276000,
+    "entryFromPrice": 143.9,
+    "entryToPrice": 145.5,
+    "targets": [
+      146.7,
+      147.2,
+      148.5,
+      150,
+      152.2
+    ],
+    "stoploss": 139.1,
+    "publishedAt": "2026-01-15T18:54:36"
+  },
+  {
+    "id": "3ccb38ec7dd6114a023440d7",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1768586287000,
+    "entryFromPrice": 0.3046,
+    "entryToPrice": 0.308,
+    "targets": [
+      0.3105,
+      0.3117,
+      0.3144,
+      0.3174,
+      0.3221
+    ],
+    "stoploss": 0.2945,
+    "publishedAt": "2026-01-16T22:58:07"
+  },
+  {
+    "id": "595b0efc64835758b88e0a71",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1768800324000,
+    "entryFromPrice": 133.2,
+    "entryToPrice": 134.6,
+    "targets": [
+      132.1,
+      131.6,
+      130.4,
+      129.1,
+      127
+    ],
+    "stoploss": 139.1,
+    "publishedAt": "2026-01-19T10:25:24"
+  },
+  {
+    "id": "8c4718346c3ed179d2eeaad2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1769016601000,
+    "entryFromPrice": 0.1334,
+    "entryToPrice": 0.1348,
+    "targets": [
+      0.1359,
+      0.1364,
+      0.1376,
+      0.139,
+      0.141
+    ],
+    "stoploss": 0.1289,
+    "publishedAt": "2026-01-21T22:30:01"
+  },
+  {
+    "id": "f049dc6814d3d434ac3bedf4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1769073341000,
+    "entryFromPrice": 0.2993,
+    "entryToPrice": 0.3026,
+    "targets": [
+      0.2969,
+      0.2957,
+      0.293,
+      0.29,
+      0.2854
+    ],
+    "stoploss": 0.3125,
+    "publishedAt": "2026-01-22T14:15:41"
+  },
+  {
+    "id": "fe0971feccd47b1faf96b5af",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1769074271000,
+    "entryFromPrice": 129.4,
+    "entryToPrice": 130.9,
+    "targets": [
+      131.9,
+      132.4,
+      133.6,
+      134.9,
+      136.9
+    ],
+    "stoploss": 125.1,
+    "publishedAt": "2026-01-22T14:31:11"
+  },
+  {
+    "id": "672eebcf680ecad64c7357ea",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1769084713000,
+    "entryFromPrice": 0.1335,
+    "entryToPrice": 0.1349,
+    "targets": [
+      0.136,
+      0.1366,
+      0.1377,
+      0.1391,
+      0.1411
+    ],
+    "stoploss": 0.129,
+    "publishedAt": "2026-01-22T17:25:13"
+  },
+  {
+    "id": "86b2f12034a83463a7e7f0fc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ENAUSDT",
+    "direction": "short",
+    "ts": 1769172005000,
+    "entryFromPrice": 0.171,
+    "entryToPrice": 0.19,
+    "targets": [
+      0.165,
+      0.155,
+      0.145,
+      0.135,
+      0.125
+    ],
+    "stoploss": 0.205,
+    "publishedAt": "2026-01-23T17:40:05"
+  },
+  {
+    "id": "c67816de1f9699453a37cab3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1769424641000,
+    "entryFromPrice": 0.2941,
+    "entryToPrice": 0.2973,
+    "targets": [
+      0.2917,
+      0.2905,
+      0.2879,
+      0.285,
+      0.2805
+    ],
+    "stoploss": 0.3071,
+    "publishedAt": "2026-01-26T15:50:41"
+  },
+  {
+    "id": "fcb9c3add9eea2bfcf034a62",
+    "channel": "crypto_yoda_channel",
+    "symbol": "FARTCOINUSDT",
+    "direction": "short",
+    "ts": 1769444365000,
+    "entryFromPrice": 0.283,
+    "entryToPrice": 0.31,
+    "targets": [
+      0.27,
+      0.25,
+      0.23,
+      0.21,
+      0.19
+    ],
+    "stoploss": 0.335,
+    "publishedAt": "2026-01-26T21:19:25"
+  },
+  {
+    "id": "48bc01617db60b37d50da417",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1769504963000,
+    "entryFromPrice": 0.2934,
+    "entryToPrice": 0.2966,
+    "targets": [
+      0.291,
+      0.2898,
+      0.2872,
+      0.2843,
+      0.2798
+    ],
+    "stoploss": 0.3063,
+    "publishedAt": "2026-01-27T14:09:23"
+  },
+  {
+    "id": "577970a188ad811bc2141623",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1769609881000,
+    "entryFromPrice": 0.1193,
+    "entryToPrice": 0.1206,
+    "targets": [
+      0.1184,
+      0.1179,
+      0.1168,
+      0.1156,
+      0.1138
+    ],
+    "stoploss": 0.1246,
+    "publishedAt": "2026-01-28T19:18:01"
+  },
+  {
+    "id": "d4f37174376b62c84572d47d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1769638442000,
+    "entryFromPrice": 124.6,
+    "entryToPrice": 126,
+    "targets": [
+      127,
+      127.5,
+      128.6,
+      129.9,
+      131.8
+    ],
+    "stoploss": 120.5,
+    "publishedAt": "2026-01-29T03:14:02"
+  },
+  {
+    "id": "5da37eda4d8f7627d299f7f3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1769775531000,
+    "entryFromPrice": 0.2886,
+    "entryToPrice": 0.2918,
+    "targets": [
+      0.2863,
+      0.2851,
+      0.2825,
+      0.2796,
+      0.2752
+    ],
+    "stoploss": 0.3013,
+    "publishedAt": "2026-01-30T17:18:51"
+  },
+  {
+    "id": "5637ca676689234cc379cf90",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1770048257000,
+    "entryFromPrice": 0.1096,
+    "entryToPrice": 0.1108,
+    "targets": [
+      0.1117,
+      0.1122,
+      0.1131,
+      0.1142,
+      0.1159
+    ],
+    "stoploss": 0.106,
+    "publishedAt": "2026-02-02T21:04:17"
+  },
+  {
+    "id": "f921c4fdc07fb7db6bca2b10",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1770048390000,
+    "entryFromPrice": 104.3,
+    "entryToPrice": 105.4,
+    "targets": [
+      103.4,
+      103,
+      102.1,
+      101.1,
+      99.5
+    ],
+    "stoploss": 108.9,
+    "publishedAt": "2026-02-02T21:06:30"
+  },
+  {
+    "id": "6d6d2416e0883196600f6c69",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1770133411000,
+    "entryFromPrice": 0.2821,
+    "entryToPrice": 0.2853,
+    "targets": [
+      0.2799,
+      0.2787,
+      0.2762,
+      0.2734,
+      0.2691
+    ],
+    "stoploss": 0.2946,
+    "publishedAt": "2026-02-03T20:43:31"
+  },
+  {
+    "id": "073a531f83c79a1e0b11ea77",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1770145760000,
+    "entryFromPrice": 0.1055,
+    "entryToPrice": 0.1066,
+    "targets": [
+      0.1075,
+      0.1079,
+      0.1088,
+      0.1099,
+      0.1115
+    ],
+    "stoploss": 0.102,
+    "publishedAt": "2026-02-04T00:09:20"
+  },
+  {
+    "id": "042c2d27ca535e3b7dadb138",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1770289499000,
+    "entryFromPrice": 33.88,
+    "entryToPrice": 34.26,
+    "targets": [
+      34.53,
+      34.66,
+      34.97,
+      35.31,
+      35.82
+    ],
+    "stoploss": 32.75,
+    "publishedAt": "2026-02-05T16:04:59"
+  },
+  {
+    "id": "f03f8e489b2cc7aade9738a4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1770316457000,
+    "entryFromPrice": 62000,
+    "entryToPrice": 66500,
+    "targets": [
+      68500,
+      70000,
+      71500,
+      74000,
+      77000
+    ],
+    "stoploss": 57000,
+    "publishedAt": "2026-02-05T23:34:17"
+  },
+  {
+    "id": "760c8c14dca19af4fc719291",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1770400969000,
+    "entryFromPrice": 33.19,
+    "entryToPrice": 33.55,
+    "targets": [
+      32.92,
+      32.79,
+      32.49,
+      32.16,
+      31.65
+    ],
+    "stoploss": 34.65,
+    "publishedAt": "2026-02-06T23:02:49"
+  },
+  {
+    "id": "9c1bf64859b6ac515e5118e5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1770418505000,
+    "entryFromPrice": 86.55,
+    "entryToPrice": 87.51,
+    "targets": [
+      85.86,
+      85.51,
+      84.74,
+      83.88,
+      82.56
+    ],
+    "stoploss": 90.38,
+    "publishedAt": "2026-02-07T03:55:05"
+  },
+  {
+    "id": "3421aa9fbdb25a34a2dee70f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1770419148000,
+    "entryFromPrice": 0.0989,
+    "entryToPrice": 0.1,
+    "targets": [
+      0.09811,
+      0.09771,
+      0.09684,
+      0.09584,
+      0.09434
+    ],
+    "stoploss": 0.10327,
+    "publishedAt": "2026-02-07T04:05:48"
+  },
+  {
+    "id": "2e1a55859a935af549fb0e02",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1770647175000,
+    "entryFromPrice": 31.26,
+    "entryToPrice": 31.61,
+    "targets": [
+      31.01,
+      30.89,
+      30.61,
+      30.3,
+      29.82
+    ],
+    "stoploss": 32.64,
+    "publishedAt": "2026-02-09T19:26:15"
+  },
+  {
+    "id": "7ac156a4171be3b02a851f9a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1770659951000,
+    "entryFromPrice": 0.2752,
+    "entryToPrice": 0.2783,
+    "targets": [
+      0.2805,
+      0.2816,
+      0.2841,
+      0.2868,
+      0.291
+    ],
+    "stoploss": 0.2661,
+    "publishedAt": "2026-02-09T22:59:11"
+  },
+  {
+    "id": "fd620d51a65190c1e0e462ae",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1770726136000,
+    "entryFromPrice": 83.89,
+    "entryToPrice": 84.82,
+    "targets": [
+      83.22,
+      82.88,
+      82.14,
+      81.3,
+      80.02
+    ],
+    "stoploss": 87.6,
+    "publishedAt": "2026-02-10T17:22:16"
+  },
+  {
+    "id": "fab5e1081504c9a26b6104e8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "short",
+    "ts": 1770820925000,
+    "entryFromPrice": 67000,
+    "entryToPrice": 69000,
+    "targets": [
+      65500,
+      64500,
+      63000,
+      62000,
+      60500
+    ],
+    "stoploss": 71000,
+    "publishedAt": "2026-02-11T19:42:05"
+  },
+  {
+    "id": "6aa34faef0e037d6a3c09605",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1770895126000,
+    "entryFromPrice": 0.09294,
+    "entryToPrice": 0.09397,
+    "targets": [
+      0.09472,
+      0.0951,
+      0.09592,
+      0.09686,
+      0.09828
+    ],
+    "stoploss": 0.08986,
+    "publishedAt": "2026-02-12T16:18:46"
+  },
+  {
+    "id": "a8d55e2104c3b27cdcc9259e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1770898301000,
+    "entryFromPrice": 0.2769,
+    "entryToPrice": 0.28,
+    "targets": [
+      0.2822,
+      0.2833,
+      0.2858,
+      0.2886,
+      0.2928
+    ],
+    "stoploss": 0.2677,
+    "publishedAt": "2026-02-12T17:11:41"
+  },
+  {
+    "id": "ddcfb61fce17a2eeb4ab458e",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1770915678000,
+    "entryFromPrice": 29.77,
+    "entryToPrice": 30.1,
+    "targets": [
+      30.34,
+      30.46,
+      30.73,
+      31.03,
+      31.48
+    ],
+    "stoploss": 28.78,
+    "publishedAt": "2026-02-12T22:01:18"
+  },
+  {
+    "id": "4133b6ef91006e52e25761e2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1770980787000,
+    "entryFromPrice": 29.77,
+    "entryToPrice": 30.1,
+    "targets": [
+      30.34,
+      30.46,
+      30.73,
+      31.03,
+      31.48
+    ],
+    "stoploss": 28.78,
+    "publishedAt": "2026-02-13T16:06:27"
+  },
+  {
+    "id": "263150d6ecf3a65d82fa6c1c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ASTERUSDT",
+    "direction": "long",
+    "ts": 1770998417000,
+    "entryFromPrice": 0.7,
+    "entryToPrice": 0.725,
+    "targets": [
+      0.79,
+      0.84,
+      0.89,
+      0.94,
+      0.99
+    ],
+    "stoploss": 0.63,
+    "publishedAt": "2026-02-13T21:00:17"
+  },
+  {
+    "id": "9ea4790c0b7f024e5e0f8e69",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ZECUSDT",
+    "direction": "long",
+    "ts": 1770998948000,
+    "entryFromPrice": 225,
+    "entryToPrice": 245,
+    "targets": [
+      255,
+      270,
+      285,
+      299,
+      315
+    ],
+    "stoploss": 210,
+    "publishedAt": "2026-02-13T21:09:08"
+  },
+  {
+    "id": "526714b399c5a0e86e9dc062",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1771239771000,
+    "entryFromPrice": 0.1053,
+    "entryToPrice": 0.1064,
+    "targets": [
+      0.1044,
+      0.104,
+      0.1031,
+      0.102,
+      0.1004
+    ],
+    "stoploss": 0.1099,
+    "publishedAt": "2026-02-16T16:02:51"
+  },
+  {
+    "id": "02b5c1052da4b991d9d3af61",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1771251148000,
+    "entryFromPrice": 83.83,
+    "entryToPrice": 84.76,
+    "targets": [
+      83.16,
+      82.82,
+      82.08,
+      81.24,
+      79.96
+    ],
+    "stoploss": 87.54,
+    "publishedAt": "2026-02-16T19:12:28"
+  },
+  {
+    "id": "7d2a365bb9fed3dfce14bdb8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1771265002000,
+    "entryFromPrice": 0.2802,
+    "entryToPrice": 0.2833,
+    "targets": [
+      0.2855,
+      0.2867,
+      0.2891,
+      0.292,
+      0.2962
+    ],
+    "stoploss": 0.2709,
+    "publishedAt": "2026-02-16T23:03:22"
+  },
+  {
+    "id": "9cc5aceafdd145899045d2bc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1771441956000,
+    "entryFromPrice": 82,
+    "entryToPrice": 84,
+    "targets": [
+      80,
+      77,
+      73,
+      68,
+      60
+    ],
+    "stoploss": 89,
+    "publishedAt": "2026-02-19T00:12:36"
+  },
+  {
+    "id": "9ae79f377e30aa249ca8e6e5",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1771541437000,
+    "entryFromPrice": 0.282,
+    "entryToPrice": 0.2852,
+    "targets": [
+      0.2874,
+      0.2886,
+      0.2911,
+      0.2939,
+      0.2982
+    ],
+    "stoploss": 0.2727,
+    "publishedAt": "2026-02-20T03:50:37"
+  },
+  {
+    "id": "43e316506a684d3997218879",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1771541969000,
+    "entryFromPrice": 29.02,
+    "entryToPrice": 29.34,
+    "targets": [
+      28.79,
+      28.67,
+      28.42,
+      28.13,
+      27.68
+    ],
+    "stoploss": 30.31,
+    "publishedAt": "2026-02-20T03:59:29"
+  },
+  {
+    "id": "50ee3070b217615707ba2167",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1771581746000,
+    "entryFromPrice": 83.61,
+    "entryToPrice": 84.54,
+    "targets": [
+      85.21,
+      85.55,
+      86.29,
+      87.13,
+      88.41
+    ],
+    "stoploss": 80.83,
+    "publishedAt": "2026-02-20T15:02:26"
+  },
+  {
+    "id": "2b1c77fa5519b614055e81b6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1771597939000,
+    "entryFromPrice": 29.34,
+    "entryToPrice": 29.67,
+    "targets": [
+      29.9,
+      30.02,
+      30.28,
+      30.58,
+      31.03
+    ],
+    "stoploss": 28.37,
+    "publishedAt": "2026-02-20T19:32:19"
+  },
+  {
+    "id": "5731d876597a7941021c4e93",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ASTERUSDT",
+    "direction": "long",
+    "ts": 1771610646000,
+    "entryFromPrice": 0.68,
+    "entryToPrice": 0.715,
+    "targets": [
+      0.75,
+      0.8,
+      0.85,
+      0.93,
+      0.99
+    ],
+    "stoploss": 0.62,
+    "publishedAt": "2026-02-20T23:04:06"
+  },
+  {
+    "id": "6a58c9ebf9a34778bb3bebe4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1771611921000,
+    "entryFromPrice": 0.1054,
+    "entryToPrice": 0.1065,
+    "targets": [
+      0.1045,
+      0.1041,
+      0.1032,
+      0.1021,
+      0.1005
+    ],
+    "stoploss": 0.11,
+    "publishedAt": "2026-02-20T23:25:21"
+  },
+  {
+    "id": "2635b3e89a0887a864008812",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1771614634000,
+    "entryFromPrice": 83,
+    "entryToPrice": 86,
+    "targets": [
+      88,
+      90,
+      93,
+      96,
+      101
+    ],
+    "stoploss": 79,
+    "publishedAt": "2026-02-21T00:10:34"
+  },
+  {
+    "id": "32c9313cd8af28e94a5c2c70",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1771847367000,
+    "entryFromPrice": 0.00645,
+    "entryToPrice": 0.00665,
+    "targets": [
+      0.0069,
+      0.0072,
+      0.0074,
+      0.0078,
+      0.0084
+    ],
+    "stoploss": 0.00615,
+    "publishedAt": "2026-02-23T16:49:27"
+  },
+  {
+    "id": "a8ad448ed3a6532ab1180147",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1771849572000,
+    "entryFromPrice": 0.2851,
+    "entryToPrice": 0.2882,
+    "targets": [
+      0.2905,
+      0.2917,
+      0.2942,
+      0.2971,
+      0.3014
+    ],
+    "stoploss": 0.2756,
+    "publishedAt": "2026-02-23T17:26:12"
+  },
+  {
+    "id": "53ff97b97104281e4f560eb7",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1771850997000,
+    "entryFromPrice": 65000,
+    "entryToPrice": 66500,
+    "targets": [
+      67600,
+      68700,
+      70700,
+      73300,
+      76900
+    ],
+    "stoploss": 63000,
+    "publishedAt": "2026-02-23T17:49:57"
+  },
+  {
+    "id": "d61ac120a5d98a7550deb313",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1771959926000,
+    "entryFromPrice": 0.1107,
+    "entryToPrice": 0.1119,
+    "targets": [
+      0.1128,
+      0.1133,
+      0.1143,
+      0.1154,
+      0.1171
+    ],
+    "stoploss": 0.107,
+    "publishedAt": "2026-02-25T00:05:26"
+  },
+  {
+    "id": "b46119afc3626b6b357535e2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1771963275000,
+    "entryFromPrice": 27.1,
+    "entryToPrice": 27.4,
+    "targets": [
+      26.88,
+      26.77,
+      26.54,
+      26.26,
+      25.85
+    ],
+    "stoploss": 28.3,
+    "publishedAt": "2026-02-25T01:01:15"
+  },
+  {
+    "id": "45ee7d19c2cef68ca27a0f61",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1772031483000,
+    "entryFromPrice": 0.2849,
+    "entryToPrice": 0.288,
+    "targets": [
+      0.2903,
+      0.2915,
+      0.294,
+      0.2969,
+      0.3012
+    ],
+    "stoploss": 0.2754,
+    "publishedAt": "2026-02-25T19:58:03"
+  },
+  {
+    "id": "8a8472dee37e60c2064aceba",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772032254000,
+    "entryFromPrice": 28.08,
+    "entryToPrice": 28.39,
+    "targets": [
+      28.62,
+      28.73,
+      28.98,
+      29.26,
+      29.69
+    ],
+    "stoploss": 27.15,
+    "publishedAt": "2026-02-25T20:10:54"
+  },
+  {
+    "id": "682920a54ce75ea46ec4d434",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1772107589000,
+    "entryFromPrice": 0.1095,
+    "entryToPrice": 0.1107,
+    "targets": [
+      0.1086,
+      0.1081,
+      0.1072,
+      0.1061,
+      0.1044
+    ],
+    "stoploss": 0.1143,
+    "publishedAt": "2026-02-26T17:06:29"
+  },
+  {
+    "id": "202fb7224db7484da806604a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772188051000,
+    "entryFromPrice": 28,
+    "entryToPrice": 29.6,
+    "targets": [
+      30.5,
+      33,
+      34.5,
+      36,
+      38
+    ],
+    "stoploss": 26,
+    "publishedAt": "2026-02-27T15:27:31"
+  },
+  {
+    "id": "200b6bdeea41f3eff892322b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1772189762000,
+    "entryFromPrice": 0.1148,
+    "entryToPrice": 0.1161,
+    "targets": [
+      0.117,
+      0.1174,
+      0.1185,
+      0.1196,
+      0.1214
+    ],
+    "stoploss": 0.111,
+    "publishedAt": "2026-02-27T15:56:02"
+  },
+  {
+    "id": "5a6ab54dd9e5e1ff6dfaca1f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772194069000,
+    "entryFromPrice": 28.12,
+    "entryToPrice": 28.43,
+    "targets": [
+      28.65,
+      28.77,
+      29.02,
+      29.3,
+      29.73
+    ],
+    "stoploss": 27.18,
+    "publishedAt": "2026-02-27T17:07:49"
+  },
+  {
+    "id": "609bdbef9a27b59b2c5ef45d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1772194124000,
+    "entryFromPrice": 83.27,
+    "entryToPrice": 84.19,
+    "targets": [
+      82.6,
+      82.26,
+      81.53,
+      80.69,
+      79.42
+    ],
+    "stoploss": 86.94,
+    "publishedAt": "2026-02-27T17:08:44"
+  },
+  {
+    "id": "f195b9e9858847914143bde3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1772214939000,
+    "entryFromPrice": 0.2823,
+    "entryToPrice": 0.2854,
+    "targets": [
+      0.28,
+      0.2789,
+      0.2764,
+      0.2735,
+      0.2692
+    ],
+    "stoploss": 0.2947,
+    "publishedAt": "2026-02-27T22:55:39"
+  },
+  {
+    "id": "deddf5e03fa8c87f31d87ce4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1772283597000,
+    "entryFromPrice": 62000,
+    "entryToPrice": 64000,
+    "targets": [
+      66000,
+      68000,
+      70500,
+      72000,
+      75000
+    ],
+    "stoploss": 59000,
+    "publishedAt": "2026-02-28T17:59:57"
+  },
+  {
+    "id": "1cc42c0819a1db0ba377fbc3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1772461228000,
+    "entryFromPrice": 0.1011,
+    "entryToPrice": 0.1022,
+    "targets": [
+      0.1003,
+      0.0999,
+      0.099,
+      0.098,
+      0.0964
+    ],
+    "stoploss": 0.1056,
+    "publishedAt": "2026-03-02T19:20:28"
+  },
+  {
+    "id": "67a3ad6f678b0460485be540",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1772467286000,
+    "entryFromPrice": 88.15,
+    "entryToPrice": 89.13,
+    "targets": [
+      89.84,
+      90.19,
+      90.97,
+      91.86,
+      93.21
+    ],
+    "stoploss": 85.22,
+    "publishedAt": "2026-03-02T21:01:26"
+  },
+  {
+    "id": "bdcf394734d3e6f496e7bdf6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1772467678000,
+    "entryFromPrice": 0.2805,
+    "entryToPrice": 0.2836,
+    "targets": [
+      0.2859,
+      0.287,
+      0.2895,
+      0.2923,
+      0.2966
+    ],
+    "stoploss": 0.2712,
+    "publishedAt": "2026-03-02T21:07:58"
+  },
+  {
+    "id": "68d31a2ad5940a0ca0fa902c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772471204000,
+    "entryFromPrice": 32.93,
+    "entryToPrice": 33.29,
+    "targets": [
+      33.56,
+      33.69,
+      33.98,
+      34.32,
+      34.82
+    ],
+    "stoploss": 31.84,
+    "publishedAt": "2026-03-02T22:06:44"
+  },
+  {
+    "id": "fd4a015feae0eed2f17e0ca3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772565504000,
+    "entryFromPrice": 31.94,
+    "entryToPrice": 32.29,
+    "targets": [
+      32.55,
+      32.68,
+      32.96,
+      33.28,
+      33.77
+    ],
+    "stoploss": 30.87,
+    "publishedAt": "2026-03-04T00:18:24"
+  },
+  {
+    "id": "e55650a3fb0843e5b019a8f3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1772613641000,
+    "entryFromPrice": 0.1023,
+    "entryToPrice": 0.1034,
+    "targets": [
+      0.1015,
+      0.1011,
+      0.1002,
+      0.0991,
+      0.0976
+    ],
+    "stoploss": 0.1068,
+    "publishedAt": "2026-03-04T13:40:41"
+  },
+  {
+    "id": "8db958651eee5fd525f5472f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1772647339000,
+    "entryFromPrice": 31.93,
+    "entryToPrice": 32.28,
+    "targets": [
+      32.54,
+      32.67,
+      32.95,
+      33.27,
+      33.76
+    ],
+    "stoploss": 30.87,
+    "publishedAt": "2026-03-04T23:02:19"
+  },
+  {
+    "id": "87ac6dcbc6c422416e5e569d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "ETHUSDT",
+    "direction": "long",
+    "ts": 1772708225000,
+    "entryFromPrice": 2050,
+    "entryToPrice": 2160,
+    "targets": [
+      2280,
+      2400,
+      2550,
+      2650,
+      2800
+    ],
+    "stoploss": 1960,
+    "publishedAt": "2026-03-05T15:57:05"
+  },
+  {
+    "id": "15aca08022ab84ede3bc124c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1772726838000,
+    "entryFromPrice": 0.1,
+    "entryToPrice": 0.1011,
+    "targets": [
+      0.0992,
+      0.0988,
+      0.0979,
+      0.0969,
+      0.0954
+    ],
+    "stoploss": 0.1044,
+    "publishedAt": "2026-03-05T21:07:18"
+  },
+  {
+    "id": "b139a1edfc463ef006236870",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TAOUSDT",
+    "direction": "long",
+    "ts": 1773136229000,
+    "entryFromPrice": 190,
+    "entryToPrice": 200,
+    "targets": [
+      210,
+      220,
+      230,
+      240,
+      260
+    ],
+    "stoploss": 175,
+    "publishedAt": "2026-03-10T14:50:29"
+  },
+  {
+    "id": "d6c6b715182e791b91a685a9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1773169767000,
+    "entryFromPrice": 0.09582,
+    "entryToPrice": 0.09689,
+    "targets": [
+      0.09766,
+      0.09804,
+      0.09889,
+      0.09986,
+      0.10133
+    ],
+    "stoploss": 0.09264,
+    "publishedAt": "2026-03-11T00:09:27"
+  },
+  {
+    "id": "0abe01e5dc9461107469b330",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1773237436000,
+    "entryFromPrice": 0.2859,
+    "entryToPrice": 0.2891,
+    "targets": [
+      0.2914,
+      0.2925,
+      0.2951,
+      0.298,
+      0.3023
+    ],
+    "stoploss": 0.2764,
+    "publishedAt": "2026-03-11T18:57:16"
+  },
+  {
+    "id": "33e7ac83beca814ca404916b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1773317876000,
+    "entryFromPrice": 35,
+    "entryToPrice": 37,
+    "targets": [
+      40,
+      44,
+      48,
+      53,
+      59
+    ],
+    "stoploss": 32,
+    "publishedAt": "2026-03-12T17:17:56"
+  },
+  {
+    "id": "1742f9026e2e2fc5e3bca7b4",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1773338857000,
+    "entryFromPrice": 69000,
+    "entryToPrice": 70000,
+    "targets": [
+      71000,
+      71800,
+      72500,
+      73100,
+      73900
+    ],
+    "stoploss": 68000,
+    "publishedAt": "2026-03-12T23:07:37"
+  },
+  {
+    "id": "83cea021c8590072cffdf436",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1773346369000,
+    "entryFromPrice": 0.2869,
+    "entryToPrice": 0.2901,
+    "targets": [
+      0.2924,
+      0.2935,
+      0.2961,
+      0.299,
+      0.3034
+    ],
+    "stoploss": 0.2774,
+    "publishedAt": "2026-03-13T01:12:49"
+  },
+  {
+    "id": "aa1b03ac583c5a04e6e39e16",
+    "channel": "crypto_yoda_channel",
+    "symbol": "RIVERUSDT",
+    "direction": "long",
+    "ts": 1773418474000,
+    "entryFromPrice": 19,
+    "entryToPrice": 20.6,
+    "targets": [
+      22,
+      24,
+      26,
+      28,
+      31
+    ],
+    "stoploss": 17,
+    "publishedAt": "2026-03-13T21:14:34"
+  },
+  {
+    "id": "67ec024a3b2d67f2ce230d76",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1773684157000,
+    "entryFromPrice": 0.2948,
+    "entryToPrice": 0.2981,
+    "targets": [
+      0.3005,
+      0.3017,
+      0.3043,
+      0.3072,
+      0.3117
+    ],
+    "stoploss": 0.285,
+    "publishedAt": "2026-03-16T23:02:37"
+  },
+  {
+    "id": "eca3ab7782755a2c3bc64097",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1773758044000,
+    "entryFromPrice": 0.099,
+    "entryToPrice": 0.1001,
+    "targets": [
+      0.1009,
+      0.1013,
+      0.10217,
+      0.10317,
+      0.10469
+    ],
+    "stoploss": 0.09571,
+    "publishedAt": "2026-03-17T19:34:04"
+  },
+  {
+    "id": "09c2cac07f7a99222fcbdeed",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1773839059000,
+    "entryFromPrice": 40.25,
+    "entryToPrice": 40.7,
+    "targets": [
+      41.02,
+      41.19,
+      41.54,
+      41.95,
+      42.56
+    ],
+    "stoploss": 38.92,
+    "publishedAt": "2026-03-18T18:04:19"
+  },
+  {
+    "id": "e17c3be7542e5e79e5d41259",
+    "channel": "crypto_yoda_channel",
+    "symbol": "BTCUSDT",
+    "direction": "long",
+    "ts": 1773846269000,
+    "entryFromPrice": 70000,
+    "entryToPrice": 71500,
+    "targets": [
+      72300,
+      72900,
+      73800,
+      75100,
+      76500
+    ],
+    "stoploss": 68500,
+    "publishedAt": "2026-03-18T20:04:29"
+  },
+  {
+    "id": "7f411e55c61ee38da1d51864",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1773936331000,
+    "entryFromPrice": 0.2988,
+    "entryToPrice": 0.3021,
+    "targets": [
+      0.2964,
+      0.2952,
+      0.2926,
+      0.2896,
+      0.285
+    ],
+    "stoploss": 0.312,
+    "publishedAt": "2026-03-19T21:05:31"
+  },
+  {
+    "id": "f0c59a78547d256c69876e44",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1774009462000,
+    "entryFromPrice": 0.3022,
+    "entryToPrice": 0.3055,
+    "targets": [
+      0.308,
+      0.3092,
+      0.3119,
+      0.3149,
+      0.3195
+    ],
+    "stoploss": 0.2921,
+    "publishedAt": "2026-03-20T17:24:22"
+  },
+  {
+    "id": "c7b781df848b5228cb807fdb",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1774009842000,
+    "entryFromPrice": 0.09771,
+    "entryToPrice": 0.09879,
+    "targets": [
+      0.09958,
+      0.09997,
+      0.10084,
+      0.10182,
+      0.10332
+    ],
+    "stoploss": 0.09446,
+    "publishedAt": "2026-03-20T17:30:42"
+  },
+  {
+    "id": "83edd27b844b68f99ee46cfc",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1774029683000,
+    "entryFromPrice": 39.06,
+    "entryToPrice": 39.49,
+    "targets": [
+      38.75,
+      38.59,
+      38.24,
+      37.85,
+      37.26
+    ],
+    "stoploss": 40.78,
+    "publishedAt": "2026-03-20T23:01:23"
+  },
+  {
+    "id": "f49980b90592bd67a2c3eee0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1774268163000,
+    "entryFromPrice": 0.09392,
+    "entryToPrice": 0.09496,
+    "targets": [
+      0.09317,
+      0.09279,
+      0.09196,
+      0.09102,
+      0.08959
+    ],
+    "stoploss": 0.09807,
+    "publishedAt": "2026-03-23T17:16:03"
+  },
+  {
+    "id": "f3e54b7729090bd9f793c684",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1774274589000,
+    "entryFromPrice": 38.76,
+    "entryToPrice": 39.19,
+    "targets": [
+      38.45,
+      38.3,
+      37.95,
+      37.57,
+      36.97
+    ],
+    "stoploss": 40.48,
+    "publishedAt": "2026-03-23T19:03:09"
+  },
+  {
+    "id": "faf2a3d60ae7b0fbf9085985",
+    "channel": "crypto_yoda_channel",
+    "symbol": "XAUTUSDT",
+    "direction": "long",
+    "ts": 1774354795000,
+    "entryFromPrice": 4320,
+    "entryToPrice": 4420,
+    "targets": [
+      4550,
+      4650,
+      4750,
+      4900,
+      5100
+    ],
+    "stoploss": 4150,
+    "publishedAt": "2026-03-24T17:19:55"
+  },
+  {
+    "id": "a98af61a1674aa437904b1f9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1774355643000,
+    "entryFromPrice": 0.3093,
+    "entryToPrice": 0.3127,
+    "targets": [
+      0.3068,
+      0.3055,
+      0.3028,
+      0.2997,
+      0.295
+    ],
+    "stoploss": 0.3229,
+    "publishedAt": "2026-03-24T17:34:03"
+  },
+  {
+    "id": "d148a1ad1a9a8fba36d0b6f7",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1774377219000,
+    "entryFromPrice": 39.11,
+    "entryToPrice": 39.54,
+    "targets": [
+      39.86,
+      40.02,
+      40.36,
+      40.76,
+      41.36
+    ],
+    "stoploss": 37.81,
+    "publishedAt": "2026-03-24T23:33:39"
+  },
+  {
+    "id": "cd01bc7d41d398065450d62a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1774459677000,
+    "entryFromPrice": 0.3107,
+    "entryToPrice": 0.3141,
+    "targets": [
+      0.3166,
+      0.3179,
+      0.3206,
+      0.3238,
+      0.3285
+    ],
+    "stoploss": 0.3004,
+    "publishedAt": "2026-03-25T22:27:57"
+  },
+  {
+    "id": "6c3c86cbf511d9355f344ef8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1774540911000,
+    "entryFromPrice": 0.09382,
+    "entryToPrice": 0.09486,
+    "targets": [
+      0.09307,
+      0.09269,
+      0.09186,
+      0.09092,
+      0.08949
+    ],
+    "stoploss": 0.09797,
+    "publishedAt": "2026-03-26T21:01:51"
+  },
+  {
+    "id": "fc87fab792f9d34ddb24bc2a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "FARTCOINUSDT",
+    "direction": "long",
+    "ts": 1774551602000,
+    "entryFromPrice": 0.17,
+    "entryToPrice": 0.175,
+    "targets": [
+      0.18,
+      0.185,
+      0.19,
+      0.195,
+      0.2
+    ],
+    "stoploss": 0.16,
+    "publishedAt": "2026-03-27T00:00:02"
+  },
+  {
+    "id": "28fdcb23a0444253b8c4b4b0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "FARTCOINUSDT",
+    "direction": "long",
+    "ts": 1774638780000,
+    "entryFromPrice": 0.168,
+    "entryToPrice": 0.173,
+    "targets": [
+      0.178,
+      0.185,
+      0.19,
+      0.195,
+      0.2
+    ],
+    "stoploss": 0.155,
+    "publishedAt": "2026-03-28T00:13:00"
+  },
+  {
+    "id": "ecfab0bb4df42748afb892a2",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1774861478000,
+    "entryFromPrice": 0.09384,
+    "entryToPrice": 0.09488,
+    "targets": [
+      0.09563,
+      0.09601,
+      0.09684,
+      0.09779,
+      0.09923
+    ],
+    "stoploss": 0.09072,
+    "publishedAt": "2026-03-30T14:04:38"
+  },
+  {
+    "id": "fa1cc6099c17b1d2f74050f6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "long",
+    "ts": 1774887455000,
+    "entryFromPrice": 0.3151,
+    "entryToPrice": 0.3186,
+    "targets": [
+      0.3211,
+      0.3224,
+      0.3252,
+      0.3284,
+      0.3332
+    ],
+    "stoploss": 0.3046,
+    "publishedAt": "2026-03-30T21:17:35"
+  },
+  {
+    "id": "5a1cfc67441301078d801859",
+    "channel": "crypto_yoda_channel",
+    "symbol": "TRXUSDT",
+    "direction": "short",
+    "ts": 1775071877000,
+    "entryFromPrice": 0.3148,
+    "entryToPrice": 0.3183,
+    "targets": [
+      0.3123,
+      0.311,
+      0.3082,
+      0.3051,
+      0.3002
+    ],
+    "stoploss": 0.3287,
+    "publishedAt": "2026-04-02T00:31:17"
+  },
+  {
+    "id": "c5add37ecd7fa881dc8a2e16",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1775146828000,
+    "entryFromPrice": 0.09183,
+    "entryToPrice": 0.09285,
+    "targets": [
+      0.09109,
+      0.09072,
+      0.08991,
+      0.08899,
+      0.08759
+    ],
+    "stoploss": 0.09589,
+    "publishedAt": "2026-04-02T21:20:28"
+  },
+  {
+    "id": "4038b1973c82056ce472f007",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1775218926000,
+    "entryFromPrice": 35.79,
+    "entryToPrice": 36.18,
+    "targets": [
+      35.5,
+      35.36,
+      35.04,
+      34.68,
+      34.13
+    ],
+    "stoploss": 37.37,
+    "publishedAt": "2026-04-03T17:22:06"
+  },
+  {
+    "id": "fefeb9f7756995cb8b309e4c",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1775221345000,
+    "entryFromPrice": 79.01,
+    "entryToPrice": 79.89,
+    "targets": [
+      78.38,
+      78.06,
+      77.36,
+      76.57,
+      75.36
+    ],
+    "stoploss": 82.5,
+    "publishedAt": "2026-04-03T18:02:25"
+  },
+  {
+    "id": "529cd0d41fcad7277bcc50c8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "short",
+    "ts": 1775561585000,
+    "entryFromPrice": 0.08964,
+    "entryToPrice": 0.09063,
+    "targets": [
+      0.08892,
+      0.08856,
+      0.08777,
+      0.08687,
+      0.0855
+    ],
+    "stoploss": 0.0936,
+    "publishedAt": "2026-04-07T16:33:05"
+  },
+  {
+    "id": "75478441320ab2ca51042ed9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "short",
+    "ts": 1775563696000,
+    "entryFromPrice": 0.006218,
+    "entryToPrice": 0.006287,
+    "targets": [
+      0.006168,
+      0.006143,
+      0.006088,
+      0.006026,
+      0.005931
+    ],
+    "stoploss": 0.006493,
+    "publishedAt": "2026-04-07T17:08:16"
+  },
+  {
+    "id": "78deb6097f3bffe4ee71e3b3",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "short",
+    "ts": 1775750626000,
+    "entryFromPrice": 0.006513,
+    "entryToPrice": 0.006585,
+    "targets": [
+      0.006461,
+      0.006434,
+      0.006377,
+      0.006311,
+      0.006212
+    ],
+    "stoploss": 0.006801,
+    "publishedAt": "2026-04-09T21:03:46"
+  },
+  {
+    "id": "9f0dd958bf179db51fe0d986",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "short",
+    "ts": 1776045691000,
+    "entryFromPrice": 41.72,
+    "entryToPrice": 42.18,
+    "targets": [
+      41.38,
+      41.21,
+      40.84,
+      40.43,
+      39.79
+    ],
+    "stoploss": 43.56,
+    "publishedAt": "2026-04-13T07:01:31"
+  },
+  {
+    "id": "1151fcbfb105d87ad0dc7ec9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "short",
+    "ts": 1776083844000,
+    "entryFromPrice": 82.02,
+    "entryToPrice": 82.93,
+    "targets": [
+      81.36,
+      81.03,
+      80.31,
+      79.48,
+      78.23
+    ],
+    "stoploss": 85.64,
+    "publishedAt": "2026-04-13T17:37:24"
+  },
+  {
+    "id": "cb890b5d8f42fdf5e4a7dafe",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1776165923000,
+    "entryFromPrice": 0.08371,
+    "entryToPrice": 0.08464,
+    "targets": [
+      0.08531,
+      0.08565,
+      0.08639,
+      0.08723,
+      0.08852
+    ],
+    "stoploss": 0.08093,
+    "publishedAt": "2026-04-14T16:25:23"
+  },
+  {
+    "id": "b271da67742f4495313f71ee",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1776168124000,
+    "entryFromPrice": 43,
+    "entryToPrice": 44.6,
+    "targets": [
+      46,
+      48,
+      50,
+      52,
+      54
+    ],
+    "stoploss": 39,
+    "publishedAt": "2026-04-14T17:02:04"
+  },
+  {
+    "id": "0f77ad0ba9a9ab2d27174bd6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1776188151000,
+    "entryFromPrice": 0.08331,
+    "entryToPrice": 0.08424,
+    "targets": [
+      0.08491,
+      0.08524,
+      0.08598,
+      0.08682,
+      0.0881
+    ],
+    "stoploss": 0.08054,
+    "publishedAt": "2026-04-14T22:35:51"
+  },
+  {
+    "id": "e12266cfa1de375184a2d050",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1776189674000,
+    "entryFromPrice": 0.006859,
+    "entryToPrice": 0.006935,
+    "targets": [
+      0.00699,
+      0.007018,
+      0.007078,
+      0.007147,
+      0.007252
+    ],
+    "stoploss": 0.006631,
+    "publishedAt": "2026-04-14T23:01:14"
+  },
+  {
+    "id": "b32273f7da06eec05712296d",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1776250895000,
+    "entryFromPrice": 0.08431,
+    "entryToPrice": 0.08524,
+    "targets": [
+      0.08592,
+      0.08626,
+      0.08701,
+      0.08785,
+      0.08915
+    ],
+    "stoploss": 0.0815,
+    "publishedAt": "2026-04-15T16:01:35"
+  },
+  {
+    "id": "c7daeff0bb114a9700d7727a",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1776268731000,
+    "entryFromPrice": 0.007129,
+    "entryToPrice": 0.007208,
+    "targets": [
+      0.007265,
+      0.007294,
+      0.007357,
+      0.007429,
+      0.007538
+    ],
+    "stoploss": 0.006892,
+    "publishedAt": "2026-04-15T20:58:51"
+  },
+  {
+    "id": "5832cf535187de8510e64dc9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "MONUSDT",
+    "direction": "long",
+    "ts": 1776351809000,
+    "entryFromPrice": 0.034,
+    "entryToPrice": 0.036,
+    "targets": [
+      0.038,
+      0.039,
+      0.041,
+      0.043,
+      0.045
+    ],
+    "stoploss": 0.032,
+    "publishedAt": "2026-04-16T20:03:29"
+  },
+  {
+    "id": "546e0c9afe0f91631e7562d6",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1776448929000,
+    "entryFromPrice": 44.25,
+    "entryToPrice": 44.74,
+    "targets": [
+      45.1,
+      45.28,
+      45.67,
+      46.11,
+      46.79
+    ],
+    "stoploss": 42.78,
+    "publishedAt": "2026-04-17T23:02:09"
+  },
+  {
+    "id": "07be38e1c9061ed373914ca8",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "short",
+    "ts": 1776688676000,
+    "entryFromPrice": 0.007235,
+    "entryToPrice": 0.007315,
+    "targets": [
+      0.007177,
+      0.007148,
+      0.007084,
+      0.007011,
+      0.006901
+    ],
+    "stoploss": 0.007555,
+    "publishedAt": "2026-04-20T17:37:56"
+  },
+  {
+    "id": "cfb417d84a23e9e2e6551d12",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1776775108000,
+    "entryFromPrice": 85.54,
+    "entryToPrice": 86.48,
+    "targets": [
+      87.17,
+      87.52,
+      88.28,
+      89.14,
+      90.45
+    ],
+    "stoploss": 82.69,
+    "publishedAt": "2026-04-21T17:38:28"
+  },
+  {
+    "id": "aa71e924ff9de5e9dc4d1e7b",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1776888128000,
+    "entryFromPrice": 0.09344,
+    "entryToPrice": 0.09448,
+    "targets": [
+      0.09523,
+      0.09561,
+      0.09643,
+      0.09737,
+      0.09881
+    ],
+    "stoploss": 0.09034,
+    "publishedAt": "2026-04-23T01:02:08"
+  },
+  {
+    "id": "af188b9461b86138f0c2a31f",
+    "channel": "crypto_yoda_channel",
+    "symbol": "SOLUSDT",
+    "direction": "long",
+    "ts": 1776916925000,
+    "entryFromPrice": 85.19,
+    "entryToPrice": 86.13,
+    "targets": [
+      86.82,
+      87.16,
+      87.92,
+      88.78,
+      90.08
+    ],
+    "stoploss": 82.36,
+    "publishedAt": "2026-04-23T09:02:05"
+  },
+  {
+    "id": "9ca2b4dd087cf25d952e55fa",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1776956589000,
+    "entryFromPrice": 0.008404,
+    "entryToPrice": 0.008497,
+    "targets": [
+      0.008565,
+      0.008598,
+      0.008673,
+      0.008758,
+      0.008886
+    ],
+    "stoploss": 0.008124,
+    "publishedAt": "2026-04-23T20:03:09"
+  },
+  {
+    "id": "75e30bec48e2e292d121d965",
+    "channel": "crypto_yoda_channel",
+    "symbol": "POLUSDT",
+    "direction": "long",
+    "ts": 1776956634000,
+    "entryFromPrice": 0.09513,
+    "entryToPrice": 0.09618,
+    "targets": [
+      0.09695,
+      0.09733,
+      0.09818,
+      0.09913,
+      0.10059
+    ],
+    "stoploss": 0.09197,
+    "publishedAt": "2026-04-23T20:03:54"
+  },
+  {
+    "id": "71661cbe0a6d650c5396d9e0",
+    "channel": "crypto_yoda_channel",
+    "symbol": "HYPEUSDT",
+    "direction": "long",
+    "ts": 1776974670000,
+    "entryFromPrice": 40.66,
+    "entryToPrice": 41.11,
+    "targets": [
+      41.44,
+      41.6,
+      41.96,
+      42.37,
+      42.99
+    ],
+    "stoploss": 39.31,
+    "publishedAt": "2026-04-24T01:04:30"
+  },
+  {
+    "id": "8c8b1266ac25589b357b3ec9",
+    "channel": "crypto_yoda_channel",
+    "symbol": "PENGUUSDT",
+    "direction": "long",
+    "ts": 1777043825000,
+    "entryFromPrice": 0.008575,
+    "entryToPrice": 0.00867,
+    "targets": [
+      0.008739,
+      0.008773,
+      0.008849,
+      0.008935,
+      0.009067
+    ],
+    "stoploss": 0.00829,
+    "publishedAt": "2026-04-24T20:17:05"
+  }
+]

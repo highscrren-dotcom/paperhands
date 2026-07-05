@@ -23,10 +23,9 @@ import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { addExchangeSchema, Exchange, roundTicks } from "backtest-kit";
-import { singleshot } from "functools-kit";
 import { PumpMatrix } from "pump-anomaly";
-import ccxt from "ccxt";
+
+import { getCandles, aggregate, pct, writeJsonl } from "./lib.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "out");
@@ -34,87 +33,6 @@ mkdirSync(OUT, { recursive: true });
 
 const items = JSON.parse(readFileSync(join(HERE, "assets/parser-items.json"), "utf8"));
 const weights = readFileSync(join(HERE, "assets/model-weights.json"), "utf8");
-
-// ---------- exchange schema (дословно по образцу example/scripts/run_forecast.ts) ----------
-const getExchange = singleshot(async () => {
-  const exchange = new ccxt.binance({
-    options: {
-      defaultType: "spot",
-      adjustForTimeDifference: true,
-      recvWindow: 60000,
-    },
-    enableRateLimit: true,
-  });
-  await exchange.loadMarkets();
-  return exchange;
-});
-
-const exchangeName = "ccxt-exchange";
-
-addExchangeSchema({
-  exchangeName,
-  getCandles: async (symbol, interval, since, limit) => {
-    const exchange = await getExchange();
-    const candles = await exchange.fetchOHLCV(symbol, interval, since.getTime(), limit);
-    return candles.map(([timestamp, open, high, low, close, volume]) => ({
-      timestamp, open, high, low, close, volume,
-    }));
-  },
-  formatPrice: async (symbol, price) => {
-    const exchange = await getExchange();
-    const market = exchange.market(symbol);
-    const tickSize = market.limits?.price?.min || market.precision?.price;
-    if (tickSize !== undefined) return roundTicks(price, tickSize);
-    return exchange.priceToPrecision(symbol, price);
-  },
-  formatQuantity: async (symbol, quantity) => {
-    const exchange = await getExchange();
-    const market = exchange.market(symbol);
-    const stepSize = market.limits?.amount?.min || market.precision?.amount;
-    if (stepSize !== undefined) return roundTicks(quantity, stepSize);
-    return exchange.amountToPrecision(symbol, quantity);
-  },
-});
-
-// Адаптер: движковый getRawCandles → GetCandles pump-anomaly (тот же порядок аргументов).
-const getCandles = (symbol, interval, limit, sDate, eDate) =>
-  Exchange.getRawCandles(symbol, interval, { exchangeName }, limit, sDate, eDate);
-
-// ---------- helpers ----------
-const pct = (x) => (x == null || !Number.isFinite(x) ? null : Math.round(x * 10000) / 100); // доля → %
-const writeJsonl = (file, rows) =>
-  writeFileSync(file, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
-
-function aggregate(pnls /* доли, в порядке времени */) {
-  const n = pnls.length;
-  if (!n) return { n: 0 };
-  const sorted = [...pnls].sort((a, b) => a - b);
-  const mean = pnls.reduce((s, x) => s + x, 0) / n;
-  const median =
-    n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
-  const variance = pnls.reduce((s, x) => s + (x - mean) ** 2, 0) / (n > 1 ? n - 1 : 1);
-  const std = Math.sqrt(variance);
-  // урок walk-forward dec2025: std≈0 → Sharpe = N/A, а не 1e14
-  const EPS = 1e-9;
-  const sharpe = std < EPS ? null : mean / std;
-  let cum = 0, peak = 0, maxDD = 0;
-  for (const x of pnls) {
-    cum += x;
-    peak = Math.max(peak, cum);
-    maxDD = Math.min(maxDD, cum - peak);
-  }
-  const wins = pnls.filter((x) => x > 0).length;
-  return {
-    n,
-    winRatePct: Math.round((wins / n) * 10000) / 100,
-    meanPct: pct(mean),
-    medianPct: pct(median),
-    stdPct: pct(std),
-    perTradeSharpe: sharpe == null ? "N/A (std≈0)" : Math.round(sharpe * 100) / 100,
-    sumPct: pct(cum),
-    maxDDPct: pct(maxDD),
-  };
-}
 
 // ---------- 0) модель ----------
 console.log(`[bench] items: ${items.length}, символов: ${new Set(items.map((i) => i.symbol)).size}`);
