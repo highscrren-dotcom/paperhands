@@ -52,6 +52,16 @@
   (скрейпер+Ollama), который в session 2 считали непубличным. Это снимает главный
   блокер paper-форварда pump-пути. Первая задача следующей сессии.
 
+### ✅ №19-b ВЫПОЛНЕНО: форки владельца взяты в работу (утро 2026-07-06)
+Владелец форкнул 3 репо; агент: клоны в амбрелле + remotes, ветки `integration`
+с правками (чужие TG-креды → env с гардом; CC_RISK_GATE=llm|rules|off — llm
+дефолт под подписку Ollama владельца; redis-пароли из env; exchangeName-фикс
+свечей в redis-mongo; экспорт-адаптер Mongo→ParserItem), README-FORK в каждом,
+build ✓ везде, скилл завендорен в `.claude/skills/` с правкой маркетинга,
+индексация в графе. Статус и хэши — в [notes/fork-map.md](notes/fork-map.md).
+⚠️ Владельцу руками: сделать форк `backtest-monorepo-parallel` ПРИВАТНЫМ (нет
+LICENSE); push веток integration — по команде.
+
 ### ✅ Деливерабл №19 ГОТОВ — [notes/fork-map.md](notes/fork-map.md)
 Вся экосистема разобрана (11 репо org + сайт 923 стр. + личный аккаунт). Итог:
 **форкать 3** — `backtest-ollama-crontab` (ingest; чужие TG-креды захардкожены —
