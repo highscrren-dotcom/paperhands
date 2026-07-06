@@ -25,6 +25,31 @@
 | ⚪ garch, agent-swarm-kit, functools-kit, di-*, trading-signals-mcp | НЕ форкать | npm-пакеты |
 | ⚪ node-ccxt-backtest / node-ccxt-dumper | пока только читать | понадобятся на этапе Optimizer |
 
+## ✅ СТАТУС ВЫПОЛНЕНИЯ (2026-07-06, утро)
+
+Владелец форкнул все 3 репо на GitHub; агент выполнил локальную часть:
+
+- **Клоны в амбрелле** (`origin`=highscrren-dotcom, `upstream`=backtest-kit),
+  все проиндексированы в codebase-memory, дубли из `_reference/` удалены.
+- **Правки на ветке `integration` в каждом форке** (master = чистый upstream для
+  ребейзов; отличия задокументированы в `README-FORK.md` внутри каждого репо):
+  - `backtest-ollama-crontab` (3485aa5): чужие TG-креды удалены (env обязателен,
+    гард с понятной ошибкой), **CC_RISK_GATE=llm|rules|off** (llm — дефолт, под
+    подписку Ollama владельца; rules — те же правила детерминированно),
+    redis-пароль из env, `scripts/export-parser-items.mjs` (Mongo → ParserItem
+    pump-anomaly, `--screened`), полный `.env.example`. Build ✓; тесты 33/35 —
+    два падения воспроизводятся на чистом upstream (флак апстрима).
+  - `backtest-kit-redis-mongo-docker` (3056847): `exchangeName` в ключе upsert'а
+    и уникальном индексе свечей (фикс коллизии мульти-биржи),
+    `CC_CANDLE_EXCHANGE_NAME`, redis-пароль из env. Build ✓.
+  - `backtest-monorepo-parallel` (ae09aed): чужие TG-креды удалены + гард,
+    redis-пароль из env. Build ✓. ⚠️ **LICENSE в upstream нет — владельцу
+    переключить форк в private руками** (gh cli на машине не установлен).
+- **Скилл завендорен**: `paperhands/.claude/skills/backtest-kit/` с правкой
+  маркетинга (секция «example генерит профит» → локальный example + доктрина;
+  evals #6-8 переписаны).
+- Push форков — по команде владельца (как всегда).
+
 ## Команды для владельца (GitHub + локально)
 
 ```bash
