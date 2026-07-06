@@ -95,6 +95,11 @@
 --init / --docker`. Бэктест: `npm start -- --backtest --symbol <SYM> <path.strategy.ts>`.
 Pine: `npm start -- --pine ./math/<f>.pine --timeframe 15m --limit 500 --when "<ISO>" --jsonl`.
 Сухой прогон брокер-хука: `npm start -- --brokerdebug --commit signal-open --symbol <SYM>`.
+**`--ui`** (подсказка автора, 2026-07-06, проверено на cli@14.1.0): веб-дашборд
+результатов на `http://localhost:60050` (порт — `CC_WWWROOT_PORT`), обновляется по
+ходу прогона; комбинируется с `--backtest`/`--paper`/`--live`. Тот же порт использует
+`--editor` (uzse-app) — не запускать одновременно. Полная справка по CLI — скилл
+[.claude/skills/backtest-kit](.claude/skills/backtest-kit/references/cli-and-broker.md).
 
 ## Как работаем (владелец)
 
