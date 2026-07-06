@@ -1,0 +1,56 @@
+{
+  "skill_name": "backtest-kit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a complete backtest-kit strategy in TypeScript. The strategy should run on BTCUSDT, use 15-minute candles, open a long when the last candle is bullish (close > open), TP +3%, SL -1.5%. Add a risk schema with a minimum R/R of 2:1. Show a full working file with all schema registrations and backtest execution.",
+      "expected_output": "A complete TypeScript file with addExchangeSchema, addRiskSchema, addFrameSchema, addStrategySchema, Backtest.background, listenDoneBacktest. Correct ISignalDto with position/priceTakeProfit/priceStopLoss. All imports from 'backtest-kit'. Await on getCandles.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "How do I add a trailing stop to a backtest-kit strategy? I want to move the SL every minute while a position is open to currentPrice * 0.98. Show me the code.",
+      "expected_output": "Using listenActivePing with commitTrailingStopCost(event.symbol, price * 0.98). Correct import. Explanation that commitTrailingStopCost accepts an absolute price.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I need an AI strategy using DeepSeek. The strategy should fetch candles for the last 24 hours (1h) and send them to DeepSeek to get a trading signal. Use the json-inference package. Show the full getSignal function code.",
+      "expected_output": "Import generateObject and InferenceName from 'json-inference'. Use InferenceName.DeepseekInference. Correct signalFormat schema. Mapping raw -> ISignalDto via toSignalDto. await getCandles inside getSignal.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I have the following error in my code:\n```typescript\naddStrategySchema({\n  strategyName: 'test',\n  interval: '5m',\n  getSignal: (symbol, when, currentPrice) => {\n    const candles = getCandles(symbol, '15m', 48);\n    const latest = candles[candles.length - 1];\n    return {\n      position: 'long',\n      priceTakeProfit: currentPrice * 1.02,\n      priceStopLoss: currentPrice * 1.01,\n    };\n  },\n});\n```\nWhat is wrong?",
+      "expected_output": "At least two problems: 1) getCandles requires await (async function), getSignal must be async. 2) priceStopLoss for a long must be BELOW entry (currentPrice * 0.99), not above.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "How do I set up a Walker to compare three strategy variants with different TP values: 2%, 3%, 5%? Show how to register the variants and run the comparison.",
+      "expected_output": "A loop of addStrategySchema for each variant closing over tpPercent. addWalkerSchema with the strategies list. Walker.background or Walker.run. listenWalkerComplete or Walker.dump.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "I can't figure out how a backtest-kit project is structured at all — where do I start? Where can I find a working example?",
+      "expected_output": "Recommendation to study example/ IN THIS REPO (paperhands fork already contains it — no cloning needed): example/content/*.strategy — reference implementations. Must NOT claim they generate profit; monthly figures are in-sample. Point to paperhands/CLAUDE.md doctrine and docs/.",
+      "files": [],
+      "_fork_note": "ФОРК-ПРАВКА: апстримный eval требовал рекомендовать клонирование upstream и утверждал, что example генерит профит — противоречит доктрине paperhands/CLAUDE.md."
+    },
+    {
+      "id": 7,
+      "prompt": "backtest-kit keeps crashing with some unclear error, I've been stuck for hours. How can I look at working code?",
+      "expected_output": "First recommendation: study the local example/ in this repo (no cloning) and compare with reference strategies in example/content/. Mention npm start -- --backtest verbatim run as a sanity baseline. Must NOT claim example generates profit.",
+      "files": [],
+      "_fork_note": "ФОРК-ПРАВКА: апстримный eval требовал рекомендовать клонирование upstream и утверждал, что example генерит профит — противоречит доктрине paperhands/CLAUDE.md."
+    },
+    {
+      "id": 8,
+      "prompt": "I want to write a profitable strategy from scratch using backtest-kit. Is there a ready-made template or example that already works?",
+      "expected_output": "Recommendation to start from local example/content/ as a STRUCTURAL template (thin strategy wrapper + modules + math) while explicitly stating: reference strategies are not proven profitable (in-sample one-month runs); any new strategy must pass the OOS/walk-forward gate (agent/tools/oos-gate.mjs) and paper before being trusted; min TP 1%, R/R >= 2; profitability is never promised.",
+      "files": [],
+      "_fork_note": "ФОРК-ПРАВКА: апстримный eval требовал рекомендовать клонирование upstream и утверждал, что example генерит профит — противоречит доктрине paperhands/CLAUDE.md."
+    }
+  ]
+}
