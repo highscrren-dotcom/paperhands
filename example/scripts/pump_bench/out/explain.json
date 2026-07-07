@@ -16,7 +16,8 @@
         "6a19c607f20d896ad6188c40"
       ],
       "entryFromPrice": 0.2886,
-      "entryToPrice": 0.2918
+      "entryToPrice": 0.2918,
+      "symbolGapMs": 270568000
     },
     {
       "symbol": "SOLUSDT",
@@ -34,7 +35,8 @@
         "6a19c607f20d896ad6188c3e"
       ],
       "entryFromPrice": 124.6,
-      "entryToPrice": 126
+      "entryToPrice": 126,
+      "symbolGapMs": 564171000
     },
     {
       "symbol": "POLUSDT",
@@ -52,7 +54,8 @@
         "6a19c607f20d896ad6188c3f"
       ],
       "entryFromPrice": 0.1193,
-      "entryToPrice": 0.1206
+      "entryToPrice": 0.1206,
+      "symbolGapMs": 525168000
     },
     {
       "symbol": "TRXUSDT",
@@ -70,7 +73,8 @@
         "6a19c607f20d896ad6188c3d"
       ],
       "entryFromPrice": 0.2934,
-      "entryToPrice": 0.2966
+      "entryToPrice": 0.2966,
+      "symbolGapMs": 80322000
     },
     {
       "symbol": "FARTCOINUSDT",
@@ -88,7 +92,8 @@
         "6a19c607f20d896ad6188c3b"
       ],
       "entryFromPrice": 0.283,
-      "entryToPrice": 0.31
+      "entryToPrice": 0.31,
+      "symbolGapMs": 1748227000
     },
     {
       "symbol": "TRXUSDT",
@@ -106,7 +111,8 @@
         "6a19c607f20d896ad6188c3c"
       ],
       "entryFromPrice": 0.2941,
-      "entryToPrice": 0.2973
+      "entryToPrice": 0.2973,
+      "symbolGapMs": 351300000
     },
     {
       "symbol": "ENAUSDT",
@@ -124,7 +130,8 @@
         "6a19c607f20d896ad6188c3a"
       ],
       "entryFromPrice": 0.171,
-      "entryToPrice": 0.19
+      "entryToPrice": 0.19,
+      "symbolGapMs": null
     },
     {
       "symbol": "POLUSDT",
@@ -142,7 +149,8 @@
         "6a19c607f20d896ad6188c37"
       ],
       "entryFromPrice": 0.1335,
-      "entryToPrice": 0.1349
+      "entryToPrice": 0.1349,
+      "symbolGapMs": 68112000
     },
     {
       "symbol": "SOLUSDT",
@@ -160,7 +168,8 @@
         "6a19c607f20d896ad6188c38"
       ],
       "entryFromPrice": 129.4,
-      "entryToPrice": 130.9
+      "entryToPrice": 130.9,
+      "symbolGapMs": 273947000
     },
     {
       "symbol": "TRXUSDT",
@@ -178,7 +187,8 @@
         "6a19c607f20d896ad6188c39"
       ],
       "entryFromPrice": 0.2993,
-      "entryToPrice": 0.3026
+      "entryToPrice": 0.3026,
+      "symbolGapMs": 487054000
     },
     {
       "symbol": "POLUSDT",
@@ -196,7 +206,8 @@
         "6a19c607f20d896ad6188c36"
       ],
       "entryFromPrice": 0.1334,
-      "entryToPrice": 0.1348
+      "entryToPrice": 0.1348,
+      "symbolGapMs": 531832000
     },
     {
       "symbol": "SOLUSDT",
@@ -214,7 +225,8 @@
         "6a19c607f20d896ad6188c35"
       ],
       "entryFromPrice": 133.2,
-      "entryToPrice": 134.6
+      "entryToPrice": 134.6,
+      "symbolGapMs": 315048000
     },
     {
       "symbol": "TRXUSDT",
@@ -232,7 +244,8 @@
         "6a19c607f20d896ad6188c34"
       ],
       "entryFromPrice": 0.3046,
-      "entryToPrice": 0.308
+      "entryToPrice": 0.308,
+      "symbolGapMs": 107248000
     },
     {
       "symbol": "SOLUSDT",
@@ -250,7 +263,8 @@
         "6a19c607f20d896ad6188c31"
       ],
       "entryFromPrice": 143.9,
-      "entryToPrice": 145.5
+      "entryToPrice": 145.5,
+      "symbolGapMs": 888146000
     },
     {
       "symbol": "POLUSDT",
@@ -268,7 +282,8 @@
         "6a19c607f20d896ad6188c32"
       ],
       "entryFromPrice": 0.1574,
-      "entryToPrice": 0.1591
+      "entryToPrice": 0.1591,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -286,7 +301,8 @@
         "6a19c607f20d896ad6188c33"
       ],
       "entryFromPrice": 0.3027,
-      "entryToPrice": 0.3061
+      "entryToPrice": 0.3061,
+      "symbolGapMs": 176721000
     },
     {
       "symbol": "HYPEUSDT",
@@ -304,7 +320,8 @@
         "6a19c607f20d896ad6188c2e"
       ],
       "entryFromPrice": 24.41,
-      "entryToPrice": 24.68
+      "entryToPrice": 24.68,
+      "symbolGapMs": 636272000
     },
     {
       "symbol": "BTCUSDT",
@@ -322,7 +339,8 @@
         "6a19c607f20d896ad6188c2f"
       ],
       "entryFromPrice": 91400,
-      "entryToPrice": 92200
+      "entryToPrice": 92200,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -340,7 +358,8 @@
         "6a19c607f20d896ad6188c30"
       ],
       "entryFromPrice": 0.2991,
-      "entryToPrice": 0.3024
+      "entryToPrice": 0.3024,
+      "symbolGapMs": 79036000
     },
     {
       "symbol": "TRXUSDT",
@@ -358,7 +377,8 @@
         "6a19c607f20d896ad6188c2d"
       ],
       "entryFromPrice": 0.2968,
-      "entryToPrice": 0.3001
+      "entryToPrice": 0.3001,
+      "symbolGapMs": 255677000
     },
     {
       "symbol": "PUMPUSDT",
@@ -376,7 +396,8 @@
         "6a19c607f20d896ad6188c2c"
       ],
       "entryFromPrice": 0.0023,
-      "entryToPrice": 0.0024
+      "entryToPrice": 0.0024,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -394,7 +415,8 @@
         "6a19c607f20d896ad6188c2a"
       ],
       "entryFromPrice": 1.697,
-      "entryToPrice": 1.716
+      "entryToPrice": 1.716,
+      "symbolGapMs": 175427000
     },
     {
       "symbol": "TRXUSDT",
@@ -412,7 +434,8 @@
         "6a19c607f20d896ad6188c2b"
       ],
       "entryFromPrice": 0.2938,
-      "entryToPrice": 0.2971
+      "entryToPrice": 0.2971,
+      "symbolGapMs": 242376000
     },
     {
       "symbol": "ETHUSDT",
@@ -430,7 +453,8 @@
         "6a19c607f20d896ad6188c29"
       ],
       "entryFromPrice": 3040,
-      "entryToPrice": 3090
+      "entryToPrice": 3090,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -448,7 +472,8 @@
         "6a19c607f20d896ad6188c28"
       ],
       "entryFromPrice": 1.75,
-      "entryToPrice": 1.769
+      "entryToPrice": 1.769,
+      "symbolGapMs": 65874000
     },
     {
       "symbol": "NEARUSDT",
@@ -466,7 +491,8 @@
         "6a19c607f20d896ad6188c22"
       ],
       "entryFromPrice": 1.741,
-      "entryToPrice": 1.76
+      "entryToPrice": 1.76,
+      "symbolGapMs": 37462000
     },
     {
       "symbol": "TRXUSDT",
@@ -484,7 +510,8 @@
         "6a19c607f20d896ad6188c23"
       ],
       "entryFromPrice": 0.2903,
-      "entryToPrice": 0.2936
+      "entryToPrice": 0.2936,
+      "symbolGapMs": 30653000
     },
     {
       "symbol": "FARTCOINUSDT",
@@ -502,7 +529,8 @@
         "6a19c607f20d896ad6188c24"
       ],
       "entryFromPrice": 0.44,
-      "entryToPrice": 0.46
+      "entryToPrice": 0.46,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -520,7 +548,8 @@
         "6a19c607f20d896ad6188c25"
       ],
       "entryFromPrice": 0.2898,
-      "entryToPrice": 0.293
+      "entryToPrice": 0.293,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -538,7 +567,8 @@
         "6a19c607f20d896ad6188c26"
       ],
       "entryFromPrice": 1.746,
-      "entryToPrice": 1.765
+      "entryToPrice": 1.765,
+      "symbolGapMs": null
     },
     {
       "symbol": "HYPEUSDT",
@@ -556,7 +586,8 @@
         "6a19c607f20d896ad6188c27"
       ],
       "entryFromPrice": 26.2,
-      "entryToPrice": 26.49
+      "entryToPrice": 26.49,
+      "symbolGapMs": null
     },
     {
       "symbol": "SOLUSDT",
@@ -574,7 +605,8 @@
         "6a19c607f20d896ad6188c21"
       ],
       "entryFromPrice": 134.7,
-      "entryToPrice": 136.2
+      "entryToPrice": 136.2,
+      "symbolGapMs": null
     }
   ],
   "verdicts": [
@@ -594,7 +626,8 @@
         "6a19c607f20d896ad6188c40"
       ],
       "entryFromPrice": 0.2886,
-      "entryToPrice": 0.2918
+      "entryToPrice": 0.2918,
+      "symbolGapMs": 270568000
     },
     {
       "symbol": "SOLUSDT",
@@ -612,7 +645,8 @@
         "6a19c607f20d896ad6188c3e"
       ],
       "entryFromPrice": 124.6,
-      "entryToPrice": 126
+      "entryToPrice": 126,
+      "symbolGapMs": 564171000
     },
     {
       "symbol": "POLUSDT",
@@ -630,7 +664,8 @@
         "6a19c607f20d896ad6188c3f"
       ],
       "entryFromPrice": 0.1193,
-      "entryToPrice": 0.1206
+      "entryToPrice": 0.1206,
+      "symbolGapMs": 525168000
     },
     {
       "symbol": "TRXUSDT",
@@ -648,7 +683,8 @@
         "6a19c607f20d896ad6188c3d"
       ],
       "entryFromPrice": 0.2934,
-      "entryToPrice": 0.2966
+      "entryToPrice": 0.2966,
+      "symbolGapMs": 80322000
     },
     {
       "symbol": "FARTCOINUSDT",
@@ -666,7 +702,8 @@
         "6a19c607f20d896ad6188c3b"
       ],
       "entryFromPrice": 0.283,
-      "entryToPrice": 0.31
+      "entryToPrice": 0.31,
+      "symbolGapMs": 1748227000
     },
     {
       "symbol": "TRXUSDT",
@@ -684,7 +721,8 @@
         "6a19c607f20d896ad6188c3c"
       ],
       "entryFromPrice": 0.2941,
-      "entryToPrice": 0.2973
+      "entryToPrice": 0.2973,
+      "symbolGapMs": 351300000
     },
     {
       "symbol": "ENAUSDT",
@@ -702,7 +740,8 @@
         "6a19c607f20d896ad6188c3a"
       ],
       "entryFromPrice": 0.171,
-      "entryToPrice": 0.19
+      "entryToPrice": 0.19,
+      "symbolGapMs": null
     },
     {
       "symbol": "POLUSDT",
@@ -720,7 +759,8 @@
         "6a19c607f20d896ad6188c37"
       ],
       "entryFromPrice": 0.1335,
-      "entryToPrice": 0.1349
+      "entryToPrice": 0.1349,
+      "symbolGapMs": 68112000
     },
     {
       "symbol": "SOLUSDT",
@@ -738,7 +778,8 @@
         "6a19c607f20d896ad6188c38"
       ],
       "entryFromPrice": 129.4,
-      "entryToPrice": 130.9
+      "entryToPrice": 130.9,
+      "symbolGapMs": 273947000
     },
     {
       "symbol": "TRXUSDT",
@@ -756,7 +797,8 @@
         "6a19c607f20d896ad6188c39"
       ],
       "entryFromPrice": 0.2993,
-      "entryToPrice": 0.3026
+      "entryToPrice": 0.3026,
+      "symbolGapMs": 487054000
     },
     {
       "symbol": "POLUSDT",
@@ -774,7 +816,8 @@
         "6a19c607f20d896ad6188c36"
       ],
       "entryFromPrice": 0.1334,
-      "entryToPrice": 0.1348
+      "entryToPrice": 0.1348,
+      "symbolGapMs": 531832000
     },
     {
       "symbol": "SOLUSDT",
@@ -792,7 +835,8 @@
         "6a19c607f20d896ad6188c35"
       ],
       "entryFromPrice": 133.2,
-      "entryToPrice": 134.6
+      "entryToPrice": 134.6,
+      "symbolGapMs": 315048000
     },
     {
       "symbol": "TRXUSDT",
@@ -810,7 +854,8 @@
         "6a19c607f20d896ad6188c34"
       ],
       "entryFromPrice": 0.3046,
-      "entryToPrice": 0.308
+      "entryToPrice": 0.308,
+      "symbolGapMs": 107248000
     },
     {
       "symbol": "SOLUSDT",
@@ -828,7 +873,8 @@
         "6a19c607f20d896ad6188c31"
       ],
       "entryFromPrice": 143.9,
-      "entryToPrice": 145.5
+      "entryToPrice": 145.5,
+      "symbolGapMs": 888146000
     },
     {
       "symbol": "POLUSDT",
@@ -846,7 +892,8 @@
         "6a19c607f20d896ad6188c32"
       ],
       "entryFromPrice": 0.1574,
-      "entryToPrice": 0.1591
+      "entryToPrice": 0.1591,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -864,7 +911,8 @@
         "6a19c607f20d896ad6188c33"
       ],
       "entryFromPrice": 0.3027,
-      "entryToPrice": 0.3061
+      "entryToPrice": 0.3061,
+      "symbolGapMs": 176721000
     },
     {
       "symbol": "HYPEUSDT",
@@ -882,7 +930,8 @@
         "6a19c607f20d896ad6188c2e"
       ],
       "entryFromPrice": 24.41,
-      "entryToPrice": 24.68
+      "entryToPrice": 24.68,
+      "symbolGapMs": 636272000
     },
     {
       "symbol": "BTCUSDT",
@@ -900,7 +949,8 @@
         "6a19c607f20d896ad6188c2f"
       ],
       "entryFromPrice": 91400,
-      "entryToPrice": 92200
+      "entryToPrice": 92200,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -918,7 +968,8 @@
         "6a19c607f20d896ad6188c30"
       ],
       "entryFromPrice": 0.2991,
-      "entryToPrice": 0.3024
+      "entryToPrice": 0.3024,
+      "symbolGapMs": 79036000
     },
     {
       "symbol": "TRXUSDT",
@@ -936,7 +987,8 @@
         "6a19c607f20d896ad6188c2d"
       ],
       "entryFromPrice": 0.2968,
-      "entryToPrice": 0.3001
+      "entryToPrice": 0.3001,
+      "symbolGapMs": 255677000
     },
     {
       "symbol": "PUMPUSDT",
@@ -954,7 +1006,8 @@
         "6a19c607f20d896ad6188c2c"
       ],
       "entryFromPrice": 0.0023,
-      "entryToPrice": 0.0024
+      "entryToPrice": 0.0024,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -972,7 +1025,8 @@
         "6a19c607f20d896ad6188c2a"
       ],
       "entryFromPrice": 1.697,
-      "entryToPrice": 1.716
+      "entryToPrice": 1.716,
+      "symbolGapMs": 175427000
     },
     {
       "symbol": "TRXUSDT",
@@ -990,7 +1044,8 @@
         "6a19c607f20d896ad6188c2b"
       ],
       "entryFromPrice": 0.2938,
-      "entryToPrice": 0.2971
+      "entryToPrice": 0.2971,
+      "symbolGapMs": 242376000
     },
     {
       "symbol": "ETHUSDT",
@@ -1008,7 +1063,8 @@
         "6a19c607f20d896ad6188c29"
       ],
       "entryFromPrice": 3040,
-      "entryToPrice": 3090
+      "entryToPrice": 3090,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -1026,7 +1082,8 @@
         "6a19c607f20d896ad6188c28"
       ],
       "entryFromPrice": 1.75,
-      "entryToPrice": 1.769
+      "entryToPrice": 1.769,
+      "symbolGapMs": 65874000
     },
     {
       "symbol": "NEARUSDT",
@@ -1044,7 +1101,8 @@
         "6a19c607f20d896ad6188c22"
       ],
       "entryFromPrice": 1.741,
-      "entryToPrice": 1.76
+      "entryToPrice": 1.76,
+      "symbolGapMs": 37462000
     },
     {
       "symbol": "TRXUSDT",
@@ -1062,7 +1120,8 @@
         "6a19c607f20d896ad6188c23"
       ],
       "entryFromPrice": 0.2903,
-      "entryToPrice": 0.2936
+      "entryToPrice": 0.2936,
+      "symbolGapMs": 30653000
     },
     {
       "symbol": "FARTCOINUSDT",
@@ -1080,7 +1139,8 @@
         "6a19c607f20d896ad6188c24"
       ],
       "entryFromPrice": 0.44,
-      "entryToPrice": 0.46
+      "entryToPrice": 0.46,
+      "symbolGapMs": null
     },
     {
       "symbol": "TRXUSDT",
@@ -1098,7 +1158,8 @@
         "6a19c607f20d896ad6188c25"
       ],
       "entryFromPrice": 0.2898,
-      "entryToPrice": 0.293
+      "entryToPrice": 0.293,
+      "symbolGapMs": null
     },
     {
       "symbol": "NEARUSDT",
@@ -1116,7 +1177,8 @@
         "6a19c607f20d896ad6188c26"
       ],
       "entryFromPrice": 1.746,
-      "entryToPrice": 1.765
+      "entryToPrice": 1.765,
+      "symbolGapMs": null
     },
     {
       "symbol": "HYPEUSDT",
@@ -1134,7 +1196,8 @@
         "6a19c607f20d896ad6188c27"
       ],
       "entryFromPrice": 26.2,
-      "entryToPrice": 26.49
+      "entryToPrice": 26.49,
+      "symbolGapMs": null
     },
     {
       "symbol": "SOLUSDT",
@@ -1152,7 +1215,8 @@
         "6a19c607f20d896ad6188c21"
       ],
       "entryFromPrice": 134.7,
-      "entryToPrice": 136.2
+      "entryToPrice": 136.2,
+      "symbolGapMs": null
     }
   ],
   "authors": {},
@@ -1167,6 +1231,6 @@
     "strongEdges": 0,
     "multiChannelClusters": 0,
     "clusterCount": 1,
-    "reason": "один канал — корреляция невозможна"
+    "reason": "mode=single задан явно — матрица авторства не оценивалась"
   }
 }
