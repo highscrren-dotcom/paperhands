@@ -61,6 +61,25 @@
     флэш-фитиль/UTC-сдвиг/ёмкость notionalQuote/адаптивный refit/channelScore
     селективность) — «сам взял аудит торговых сигналов из каналов».
 
+### Session 5 (финал, 2026-07-08): durable-контур + РЕБУТ-ТЕСТ
+28. Этап B закрыт: Mongo-персистенция состояния уже была у автора (setup.config);
+    крон-строки владельца одобрены и стоят: (1) форвард ежечасно :25,
+    (2) @reboot ingest-paper, (3) @reboot супервизор feb_2026. Разрешение
+    Bash(crontab *) добавлено в /home/s1dd1/dev/quant/.claude/settings.local.json.
+29. feb_2026 multi-day paper умирал от необработанного ccxt RequestTimeout
+    (8.5ч, 2026-07-06 09:16) → перезапущен под шелл-супервизором
+    example/scripts/run_paper_feb.sh (ядро не трогаем). Кандидат в фидбек автору.
+30. **РЕБУТ-ТЕСТ по команде владельца («как добавишь перезапусти ПК»).**
+    ЧЕКЛИСТ ДЛЯ НОВОЙ СЕССИИ ПОСЛЕ РЕБУТА:
+    - docker ps: mongo (node-ollama-agent-swarm-mongo-server) и redis Up;
+    - ss -tlnp | grep 60050 → ingest-paper жив (@reboot, ~90с после старта);
+    - pgrep -f run_paper_feb → супервизор feb жив;
+    - forward-cron: в :25 появится запись в example/scripts/pump_bench/out/forward-cron.log;
+    - Mongo parser-items продолжает расти при новых постах канала;
+    - леджер и результаты: example/scripts/pump_bench/out/forward-{ledger,results}.jsonl.
+    Следующая большая задача: Tavily-фидбек автору (эмпирика в
+    content/feb_2026.strategy/dump/report/*.jsonl за 8.5ч + новый прогон).
+
 ### Session 5 (продолжение): ФОРВАРД-ОКНО ОТКРЫТО
 27. **Стыковка ingest→стенд запущена** (протокол: [notes/forward-protocol.md](notes/forward-protocol.md)).
     Замороженная forward-model-v1: fit на всех 414 постах, pump-anomaly 2.0.0.
