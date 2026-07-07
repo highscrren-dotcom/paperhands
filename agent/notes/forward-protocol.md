@@ -77,9 +77,9 @@ pump-anomaly 2.0.0 сама блокирует live-сигналы несерт�
   `setup()` из `@backtest-kit/mongo` + `usePersist()` для Session/Storage/State/
   Memory/Notification; `signal-items` в Mongo = позиции переживают рестарт).
   Рестарт-смоук пройден (kill → чистый старт, UI 200, 0 ошибок). Redis жив.
-  Форвард-cron стоит (ежечасно :25). Осталось: `@reboot`-воскрешение paper-процесса
-  (строка готова, ждёт явного «да» владельца — классификатор требует отдельного
-  разрешения):
+  Форвард-cron стоит (ежечасно :25). `@reboot`-воскрешение paper-процесса
+  УСТАНОВЛЕНО (2026-07-08, явное «ставь @reboot» владельца) — **этап B закрыт
+  полностью**; при @reboot-запуске `$!` = PID node напрямую (без npm-обёртки):
 
   ```
   @reboot sleep 90 && cd /home/s1dd1/dev/quant/backtest-ollama-crontab && (/home/s1dd1/.nvm/versions/node/v24.17.0/bin/node ./node_modules/@backtest-kit/cli/build/index.mjs --paper --ui --entry ./content/jan_2026.strategy/jan_2026.strategy.ts >> logs/paper-ingest.log 2>&1 & echo $! > logs/paper-ingest.pid)
