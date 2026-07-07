@@ -72,6 +72,19 @@ pump-anomaly 2.0.0 сама блокирует live-сигналы несерт�
   ```bash
   (crontab -l 2>/dev/null; echo '25 * * * * cd /home/s1dd1/dev/quant/paperhands/example && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/pump_bench/forward.mjs >> scripts/pump_bench/out/forward-cron.log 2>&1') | crontab -
   ```
-- Уязвимость: ребут машины кладёт и ingest, и Mongo (docker restart=always
-  поднимет Mongo; paper-процесс НЕ переживёт — durable-вариант = этап B,
-  redis-mongo-персистенция + docker).
+- **Этап B (статус 2026-07-08): состояние — DURABLE, процесс — почти.**
+  Mongo-персистенция уже смонтирована АВТОРОМ в ingest (`config/setup.config.ts`:
+  `setup()` из `@backtest-kit/mongo` + `usePersist()` для Session/Storage/State/
+  Memory/Notification; `signal-items` в Mongo = позиции переживают рестарт).
+  Рестарт-смоук пройден (kill → чистый старт, UI 200, 0 ошибок). Redis жив.
+  Форвард-cron стоит (ежечасно :25). Осталось: `@reboot`-воскрешение paper-процесса
+  (строка готова, ждёт явного «да» владельца — классификатор требует отдельного
+  разрешения):
+
+  ```
+  @reboot sleep 90 && (/home/s1dd1/.nvm/versions/node/v24.17.0/bin/node ./node_modules/@backtest-kit/cli/build/index.mjs --paper --ui --entry ./content/jan_2026.strategy/jan_2026.strategy.ts >> logs/paper-ingest.log 2>&1 & echo $! > logs/paper-ingest.pid)
+  ```
+
+  ⚠️ Урок: pid-файл должен хранить PID node-процесса, НЕ npm-обёртки (kill
+  обёртки оставляет node сиротой — так расплодились 4 параллельных paper).
+  Надёжный способ найти процесс: `ss -tlnp | grep 60050`.
