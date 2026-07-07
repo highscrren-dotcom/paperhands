@@ -70,7 +70,7 @@ pump-anomaly 2.0.0 сама блокирует live-сигналы несерт�
   владельца; агенту запись в crontab запрещена политикой):
 
   ```bash
-  (crontab -l 2>/dev/null; echo '25 * * * * /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/pump_bench/forward.mjs >> scripts/pump_bench/out/forward-cron.log 2>&1') | crontab -
+  (crontab -l 2>/dev/null; echo '25 * * * * cd /home/s1dd1/dev/quant/paperhands/example && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/pump_bench/forward.mjs >> scripts/pump_bench/out/forward-cron.log 2>&1') | crontab -
   ```
 - Уязвимость: ребут машины кладёт и ingest, и Mongo (docker restart=always
   поднимет Mongo; paper-процесс НЕ переживёт — durable-вариант = этап B,
