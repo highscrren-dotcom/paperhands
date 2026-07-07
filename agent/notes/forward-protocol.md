@@ -82,7 +82,7 @@ pump-anomaly 2.0.0 сама блокирует live-сигналы несерт�
   разрешения):
 
   ```
-  @reboot sleep 90 && (/home/s1dd1/.nvm/versions/node/v24.17.0/bin/node ./node_modules/@backtest-kit/cli/build/index.mjs --paper --ui --entry ./content/jan_2026.strategy/jan_2026.strategy.ts >> logs/paper-ingest.log 2>&1 & echo $! > logs/paper-ingest.pid)
+  @reboot sleep 90 && cd /home/s1dd1/dev/quant/backtest-ollama-crontab && (/home/s1dd1/.nvm/versions/node/v24.17.0/bin/node ./node_modules/@backtest-kit/cli/build/index.mjs --paper --ui --entry ./content/jan_2026.strategy/jan_2026.strategy.ts >> logs/paper-ingest.log 2>&1 & echo $! > logs/paper-ingest.pid)
   ```
 
   ⚠️ Урок: pid-файл должен хранить PID node-процесса, НЕ npm-обёртки (kill
