@@ -1,0 +1,58 @@
+{
+  "frozenAt": "2026-07-07T19:08:45.924Z",
+  "trainItems": 414,
+  "trainRange": "2025-04..2026-04 (вся история канала)",
+  "mode": "single",
+  "reliable": false,
+  "confidence": 0.107965,
+  "deployment": {
+    "verdict": "paper",
+    "reasons": [
+      "сертификат красный — live-сигналы требуют acknowledgeUncertified (paper/микро-режим):",
+      "DSR 0.026 < 0.95 — эдж не переживает поправку на 16438 испытаний",
+      "PBO 0.833 > 0.1 — конфиг оверфитнут (CSCV)",
+      "SPA p-value 0.059 > 0.05 — эдж объясним data-snooping",
+      "nested OOS-score -0.0005 ≤ 0 — несмещённый прогноз не положителен"
+    ]
+  },
+  "certification": {
+    "certified": false,
+    "dsr": 0.026473439275299573,
+    "pbo": 0.8333333333333334,
+    "spaPValue": 0.058941058941058944,
+    "minTRL": 24.765889951471834,
+    "actualN": 118,
+    "nestedScore": -0.000484,
+    "reasons": [
+      "DSR 0.026 < 0.95 — эдж не переживает поправку на 16438 испытаний",
+      "PBO 0.833 > 0.1 — конфиг оверфитнут (CSCV)",
+      "SPA p-value 0.059 > 0.05 — эдж объясним data-snooping",
+      "nested OOS-score -0.0005 ≤ 0 — несмещённый прогноз не положителен"
+    ]
+  },
+  "exitGlobal": {
+    "trailingTake": 2.48,
+    "hardStop": 1.7536,
+    "stalenessSinceProfit": 0.62,
+    "stalenessSinceMinutes": 60,
+    "staleMinutes": 240,
+    "volZThreshold": 1.5,
+    "squeezePolicy": "invert",
+    "squeezeThreshold": 0.55,
+    "volBaselineWindow": 20,
+    "cascadeWindowMinutes": 60,
+    "roundTripCostPct": 0.1103,
+    "slippageRangeFrac": 0
+  },
+  "labeling": {
+    "candidates": 414,
+    "outcomes": {
+      "ok": 394,
+      "no-entry": 19,
+      "no-candles": 1
+    },
+    "errors": {},
+    "invalidItems": 0
+  },
+  "library": "pump-anomaly@2.0.0"
+}

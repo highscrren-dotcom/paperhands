@@ -1,11 +1,8 @@
 {
   "disclaimer": "IN-SAMPLE (модель обучена на этих же 32 постах). pnl СЫРОЙ: без комиссии/слиппеджа/фандинга/спреда.",
   "items": 32,
-  "planSignals": 32,
-  "planActions": {
-    "enter": 28,
-    "invert": 4
-  },
+  "planSignals": 0,
+  "planActions": {},
   "backtestSignals": 32,
   "entered": 32,
   "skipped": 0,
@@ -18,34 +15,34 @@
   },
   "raw": {
     "n": 32,
-    "winRatePct": 62.5,
-    "meanPct": 0.86,
-    "medianPct": 0.42,
-    "stdPct": 1.74,
-    "perTradeSharpe": 0.5,
-    "sumPct": 27.57,
+    "winRatePct": 59.38,
+    "meanPct": 0.53,
+    "medianPct": 0.33,
+    "stdPct": 1.34,
+    "perTradeSharpe": 0.39,
+    "sumPct": 16.88,
     "maxDDPct": -3.05
   },
   "afterFriction": {
     "0.2%_за_раундтрип": {
       "n": 32,
-      "winRatePct": 56.25,
-      "meanPct": 0.66,
-      "medianPct": 0.22,
-      "stdPct": 1.74,
-      "perTradeSharpe": 0.38,
-      "sumPct": 21.17,
+      "winRatePct": 53.13,
+      "meanPct": 0.33,
+      "medianPct": 0.13,
+      "stdPct": 1.34,
+      "perTradeSharpe": 0.24,
+      "sumPct": 10.48,
       "maxDDPct": -3.85
     },
     "0.4%_за_раундтрип": {
       "n": 32,
-      "winRatePct": 50,
-      "meanPct": 0.46,
-      "medianPct": 0.02,
-      "stdPct": 1.74,
-      "perTradeSharpe": 0.27,
-      "sumPct": 14.77,
-      "maxDDPct": -4.65
+      "winRatePct": 46.88,
+      "meanPct": 0.13,
+      "medianPct": -0.07,
+      "stdPct": 1.34,
+      "perTradeSharpe": 0.1,
+      "sumPct": 4.08,
+      "maxDDPct": -5.99
     }
   },
   "bySymbol": {
@@ -82,11 +79,11 @@
     "FARTCOINUSDT": {
       "n": 2,
       "winRatePct": 50,
-      "meanPct": 0.74,
-      "medianPct": 0.74,
-      "stdPct": 2.46,
-      "perTradeSharpe": 0.3,
-      "sumPct": 1.47,
+      "meanPct": -0.27,
+      "medianPct": -0.27,
+      "stdPct": 1.03,
+      "perTradeSharpe": -0.26,
+      "sumPct": -0.54,
       "maxDDPct": -1
     },
     "HYPEUSDT": {
@@ -102,21 +99,21 @@
     "NEARUSDT": {
       "n": 4,
       "winRatePct": 75,
-      "meanPct": 1.83,
-      "medianPct": 2.2,
-      "stdPct": 2.3,
-      "perTradeSharpe": 0.8,
-      "sumPct": 7.32,
+      "meanPct": 1.44,
+      "medianPct": 1.66,
+      "stdPct": 2.1,
+      "perTradeSharpe": 0.69,
+      "sumPct": 5.77,
       "maxDDPct": -1
     },
     "POLUSDT": {
       "n": 4,
       "winRatePct": 100,
-      "meanPct": 3.68,
-      "medianPct": 3.62,
-      "stdPct": 0.72,
-      "perTradeSharpe": 5.14,
-      "sumPct": 14.74,
+      "meanPct": 2.16,
+      "medianPct": 2.1,
+      "stdPct": 0.19,
+      "perTradeSharpe": 11.51,
+      "sumPct": 8.62,
       "maxDDPct": 0
     },
     "PUMPUSDT": {
@@ -141,12 +138,12 @@
     },
     "TRXUSDT": {
       "n": 11,
-      "winRatePct": 54.55,
-      "meanPct": 0.38,
-      "medianPct": 0.68,
-      "stdPct": 1.44,
-      "perTradeSharpe": 0.26,
-      "sumPct": 4.19,
+      "winRatePct": 45.45,
+      "meanPct": 0.29,
+      "medianPct": 0,
+      "stdPct": 1.4,
+      "perTradeSharpe": 0.21,
+      "sumPct": 3.19,
       "maxDDPct": -3.12
     }
   },
