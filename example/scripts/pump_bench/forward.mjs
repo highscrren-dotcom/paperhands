@@ -25,7 +25,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { PumpMatrix } from "pump-anomaly";
+import { PumpMatrix, PaperTrader } from "pump-anomaly";
 
 import { getCandles } from "./fast_candles.mjs";
 import { aggregate, pct } from "./lib.mjs";
@@ -66,8 +66,16 @@ const toParserItem = (d) => ({
 });
 
 const seen = new Set(readJsonl(LEDGER).map((r) => r.item.id));
-const fresh = docs.map(toParserItem).filter((i) => !seen.has(i.id));
+let fresh = docs.map(toParserItem).filter((i) => !seen.has(i.id));
 console.log(`[forward] в Mongo: ${docs.length}, новых для решения: ${fresh.length}`);
+
+// стоп-флаг дрейф-монитора: alarm → новых решений не принимаем до решения
+// владельца (EVALUATE продолжается — созревшие сделки дооцениваем всегда)
+const ALARM_FLAG = join(OUT, "DRIFT-ALARM");
+if (fresh.length && existsSync(ALARM_FLAG)) {
+  console.log(`[forward] ДРЕЙФ-АЛАРМ активен (${ALARM_FLAG}) — DECIDE пропущен для ${fresh.length} новых постов`);
+  fresh = [];
+}
 
 if (fresh.length) {
   // live-семантика: свечи строго до сигнала; ack — задокументированное решение
@@ -131,6 +139,32 @@ if (results.length) {
   const pnls = results.sort((a, b) => a.ts - b.ts).map((r) => r.result.pnl);
   console.log("[forward] ФОРВАРД-СВОДКА (сырая):", JSON.stringify(aggregate(pnls)));
   console.log("[forward] после 0.4% haircut:", JSON.stringify(aggregate(pnls.map((x) => x - 0.004))));
+
+  // ---------- дрейф-монитор (PaperTrader: CUSUM + KS против history модели) ----------
+  // planForAt() отдаёт БРУТТО-pnl (replay без издержек), baseline history —
+  // НЕТТО (roundTripCostPct вшит в разметку fit) → перед record вычитаем COST
+  // модели, чтобы монитор сравнивал яблоки с яблоками. 0.4% haircut выше —
+  // отдельный консервативный сценарий сводки, в монитор его не тащим.
+  const COST = (JSON.parse(readFileSync(MODEL_FILE, "utf8")).exit?.global?.roundTripCostPct ?? 0) / 100;
+  const pt = new PaperTrader(model);
+  for (const r of results) pt.record({ ts: r.ts, pnl: r.result.pnl - COST, symbol: r.symbol });
+  const drift = pt.status();
+  console.log("[forward] ДРЕЙФ:", JSON.stringify({
+    alarm: drift.alarm,
+    n: drift.n,
+    cusum: drift.cusum.stat,
+    ksPValue: drift.ks?.pValue ?? null,
+    meanForward: drift.meanForward,
+    meanBaseline: drift.meanBaseline,
+    tradesToSignificance: drift.tradesToSignificance,
+  }));
+  for (const line of drift.reasons) console.log("[forward]   " + line);
+  if (drift.alarm && !existsSync(ALARM_FLAG)) {
+    // стоп-флаг: DECIDE замирает со следующего прогона; снятие — решение
+    // владельца (rm флага); авто-refit НЕ делаем (cadence-guard + протокол)
+    writeFileSync(ALARM_FLAG, JSON.stringify({ raisedAt: new Date().toISOString(), drift }, null, 2));
+    console.log(`[forward] ⚠️ ДРЕЙФ-АЛАРМ: записан стоп-флаг ${ALARM_FLAG}`);
+  }
 } else {
   console.log("[forward] реализованных форвард-сделок пока нет");
 }
