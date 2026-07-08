@@ -63,6 +63,23 @@
     `kill $(cat logs/live-ingest.pid)` (позиция остаётся на бирже!).
     Сайзинг: дефолт CC_POSITION_ENTRY_COST=$100 → при балансе ~$100 живёт
     только ОДНА позиция за раз (второй open упадёт и будет ретраиться — ок).
+48. **Вечер 08.07: подключены источники-мониторы + pgpool-контур (без денег).**
+    (а) volume-anomaly (источник B): example/scripts/volume_monitor.mjs
+    (паттерн scan() автора), крон */15, лог out/volume-monitor.log; первая
+    strong-аномалия поймана (ZEC 22:30, conf 0.77). (б) trading-agents
+    (источник C): поднят локально через uv на :8080, LLM = Ollama Cloud через
+    openai_compatible (OPENAI_COMPATIBLE_API_KEY + TRADINGAGENTS_LLM_BACKEND_URL
+    =https://ollama.com/v1); фикс регистра сигнала в форке (c6ed94c); смоук
+    HTTP 200, вердикты недетерминированы (Overweight/Hold/Underweight за
+    вечер) — использовать как советника, НЕ как сигнал. Известный шум:
+    fapi.binance.com klines по HYPE/FARTCOIN стабильно fetch-failed из
+    контура гейта (24 за 2ч; сигналам SOL/PENGU/TAO не мешало — следить).
+    (в) Новый репо автора backtest-kit-redis-postgres-pgpool-docker форкнут,
+    склонирован, проиндексирован; кластер pgcluster :5432 healthy, бэктест
+    прошёл, 44665 свечей в Postgres через Pgpool — альтернатива Mongo для
+    VPS. (г) Автору отправлены 4 вопроса (volume-anomaly стыковка, пример
+    signals-стратегии, место trading-agents, делёж источников; Veles снят —
+    его планы). Промт на поиск каналов-сиблингов Yoda выдан владельцу.
 47. **РЕШЕНИЕ ВЛАДЕЛЬЦА (после глубокого сравнения фильтров): «оставляем всё
     как у автора, ничего не придумываем»** — наш фильтр шортов СНЯТ,
     `jan_2026.strategy.ts` возвращён к апстриму бит-в-бит; short-сигналы в
