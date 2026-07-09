@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 import { PumpMatrix, PaperTrader } from "pump-anomaly";
 
 import { getCandles } from "./fast_candles.mjs";
+import { getFactors } from "./factors.mjs";
 import { aggregate, pct } from "./lib.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -88,12 +89,16 @@ if (fresh.length) {
   const byExpKey = new Map(explains.map((e) => [`${e.symbol}|${e.ts}`, e]));
   for (const item of fresh) {
     const key = `${item.symbol}|${item.ts}`;
+    // факторы demo/ccxt (volume-skew + garch) — observation-only: пишем рядом
+    // с решением для будущей оценки их ценности, на решение НЕ влияют
+    const factors = await getFactors(item.symbol);
     const rec = {
       decidedAt: new Date().toISOString(),
       modelVersion: "forward-v1",
       item,
       signal: bySigKey.get(key) ?? null,
       explain: byExpKey.get(key) ?? null,
+      factors,
     };
     appendFileSync(LEDGER, JSON.stringify(rec) + "\n");
     console.log(`[forward] ${item.symbol} ${item.direction} @${new Date(item.ts).toISOString()} → ${
