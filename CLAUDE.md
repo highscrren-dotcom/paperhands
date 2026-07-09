@@ -122,4 +122,9 @@ Evidence-first, без хайпа: benchmark + fees/slippage + drawdown всег
 - **AI:** Ollama Cloud (`minimax-m2.7:cloud`) + Tavily Free; ключи в `example/.env` (проверены).
   Claude не используем (дорого). Healthcheck: `example/scripts/ai-healthcheck.mjs`.
 - **Binance trade-ключи — только перед live** (Phase 5); backtest/paper ключей не требуют.
-- **Следующий шаг:** Phase 3 — стратегия июнь-2026 ETHUSDT (трендследящий SHORT).
+- **LIVE запущен (2026-07-08):** jan_2026, spot-only, $100, из форка
+  `../backtest-ollama-crontab` (@reboot, дословный авторский Spot-брокер).
+  Принцип владельца: «всё как у автора, ничего не придумываем».
+- **Следующий шаг:** интеграция volume-anomaly/garch/pump по образцу
+  [demo/ccxt/src/index.mjs](demo/ccxt/src/index.mjs) (ответ автора) + записка
+  автору с Tavily-запросами — см. DECISIONS «Следующие шаги (session 9)».
