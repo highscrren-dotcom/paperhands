@@ -1,0 +1,14 @@
+[
+  { "label": "etf-clean",     "asset": "BTC", "style": "clean",       "query": "Bitcoin ETF outflows inflows institutional demand" },
+  { "label": "etf-instr",     "asset": "BTC", "style": "instruction", "query": "Bitcoin ETF flows. Are institutions buying or selling Bitcoin ETFs today? Can be bullish or bearish." },
+  { "label": "liquidations",  "asset": "BTC", "style": "clean",       "query": "Bitcoin liquidations funding rate open interest leverage" },
+  { "label": "regulation",    "asset": "BTC", "style": "clean",       "query": "Bitcoin SEC CFTC crypto regulation CLARITY Act MiCA ruling" },
+  { "label": "macro-fomc",    "asset": "BTC", "style": "clean",       "query": "Federal Reserve FOMC interest rate decision inflation crypto" },
+  { "label": "whales",        "asset": "BTC", "style": "clean",       "query": "Bitcoin whale accumulation exchange reserves large holders" },
+  { "label": "network-hacks", "asset": "ETH", "style": "clean",       "query": "crypto exchange hack exploit DeFi security breach stolen funds" },
+  { "label": "crash-rally",   "asset": "BTC", "style": "clean",       "query": "Bitcoin crypto sell-off crash rally price plunge surge" },
+  { "label": "stablecoin",    "asset": "BTC", "style": "clean",       "query": "stablecoin depeg USDT USDC Tether reserves" },
+  { "label": "eth-cross",     "asset": "ETH", "style": "clean",       "query": "Ethereum ETF staking inflows network upgrade" },
+  { "label": "sol-cross",     "asset": "SOL", "style": "clean",       "query": "Solana ETF inflows Alpenglow network upgrade outage" },
+  { "label": "persona-trump", "asset": "BTC", "style": "clean",       "query": "Trump executive order crypto digital assets SEC White House" }
+]
