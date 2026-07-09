@@ -63,6 +63,19 @@
     `kill $(cat logs/live-ingest.pid)` (позиция остаётся на бирже!).
     Сайзинг: дефолт CC_POSITION_ENTRY_COST=$100 → при балансе ~$100 живёт
     только ОДНА позиция за раз (второй open упадёт и будет ретраиться — ок).
+49. **Ночь 08→09.07, инцидент OOM (деньги целы, сделок не было):** в 02:23
+    systemd-oomd убил cgroup VSCode (сессия Claude раздулась до 13.5GB RSS) —
+    умерло всё, запущенное из терминалов VSCode: live-бот и trading-agents.
+    Выжило запущенное кроном/докером (feb, volume-монитор, контейнеры).
+    Параллельно Binance «Auto-Subscribe» ночью увёл весь свободный USDT в
+    Simple Earn Flexible (LDUSDT в споте) — бот остался бы без баланса на
+    вход. УТРОМ: владелец сделал Redeem + выключил Auto-Subscribe (проверено:
+    $100.89 free, Earn пуст), ребут — live поднялся @reboot'ом (pid cron-scope).
+    **УРОКИ (в память):** (а) боевые процессы — ТОЛЬКО через cron/@reboot или
+    systemd, никогда из терминала VSCode (умирают с cgroup'ом при OOM сессии
+    Claude); (б) на торговом аккаунте Binance выключать Earn Auto-Subscribe;
+    (в) @reboot-строка агентов требует PATH до uv (в кроне его нет) — строка
+    исправляется на `env PATH=/home/s1dd1/.local/bin:$PATH`.
 48. **Вечер 08.07: подключены источники-мониторы + pgpool-контур (без денег).**
     (а) volume-anomaly (источник B): example/scripts/volume_monitor.mjs
     (паттерн scan() автора), крон */15, лог out/volume-monitor.log; первая
