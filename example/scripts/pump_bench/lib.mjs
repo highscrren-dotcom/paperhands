@@ -52,6 +52,26 @@ addExchangeSchema({
     if (stepSize !== undefined) return roundTicks(quantity, stepSize);
     return exchange.amountToPrecision(symbol, quantity);
   },
+  // по demo/ccxt/src/index.mjs (канон интеграции volume-anomaly).
+  // Отличие от дословного: Number(t.T) — ccxt implicit-API (проверено на
+  // 4.5.24 авторского пина и нашем 4.5.64) отдаёт ВСЕ скаляры строками,
+  // demo-вариант `timestamp: t.T` роняет volume-anomaly 2.0.0 на валидации
+  // "timestamps must be finite numbers" → кандидат в фидбек автору.
+  getAggregatedTrades: async (symbol, from, to) => {
+    const exchange = await getExchange();
+    const response = await exchange.publicGetAggTrades({
+      symbol,
+      startTime: from.getTime(),
+      endTime: to.getTime(),
+    });
+    return response.map((t) => ({
+      id: String(t.a),
+      price: parseFloat(t.p),
+      qty: parseFloat(t.q),
+      timestamp: Number(t.T),
+      isBuyerMaker: t.m,
+    }));
+  },
 });
 
 /** Адаптер: движковый getRawCandles → GetCandles pump-anomaly. */
