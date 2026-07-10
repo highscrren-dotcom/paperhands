@@ -31,17 +31,32 @@ const CRON_METHOD_NAME_DISPOSE = "CronUtils.dispose";
 /**
  * Watchdog timeout (ms) for a single cron handler invocation.
  *
- * A handler that does not settle within this window is treated as failed:
- * `_runEntry` races `entry.handler(info)` against this `sleep` and, when the
- * timeout wins, throws into the same `catch` as any other handler error —
- * surfacing `failed = true`, logging a warning, and (for periodic entries)
- * rolling back the watermark so the boundary is retried on the next tick.
+ * A slot that does not settle within this window is treated as failed:
+ * `_runEntry` races the runtime-info assembly plus `entry.handler(info)`
+ * against a timer of this duration and, when the timer wins, rejects into the
+ * same `catch` as any other handler error — surfacing `failed = true`, logging
+ * a warning, and (for periodic entries) rolling back the watermark so the
+ * boundary is retried on the next tick.
  *
  * This guards the `singlerun`-serialised tick pipeline against a handler that
- * never resolves (a lost `resolve`, a hung promise with no timeout of its
- * own): without it such a handler would stall every subsequent tick forever.
+ * never resolves (a lost `resolve`, a hung network call with no timeout of its
+ * own): without it such a handler would hold its `_inFlight` slot forever and
+ * `_tick`'s `Promise.all` would never settle, silently stalling every
+ * subsequent lifecycle tick while the process stays alive and outwardly
+ * healthy.
  */
-const CRON_HANDLER_TIMEOUT = 120_000;
+const CRON_HANDLER_TIMEOUT = 900_000;
+
+/**
+ * Early-warning threshold (ms) for a single cron handler invocation.
+ *
+ * Purely observational: when a slot is still running this long after it was
+ * opened, `_runEntry` logs a warning naming the entry — so a slow handler is
+ * visible in the logs long before the {@link CRON_HANDLER_TIMEOUT} watchdog
+ * forcibly fails it. Nothing is interrupted and no rollback happens at this
+ * mark; the slot keeps running and may still succeed.
+ */
+const CRON_HANDLER_WARN_TIMEOUT = 120_000;
 
 /**
  * Local logger instance.
@@ -409,9 +424,17 @@ export class CronUtils {
    *
    * Assembles the {@link IRuntimeInfo} snapshot via
    * `RuntimeMetaService.getRuntimeInfo(symbol, context, backtest)` and invokes
-   * `entry.handler(info)`. Logs any error via `console.error` and **returns** a
-   * `failed` boolean (`true` when the handler — or the runtime-info assembly —
-   * threw) so the caller (`_tick`) can roll back the periodic watermark of the
+   * `entry.handler(info)`, racing both against the
+   * {@link CRON_HANDLER_TIMEOUT} watchdog — a slot that does not settle in time
+   * rejects into the same `catch` as any other error, so a hung handler (or a
+   * hung price fetch inside `getRuntimeInfo`) can never hold the `_inFlight`
+   * slot forever and stall the serialised tick pipeline. A slot still running
+   * at {@link CRON_HANDLER_WARN_TIMEOUT} logs an observational warning first,
+   * so a slow handler is visible in the logs well before the watchdog forcibly
+   * fails it. Logs any error via
+   * `console.error` and **returns** a `failed` boolean (`true` when the
+   * handler — or the runtime-info assembly — threw or timed out) so the caller
+   * (`_tick`) can roll back the periodic watermark of the
    * slot it opened and retry that boundary. The error is **not** rethrown, so a
    * failing handler never produces an unhandled rejection. Clears the
    * `_inFlight` slot in `.finally()` so the next boundary produces a fresh
@@ -444,9 +467,41 @@ export class CronUtils {
     context: { strategyName: string; exchangeName: string; frameName: string }
   ): Promise<boolean> {
     let failed = false;
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    // Observational early warning: fires while the slot is still running, long
+    // before the watchdog below forcibly fails it. Cancelled in `finally`, so
+    // it never fires for slots that settle in time.
+    const slowAlarm = setTimeout(() => {
+      const message = `${CRON_METHOD_NAME_TICK} entry "${entry.name}" still running after ${CRON_HANDLER_WARN_TIMEOUT}ms (watchdog at ${CRON_HANDLER_TIMEOUT}ms)`;
+      const payload = { symbol, alignedMs };
+      LOGGER_SERVICE.warn(message, payload);
+      console.error(message, payload);
+    }, CRON_HANDLER_WARN_TIMEOUT);
     try {
-      const info = await RUNTIME_META_SERVICE.getRuntimeInfo(symbol, context, backtest);
-      await entry.handler(info);
+      // The runtime-info assembly is raced alongside the handler: in live mode
+      // getRuntimeInfo reaches out to the exchange for the current price, so it
+      // can hang on a dead network exactly like a user handler can.
+      const work = (async () => {
+        const info = await RUNTIME_META_SERVICE.getRuntimeInfo(symbol, context, backtest);
+        await entry.handler(info);
+      })();
+      // A timed-out slot abandons `work`; swallow its eventual rejection so a
+      // zombie handler that fails later never surfaces as an unhandled
+      // rejection. Its late success is equally unobserved: `failed` was already
+      // reported and (for fire-once entries) the fired mark deliberately not set.
+      work.catch(() => void 0);
+      await Promise.race([
+        work,
+        new Promise<never>((_, reject) => {
+          watchdog = setTimeout(() => {
+            reject(
+              new Error(
+                `Cron entry "${entry.name}" timed out after ${CRON_HANDLER_TIMEOUT}ms`
+              )
+            );
+          }, CRON_HANDLER_TIMEOUT);
+        }),
+      ]);
     } catch (error) {
       failed = true;
       const message = `${CRON_METHOD_NAME_TICK} entry "${entry.name}" failed`;
@@ -460,6 +515,8 @@ export class CronUtils {
       console.error(message, payload);
       errorEmitter.next(error as Error);
     } finally {
+      clearTimeout(slowAlarm);
+      clearTimeout(watchdog);
       this._inFlight.delete(slotKey);
       if (!failed && firedKey !== null) {
         this._firedOnce.add(firedKey);
@@ -762,28 +819,9 @@ export class CronUtils {
       taskList.push(pending);
     }
 
-    {
-      // Watchdog: warn (do not interrupt) if the slots this tick is awaiting
-      // have not settled within CRON_HANDLER_TIMEOUT. We deliberately keep
-      // awaiting Promise.all so the singlerun pipeline stays serialised and no
-      // duplicate/zombie slots are spawned — the timer only surfaces the stall.
-      // Use a real setTimeout/clearTimeout (not sleep) so the alarm is cancelled
-      // the instant Promise.all resolves, rather than lingering for the full
-      // timeout on every fast tick.
-      const timer = setTimeout(() => {
-        const message = `${CRON_METHOD_NAME_TICK} timed out after ${CRON_HANDLER_TIMEOUT}ms`;
-        const payload = { symbol, when, context };
-        LOGGER_SERVICE.warn(message, payload);
-        console.error(message, payload);
-        errorEmitter.next(new Error(message));
-      }, CRON_HANDLER_TIMEOUT);
-
-      try {
-        await Promise.all(taskList);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
+    // Every slot self-terminates via the `_runEntry` watchdog, so this settles
+    // within CRON_HANDLER_TIMEOUT plus epsilon even when a handler hangs.
+    await Promise.all(taskList);
 
     // Roll back the watermark for any periodic slot THIS tick opened whose
     // handler failed, so the next tick re-opens the same boundary and retries
