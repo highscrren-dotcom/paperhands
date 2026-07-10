@@ -81,23 +81,46 @@ if (fresh.length && existsSync(ALARM_FLAG)) {
 if (fresh.length) {
   // live-семантика: свечи строго до сигнала; ack — задокументированное решение
   const signals = await model.plan(fresh, getCandles, { acknowledgeUncertified: true });
-  // та же политика, что и в plan(): иначе explain врёт «uncertified-model»
-  const explains = model.explainSignals
-    ? model.explainSignals(fresh, undefined, { acknowledgeUncertified: true })
-    : [];
   const bySigKey = new Map(signals.map((s) => [`${s.symbol}|${s.ts}`, s]));
-  const byExpKey = new Map(explains.map((e) => [`${e.symbol}|${e.ts}`, e]));
+  // словарь свечей для честного explain: без него buildSignalCore получает
+  // null и rejectedBy ВСЕГДА «momentum-gate: нет свечей» (артефакт, вскрыт
+  // 10.07 на TAO/SOL — настоящая причина была «momentum ниже порога»).
+  // Свечи заканчиваются НА минуте сигнала (как в plan) — explain на партию
+  // из одного item, чтобы не подмешивать чужое время. Lookback — той же
+  // формулой, что plan(): momentum-окно (если фильтр включён) поверх
+  // базового lookbackMinutes модели.
+  const MIN_MS = 60_000;
+  const pol = model.params?.policy ?? {};
+  const momWin = pol.minMomentum24hPct !== undefined ? (pol.momentumWindowMinutes ?? 1440) + 5 : 0;
+  const EXPLAIN_LOOKBACK = Math.max(model.lookbackMinutes ?? 0, momWin, 65);
   for (const item of fresh) {
     const key = `${item.symbol}|${item.ts}`;
     // факторы demo/ccxt (volume-skew + garch) — observation-only: пишем рядом
     // с решением для будущей оценки их ценности, на решение НЕ влияют
     const factors = await getFactors(item.symbol);
+    let explain = null;
+    if (model.explainSignals) {
+      let dict;
+      try {
+        const start = Math.floor(item.ts / MIN_MS) * MIN_MS;
+        dict = {
+          [item.symbol]: await getCandles(
+            item.symbol, "1m", undefined,
+            new Date(start - EXPLAIN_LOOKBACK * MIN_MS), new Date(start + MIN_MS),
+          ),
+        };
+      } catch {
+        dict = undefined; // битый символ: explain без свечей честно скажет «нет свечей»
+      }
+      // та же политика, что и в plan(): иначе explain врёт «uncertified-model»
+      explain = model.explainSignals([item], dict, { acknowledgeUncertified: true })[0] ?? null;
+    }
     const rec = {
       decidedAt: new Date().toISOString(),
       modelVersion: "forward-v1",
       item,
       signal: bySigKey.get(key) ?? null,
-      explain: byExpKey.get(key) ?? null,
+      explain,
       factors,
     };
     appendFileSync(LEDGER, JSON.stringify(rec) + "\n");
