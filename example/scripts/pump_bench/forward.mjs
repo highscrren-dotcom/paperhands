@@ -196,3 +196,12 @@ if (results.length) {
 } else {
   console.log("[forward] реализованных форвард-сделок пока нет");
 }
+
+// ---------- shadow (№67: тень фьючей/инверта, observation-only) ----------
+// на том же часовом кроне; ошибки тени не валят форвард
+try {
+  const { runShadow } = await import("./shadow.mjs");
+  await runShadow();
+} catch (e) {
+  console.log(`[forward] shadow пропущен: ${String(e.message).slice(0, 100)}`);
+}
