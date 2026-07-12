@@ -185,3 +185,11 @@ Evals на look-ahead у автора НЕТ — если делать, то с�
 
 После форков переиндексировать новые клоны в codebase-memory (auto_index подхватит
 при первом обращении, либо `index_repository`).
+
+## Дополнение 2026-07-12: garch форкнут
+
+**tripolskypetr/garch → highscrren-dotcom/garch** (форк владельца по нашей
+рекомендации — «четвёртая либа», уже используется боевым paper-контуром через
+factors.mjs). Клон: `/home/s1dd1/dev/quant/garch`, remotes origin/upstream,
+тесты 1053/1053 ✓, граф `home-s1dd1-dev-quant-garch` (643 узла). Умбрелла
+закрыта: все либы стека (pump/volume/garch) теперь форкнуты.
