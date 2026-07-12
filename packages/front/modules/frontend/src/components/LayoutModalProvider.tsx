@@ -41,9 +41,10 @@ import useActivateScheduledView from "../hooks/useActivateScheduledView";
 // Average buy hook
 import useAverageBuyCommitView from "../hooks/useAverageBuyCommitView";
 
-// Signal sync hooks (2 types)
-import useSignalSyncOpenView from "../hooks/useSignalSyncOpenView";
-import useSignalSyncCloseView from "../hooks/useSignalSyncCloseView";
+// Order sync hooks (3 types)
+import useOrderSyncOpenView from "../hooks/useOrderSyncOpenView";
+import useOrderSyncCloseView from "../hooks/useOrderSyncCloseView";
+import useOrderSyncCheckView from "../hooks/useOrderSyncCheckView";
 
 // Cancel scheduled / close pending hooks
 import useCancelScheduledView from "../hooks/useCancelScheduledView";
@@ -128,9 +129,10 @@ export const LayoutModalProvider = ({
     // Average buy hook
     const pickAverageBuyCommit = useAverageBuyCommitView();
 
-    // Signal sync hooks (2 types)
-    const pickSignalSyncOpen = useSignalSyncOpenView();
-    const pickSignalSyncClose = useSignalSyncCloseView();
+    // Order sync hooks (3 types)
+    const pickOrderSyncOpen = useOrderSyncOpenView();
+    const pickOrderSyncClose = useOrderSyncCloseView();
+    const pickOrderSyncCheck = useOrderSyncCheckView();
 
     // Cancel scheduled / close pending hooks
     const pickCancelScheduled = useCancelScheduledView();
@@ -199,9 +201,10 @@ export const LayoutModalProvider = ({
     // Average buy subscription
     useOnce(() => ioc.layoutService.pickAverageBuyCommitSubject.subscribe(pickAverageBuyCommit));
 
-    // Signal sync subscriptions (2 types)
-    useOnce(() => ioc.layoutService.pickSignalSyncOpenSubject.subscribe(pickSignalSyncOpen));
-    useOnce(() => ioc.layoutService.pickSignalSyncCloseSubject.subscribe(pickSignalSyncClose));
+    // Order sync subscriptions (3 types)
+    useOnce(() => ioc.layoutService.pickOrderSyncOpenSubject.subscribe(pickOrderSyncOpen));
+    useOnce(() => ioc.layoutService.pickOrderSyncCloseSubject.subscribe(pickOrderSyncClose));
+    useOnce(() => ioc.layoutService.pickOrderSyncCheckSubject.subscribe(pickOrderSyncCheck));
 
     // Cancel scheduled / close pending subscriptions
     useOnce(() => ioc.layoutService.pickCancelScheduledSubject.subscribe(pickCancelScheduled));

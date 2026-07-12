@@ -1070,11 +1070,13 @@ export interface TrailingTakeCommitNotification {
 
 /**
  * Signal sync open notification.
- * Emitted when a scheduled (limit order) signal is activated and the position is opened.
+ * Emitted when the position order is filled (`orderType: "active"` — immediate open
+ * or activation fill of a resting order) or when the resting entry order is placed
+ * at scheduled-signal creation (`orderType: "schedule"`).
  */
 export interface OrderSyncOpenNotification {
   /** Discriminator for type-safe union */
-  type: "signal_sync.open";
+  type: "order_sync.open";
   /** Unique notification identifier */
   id: string;
   /** Unix timestamp in milliseconds when signal was opened */
@@ -1089,6 +1091,12 @@ export interface OrderSyncOpenNotification {
   exchangeName: ExchangeName;
   /** Unique signal identifier (UUID v4) */
   signalId: string;
+  /**
+   * Which order this sync event is about (from OrderSyncContract.type):
+   * - "active" — the position order was filled (immediate open or activation of a resting order)
+   * - "schedule" — the resting entry order was placed at scheduled-signal creation (not a fill)
+   */
+  orderType: "schedule" | "active";
   /** Current market price at activation */
   currentPrice: number;
   /** Total PNL of the closed position (including all entries and partials) */
@@ -1163,7 +1171,7 @@ export interface OrderSyncOpenNotification {
  */
 export interface OrderSyncCloseNotification {
   /** Discriminator for type-safe union */
-  type: "signal_sync.close";
+  type: "order_sync.close";
   /** Unique notification identifier */
   id: string;
   /** Unix timestamp in milliseconds when signal was closed */
@@ -1178,6 +1186,8 @@ export interface OrderSyncCloseNotification {
   exchangeName: ExchangeName;
   /** Unique signal identifier (UUID v4) */
   signalId: string;
+  /** Which order this sync event is about (from OrderSyncContract.type). Closes always go through the position order, so this is always "active". */
+  orderType: "schedule" | "active";
   /** Current market price at close */
   currentPrice: number;
   /** Total PNL of the closed position (including all entries and partials) */
@@ -1240,6 +1250,104 @@ export interface OrderSyncCloseNotification {
   pendingAt: number;
   /** Why the signal was closed (take_profit | stop_loss | time_expired | closed) */
   closeReason: string;
+  /** Optional human-readable description of signal reason */
+  note?: string;
+  /** Unix timestamp in milliseconds when the notification was created */
+  createdAt: number;
+}
+
+/**
+ * Signal sync check (order-ping) notification.
+ * Emitted while a signal is being monitored in live mode: on every tick the framework
+ * asks the external order management system whether the order backing the signal is
+ * still open on the exchange (`syncPendingSubject` / OrderCheckContract).
+ * Throttled by NotificationAdapter to at most one notification per signalId per
+ * `CC_NOTIFICATION_ORDER_CHECK_TTL` (default 15 minutes); the throttle entry is dropped
+ * when the signal is closed or cancelled.
+ */
+export interface OrderSyncCheckNotification {
+  /** Discriminator for type-safe union */
+  type: "order_sync.check";
+  /** Unique notification identifier */
+  id: string;
+  /** Unix timestamp in milliseconds when the order ping was emitted */
+  timestamp: number;
+  /** Whether this notification is from backtest mode (true) or live mode (false); pings are live-only in practice */
+  backtest: boolean;
+  /** Trading pair symbol (e.g., "BTCUSDT") */
+  symbol: string;
+  /** Strategy name that generated this signal */
+  strategyName: StrategyName;
+  /** Exchange name where signal was executed */
+  exchangeName: ExchangeName;
+  /** Unique signal identifier (UUID v4) */
+  signalId: string;
+  /**
+   * Which order is being monitored (from OrderCheckContract.type):
+   * - "active" — the order backing an open position (pending signal)
+   * - "schedule" — the resting entry order of a scheduled signal awaiting activation
+   */
+  orderType: "schedule" | "active";
+  /** Market price at the moment of the ping (VWAP) */
+  currentPrice: number;
+  /** Trade direction: "long" (buy) or "short" (sell) */
+  position: "long" | "short";
+  /** Effective entry price (may differ from original after DCA averaging) */
+  priceOpen: number;
+  /** Effective take profit price (with trailing if set) */
+  priceTakeProfit: number;
+  /** Effective stop loss price (with trailing if set) */
+  priceStopLoss: number;
+  /** Original take profit price before any trailing adjustments */
+  originalPriceTakeProfit: number;
+  /** Original stop loss price before any trailing adjustments */
+  originalPriceStopLoss: number;
+  /** Original entry price at signal creation (unchanged by DCA averaging) */
+  originalPriceOpen: number;
+  /** Total number of DCA entries (_entry.length). 1 = no averaging. */
+  totalEntries: number;
+  /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
+  totalPartials: number;
+  /** Unrealized PNL of the open position at the moment of the ping */
+  pnl: IStrategyPnL;
+  /** Peak profit achieved during the life of this position up to the moment of the ping */
+  peakProfit: IStrategyPnL;
+  /** Maximum drawdown experienced during the life of this position up to the moment of the ping */
+  maxDrawdown: IStrategyPnL;
+  /** Profit/loss as percentage (e.g., 1.5 for +1.5%, -2.3 for -2.3%) */
+  pnlPercentage: number;
+  /** Entry price from PNL calculation (effective price adjusted with slippage and fees) */
+  pnlPriceOpen: number;
+  /** Exit price from PNL calculation (adjusted with slippage and fees) */
+  pnlPriceClose: number;
+  /** Absolute profit/loss in USD */
+  pnlCost: number;
+  /** Total invested capital in USD */
+  pnlEntries: number;
+  /** Peak price reached in profit direction during the life of this position */
+  peakProfitPriceOpen: number;
+  /** Exit price for PNL calculation at the moment of peak profit */
+  peakProfitPriceClose: number;
+  /** Absolute profit/loss in USD at the moment the position reached its peak profit during the life of this position */
+  peakProfitCost: number;
+  /** Profit/loss as percentage at the moment the position reached its peak profit during the life of this position */
+  peakProfitPercentage: number;
+  /** Number of entries executed at the moment the position reached its peak profit during the life of this position */
+  peakProfitEntries: number;
+  /** Maximum drawdown price reached in loss direction during the life of this position */
+  maxDrawdownPriceOpen: number;
+  /** Exit price for PNL calculation at the moment of max drawdown */
+  maxDrawdownPriceClose: number;
+  /** Absolute profit/loss in USD at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownCost: number;
+  /** Profit/loss as percentage at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownPercentage: number;
+  /** Number of entries executed at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownEntries: number;
+  /** Signal creation timestamp in milliseconds (when signal was first created/scheduled) */
+  scheduledAt: number;
+  /** Pending timestamp in milliseconds (when position became pending/active at priceOpen) */
+  pendingAt: number;
   /** Optional human-readable description of signal reason */
   note?: string;
   /** Unix timestamp in milliseconds when the notification was created */
@@ -1758,6 +1866,7 @@ export type NotificationModel =
   | ClosePendingCommitNotification
   | OrderSyncOpenNotification
   | OrderSyncCloseNotification
+  | OrderSyncCheckNotification
   | RiskRejectionNotification
   | SignalScheduledNotification
   | SignalCancelledNotification

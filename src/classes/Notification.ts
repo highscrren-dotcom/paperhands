@@ -11,6 +11,9 @@ import {
   validationSubject,
   strategyCommitSubject,
   syncSubject,
+  syncPendingSubject,
+  signalEventSubject,
+  scheduleEventSubject,
   signalNotifySubject,
 } from "../config/emitters";
 import { NotificationModel } from "../model/Notification.model";
@@ -21,6 +24,9 @@ import { BreakevenContract } from "../contract/Breakeven.contract";
 import { RiskContract } from "../contract/Risk.contract";
 import { StrategyCommitContract } from "../contract/StrategyCommit.contract";
 import { OrderSyncContract } from "../contract/OrderSync.contract";
+import { OrderCheckContract } from "../contract/OrderCheck.contract";
+import { SignalEventContract } from "../contract/SignalEvent.contract";
+import { ScheduleEventContract } from "../contract/ScheduleEvent.contract";
 import { SignalInfoContract } from "../contract/SignalInfo.contract";
 import backtest from "../lib";
 import { PersistNotificationAdapter } from "./Persist";
@@ -36,7 +42,7 @@ import get from "../utils/get";
  * @example
  * // Subscribe only to signal lifecycle and error events
  * notificationAdapter.enable({ signal: true, common_error: true, critical_error: true, validation_error: true,
- *   partial_profit: false, partial_loss: false, breakeven: false, strategy_commit: false, signal_sync: false,
+ *   partial_profit: false, partial_loss: false, breakeven: false, strategy_commit: false, order_sync: false, order_check: false,
  *   risk: false, info: false });
  */
 export interface INotificationTarget {
@@ -81,12 +87,25 @@ export interface INotificationTarget {
   strategy_commit: boolean;
 
   /**
-   * Signal synchronization events for live trading (`signal_sync.open`, `signal_sync.close`).
-   * Fired when a limit order is confirmed filled (`signal-open`) or when an open
-   * position is confirmed exited (`signal-close`) by the exchange sync layer.
+   * Signal synchronization events for live trading (`order_sync.open`, `order_sync.close`).
+   * Fired when the position order is filled (`signal-open` with `orderType: "active"`),
+   * when the resting entry order is placed at scheduled-signal creation (`signal-open`
+   * with `orderType: "schedule"`), or when an open position is confirmed exited
+   * (`signal-close`) by the exchange sync layer.
    * Source: `syncSubject` (OrderSyncContract).
    */
-  signal_sync: boolean;
+  order_sync: boolean;
+
+  /**
+   * Order-ping check notifications (`order_sync.check`).
+   * Fired while a signal is monitored in live mode, when the framework asks the
+   * external order management system whether the order is still open on the
+   * exchange. Throttled to at most one notification per signalId per
+   * `CC_NOTIFICATION_ORDER_CHECK_TTL` (default 15 minutes); the throttle entry is
+   * dropped when the signal is closed or cancelled.
+   * Source: `syncPendingSubject` (OrderCheckContract).
+   */
+  order_check: boolean;
 
   /**
    * Risk manager rejection notifications (`risk.rejection`).
@@ -136,7 +155,8 @@ const WILDCARD_TARGET: INotificationTarget = {
   partial_loss: true,
   breakeven: true,
   strategy_commit: true,
-  signal_sync: true,
+  order_sync: true,
+  order_check: true,
   risk: true,
   info: true,
   common_error: true,
@@ -874,14 +894,15 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
 
 /**
  * Creates a notification model for signal sync events.
- * Handles signal-open (limit order filled) and signal-close (position exited) actions.
+ * Handles signal-open (position order filled with orderType "active", or resting
+ * entry order placed with orderType "schedule") and signal-close (position exited) actions.
  * @param data - The signal sync contract data
  * @returns NotificationModel for signal sync event
  */
 const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): NotificationModel => {
   if (data.action === "signal-open") {
     return {
-      type: "signal_sync.open",
+      type: "order_sync.open",
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -889,6 +910,7 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
       strategyName: data.strategyName,
       exchangeName: data.exchangeName,
       signalId: data.signalId,
+      orderType: data.type,
       currentPrice: data.currentPrice,
       pnl: data.signal.pnl,
       maxDrawdown: data.signal.maxDrawdown,
@@ -926,7 +948,7 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
   }
   if (data.action === "signal-close") {
     return {
-      type: "signal_sync.close",
+      type: "order_sync.close",
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -934,6 +956,7 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
       strategyName: data.strategyName,
       exchangeName: data.exchangeName,
       signalId: data.signalId,
+      orderType: data.type,
       currentPrice: data.currentPrice,
       pnl: data.signal.pnl,
       maxDrawdown: data.signal.maxDrawdown,
@@ -971,6 +994,55 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
   }
   throw new Error(`Unrecognized signal sync action: ${get(data, "action")}`);
 };
+
+/**
+ * Creates a notification model for order-ping check events.
+ * @param data - The order check contract data
+ * @returns NotificationModel for signal sync check event
+ */
+const CREATE_ORDER_CHECK_NOTIFICATION_FN = (data: OrderCheckContract): NotificationModel => ({
+  type: "order_sync.check",
+  id: CREATE_KEY_FN(),
+  timestamp: data.timestamp,
+  backtest: data.backtest,
+  symbol: data.symbol,
+  strategyName: data.strategyName,
+  exchangeName: data.exchangeName,
+  signalId: data.signalId,
+  orderType: data.type,
+  currentPrice: data.currentPrice,
+  position: data.position,
+  priceOpen: data.priceOpen,
+  priceTakeProfit: data.priceTakeProfit,
+  priceStopLoss: data.priceStopLoss,
+  originalPriceTakeProfit: data.originalPriceTakeProfit,
+  originalPriceStopLoss: data.originalPriceStopLoss,
+  originalPriceOpen: data.originalPriceOpen,
+  totalEntries: data.totalEntries,
+  totalPartials: data.totalPartials,
+  pnl: data.pnl,
+  maxDrawdown: data.maxDrawdown,
+  peakProfit: data.peakProfit,
+  pnlPercentage: data.pnl.pnlPercentage,
+  pnlPriceOpen: data.pnl.priceOpen,
+  pnlPriceClose: data.pnl.priceClose,
+  pnlCost: data.pnl.pnlCost,
+  pnlEntries: data.pnl.pnlEntries,
+  peakProfitPriceOpen: data.peakProfit.priceOpen,
+  peakProfitPriceClose: data.peakProfit.priceClose,
+  peakProfitPercentage: data.peakProfit.pnlPercentage,
+  peakProfitCost: data.peakProfit.pnlCost,
+  peakProfitEntries: data.peakProfit.pnlEntries,
+  maxDrawdownPriceOpen: data.maxDrawdown.priceOpen,
+  maxDrawdownPriceClose: data.maxDrawdown.priceClose,
+  maxDrawdownPercentage: data.maxDrawdown.pnlPercentage,
+  maxDrawdownCost: data.maxDrawdown.pnlCost,
+  maxDrawdownEntries: data.maxDrawdown.pnlEntries,
+  scheduledAt: data.scheduledAt,
+  pendingAt: data.pendingAt,
+  note: data.signal.note,
+  createdAt: data.timestamp,
+});
 
 /**
  * Creates a notification model for risk rejection events.
@@ -1094,6 +1166,7 @@ const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_PARTIAL_LOSS = "Notificati
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_BREAKEVEN = "NotificationMemoryBacktestUtils.handleBreakeven";
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_STRATEGY_COMMIT = "NotificationMemoryBacktestUtils.handleStrategyCommit";
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_SYNC = "NotificationMemoryBacktestUtils.handleSync";
+const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_CHECK = "NotificationMemoryBacktestUtils.handleCheck";
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_RISK = "NotificationMemoryBacktestUtils.handleRisk";
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_ERROR = "NotificationMemoryBacktestUtils.handleError";
 const NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_CRITICAL_ERROR = "NotificationMemoryBacktestUtils.handleCriticalError";
@@ -1108,6 +1181,7 @@ const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_PARTIAL_LOSS = "NotificationMe
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_BREAKEVEN = "NotificationMemoryLiveUtils.handleBreakeven";
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_STRATEGY_COMMIT = "NotificationMemoryLiveUtils.handleStrategyCommit";
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_SYNC = "NotificationMemoryLiveUtils.handleSync";
+const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_CHECK = "NotificationMemoryLiveUtils.handleCheck";
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_RISK = "NotificationMemoryLiveUtils.handleRisk";
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_ERROR = "NotificationMemoryLiveUtils.handleError";
 const NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_CRITICAL_ERROR = "NotificationMemoryLiveUtils.handleCriticalError";
@@ -1141,6 +1215,7 @@ const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_PARTIAL_LOSS = "Notificat
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_BREAKEVEN = "NotificationPersistBacktestUtils.handleBreakeven";
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_STRATEGY_COMMIT = "NotificationPersistBacktestUtils.handleStrategyCommit";
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_SYNC = "NotificationPersistBacktestUtils.handleSync";
+const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_CHECK = "NotificationPersistBacktestUtils.handleCheck";
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_RISK = "NotificationPersistBacktestUtils.handleRisk";
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_ERROR = "NotificationPersistBacktestUtils.handleError";
 const NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_CRITICAL_ERROR = "NotificationPersistBacktestUtils.handleCriticalError";
@@ -1157,6 +1232,7 @@ const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_PARTIAL_LOSS = "NotificationP
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_BREAKEVEN = "NotificationPersistLiveUtils.handleBreakeven";
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_STRATEGY_COMMIT = "NotificationPersistLiveUtils.handleStrategyCommit";
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_SYNC = "NotificationPersistLiveUtils.handleSync";
+const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_CHECK = "NotificationPersistLiveUtils.handleCheck";
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_RISK = "NotificationPersistLiveUtils.handleRisk";
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_ERROR = "NotificationPersistLiveUtils.handleError";
 const NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_CRITICAL_ERROR = "NotificationPersistLiveUtils.handleCriticalError";
@@ -1200,6 +1276,11 @@ export interface INotificationUtils {
    * @param data - The signal sync contract data
    */
   handleSync(data: OrderSyncContract): Promise<void>;
+  /**
+   * Handles order-ping check event (signal-ping).
+   * @param data - The order check contract data
+   */
+  handleCheck(data: OrderCheckContract): Promise<void>;
   /**
    * Handles risk rejection event.
    * @param data - The risk contract data
@@ -1347,12 +1428,21 @@ export class NotificationMemoryBacktestUtils implements INotificationUtils {
       signalId: data.signalId,
       action: data.action,
     });
-    // A "schedule" open is a resting-order placement, not a fill:
-    // signal_sync.open means "limit order confirmed filled"
-    if (data.action === "signal-open" && data.type === "schedule") {
-      return;
-    }
     this._addNotification(CREATE_SIGNAL_SYNC_NOTIFICATION_FN(data));
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * Handles order-ping check event.
+   * @param data - The order check contract data
+   */
+  public handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    backtest.loggerService.info(NOTIFICATION_MEMORY_BACKTEST_METHOD_NAME_HANDLE_CHECK, {
+      signalId: data.signalId,
+      type: data.type,
+    });
+    this._addNotification(CREATE_ORDER_CHECK_NOTIFICATION_FN(data));
   }, {
     defaultValue: null,
   });
@@ -1473,6 +1563,15 @@ export class NotificationDummyBacktestUtils implements INotificationUtils {
    * No-op handler for signal sync event.
    */
   public handleSync = trycatch(async (): Promise<void> => {
+    void 0;
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * No-op handler for order-ping check event.
+   */
+  public handleCheck = trycatch(async (): Promise<void> => {
     void 0;
   }, {
     defaultValue: null,
@@ -1689,13 +1788,24 @@ export class NotificationPersistBacktestUtils implements INotificationUtils {
       signalId: data.signalId,
       action: data.action,
     });
-    // A "schedule" open is a resting-order placement, not a fill:
-    // signal_sync.open means "limit order confirmed filled"
-    if (data.action === "signal-open" && data.type === "schedule") {
-      return;
-    }
     await this.waitForInit();
     this._addNotification(CREATE_SIGNAL_SYNC_NOTIFICATION_FN(data));
+    await this._updateNotifications();
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * Handles order-ping check event.
+   * @param data - The order check contract data
+   */
+  public handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    backtest.loggerService.info(NOTIFICATION_PERSIST_BACKTEST_METHOD_NAME_HANDLE_CHECK, {
+      signalId: data.signalId,
+      type: data.type,
+    });
+    await this.waitForInit();
+    this._addNotification(CREATE_ORDER_CHECK_NOTIFICATION_FN(data));
     await this._updateNotifications();
   }, {
     defaultValue: null,
@@ -1885,12 +1995,21 @@ export class NotificationMemoryLiveUtils implements INotificationUtils {
       signalId: data.signalId,
       action: data.action,
     });
-    // A "schedule" open is a resting-order placement, not a fill:
-    // signal_sync.open means "limit order confirmed filled"
-    if (data.action === "signal-open" && data.type === "schedule") {
-      return;
-    }
     this._addNotification(CREATE_SIGNAL_SYNC_NOTIFICATION_FN(data));
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * Handles order-ping check event.
+   * @param data - The order check contract data
+   */
+  public handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    backtest.loggerService.info(NOTIFICATION_MEMORY_LIVE_METHOD_NAME_HANDLE_CHECK, {
+      signalId: data.signalId,
+      type: data.type,
+    });
+    this._addNotification(CREATE_ORDER_CHECK_NOTIFICATION_FN(data));
   }, {
     defaultValue: null,
   });
@@ -2011,6 +2130,15 @@ export class NotificationDummyLiveUtils implements INotificationUtils {
    * No-op handler for signal sync event.
    */
   public handleSync = trycatch(async (): Promise<void> => {
+    void 0;
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * No-op handler for order-ping check event.
+   */
+  public handleCheck = trycatch(async (): Promise<void> => {
     void 0;
   }, {
     defaultValue: null,
@@ -2230,13 +2358,24 @@ export class NotificationPersistLiveUtils implements INotificationUtils {
       signalId: data.signalId,
       action: data.action,
     });
-    // A "schedule" open is a resting-order placement, not a fill:
-    // signal_sync.open means "limit order confirmed filled"
-    if (data.action === "signal-open" && data.type === "schedule") {
-      return;
-    }
     await this.waitForInit();
     this._addNotification(CREATE_SIGNAL_SYNC_NOTIFICATION_FN(data));
+    await this._updateNotifications();
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * Handles order-ping check event.
+   * @param data - The order check contract data
+   */
+  public handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    backtest.loggerService.info(NOTIFICATION_PERSIST_LIVE_METHOD_NAME_HANDLE_CHECK, {
+      signalId: data.signalId,
+      type: data.type,
+    });
+    await this.waitForInit();
+    this._addNotification(CREATE_ORDER_CHECK_NOTIFICATION_FN(data));
     await this._updateNotifications();
   }, {
     defaultValue: null,
@@ -2394,6 +2533,17 @@ export class NotificationBacktestAdapter implements INotificationUtils {
    */
   handleSync = trycatch(async (data: OrderSyncContract): Promise<void> => {
     return await this.getInstance().handleSync(data);
+  }, {
+    defaultValue: null,
+  });
+
+  /**
+   * Handles order-ping check event.
+   * Proxies call to the underlying notification adapter.
+   * @param data - The order check contract data
+   */
+  handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    return await this.getInstance().handleCheck(data);
   }, {
     defaultValue: null,
   });
@@ -2587,6 +2737,17 @@ export class NotificationLiveAdapter implements INotificationUtils {
   });
 
   /**
+   * Handles order-ping check event.
+   * Proxies call to the underlying notification adapter.
+   * @param data - The order check contract data
+   */
+  handleCheck = trycatch(async (data: OrderCheckContract): Promise<void> => {
+    return await this.getInstance().handleCheck(data);
+  }, {
+    defaultValue: null,
+  });
+
+  /**
    * Handles risk rejection event.
    * Proxies call to the underlying notification adapter.
    * @param data - The risk contract data
@@ -2715,7 +2876,8 @@ export class NotificationAdapter {
     partial_loss = false,
     breakeven = false,
     strategy_commit = false,
-    signal_sync = false,
+    order_sync = false,
+    order_check = false,
     risk = false,
     common_error = false,
     critical_error = false,
@@ -2726,11 +2888,38 @@ export class NotificationAdapter {
     let unBacktest: Function;
 
     {
+      // Throttle state for order_sync.check: signalId -> timestamp of the last
+      // emitted check notification. Entries are dropped on signal close/cancel
+      // so the map cannot grow unbounded.
+      const checkThrottleMap = new Map<string, number>();
+
       const unBacktestSignal = signalBacktestEmitter.subscribe(async (data: IStrategyTickResult) => {
         if (signal) {
           await NotificationBacktest.handleSignal(data);
         }
       });
+
+      // Cleanup for checkThrottleMap. Tick-result emitters are NOT sufficient here:
+      // out-of-band closes (commitClosePending, failed order ping, scheduled cancel
+      // via commit) never reach signalBacktestEmitter/signalLiveEmitter. The
+      // lifecycle channels cover every path: signalEventSubject "closed" fires for
+      // all pending-signal closes (TP/SL/time_expired/user/ping), scheduleEventSubject
+      // "cancelled" fires for scheduled signals removed before activation.
+      const unBacktestSignalEvent = signalEventSubject
+        .filter(({ backtest }) => backtest)
+        .connect(async (event: SignalEventContract) => {
+          if (event.action === "closed") {
+            checkThrottleMap.delete(event.data.id);
+          }
+        });
+
+      const unBacktestScheduleEvent = scheduleEventSubject
+        .filter(({ backtest }) => backtest)
+        .connect(async (event: ScheduleEventContract) => {
+          if (event.action === "cancelled") {
+            checkThrottleMap.delete(event.data.id);
+          }
+        });
 
       const unBacktestPartialProfit = partialProfitSubject
         .filter(({ backtest }) => backtest)
@@ -2767,8 +2956,21 @@ export class NotificationAdapter {
       const unBacktestSync = syncSubject
         .filter(({ backtest }) => backtest)
         .connect(async (data: OrderSyncContract) => {
-          if (signal_sync) {
+          if (order_sync) {
             await NotificationBacktest.handleSync(data);
+          }
+        });
+
+      const unBacktestCheck = syncPendingSubject
+        .filter(({ backtest }) => backtest)
+        .connect(async (data: OrderCheckContract) => {
+          if (order_check) {
+            const lastTimestamp = checkThrottleMap.get(data.signalId);
+            if (lastTimestamp !== undefined && data.timestamp - lastTimestamp < GLOBAL_CONFIG.CC_NOTIFICATION_ORDER_CHECK_TTL) {
+              return;
+            }
+            checkThrottleMap.set(data.signalId, data.timestamp);
+            await NotificationBacktest.handleCheck(data);
           }
         });
 
@@ -2808,25 +3010,56 @@ export class NotificationAdapter {
 
       unBacktest = compose(
         () => unBacktestSignal(),
+        () => unBacktestSignalEvent(),
+        () => unBacktestScheduleEvent(),
         () => unBacktestPartialProfit(),
         () => unBacktestPartialLoss(),
         () => unBacktestBreakeven(),
         () => unBacktestStrategyCommit(),
         () => unBacktestSync(),
+        () => unBacktestCheck(),
         () => unBacktestRisk(),
         () => unBacktestError(),
         () => unBacktestExit(),
         () => unBacktestValidation(),
         () => unBacktestSignalNotify(),
+        () => checkThrottleMap.clear(),
       );
     }
 
     {
+      // Throttle state for order_sync.check: signalId -> timestamp of the last
+      // emitted check notification. Entries are dropped on signal close/cancel
+      // so the map cannot grow unbounded.
+      const checkThrottleMap = new Map<string, number>();
+
       const unLiveSignal = signalLiveEmitter.subscribe(async (data: IStrategyTickResult) => {
         if (signal) {
           await NotificationLive.handleSignal(data);
         }
       });
+
+      // Cleanup for checkThrottleMap. Tick-result emitters are NOT sufficient here:
+      // out-of-band closes (commitClosePending, failed order ping, scheduled cancel
+      // via commit) never reach signalBacktestEmitter/signalLiveEmitter. The
+      // lifecycle channels cover every path: signalEventSubject "closed" fires for
+      // all pending-signal closes (TP/SL/time_expired/user/ping), scheduleEventSubject
+      // "cancelled" fires for scheduled signals removed before activation.
+      const unLiveSignalEvent = signalEventSubject
+        .filter(({ backtest }) => !backtest)
+        .connect(async (event: SignalEventContract) => {
+          if (event.action === "closed") {
+            checkThrottleMap.delete(event.data.id);
+          }
+        });
+
+      const unLiveScheduleEvent = scheduleEventSubject
+        .filter(({ backtest }) => !backtest)
+        .connect(async (event: ScheduleEventContract) => {
+          if (event.action === "cancelled") {
+            checkThrottleMap.delete(event.data.id);
+          }
+        });
 
       const unLivePartialProfit = partialProfitSubject
         .filter(({ backtest }) => !backtest)
@@ -2863,8 +3096,21 @@ export class NotificationAdapter {
       const unLiveSync = syncSubject
         .filter(({ backtest }) => !backtest)
         .connect(async (data: OrderSyncContract) => {
-          if (signal_sync) {
+          if (order_sync) {
             await NotificationLive.handleSync(data);
+          }
+        });
+
+      const unLiveCheck = syncPendingSubject
+        .filter(({ backtest }) => !backtest)
+        .connect(async (data: OrderCheckContract) => {
+          if (order_check) {
+            const lastTimestamp = checkThrottleMap.get(data.signalId);
+            if (lastTimestamp !== undefined && data.timestamp - lastTimestamp < GLOBAL_CONFIG.CC_NOTIFICATION_ORDER_CHECK_TTL) {
+              return;
+            }
+            checkThrottleMap.set(data.signalId, data.timestamp);
+            await NotificationLive.handleCheck(data);
           }
         });
 
@@ -2904,16 +3150,20 @@ export class NotificationAdapter {
 
       unLive = compose(
         () => unLiveSignal(),
+        () => unLiveSignalEvent(),
+        () => unLiveScheduleEvent(),
         () => unLivePartialProfit(),
         () => unLivePartialLoss(),
         () => unLiveBreakeven(),
         () => unLiveStrategyCommit(),
         () => unLiveSync(),
+        () => unLiveCheck(),
         () => unLiveRisk(),
         () => unLiveError(),
         () => unLiveExit(),
         () => unLiveValidation(),
         () => unLiveSignalNotify(),
+        () => checkThrottleMap.clear(),
       );
     }
 

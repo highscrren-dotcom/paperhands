@@ -351,6 +351,7 @@ export {
   AverageBuyCommitNotification,
   OrderSyncCloseNotification,
   OrderSyncOpenNotification,
+  OrderSyncCheckNotification,
   CancelScheduledCommitNotification,
   ClosePendingCommitNotification,
   SignalInfoNotification,

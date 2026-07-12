@@ -1,4 +1,5 @@
 import { TypedField, FieldType } from "react-declarative";
+import { t } from "../i18n";
 
 import {
     AccountBalanceTwoTone as AccountBalance,
@@ -57,7 +58,7 @@ export const status_fields: TypedField[] = [
                         <IndicatorValueWidget
                             outlinePaper={payload.outlinePaper}
                             color={pnlColor(pnlPercentage)}
-                            label="PNL %"
+                            label={t("PNL %")}
                             value={`${pnlPercentage >= 0 ? "+" : ""}${pnlPercentage.toFixed(2)}%`}
                             icon={Analytics}
                         />
@@ -79,8 +80,8 @@ export const status_fields: TypedField[] = [
                         <IndicatorValueWidget
                             outlinePaper={payload.outlinePaper}
                             color={pnlColor(pnlCost)}
-                            label="PNL $"
-                            value={`${pnlCost >= 0 ? "+" : "-"}${Math.abs(pnlCost).toFixed(getPriceScale(pnlCost))}$`}
+                            label={t("PNL $")}
+                            value={`${pnlCost >= 0 ? "+" : "-"}${Math.abs(pnlCost).toFixed(getPriceScale(pnlCost))}${t("$")}`}
                             icon={Analytics}
                         />
                     ),
@@ -101,8 +102,8 @@ export const status_fields: TypedField[] = [
                         <IndicatorValueWidget
                             outlinePaper={payload.outlinePaper}
                             color={COLOR_BLUE}
-                            label="Invested $"
-                            value={`$${pnlEntries.toFixed(getPriceScale(pnlEntries))}`}
+                            label={t("Invested $")}
+                            value={`${t("$")}${pnlEntries.toFixed(getPriceScale(pnlEntries))}`}
                             icon={AccountBalance}
                         />
                     ),
@@ -123,7 +124,7 @@ export const status_fields: TypedField[] = [
                         <IndicatorValueWidget
                             outlinePaper={payload.outlinePaper}
                             color={COLOR_ORANGE}
-                            label="Total Entries"
+                            label={t("Total Entries")}
                             value={totalEntries}
                             icon={Layers}
                         />
@@ -240,8 +241,8 @@ export const status_fields: TypedField[] = [
                                     <IndicatorValueWidget
                                         color={COLOR_PURPLE}
                                         outlinePaper={payload.outlinePaper}
-                                        label="Max Drawdown"
-                                        value={`${maxDrawdownCost}$ / ${maxDrawdownPercentage}%`}
+                                        label={t("Max Drawdown")}
+                                        value={`${maxDrawdownCost}${t("$")} / ${maxDrawdownPercentage}%`}
                                         icon={DonutSmall}
                                     />
                                 );
@@ -274,8 +275,8 @@ export const status_fields: TypedField[] = [
                                                 : COLOR_BLUE
                                         }
                                         outlinePaper={payload.outlinePaper}
-                                        label="Peak Profit"
-                                        value={`${peakProfitCost}$ / ${peakProfitPercentage}%`}
+                                        label={t("Peak Profit")}
+                                        value={`${peakProfitCost}${t("$")} / ${peakProfitPercentage}%`}
                                         icon={DonutSmall}
                                     />
                                 )
@@ -301,7 +302,7 @@ export const status_fields: TypedField[] = [
                                 <IndicatorValueWidget
                                     color={pnlColor(pnlPercentage)}
                                     outlinePaper={payload.outlinePaper}
-                                    label="Average Price"
+                                    label={t("Average Price")}
                                     value={priceOpen.toFixed(getPriceScale(priceOpen))}
                                     icon={RequestQuote}
                                 />

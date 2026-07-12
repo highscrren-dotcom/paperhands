@@ -44,6 +44,7 @@ import {
   SwapVert,
   Timeline,
   PlayArrow,
+  Sync,
 } from "@mui/icons-material";
 import sanitize from "../../config/sanitize";
 import { makeStyles } from "../../styles";
@@ -112,10 +113,12 @@ const getNotificationColor = (item: NotificationModel): string | undefined => {
     case "trailing_stop.commit":
     case "trailing_take.commit":
       return "#673AB7";
-    case "signal_sync.open":
-      return "#4CAF50";
-    case "signal_sync.close":
+    case "order_sync.open":
+      return item.orderType === "schedule" ? "#FF9800" : "#4CAF50";
+    case "order_sync.close":
       return "#2196F3";
+    case "order_sync.check":
+      return "#3F51B5";
     case "cancel_scheduled.commit":
       return "#9E9E9E";
     case "close_pending.commit":
@@ -161,10 +164,12 @@ const getNotificationIcon = (item: NotificationModel) => {
     case "trailing_stop.commit":
     case "trailing_take.commit":
       return <Timeline sx={sx} />;
-    case "signal_sync.open":
-      return <PlayArrow sx={sx} />;
-    case "signal_sync.close":
+    case "order_sync.open":
+      return item.orderType === "schedule" ? <Schedule sx={sx} /> : <PlayArrow sx={sx} />;
+    case "order_sync.close":
       return <Close sx={sx} />;
+    case "order_sync.check":
+      return <Sync sx={sx} />;
     case "cancel_scheduled.commit":
       return <Cancel sx={sx} />;
     case "close_pending.commit":
@@ -188,7 +193,7 @@ const getNotificationTitle = (item: NotificationModel): string => {
     case "signal.opened":
       return `${t("Opened")} ${item.position.toUpperCase()} ${item.symbol}`;
     case "signal.closed":
-      return `${t("Closed")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : "N/A"})`;
+      return `${t("Closed")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : t("N/A")})`;
     case "signal.scheduled":
       return `${t("Scheduled")} ${item.position.toUpperCase()} ${item.symbol}`;
     case "signal.cancelled":
@@ -213,10 +218,12 @@ const getNotificationTitle = (item: NotificationModel): string => {
       return `${t("Trailing stop")} ${item.symbol}`;
     case "trailing_take.commit":
       return `${t("Trailing take")} ${item.symbol}`;
-    case "signal_sync.open":
-      return `${t("Sync Open")} ${item.position.toUpperCase()} ${item.symbol}`;
-    case "signal_sync.close":
-      return `${t("Sync Close")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : "N/A"})`;
+    case "order_sync.open":
+      return `${t(item.orderType === "schedule" ? "Order Sync Placed" : "Order Sync Open")} ${item.position.toUpperCase()} ${item.symbol}`;
+    case "order_sync.close":
+      return `${t("Order Sync Close")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : t("N/A")})`;
+    case "order_sync.check":
+      return `${t("Order Sync Check")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : t("N/A")})`;
     case "cancel_scheduled.commit":
       return `${t("Cancel Scheduled")} ${item.symbol}`;
     case "close_pending.commit":
@@ -230,7 +237,7 @@ const getNotificationTitle = (item: NotificationModel): string => {
     case "error.critical":
       return `${t("Critical")}: ${item.message}`;
     case "signal.info":
-      return `${t("Signal Info")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : "N/A"})`;
+      return `${t("Signal Info")} ${item.symbol} (${item.pnlPercentage != null ? `${item.pnlPercentage > 0 ? "+" : ""}${item.pnlPercentage.toFixed(2)}%` : t("N/A")})`;
     default:
       return `${t("Unknown")} ${get(item, "type")}`;
   }
@@ -283,11 +290,14 @@ const handleNotificationClick = (item: NotificationModel) => {
     case "average_buy.commit":
       ioc.layoutService.pickAverageBuyCommit(item.id);
       break;
-    case "signal_sync.open":
-      ioc.layoutService.pickSignalSyncOpen(item.id);
+    case "order_sync.open":
+      ioc.layoutService.pickOrderSyncOpen(item.id);
       break;
-    case "signal_sync.close":
-      ioc.layoutService.pickSignalSyncClose(item.id);
+    case "order_sync.close":
+      ioc.layoutService.pickOrderSyncClose(item.id);
+      break;
+    case "order_sync.check":
+      ioc.layoutService.pickOrderSyncCheck(item.id);
       break;
     case "cancel_scheduled.commit":
       ioc.layoutService.pickCancelScheduled(item.id);
@@ -424,7 +434,7 @@ export const NotificationView = () => {
                               }
                               secondary={"timestamp" in item ? dayjs(item.timestamp).format(
                                 "HH:mm DD/MM/YYYY"
-                              ) : "N/A"}
+                              ) : t("N/A")}
                             />
                             <IconButton disableRipple>
                               <ArrowForwardIcon />
@@ -442,7 +452,7 @@ export const NotificationView = () => {
                 {async () => {
                   const rawItems = await ioc.notificationViewService.getList();
                   const items = rawItems.filter((item) =>
-                    item.type.startsWith("signal.") || item.type.startsWith("signal_sync.")
+                    item.type.startsWith("signal.") || item.type.startsWith("order_sync.")
                   );
                   return (
                     <VirtualView
@@ -484,7 +494,7 @@ export const NotificationView = () => {
                               }
                               secondary={"timestamp" in item ? dayjs(item.timestamp).format(
                                 "HH:mm DD/MM/YYYY"
-                              ) : "N/A"}
+                              ) : t("N/A")}
                             />
                             <IconButton disableRipple>
                               <ArrowForwardIcon />
