@@ -1,0 +1,10 @@
+[
+ {"label":"ETF-clean","cls":"ETF","style":"clean","query":"Bitcoin ETF outflows inflows institutional demand"},
+ {"label":"ETF-instr","cls":"ETF","style":"instruction","query":"Bitcoin ETF flows. Are institutions buying or selling? Bullish or bearish for Bitcoin price"},
+ {"label":"FOMC-clean","cls":"FOMC","style":"clean","query":"Federal Reserve FOMC interest rate decision inflation crypto"},
+ {"label":"FOMC-instr","cls":"FOMC","style":"instruction","query":"Federal Reserve decision. Will the Fed cut or hike rates and is it bullish or bearish for crypto?"},
+ {"label":"CRASH-clean","cls":"crash","style":"clean","query":"Bitcoin crypto sell-off crash rally price plunge surge"},
+ {"label":"CRASH-instr","cls":"crash","style":"instruction","query":"Bitcoin price action. Is the market crashing or rallying? Bullish or bearish signals this week"},
+ {"label":"REG-clean","cls":"reg","style":"clean","query":"Bitcoin SEC CFTC crypto regulation CLARITY Act MiCA ruling"},
+ {"label":"REG-instr","cls":"reg","style":"instruction","query":"Crypto regulation news. Are SEC and CFTC actions bullish or bearish for Bitcoin?"}
+]
