@@ -141,8 +141,11 @@ console.log(`[forward] созревших для оценки: ${ripe.length}`);
 for (const r of ripe) {
   try {
     const candles = await getCandles(r.item.symbol, "1m", undefined, r.item.ts, Math.min(Date.now(), r.item.ts + staleMs));
+    // реплеим направление СИГНАЛА, не поста: при action=invert они противоположны
+    // (вскрыто 13.07 на первом инверте WLD — реплей по item.direction оценивал
+    // несуществующий лонг вместо модельного шорта)
     const bt = model.planForAt(
-      r.item.symbol, r.item.direction, r.item.channel, candles, r.item.ts,
+      r.item.symbol, r.signal.direction ?? r.item.direction, r.item.channel, candles, r.item.ts,
       { acknowledgeUncertified: true },
     );
     const rec = {
