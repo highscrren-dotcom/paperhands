@@ -1,0 +1,184 @@
+// news_classify.mjs — шаг 2 конвейера NEWS→ParserItem (ТЗ автора 13.07, DECISIONS №71).
+// Каждый новый url из news-raw.jsonl → Ollama Cloud (модель автора minimax-m2.7:cloud,
+// паттерн вызова = logic/core/completion/ollama_outline_format.completion.ts:
+// format-схема + think:false + jsonrepair + ретраи).
+// Классификатор видит ТОЛЬКО текст новости (title+content) — ни цены, ни даты:
+// никакого look-ahead. Идемпотентно по url (news-classified.jsonl — журнал).
+// null-символ / null-направление / не-листящийся на Binance тикер → отсев со счётчиком.
+//
+// Usage: node news_classify.mjs
+import { readFileSync, existsSync, appendFileSync, writeFileSync, statSync, mkdirSync } from "node:fs";
+import { Ollama } from "ollama";
+import { jsonrepair } from "jsonrepair";
+
+const envRaw = readFileSync(new URL("../../.env", import.meta.url), "utf8");
+for (const line of envRaw.split("\n")) {
+  const m = line.match(/^([A-Z_]+)=(.*)$/);
+  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+}
+if (!process.env.OLLAMA_TOKEN) { console.error("OLLAMA_TOKEN not found in example/.env"); process.exit(1); }
+
+const DATA_DIR = new URL("../../../agent/notes/news-dataset/", import.meta.url);
+const RAW_PATH = new URL("news-raw.jsonl", DATA_DIR);
+const CLS_PATH = new URL("news-classified.jsonl", DATA_DIR);
+const BINANCE_CACHE = new URL("binance-usdt-symbols.json", DATA_DIR);
+mkdirSync(DATA_DIR, { recursive: true });
+
+const MODEL_NAME = "minimax-m2.7:cloud";
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 5_000;
+const CALL_TIMEOUT_MS = 120_000;
+const CONTENT_CLIP = 4_000;
+
+// --- Binance-листинг: кэш USDT-пар (spot, TRADING), обновление раз в 7 дней ---
+async function loadBinanceSymbols() {
+  const WEEK = 7 * 24 * 36e5;
+  if (existsSync(BINANCE_CACHE) && Date.now() - statSync(BINANCE_CACHE).mtimeMs < WEEK) {
+    return new Set(JSON.parse(readFileSync(BINANCE_CACHE, "utf8")));
+  }
+  const resp = await fetch("https://api.binance.com/api/v3/exchangeInfo");
+  if (!resp.ok) throw new Error(`Binance exchangeInfo HTTP ${resp.status}`);
+  const info = await resp.json();
+  const symbols = info.symbols
+    .filter((s) => s.quoteAsset === "USDT" && s.status === "TRADING" && s.isSpotTradingAllowed)
+    .map((s) => s.symbol);
+  writeFileSync(BINANCE_CACHE, JSON.stringify(symbols));
+  return new Set(symbols);
+}
+
+// --- Классификация одной новости (строгий JSON по схеме) ---
+const SCHEMA = {
+  type: "object",
+  properties: {
+    symbol: { type: ["string", "null"] },
+    direction: { type: ["string", "null"], enum: ["long", "short", null] },
+    confidence: { type: "number", minimum: 0, maximum: 1 },
+  },
+  required: ["symbol", "direction", "confidence"],
+};
+
+const SYSTEM_PROMPT = [
+  "You are a crypto news classifier. You will be given a news article (title and excerpt).",
+  "Answer with STRICT JSON only, matching this schema:",
+  '{"symbol": string|null, "direction": "long"|"short"|null, "confidence": number}',
+  "",
+  'Rules:',
+  '- "symbol": the ticker of the SINGLE main crypto asset the article is about (e.g. "BTC", "ETH", "SOL", "XRP", "DOGE").',
+  '  Broad crypto-market or macro news (Fed, inflation, regulation of the whole market) counts as "BTC" ONLY if',
+  "  Bitcoin or the crypto market as a whole is the explicit subject of expected impact; otherwise null.",
+  "  If the article is not about a crypto asset at all, or no single main asset can be identified: null.",
+  '- "direction": the expected effect of this news on the PRICE of that asset — "long" if the news should push',
+  '  the price up, "short" if down. If the effect is unclear, mixed or neutral: null.',
+  '- "confidence": your confidence in the direction call, 0..1.',
+  "- Judge ONLY from the given text. Do not use any knowledge of current prices or later events.",
+].join("\n");
+
+const ollama = new Ollama({
+  host: "https://ollama.com",
+  headers: { Authorization: `Bearer ${process.env.OLLAMA_TOKEN}` },
+});
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function classifyOne(title, content) {
+  let lastErr;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const resp = await Promise.race([
+        ollama.chat({
+          model: MODEL_NAME,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: `TITLE: ${title}\n\nEXCERPT: ${content.slice(0, CONTENT_CLIP)}` },
+          ],
+          format: SCHEMA,
+          think: false,
+          stream: false,
+        }),
+        sleep(CALL_TIMEOUT_MS).then(() => { throw new Error("completion timed out"); }),
+      ]);
+      const parsed = JSON.parse(jsonrepair(resp.message?.content ?? ""));
+      if (typeof parsed !== "object" || parsed === null) throw new Error("not an object");
+      const { symbol, direction, confidence } = parsed;
+      if (symbol !== null && typeof symbol !== "string") throw new Error("bad symbol");
+      if (direction !== null && direction !== "long" && direction !== "short") throw new Error("bad direction");
+      if (typeof confidence !== "number" || confidence < 0 || confidence > 1) throw new Error("bad confidence");
+      return { symbol, direction, confidence };
+    } catch (e) {
+      lastErr = e;
+      if (attempt < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS);
+    }
+  }
+  throw lastErr;
+}
+
+// "$BTC"/"btc"/"BTCUSDT"/"BTC-USD" → база тикера; пара собирается как <BASE>USDT.
+// База обязана остаться ≥2 символов — иначе "USDC"/"USDT" схлопнулись бы в пустоту.
+function normalizeTicker(raw) {
+  let t = String(raw).trim().toUpperCase().replace(/^\$/, "");
+  t = t.replace(/[-_/](USDT|USD|USDC)$/, "");
+  const pair = t.match(/^([A-Z0-9]{2,10})(USDT|USD)$/);
+  if (pair) t = pair[1];
+  return /^[A-Z0-9]{2,10}$/.test(t) ? t : null;
+}
+
+// --- Основной цикл: идемпотентно по url, фиксация после каждой новости ---
+const done = new Set();
+if (existsSync(CLS_PATH)) {
+  for (const line of readFileSync(CLS_PATH, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    try { done.add(JSON.parse(line).url); } catch { /* skip */ }
+  }
+}
+const rawItems = [];
+if (existsSync(RAW_PATH)) {
+  for (const line of readFileSync(RAW_PATH, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    try { const it = JSON.parse(line); if (!done.has(it.url)) rawItems.push(it); } catch { /* skip */ }
+  }
+}
+console.log(`[classify] ${new Date().toISOString()} model=${MODEL_NAME} already=${done.size} todo=${rawItems.length}`);
+
+const binance = await loadBinanceSymbols();
+console.log(`[classify] binance USDT spot pairs: ${binance.size}`);
+
+const counters = { ok: 0, no_symbol: 0, no_direction: 0, not_listed: 0, failed: 0 };
+for (const it of rawItems) {
+  let verdict;
+  try {
+    verdict = await classifyOne(it.title, it.content);
+  } catch (e) {
+    // Не фиксируем в журнал — url останется в todo и переклассифицируется следующим прогоном.
+    counters.failed++;
+    console.log(`FAIL\t${it.domain}\t${String(e?.message || e).slice(0, 80)}\t${it.url.slice(0, 90)}`);
+    continue;
+  }
+  let status = "ok", reason = null, pair = null;
+  const base = verdict.symbol === null ? null : normalizeTicker(verdict.symbol);
+  if (base === null) {
+    status = "rejected"; reason = "no_symbol";
+  } else if (verdict.direction === null) {
+    status = "rejected"; reason = "no_direction";
+  } else if (!binance.has(base + "USDT")) {
+    status = "rejected"; reason = "not_listed";
+  } else {
+    pair = base + "USDT";
+  }
+  counters[reason ?? "ok"]++;
+  appendFileSync(CLS_PATH, JSON.stringify({
+    url: it.url,
+    domain: it.domain,
+    title: it.title,
+    publishedDate: it.publishedDate,
+    class: it.class,
+    symbolRaw: verdict.symbol,
+    symbol: pair,
+    direction: verdict.direction,
+    confidence: verdict.confidence,
+    status, reason,
+    model: MODEL_NAME,
+    classifiedAt: new Date().toISOString(),
+  }) + "\n");
+  console.log(`${status === "ok" ? "OK" : "REJ"}\t${it.domain}\t${pair ?? verdict.symbol}\t${verdict.direction}\tconf=${verdict.confidence}\t${reason ?? ""}`);
+}
+
+console.log(`[classify] done: ok=${counters.ok} rejected(no_symbol=${counters.no_symbol}, no_direction=${counters.no_direction}, not_listed=${counters.not_listed}) failed=${counters.failed}`);
