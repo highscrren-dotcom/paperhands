@@ -6,14 +6,16 @@ group: docs
 # OrderSyncOpenNotification
 
 Signal sync open notification.
-Emitted when a scheduled (limit order) signal is activated and the position is opened.
+Emitted when the position order is filled (`orderType: "active"` — immediate open
+or activation fill of a resting order) or when the resting entry order is placed
+at scheduled-signal creation (`orderType: "schedule"`).
 
 ## Properties
 
 ### type
 
 ```ts
-type: "signal_sync.open"
+type: "order_sync.open"
 ```
 
 Discriminator for type-safe union
@@ -73,6 +75,16 @@ signalId: string
 ```
 
 Unique signal identifier (UUID v4)
+
+### orderType
+
+```ts
+orderType: "schedule" | "active"
+```
+
+Which order this sync event is about (from OrderSyncContract.type):
+- "active" — the position order was filled (immediate open or activation of a resting order)
+- "schedule" — the resting entry order was placed at scheduled-signal creation (not a fill)
 
 ### currentPrice
 
