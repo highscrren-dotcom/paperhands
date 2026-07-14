@@ -4,3 +4,5 @@
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1783614195000,"id":"https://www.kitco.com/opinion/2026-07-09/bitcoin-slips-below-cloud-ethereum-and-altcoins-show-relative-strength","confidence":0.75,"class":"etf"}
 {"channel":"finance.yahoo.com","symbol":"USDCUSDT","direction":"long","ts":1783680827000,"id":"https://finance.yahoo.com/markets/crypto/articles/circle-wins-final-regulatory-approval-105347625.html","confidence":0.75,"class":"regulation"}
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"long","ts":1783698476000,"id":"https://www.kitco.com/opinion/2026-07-10/bitcoin-reclaims-cloud-ethereum-and-altcoin-rotation-strengthen","confidence":0.75,"class":"etf"}
+{"channel":"finance.yahoo.com","symbol":"BTCUSDT","direction":"long","ts":1783944075000,"id":"https://finance.yahoo.com/markets/crypto/articles/trump-invested-crypto-gains-stocks-111144069.html","confidence":0.45,"class":"crash-rally"}
+{"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1783978298000,"id":"https://www.kitco.com/opinion/2026-07-13/crypto-swot-kraken-pursuing-full-european-banking-license","confidence":0.72,"class":"etf"}
