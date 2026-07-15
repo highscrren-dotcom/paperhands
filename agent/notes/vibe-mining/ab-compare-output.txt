@@ -1,0 +1,48 @@
+v1=80 v2=80 joined=80
+
+outcome v1: { no_symbol: 71, ok: 8, no_direction: 1 }
+outcome v2: { no_symbol: 73, no_direction: 3, ok: 4 }
+
+agreement: status 73/80, full(status+symbol+direction) 71/80
+
+ok∩ok=3: conf v1 mean=0.72 v2 mean=0.65
+conf spread v1: 0.7, 0.72, 0.75
+conf spread v2: 0.55, 0.6, 0.8
+
+=== расхождения (9) ===
+- kitco.com | Bitcoin pullback keeps July rally alive as altcoin breadth weakens - KITCO
+  v1: ok BTCUSDT long conf=0.65
+  v2: rejected/no_direction BTC  conf=0.65 [market-structure] Technical analysis suggesting BTC may outperform altcoins short-term while July upside thesis remains intact -
+  url: https://www.kitco.com/opinion/2026-07-08/bitcoin-pullback-keeps-july-rally-alive-altcoin-breadth-wea
+- kitco.com | Bitcoin slips below the cloud as Ethereum and Altcoins show relative strength - KITCO
+  v1: ok BTCUSDT short conf=0.75
+  v2: rejected/no_direction BTC  conf=0.5 [market-structure] The article provides technical analysis commentary comparing Bitcoin's price action to Ethereum and altcoins, 
+  url: https://www.kitco.com/opinion/2026-07-09/bitcoin-slips-below-cloud-ethereum-and-altcoins-show-relati
+- kitco.com | Bitcoin reclaims the cloud as Ethereum and Altcoin rotation strengthen - KITCO
+  v1: ok BTCUSDT long conf=0.75
+  v2: rejected/no_direction BTC  conf=0.3 [market-structure] This is pure technical analysis opinion with price targets ($64,700, $65,622, $67,292) based on TBO Cloud patt
+  url: https://www.kitco.com/opinion/2026-07-10/bitcoin-reclaims-cloud-ethereum-and-altcoin-rotation-streng
+- cnbc.com | Bitcoin rebounds after Trump says he's become 'a big crypto guy' - CNBC
+  v1: ok BTCUSDT long conf=0.75
+  v2: ok BTCUSDT short conf=0.55 [adoption] Strategy disclosed $216 million in bitcoin sales, marking a reversal of its earlier 'never sell' promise, repr
+  url: https://www.cnbc.com/2026/07/06/bitcoin-rebounds-after-trump-says-hes-become-a-big-crypto-guy.html
+- coingape.com | New CLARITY Act Draft Expected Next Week as Senate Banking & Agriculture Committees Merge 
+  v1: rejected/no_direction BTC  conf=0
+  v2: rejected/no_symbol   conf=0.3 [regulation] The article only discusses an upcoming draft of the CLARITY Act expected next week, a pending legislative prop
+  url: https://coingape.com/new-clarity-act-draft-expected-next-week-as-senate-banking-agriculture-committe
+- cnbc.com | Stablecoin issuer Circle just got the greenlight to operate as a bank. The shares are up 1
+  v1: rejected/no_symbol  long conf=0.55
+  v2: rejected/no_symbol   conf=0.3 [regulation] Circle received OCC approval to operate as a national bank, which is positive for the company but affects a pr
+  url: https://www.cnbc.com/2026/07/10/circle-gets-an-occ-bank-charter-as-stablecoin-competition-heats-up-s
+- finance.yahoo.com | Circle wins final regulatory approval to establish US trust bank, shares rise - Yahoo Fina
+  v1: ok USDCUSDT long conf=0.75
+  v2: rejected/no_symbol  long conf=0.6 [regulation] Circle received OCC approval to establish a national trust bank, enabling direct federal oversight and institu
+  url: https://finance.yahoo.com/markets/crypto/articles/circle-wins-final-regulatory-approval-105347625.ht
+- finance.yahoo.com | Trump invested crypto gains in stocks and bonds, filings show - Yahoo Finance
+  v1: ok BTCUSDT long conf=0.45
+  v2: rejected/no_symbol   conf=0.7 [adoption] Article reports Trump's financial disclosures showing crypto holdings and proceeds invested in traditional ass
+  url: https://finance.yahoo.com/markets/crypto/articles/trump-invested-crypto-gains-stocks-111144069.html
+- cnbc.com | Trump calls for Congress to pass Clarity Act crypto bill to honor Lindsey Graham - CNBC
+  v1: rejected/no_symbol   conf=0.5
+  v2: ok BTCUSDT long conf=0.6 [regulation] The Clarity Act, backed by the crypto industry and White House, would provide regulatory clarity for cryptocur
+  url: https://www.cnbc.com/2026/07/13/trump-congress-clarity-act-crypto-bill-lindsey-graham.html
