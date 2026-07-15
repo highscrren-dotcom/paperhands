@@ -1,0 +1,12 @@
+v1=80 v2=80 joined=80
+
+outcome v1: { no_symbol: 71, ok: 8, no_direction: 1 }
+outcome v2: { no_symbol: 72, ok: 8 }
+
+agreement: status 77/80, full(status+symbol+direction) 74/80
+
+ok∩ok=7: conf v1 mean=0.69 v2 mean=0.51
+conf spread v1: 0.45, 0.65, 0.7, 0.75
+conf spread v2: 0.3, 0.5, 0.6, 0.75, 0.85
+
+=== расхождения (6) ===
