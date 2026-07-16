@@ -6,6 +6,13 @@
 // никакого look-ahead. Идемпотентно по url (news-classified.jsonl — журнал).
 // null-символ / null-направление / не-листящийся на Binance тикер → отсев со счётчиком.
 //
+// ПРОМПТ v2.1 (решение владельца 16.07, DECISIONS №84): приёмы Vibe-Trading
+// event-driven (якоря направлений, шаги, калиброванный confidence, event_type+reason
+// как аудит-след) + две правки по A/B (TA-опинионка = direction с conf~0.3;
+// судить главную историю заголовка). A/B v1↔v2.1: ok=8=v1, agreement 96%
+// (agent/notes/vibe-mining/report.md). Записи журнала БЕЗ promptVersion = старый v1;
+// фиту не смешивать версии.
+//
 // Usage: node news_classify.mjs
 import { readFileSync, existsSync, appendFileSync, writeFileSync, statSync, mkdirSync } from "node:fs";
 import { Ollama } from "ollama";
@@ -25,6 +32,7 @@ const BINANCE_CACHE = new URL("binance-usdt-symbols.json", DATA_DIR);
 mkdirSync(DATA_DIR, { recursive: true });
 
 const MODEL_NAME = "minimax-m2.7:cloud";
+const PROMPT_VERSION = "v2.1-vibe-2026-07-15";
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 5_000;
 const CALL_TIMEOUT_MS = 120_000;
@@ -46,31 +54,60 @@ async function loadBinanceSymbols() {
   return new Set(symbols);
 }
 
-// --- Классификация одной новости (строгий JSON по схеме) ---
+// --- Классификация одной новости (строгий JSON по схеме; v2.1: +event_type/reason) ---
 const SCHEMA = {
   type: "object",
   properties: {
     symbol: { type: ["string", "null"] },
     direction: { type: ["string", "null"], enum: ["long", "short", null] },
     confidence: { type: "number", minimum: 0, maximum: 1 },
+    event_type: {
+      type: "string",
+      enum: ["etf-flow", "regulation", "legal", "macro", "security", "adoption", "market-structure", "other"],
+    },
+    reason: { type: "string" },
   },
-  required: ["symbol", "direction", "confidence"],
+  required: ["symbol", "direction", "confidence", "event_type", "reason"],
 };
 
 const SYSTEM_PROMPT = [
-  "You are a crypto news classifier. You will be given a news article (title and excerpt).",
+  "You are a crypto news classifier. You will be given one news article (title and excerpt).",
   "Answer with STRICT JSON only, matching this schema:",
-  '{"symbol": string|null, "direction": "long"|"short"|null, "confidence": number}',
+  '{"symbol": string|null, "direction": "long"|"short"|null, "confidence": number, "event_type": string, "reason": string}',
   "",
-  'Rules:',
-  '- "symbol": the ticker of the SINGLE main crypto asset the article is about (e.g. "BTC", "ETH", "SOL", "XRP", "DOGE").',
-  '  Broad crypto-market or macro news (Fed, inflation, regulation of the whole market) counts as "BTC" ONLY if',
+  "Work in steps:",
+  "",
+  'Step 1 — "symbol": the ticker of the SINGLE main crypto asset the article is about (e.g. "BTC", "ETH", "SOL", "XRP", "DOGE").',
+  "- Broad crypto-market or macro news (Fed, inflation, regulation of the whole market) counts as \"BTC\" ONLY if",
   "  Bitcoin or the crypto market as a whole is the explicit subject of expected impact; otherwise null.",
-  "  If the article is not about a crypto asset at all, or no single main asset can be identified: null.",
-  '- "direction": the expected effect of this news on the PRICE of that asset — "long" if the news should push',
-  '  the price up, "short" if down. If the effect is unclear, mixed or neutral: null.',
-  '- "confidence": your confidence in the direction call, 0..1.',
+  "- If the article is not about a crypto asset at all, or covers many assets with no single main one: null.",
+  "",
+  'Step 2 — "direction": the expected effect of this news on the PRICE of that asset. Calibration anchors:',
+  '- "long": spot-ETF approval or large documented ETF inflows; a major company, fund or state buying the asset;',
+  "  a court ruling or regulation explicitly favorable to the asset; a large supply reduction.",
+  '- "short": exchange hack or protocol exploit; a regulator lawsuit or ban targeting the asset; a major holder',
+  "  selling or forced liquidation; delisting or loss of market access.",
+  '- Technical-analysis commentary IS a valid direction call: if the author\'s stance implies a clear near-term',
+  '  direction ("breaks below support", "reclaims key level", "rally intact"), use that direction with LOW',
+  "  confidence (about 0.3) instead of null.",
+  '- null: routine price recap with no stance and no new fact; mixed news with bullish and bearish elements of',
+  "  similar weight.",
+  "- Judge the MAIN story of the article — the one the TITLE is about. Ignore secondary facts mentioned in",
+  "  passing in the excerpt.",
+  "",
+  'Step 3 — "confidence": how strongly the text itself supports the direction call. Calibrated scale:',
+  "- 0.9: a major, concrete, dated event directly about the asset (ETF approved, exchange hacked, lawsuit filed).",
+  "- 0.6: clear directional news but indirect, partial or second-hand (analyst-reported flows, rumored decision,",
+  "  industry-wide policy that includes the asset).",
+  '- 0.3: weak or speculative hints (opinions, forecasts, "could/may" phrasing).',
+  "Intermediate values are allowed. If direction is null, confidence is your confidence that NO call should be made.",
+  "",
+  '- "event_type": one of "etf-flow", "regulation", "legal", "macro", "security", "adoption", "market-structure", "other".',
+  '- "reason": ONE short sentence quoting the decisive fact from the text.',
+  "",
+  "Rules:",
   "- Judge ONLY from the given text. Do not use any knowledge of current prices or later events.",
+  "- Do not force a call: null is a correct and common answer — most general finance news has no single crypto asset.",
 ].join("\n");
 
 const ollama = new Ollama({
@@ -98,11 +135,13 @@ async function classifyOne(title, content) {
       ]);
       const parsed = JSON.parse(jsonrepair(resp.message?.content ?? ""));
       if (typeof parsed !== "object" || parsed === null) throw new Error("not an object");
-      const { symbol, direction, confidence } = parsed;
+      const { symbol, direction, confidence, event_type, reason } = parsed;
       if (symbol !== null && typeof symbol !== "string") throw new Error("bad symbol");
       if (direction !== null && direction !== "long" && direction !== "short") throw new Error("bad direction");
       if (typeof confidence !== "number" || confidence < 0 || confidence > 1) throw new Error("bad confidence");
-      return { symbol, direction, confidence };
+      if (typeof event_type !== "string") throw new Error("bad event_type");
+      if (typeof reason !== "string") throw new Error("bad reason");
+      return { symbol, direction, confidence, event_type, reason };
     } catch (e) {
       lastErr = e;
       if (attempt < MAX_ATTEMPTS) await sleep(RETRY_DELAY_MS);
@@ -136,7 +175,7 @@ if (existsSync(RAW_PATH)) {
     try { const it = JSON.parse(line); if (!done.has(it.url)) rawItems.push(it); } catch { /* skip */ }
   }
 }
-console.log(`[classify] ${new Date().toISOString()} model=${MODEL_NAME} already=${done.size} todo=${rawItems.length}`);
+console.log(`[classify] ${new Date().toISOString()} model=${MODEL_NAME} prompt=${PROMPT_VERSION} already=${done.size} todo=${rawItems.length}`);
 
 const binance = await loadBinanceSymbols();
 console.log(`[classify] binance USDT spot pairs: ${binance.size}`);
@@ -174,11 +213,14 @@ for (const it of rawItems) {
     symbol: pair,
     direction: verdict.direction,
     confidence: verdict.confidence,
+    eventType: verdict.event_type,
+    llmReason: verdict.reason,
     status, reason,
     model: MODEL_NAME,
+    promptVersion: PROMPT_VERSION,
     classifiedAt: new Date().toISOString(),
   }) + "\n");
-  console.log(`${status === "ok" ? "OK" : "REJ"}\t${it.domain}\t${pair ?? verdict.symbol}\t${verdict.direction}\tconf=${verdict.confidence}\t${reason ?? ""}`);
+  console.log(`${status === "ok" ? "OK" : "REJ"}\t${it.domain}\t${pair ?? verdict.symbol}\t${verdict.direction}\tconf=${verdict.confidence}\t${verdict.event_type}\t${reason ?? ""}`);
 }
 
 console.log(`[classify] done: ok=${counters.ok} rejected(no_symbol=${counters.no_symbol}, no_direction=${counters.no_direction}, not_listed=${counters.not_listed}) failed=${counters.failed}`);
