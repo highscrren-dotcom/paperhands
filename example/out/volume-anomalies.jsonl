@@ -117,3 +117,6 @@
 {"at":"2026-07-15T08:45:08.235Z","symbol":"ZECUSDT","severity":"extreme","confidence":0.9623846407335745,"moveScore":0.9019767803686203,"trades":2492,"spanMin":35}
 {"at":"2026-07-15T09:00:06.628Z","symbol":"PENGUUSDT","severity":"strong","confidence":0.8117361522211959,"moveScore":0.3840447756125104,"trades":1448,"spanMin":35}
 {"at":"2026-07-15T12:15:11.798Z","symbol":"SOLUSDT","severity":"strong","confidence":0.8340835969401953,"moveScore":0.5710281078726915,"trades":3175,"spanMin":35}
+{"at":"2026-07-16T13:30:07.048Z","symbol":"PENGUUSDT","severity":"strong","confidence":0.8308519064804887,"moveScore":0.4745670347299635,"trades":1652,"spanMin":35}
+{"at":"2026-07-16T13:30:07.447Z","symbol":"TAOUSDT","severity":"extreme","confidence":0.9409463581751392,"moveScore":0.9409463581751392,"trades":470,"spanMin":35}
+{"at":"2026-07-16T14:00:12.324Z","symbol":"SOLUSDT","severity":"strong","confidence":0.7504136194031595,"moveScore":0.293833681989782,"trades":5596,"spanMin":35}
