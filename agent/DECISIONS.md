@@ -6,6 +6,24 @@
 
 ## Session 12 (2026-07-16 день) — возврат после офлайна: контур сам встал, но ingest снова терял посты
 
+85. **News→mongo worker ПОСТРОЕН по ТЗ №84 (сессия-строитель 16.07, не
+    закоммичено).** Два скрипта в `example/scripts/news_dataset/`:
+    `news_mongo_sync.mjs` (идемпотентное зеркало journal→`news-audit`.verdicts,
+    localhost, НЕ backtest-pro; upsert по url unique + индексы (symbol,publishedAt)/
+    (domain,publishedAt); ВСЕ вердикты вкл. rejected; mongoose через createRequire
+    из ollama-crontab) и `news_query.mjs` (`itemsFor({when})`: status ok,
+    **publishedAt ≤ when**, backfill исключён по умолчанию, одна promptVersion —
+    look-ahead невозможен по построению; ни к чему не подключён). Полный синк:
+    127/127, повтор = modified 0; БД 128KB. Смоук when до/между/после: 0→1→2
+    items (kitco 21:31Z отрезан при when 15:00Z). Нюансы: fetchedAt взят из
+    collectedAt raw (честнее ТЗ-фолбэка classifiedAt, разница минуты);
+    tavilyScore уже был в raw (score) — collect не тронут; все 127 записей =
+    v1. Крон-строка стала 4-шаговой (README) — обновляет владелец. Открытые
+    вопросы: unique-url vs переклассификация новой версией промпта (сейчас
+    конфликта нет — журнал идемпотентен по url), полуночные даты в зеркало
+    не попадают вовсе (collect режет раньше), судьба v1-затравки при фите.
+    Схема/канон — [notes/news-dataset/README.md](notes/news-dataset/README.md).
+
 84. **Три решения владельца по vibe-отчёту (16.07): (1) v2.1 → БОЙ; (2) фидбек
     по рекомендации; (3) mongo-worker — ДА.** Сделано: (1) боевой
     `news_classify.mjs` переведён на v2.1 (схема +event_type/reason, промпт с

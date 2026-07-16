@@ -20,15 +20,16 @@
 | 1 | `news_collect.mjs [day\|week]` | Tavily: пул-13 (карта 7.1), 4 clean-запроса классов ETF/FOMC/крах/регуляторка (A.3), advanced, `timeRange:day` (дефолт). Без порога score; фильтр только «валидная дата ≠ 00:00 UTC». Дедуп по url против всего датасета. | `news-raw.jsonl` (append) |
 | 2 | `news_classify.mjs` | Каждый новый url → Ollama Cloud `minimax-m2.7:cloud` (модель и паттерн вызова автора: format-схема, think:false, jsonrepair, 3 ретрая). Строгий JSON `{symbol, direction, confidence}`. Классификатор видит ТОЛЬКО title+content — ни цены, ни даты (никакого look-ahead). Отсев: symbol=null / direction=null / пары нет на Binance spot (кэш `binance-usdt-symbols.json`, обновление раз в 7 дней). Идемпотентно по url; сетевые фейлы НЕ фиксируются — доклассифицируются следующим прогоном. | `news-classified.jsonl` (append, журнал) |
 | 3 | `news_dataset.mjs` | status=ok → ParserItem: `{channel: домен, symbol: <BASE>USDT, direction, ts: publishedDate мс, id: url}` + extra-поля `confidence`/`class` (pump-anomaly игнорирует). Перезапись целиком, сортировка по ts. Печатает сводку и fit-гейт. | `news-parser-items.jsonl` (rewrite) |
+| 4 | `news_mongo_sync.mjs` | Идемпотентное зеркало журнала в Mongo `news-audit`.verdicts (localhost:27017, **НЕ backtest-pro**): upsert по url (unique-индекс), вторичные индексы `(symbol, publishedAt)`, `(domain, publishedAt)`. Пишутся ВСЕ вердикты, включая rejected. JSONL остаётся источником истины. | Mongo `news-audit`.verdicts |
 
 Первый прогон был с `week` (ретро-затравка ~7 дней); ежедневный цикл — `day`.
 
 ## Крон-строка (ставит владелец)
 
-Раз в день, конвейером, лог сюда же в `news-cron.log`:
+Раз в день, конвейером (с 16.07 — четыре шага, добавлен mongo-синк), лог сюда же в `news-cron.log`:
 
 ```cron
-40 9 * * * cd /home/s1dd1/dev/quant/paperhands/example && ( /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_collect.mjs day && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_classify.mjs && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_dataset.mjs ) >> /home/s1dd1/dev/quant/paperhands/agent/notes/news-dataset/news-cron.log 2>&1
+40 9 * * * cd /home/s1dd1/dev/quant/paperhands/example && ( /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_collect.mjs day && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_classify.mjs && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_dataset.mjs && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_mongo_sync.mjs ) >> /home/s1dd1/dev/quant/paperhands/agent/notes/news-dataset/news-cron.log 2>&1
 ```
 
 - node абсолютным путём (урок OOM-инцидента: в кроне PATH голый).
@@ -37,6 +38,47 @@
 - Бюджет Tavily: 4 запроса × advanced = **8 кредитов/день** (+2 у джекпот-монитора
   №66 = 10/день суммарно). Стоп-правило то же: остаток месячного лимита < 100 → стоп.
 - Ollama — штатная подписка владельца, ~десятки коротких вызовов/день.
+
+## Mongo-зеркало `news-audit`.verdicts (канон автора №76, ТЗ №84)
+
+> Канон дословно (автор, 14.07): «worker пишет аудит новостей в mongo с publishedAt;
+> на стороне backtest-kit — запрос в mongo через getSignal, последний аргумент
+> `when: Date` — виртуальное время бэктеста».
+
+**Инвариант: потребитель читает только `status:"ok"` с `publishedAt ≤ when`** —
+look-ahead невозможен по построению. База `news-audit` на localhost:27017;
+боевая `backtest-pro` (live-бот) не используется вообще («прод пишется отдельно»).
+JSONL-журнал остаётся источником истины, зеркало пересобирается синком из него.
+
+Схема документа (upsert по `url`, unique-индекс; вторичные `(symbol, publishedAt)`
+и `(domain, publishedAt)`):
+
+| Поле | Тип | Откуда / зачем |
+|---|---|---|
+| `url` | string, **ключ** | идентичность новости |
+| `domain` | string | = будущий channel |
+| `title` | string | аудит глазами |
+| `class` | string | класс Tavily-запроса (etf/fomc/crash-rally/regulation) |
+| `tavilyScore` | number\|null | `score` raw-записи (в classified его нет — join по url) |
+| `publishedAt` | **Date** | когда новость случилась; **канон: publishedAt ≤ when** |
+| `fetchedAt` | **Date** | когда новость появилась у НАС = `collectedAt` шага collect (фолбэк `classifiedAt`); в live новость доступна с fetchedAt, не с publishedAt |
+| `backfill` | bool | true для week-затравки (разрыв publishedAt↔fetchedAt — дни); фит может исключить |
+| `midnightUtc` | bool | 00:00Z-дата = артефакт индекса Tavily (№66); пишем как есть, фильтрует ПОТРЕБИТЕЛЬ (сейчас таких 0 — collect отбрасывает) |
+| `symbolRaw`/`symbol` | string\|null | вердикт LLM / пара после нормализации+Binance-гейта |
+| `direction`/`confidence` | string\|null / number | вердикт LLM |
+| `eventType`/`llmReason` | string\|null | аудит-поля v2.1 (у v1-записей null) |
+| `status`/`rejectReason` | string / string\|null | ok либо rejected (= `reason` журнала); **rejected тоже пишутся** — иначе отсев/фит не пересчитать задним числом |
+| `model`/`promptVersion` | string | провенанс; записи журнала без promptVersion = `"v1"` (дрейф-урок Vibe: версии при фите не смешивать) |
+| `classifiedAt` | Date | когда классифицирована |
+| `syncedAt` | Date | когда впервые попала в зеркало (`$setOnInsert`: повторный синк неизменного журнала даёт modified=0) |
+
+**Read-side: `news_query.mjs`** — `itemsFor({symbol?, domain?, when, promptVersion?})`
+→ ParserItem-подобные (`channel`=domain, `ts`=publishedAt.getTime(), `id`=url).
+Дефолты строгие: `status:"ok"`, `publishedAt ≤ when` (when обязателен),
+`backfill:{$ne:true}` (флаг `--include-backfill`/`includeBackfill:true` включает),
+`midnightUtc:{$ne:true}`, одна promptVersion (дефолт — версия самой свежей записи).
+Ни к какой стратегии НЕ подключён — инструмент фита и демонстрация канона.
+CLI: `node news_query.mjs --when <ISO> [--symbol ...] [--domain ...] [--prompt-version ...] [--include-backfill]`.
 
 ## Фит pump-anomaly — НЕ здесь
 
@@ -51,6 +93,8 @@
 - `news-parser-items.jsonl` — итоговый датасет ParserItem.
 - `binance-usdt-symbols.json` — кэш листинга Binance spot USDT (TTL 7 дней).
 - `news-cron.log` — лог ежедневных прогонов (появится с кроном).
+- Mongo `news-audit`.verdicts (localhost:27017) — зеркало журнала под getSignal(when)
+  и фит; пересобирается `news_mongo_sync.mjs`, при потере просто синкнуть заново.
 
 ## Первый прогон (смоук, 2026-07-13 19:45 +05, окно week — ретро-затравка)
 
