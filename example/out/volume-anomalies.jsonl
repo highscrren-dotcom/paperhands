@@ -116,3 +116,4 @@
 {"at":"2026-07-15T08:45:07.029Z","symbol":"TAOUSDT","severity":"strong","confidence":0.8765108618113173,"moveScore":0.40505129919935196,"trades":506,"spanMin":34}
 {"at":"2026-07-15T08:45:08.235Z","symbol":"ZECUSDT","severity":"extreme","confidence":0.9623846407335745,"moveScore":0.9019767803686203,"trades":2492,"spanMin":35}
 {"at":"2026-07-15T09:00:06.628Z","symbol":"PENGUUSDT","severity":"strong","confidence":0.8117361522211959,"moveScore":0.3840447756125104,"trades":1448,"spanMin":35}
+{"at":"2026-07-15T12:15:11.798Z","symbol":"SOLUSDT","severity":"strong","confidence":0.8340835969401953,"moveScore":0.5710281078726915,"trades":3175,"spanMin":35}
