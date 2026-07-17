@@ -1543,12 +1543,17 @@ interface OrderSyncBase {
     /**
      * Which order the sync gate is about:
      * - "active" — the position order: immediate open, activation fill of a resting
-     *   order, and every close. Reject (false/throw) skips the open/close; a rejected
-     *   fresh open rolls back the interval throttle and retries on the next tick.
+     *   order, and every close.
      * - "schedule" — the resting entry order being PLACED when a scheduled signal is
-     *   created (action "signal-open" only). Reject means the exchange did not accept
-     *   the resting order: the scheduled signal is NOT registered, the risk
-     *   reservation is released and the placement retries on the next tick.
+     *   created (action "signal-open" only).
+     *
+     * Listener throw semantics (resolved into IBrokerOrderVerdict): a plain Error or
+     * OrderTransientError = "transient" — the open rolls back and retries
+     * identity-stably (same signalId, `attempt` increments) up to
+     * CC_ORDER_OPEN_RETRY_ATTEMPTS, the close is skipped and retries up to
+     * CC_ORDER_CLOSE_RETRY_ATTEMPTS (then force-close); OrderRejectedError =
+     * "rejected", terminal at once (open dropped without retry / close force-closed);
+     * OrderDeletedError here is a protocol violation and degrades to "transient".
      */
     type: "schedule" | "active";
     /** Trading pair symbol (e.g., "BTCUSDT") */
@@ -1567,6 +1572,14 @@ interface OrderSyncBase {
     timestamp: number;
     /** Complete public signal row at the moment of this event */
     signal: IPublicSignalRow;
+    /**
+     * Number of CONSECUTIVE prior failures of this gate for this signal (0 = first
+     * attempt / healthy). Managed by the framework: a rejected gate increments the
+     * counter carried by the next attempt; a confirmed gate resets it to 0. Bounded by
+     * CC_ORDER_OPEN_RETRY_ATTEMPTS (signal-open) / CC_ORDER_CLOSE_RETRY_ATTEMPTS
+     * (signal-close).
+     */
+    attempt: number;
 }
 /**
  * Signal open sync event.
@@ -1704,11 +1717,19 @@ type OrderSyncContract = OrderOpenContract | OrderCloseContract;
  * - `type: "active"` — a pending signal (open position); the order backing the position.
  * - `type: "schedule"` — a scheduled signal; the resting entry order awaiting activation.
  *
- * Listener contract (mirrors syncSubject semantics):
- * - Return true (or do nothing) — the order is still open on the exchange, keep monitoring.
- * - Return false OR throw — the order is no longer open on the exchange (filled, cancelled,
- *   liquidated externally). For "active" the framework closes the pending signal with
- *   closeReason "closed"; for "schedule" it cancels the scheduled signal (reason "user").
+ * Listener contract (resolved into IBrokerOrderVerdict):
+ * - Return true (or do nothing) — the order is still open on the exchange, keep monitoring;
+ *   the consecutive-failure counter (`attempt`) resets to 0.
+ * - Throw OrderDeletedError — the CONFIRMED "order not found by id" (filled, cancelled,
+ *   liquidated externally): terminal AT ONCE, bypassing the tolerance counter. For "active"
+ *   the framework closes the pending signal with closeReason "closed"; for "schedule" it
+ *   cancels the scheduled signal (reason "user").
+ * - Return false OR throw a plain Error / OrderTransientError — the check FAILED
+ *   transiently (network blip, exchange 5xx): TOLERATED, the order is assumed still open
+ *   and the next ping carries `attempt` incremented, up to CC_ORDER_CHECK_RETRY_ATTEMPTS
+ *   consecutive failures before the terminal action above fires (with the config at 0 any
+ *   failure is terminal on the spot — legacy).
+ * - Throw OrderRejectedError — protocol violation in this channel, degrades to transient.
  *   NOTE for "schedule": if the resting order actually FILLED, confirm it via
  *   activateScheduled/commitActivateScheduled instead of failing the ping — a failed ping
  *   is a terminal cancel, not an activation.
@@ -1740,6 +1761,13 @@ interface OrderCheckContract {
     timestamp: number;
     /** Complete public signal row at the moment of this event */
     signal: IPublicSignalRow;
+    /**
+     * Number of CONSECUTIVE prior failed checks for this signal (0 = first check /
+     * healthy). Managed by the framework: a failed check (false/non-typed throw)
+     * increments the counter carried by the next ping while the failure is tolerated
+     * as transient (CC_ORDER_CHECK_RETRY_ATTEMPTS); a successful check resets it to 0.
+     */
+    attempt: number;
     /** Market price at the moment of the ping (VWAP) */
     currentPrice: number;
     /** Unrealized PNL of the open position at the moment of the ping */
@@ -2162,18 +2190,23 @@ interface IActionCallbacks {
     onRiskRejection(event: RiskContract, actionName: ActionName, strategyName: StrategyName, frameName: FrameName, backtest: boolean): void | Promise<void>;
     /**
      * Called when framework attempts to open or close a position via limit order.
-     * Return false (or throw) to reject the operation — framework will retry on next tick.
+     * THROW to reject the operation — the return value is IGNORED (only a throw gates).
      *
      * NOTE: Unlike other callbacks, exceptions from this method are NOT swallowed.
-     * They propagate up to CREATE_SYNC_FN which catches them and returns false.
-     * Throw to reject the operation — framework will retry on next tick.
+     * They propagate up to CREATE_SYNC_FN which resolves them into an
+     * IBrokerOrderVerdict (see interfaces/Broker.interface):
+     * - non-typed throw (or explicit OrderTransientError) → "transient": the open retries identity-stably (same signalId,
+     *   `event.attempt` incremented) up to CC_ORDER_OPEN_RETRY_ATTEMPTS, then is dropped;
+     *   the close retries up to CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine
+     *   FORCE-CLOSES its state with the original closeReason (loud errorEmitter);
+     * - throw OrderRejectedError → "rejected", TERMINAL: the open is dropped at once
+     *   without arming the retry; the close is force-closed at once.
      *
      * MANUAL WIRING — EXCEPTION-BASED GATE: the action-side equivalent of the Broker
-     * `onOrderOpenCommit` / `onOrderCloseCommit` gate. Throwing (or returning false) on
-     * `event.action === "signal-open"` rolls the open back to idle (a scheduled activation is
-     * cancelled); on `"signal-close"` it skips the close and leaves the position open — retried next
-     * tick. Rides the same `syncSubject` emission as the Broker commit hooks, so a throw from either is
-     * collapsed to false by `CREATE_SYNC_FN`. Backtest short-circuits the gate to true (live-only).
+     * `onOrderOpenCommit` / `onOrderCloseCommit` gate. Rides the same `syncSubject` emission
+     * as the Broker commit hooks — the verdict semantics are identical for both channels.
+     * `event.attempt` carries the number of consecutive prior rejections (0 = first try).
+     * Backtest short-circuits the gate to "confirmed" (live-only).
      *
      * @param event - Sync event with action "signal-open" or "signal-close"
      * @param actionName - Action identifier
@@ -2189,26 +2222,27 @@ interface IActionCallbacks {
      * Fires for both monitored states, discriminated by `event.type`: "active" — pending signal
      * (open position); "schedule" — scheduled signal (resting entry order awaiting activation).
      *
-     * Query the exchange by `event.signalId` and THROW ONLY when the order is NOT FOUND by that id
-     * (filled, cancelled, or liquidated externally) — the framework then closes the position with
-     * closeReason "closed" (type "active") or cancels the scheduled signal with reason "user"
-     * (type "schedule").
+     * Exceptions are NOT swallowed — they propagate up to CREATE_SYNC_PENDING_FN which resolves
+     * them into an IBrokerOrderVerdict (see interfaces/Broker.interface):
+     * - non-typed throw (or explicit OrderTransientError) → "transient": the failed check is TOLERATED (order assumed still open,
+     *   monitoring continues, `event.attempt` incremented) up to CC_ORDER_CHECK_RETRY_ATTEMPTS
+     *   consecutive failures; exhaustion acts terminally — close with closeReason "closed"
+     *   (type "active") / cancel with reason "user" (type "schedule"). A network blip no longer
+     *   kills a live position on the spot;
+     * - throw OrderDeletedError → "deleted", TERMINAL at once, bypassing the tolerance counter —
+     *   the adapter's CONFIRMED "order not found by id" (filled, cancelled, or liquidated
+     *   externally; e.g. the user deleted the order manually).
+     * A successful check resets `event.attempt` to 0.
      *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing, otherwise a connectivity blip would wrongly close an open
-     * position. Throw exclusively on a confirmed "order not found by id" result.
-     *
-     * NOTE: Like onOrderSync, exceptions from this method are NOT swallowed. They propagate up to
-     * CREATE_SYNC_PENDING_FN which catches them and returns false.
-     *
-     * MANUAL WIRING — EXCEPTION-BASED GATE: the action-side equivalent of the Broker `onOrderCheck`.
-     * A THROW on a confirmed "order not found by id" closes the position with closeReason "closed"
-     * (retried via CREATE_SYNC_PENDING_FN). This is the throw-driven alternative to the imperative
-     * `commitClosePending` (call it from `pingActive` instead) — pick one, not both, for the same
-     * "order gone" condition. Backtest short-circuits the gate (live-only).
+     * MANUAL WIRING — EXCEPTION-BASED GATE: the action-side equivalent of the Broker
+     * `onOrderActiveCheck` / `onOrderScheduleCheck` — the verdict semantics are identical for both
+     * channels. Throw-driven alternative to the imperative `commitClosePending` (call it from
+     * `pingActive` instead) — pick one, not both, for the same "order gone" condition.
+     * Backtest short-circuits the gate (live-only).
      *
      * @deprecated This callback is not recommended for use. Exchange integration should be implemented
-     * in Broker.useBrokerAdapter (the infrastructure domain layer) via onOrderCheck instead.
+     * in Broker.useBrokerAdapter (the infrastructure domain layer) via onOrderActiveCheck /
+     * onOrderScheduleCheck instead.
      * @param event - Pending-ping event with action "signal-ping"
      * @param actionName - Action identifier
      * @param strategyName - Strategy identifier
@@ -2507,15 +2541,18 @@ interface IAction {
     riskRejection(event: RiskContract): void | Promise<void>;
     /**
      * Called when framework attempts to open or close a position via limit order.
-     * Throw to reject — framework will retry on next tick.
+     * Throw to reject (the return value is IGNORED).
      *
-     * NOTE: Exceptions are NOT swallowed here — they propagate to CREATE_SYNC_FN.
+     * NOTE: Exceptions are NOT swallowed here — they propagate to CREATE_SYNC_FN and resolve
+     * into an IBrokerOrderVerdict: non-typed throw or OrderTransientError = "transient" (bounded retry — opens
+     * identity-stably up to CC_ORDER_OPEN_RETRY_ATTEMPTS, closes up to
+     * CC_ORDER_CLOSE_RETRY_ATTEMPTS with force-close on exhaustion); throw
+     * OrderRejectedError = "rejected", terminal at once (open dropped / close force-closed).
      *
      * MANUAL WIRING — EXCEPTION-BASED GATE: action-side equivalent of the Broker
-     * `onOrderOpenCommit` / `onOrderCloseCommit`. Throw on "signal-open" → open rolls back to idle
-     * (scheduled activation cancelled); throw on "signal-close" → close skipped, position stays open;
-     * retried next tick. Same `syncSubject` emission as the Broker commit hooks (collapsed to false by
-     * CREATE_SYNC_FN). Live-only. Implement via the {@link IActionCallbacks.onOrderSync} callback.
+     * `onOrderOpenCommit` / `onOrderCloseCommit`. Same `syncSubject` emission as the Broker
+     * commit hooks — identical verdict semantics. `event.attempt` = consecutive prior
+     * rejections. Live-only. Implement via the {@link IActionCallbacks.onOrderSync} callback.
      *
      * @deprecated This method is not recommended for use. Implement custom logic in signal(), signalLive(), or signalBacktest() instead.
      * If you need to implement custom logic on signal open/close, please use signal(), signalBacktest(), signalLive() instead.
@@ -2527,26 +2564,23 @@ interface IAction {
      * Called on every live tick while a pending signal is monitored, BEFORE TP/SL/time evaluation,
      * to confirm the order is still pending (open) on the exchange.
      *
-     * Query the exchange by `event.signalId` and THROW ONLY when the order is NOT FOUND by that id
-     * (filled, cancelled, or liquidated externally) — the framework then closes the position with
-     * closeReason "closed".
+     * NOTE: Exceptions are NOT swallowed here — they propagate to CREATE_SYNC_PENDING_FN and
+     * resolve into an IBrokerOrderVerdict: non-typed throw or OrderTransientError = "transient" (tolerated, order
+     * assumed still open, up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures — then the
+     * terminal action fires); throw OrderDeletedError = "deleted", terminal AT ONCE, bypassing
+     * the tolerance counter — the CONFIRMED "order not found by `event.signalId`" (filled,
+     * cancelled, or liquidated externally). Terminal action: close with closeReason "closed"
+     * (event.type "active") or cancel with reason "user" (event.type "schedule").
+     * `event.attempt` = consecutive prior failed checks; a successful check resets it to 0.
      *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing, otherwise a connectivity blip would wrongly close an open
-     * position. Throw exclusively on a confirmed "order not found by id" result.
-     *
-     * NOTE: Exceptions are NOT swallowed here — they propagate to CREATE_SYNC_PENDING_FN.
-     *
-     * MANUAL WIRING — EXCEPTION-BASED GATE: action-side equivalent of the Broker `onOrderCheck`. A
-     * throw on a confirmed "order not found by id" closes the position with closeReason "closed"
-     * (retried via CREATE_SYNC_PENDING_FN). Throw-driven alternative to the imperative
-     * `commitClosePending` (call it from `pingActive`) — pick one, not both. Live-only. Implement via
-     * the {@link IActionCallbacks.onOrderCheck} callback.
+     * MANUAL WIRING — EXCEPTION-BASED GATE: action-side equivalent of the Broker
+     * `onOrderActiveCheck` / `onOrderScheduleCheck` — identical verdict semantics. Throw-driven
+     * alternative to the imperative `commitClosePending` (call it from `pingActive`) — pick one,
+     * not both. Live-only. Implement via the {@link IActionCallbacks.onOrderCheck} callback.
      *
      * @deprecated This method is not recommended for use. Exchange integration should be implemented
-     * in Broker.useBrokerAdapter (the infrastructure domain layer) via onOrderCheck instead.
-     * If Action::orderCheck throws the framework will close the position with closeReason "closed"
-     * (event.type "active") or cancel the scheduled signal (event.type "schedule")!
+     * in Broker.useBrokerAdapter (the infrastructure domain layer) via onOrderActiveCheck /
+     * onOrderScheduleCheck instead.
      * @param event - Order-ping event with action "signal-ping" and type "schedule" | "active"
      */
     orderCheck(event: OrderCheckContract): void | Promise<void>;
@@ -2875,6 +2909,120 @@ interface ActivateScheduledCommit extends SignalCommitBase {
  */
 type StrategyCommitContract = CancelScheduledCommit | ClosePendingCommit | PartialProfitCommit | PartialLossCommit | TrailingStopCommit | TrailingTakeCommit | BreakevenCommit | AverageBuyCommit | ActivateScheduledCommit;
 
+declare const BROKER_ORDER_VERDICT: unique symbol;
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * should not be discriminated by `reason`.
+ */
+interface IBrokerOrderVerdictBase {
+    /** Discriminator for BrokerOrderVerdict union */
+    __type__: typeof BROKER_ORDER_VERDICT;
+}
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * discriminated by `reason`.
+ *
+ * Adapters/listeners do NOT construct this union — they signal via return/throw
+ * (return normally or `true` = confirmed; throw a non-typed error = transient;
+ * throw OrderRejectedError / OrderDeletedError = terminal). The framework collapses
+ * those signals into this verdict and routes on it:
+ *
+ * - "confirmed" — the gate allowed the open/close, or the checked order is still open.
+ */
+interface IBrokerOrderVerdictConfirmed extends IBrokerOrderVerdictBase {
+    /** Gate confirmed / checked order is still alive */
+    reason: "confirmed";
+}
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * discriminated by `reason`.
+ *
+ * Adapters/listeners do NOT construct this union — they signal via return/throw
+ * (return normally or `true` = confirmed; throw a non-typed error = transient;
+ * throw OrderRejectedError / OrderDeletedError = terminal). The framework collapses
+ * those signals into this verdict and routes on it:
+ *
+ * - "transient" — the operation FAILED with an unknown/temporary cause (network blip,
+ *   lost response, exchange 5xx). Bounded retry: opens retry identity-stably up to
+ *   CC_ORDER_OPEN_RETRY_ATTEMPTS, closes up to CC_ORDER_CLOSE_RETRY_ATTEMPTS, checks
+ *   tolerate up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures.
+ */
+interface IBrokerOrderVerdictTransient extends IBrokerOrderVerdictBase {
+    /** Unknown/temporary failure — bounded retry / tolerance window */
+    reason: "transient";
+    /** The failure that produced this verdict, when available */
+    error?: unknown;
+}
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * discriminated by `reason`.
+ *
+ * Adapters/listeners do NOT construct this union — they signal via return/throw
+ * (return normally or `true` = confirmed; throw a non-typed error = transient;
+ * throw OrderRejectedError / OrderDeletedError = terminal). The framework collapses
+ * those signals into this verdict and routes on it:
+ *
+ * - "rejected" — TERMINAL business rejection (OrderRejectedError: "no counterparty,
+ *   retrying is pointless"). A rejected open is dropped without arming the retry; a
+ *   rejected close is force-closed immediately.
+ */
+interface IBrokerOrderVerdictRejected extends IBrokerOrderVerdictBase {
+    /** Terminal business rejection (OrderRejectedError) — no retry */
+    reason: "rejected";
+    /** The OrderRejectedError that produced this verdict */
+    error?: unknown;
+}
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * discriminated by `reason`.
+ *
+ * Adapters/listeners do NOT construct this union — they signal via return/throw
+ * (return normally or `true` = confirmed; throw a non-typed error = transient;
+ * throw OrderRejectedError / OrderDeletedError = terminal). The framework collapses
+ * those signals into this verdict and routes on it:
+ *
+ * - "deleted" — CONFIRMED order-not-found (OrderDeletedError: e.g. the user cancelled
+ *   the order manually on the exchange). Checks act terminally at once (close "closed"
+ *   / cancel "user"), bypassing the tolerance counter.
+ */
+interface IBrokerOrderVerdictDeleted extends IBrokerOrderVerdictBase {
+    /** Confirmed order-not-found (OrderDeletedError) — checks act terminally */
+    reason: "deleted";
+    /** The OrderDeletedError that produced this verdict */
+    error?: unknown;
+}
+/**
+ * Framework-side resolution of an order gate (onOrderSync) or order check (onOrderCheck),
+ * discriminated by `reason`.
+ *
+ * Adapters/listeners do NOT construct this union — they signal via return/throw
+ * (return normally or `true` = confirmed; throw a non-typed error = transient;
+ * throw OrderRejectedError / OrderDeletedError = terminal). The framework collapses
+ * those signals into this verdict and routes on it:
+ *
+ * - "confirmed" — the gate allowed the open/close, or the checked order is still open.
+ * - "transient" — the operation FAILED with an unknown/temporary cause (network blip,
+ *   lost response, exchange 5xx). Bounded retry: opens retry identity-stably up to
+ *   CC_ORDER_OPEN_RETRY_ATTEMPTS, closes up to CC_ORDER_CLOSE_RETRY_ATTEMPTS, checks
+ *   tolerate up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures.
+ * - "rejected" — TERMINAL business rejection (OrderRejectedError: "no counterparty,
+ *   retrying is pointless"). A rejected open is dropped without arming the retry; a
+ *   rejected close is force-closed immediately.
+ * - "deleted" — CONFIRMED order-not-found (OrderDeletedError: e.g. the user cancelled
+ *   the order manually on the exchange). Checks act terminally at once (close "closed"
+ *   / cancel "user"), bypassing the tolerance counter.
+ *
+ * Every consumer MUST branch on `reason` explicitly — the union is an object and is
+ * always truthy, so boolean-style `if (!verdict)` checks are meaningless by design.
+ *
+ * The typed errors are CONTEXT-SPECIFIC: OrderRejectedError belongs to the gates
+ * (onOrderOpenCommit/onOrderCloseCommit), OrderDeletedError to the checks
+ * (onOrderActiveCheck/onOrderScheduleCheck). Throwing one in the other's context is a
+ * userspace protocol violation and INTENTIONALLY degrades to "transient" (bounded
+ * retry + loud errorEmitter) instead of being honored as terminal.
+ */
+type IBrokerOrderVerdict = IBrokerOrderVerdictConfirmed | IBrokerOrderVerdictTransient | IBrokerOrderVerdictRejected | IBrokerOrderVerdictDeleted;
+
 /**
  * Generic key-value type for strategy runtime data.
  * Allows strategies to store arbitrary data for custom monitoring, reporting, or external logic.
@@ -2924,6 +3072,21 @@ type StrategyStatus = {
      * Drained on the next tick/backtest to close the position with closeReason "stop_loss".
      */
     stopLossSignal: ISignalCloseRow | null;
+    /**
+     * Gate-rejected open awaiting an identity-stable retry (CC_ORDER_OPEN_RETRY_ATTEMPTS), or
+     * null if none. The row is re-submitted with its ORIGINAL signalId so an idempotent broker
+     * adapter (clientOrderId = signalId) reconciles a lost-response fill instead of double-buying.
+     * Write-ahead: stays persisted until the open outcome (success / exhaustion / failed
+     * re-validation) is durably recorded — a crash right after the broker confirmed the open
+     * replays the same id and resolves on the exchange side.
+     */
+    retryOpenSignal: ISignalRow | IScheduledSignalRow | null;
+    /**
+     * Number of broker-gate rejections recorded for retryOpenSignal's signalId. Incremented on
+     * every rejection of the same id; once it exceeds CC_ORDER_OPEN_RETRY_ATTEMPTS the retry row
+     * is dropped loudly and signal generation resumes. Reset on successful open or id change.
+     */
+    retryOpenCount: number;
 };
 /**
  * Commit payload for strategy commits.
@@ -7517,6 +7680,62 @@ declare const GLOBAL_CONFIG: {
      * Default: $100 per position
      */
     CC_POSITION_ENTRY_COST: number;
+    /**
+     * Maximum number of open retries after the broker gate (onOrderSync / onOrderOpenCommit)
+     * rejected a signal-open. Each retry re-submits the SAME signal row with the SAME signalId
+     * on the next tick, so a broker adapter that tags exchange orders with
+     * clientOrderId = signalId gets idempotent placement: a retry after a LOST RESPONSE
+     * (order actually filled, confirmation never arrived) resolves to "duplicate order" on
+     * the exchange and reconciles into a confirmed open instead of buying twice.
+     *
+     * The retried row is re-validated against the current price on every consumption and is
+     * dropped loudly (errorEmitter) when the price has drifted out of its TP/SL bounds or
+     * when the attempts are exhausted — generation then resumes with a fresh signal.
+     *
+     * Set to 0 to disable: a rejected open is dropped immediately and the next tick
+     * regenerates a fresh signal with a NEW id (legacy behavior).
+     *
+     * Default: 5 retries (1 initial attempt + up to 5 identity-stable retries)
+     */
+    CC_ORDER_OPEN_RETRY_ATTEMPTS: number;
+    /**
+     * Number of CONSECUTIVE failed order-check pings (onOrderActiveCheck /
+     * onOrderScheduleCheck returned false or threw a non-typed error) tolerated before
+     * the framework acts terminally (closes the pending signal with closeReason "closed"
+     * / cancels the scheduled signal with reason "user").
+     *
+     * While attempts remain, a failed ping is treated as TRANSIENT (network blip,
+     * exchange blocked) — the order is assumed still open and monitoring continues; the
+     * next ping carries the incremented `attempt`. A successful ping resets the counter
+     * to 0. Throwing OrderDeletedError acts terminally IMMEDIATELY, bypassing the
+     * counter — it is the adapter's confirmed "order not found by id".
+     *
+     * Set to 0 to disable tolerance: any failed ping is terminal on the spot
+     * (legacy behavior).
+     *
+     * Default: 5 consecutive failures tolerated
+     */
+    CC_ORDER_CHECK_RETRY_ATTEMPTS: number;
+    /**
+     * Number of CONSECUTIVE close-gate rejections (onOrderSync signal-close /
+     * onOrderCloseCommit returned false or threw a non-typed error) tolerated before
+     * the framework FORCE-CLOSES its position state without broker confirmation.
+     *
+     * While attempts remain, a rejected close keeps the position open and retries on
+     * the next tick/candle (the next gate call carries the incremented `attempt`); a
+     * confirmed close resets the counter. On exhaustion the engine closes the position
+     * with the ORIGINAL closeReason, emits a loud error (errorEmitter) and the standard
+     * signal-close lifecycle event — the adapter/operator must reconcile the real
+     * exchange position. Rationale: an eternally rejected close blocks the risk slot
+     * and floods logs forever (a stuck spot-short rejection burned 492 log lines in 2h).
+     * Throwing OrderRejectedError ("no counterparty, retrying is pointless")
+     * force-closes IMMEDIATELY, bypassing the counter.
+     *
+     * Set to 0 to disable the cap: a rejected close retries forever (legacy behavior).
+     *
+     * Default: 5 consecutive rejections tolerated
+     */
+    CC_ORDER_CLOSE_RETRY_ATTEMPTS: number;
 };
 /**
  * Type for global configuration object.
@@ -7655,6 +7874,9 @@ declare function getConfig(): {
     CC_ENABLE_SHORT_SIGNAL: boolean;
     CC_ENABLE_TRAILING_EVERYWHERE: boolean;
     CC_POSITION_ENTRY_COST: number;
+    CC_ORDER_OPEN_RETRY_ATTEMPTS: number;
+    CC_ORDER_CHECK_RETRY_ATTEMPTS: number;
+    CC_ORDER_CLOSE_RETRY_ATTEMPTS: number;
 };
 /**
  * Retrieves the default configuration object for the framework.
@@ -7715,6 +7937,9 @@ declare function getDefaultConfig(): Readonly<{
     CC_ENABLE_SHORT_SIGNAL: boolean;
     CC_ENABLE_TRAILING_EVERYWHERE: boolean;
     CC_POSITION_ENTRY_COST: number;
+    CC_ORDER_OPEN_RETRY_ATTEMPTS: number;
+    CC_ORDER_CHECK_RETRY_ATTEMPTS: number;
+    CC_ORDER_CLOSE_RETRY_ATTEMPTS: number;
 }>;
 /**
  * Sets custom column configurations for markdown report generation.
@@ -10272,9 +10497,22 @@ declare function listenStrategyCommit(fn: (event: StrategyCommitContract) => voi
 declare function listenStrategyCommitOnce(filterFn: (event: StrategyCommitContract) => boolean, fn: (event: StrategyCommitContract) => void): () => void;
 /**
  * Subscribes to signal synchronization events with queued async processing.
- * If throws position is not being opened/closed until the async function completes. Useful for synchronizing with external systems.
+ * This is an order GATE: a throw from the listener rejects the open/close.
  *
  * Emits when signals are being synchronized (e.g. pending signal being opened/closed).
+ *
+ * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
+ * `onOrderOpenCommit` / `onOrderCloseCommit` channel):
+ * - plain Error or {@link OrderTransientError} → "transient": the open retries
+ *   identity-stably (same signalId, `event.attempt` increments) up to
+ *   CC_ORDER_OPEN_RETRY_ATTEMPTS; the close retries up to
+ *   CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine FORCE-CLOSES its state with the
+ *   original closeReason. Exhaustion of either signals a fatal exit (exitEmitter).
+ * - {@link OrderRejectedError} → "rejected", TERMINAL at once: the open is dropped
+ *   without arming the retry; the close is force-closed immediately. No exit signal
+ *   (business outcome).
+ * - {@link OrderDeletedError} here is a userspace protocol violation (it belongs to
+ *   the CHECK channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle sync events. If the function returns a promise, signal processing will wait until it resolves.
  * @returns Unsubscribe function to stop listening
@@ -10282,7 +10520,10 @@ declare function listenStrategyCommitOnce(filterFn: (event: StrategyCommitContra
 declare function listenSync(fn: (event: OrderSyncContract) => void, warned?: boolean): () => void;
 /**
  * Subscribes to filtered signal synchronization events with one-time execution.
- * If throws position is not being opened/closed until the async function completes. Useful for synchronizing with external systems.
+ * This is an order GATE: a throw from the listener rejects the open/close — see
+ * {@link listenSync} for the full throw semantics (plain Error /
+ * {@link OrderTransientError} = bounded "transient" retry, {@link OrderRejectedError}
+ * = terminal at once, {@link OrderDeletedError} = protocol violation → transient).
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -10291,12 +10532,27 @@ declare function listenSync(fn: (event: OrderSyncContract) => void, warned?: boo
 declare function listenSyncOnce(filterFn: (event: OrderSyncContract) => boolean, fn: (event: OrderSyncContract) => void, warned?: boolean): () => void;
 /**
  * Subscribes to order-check ping events with queued async processing.
- * If throws, the order behind the monitored signal is treated as no longer open on the
- * exchange until the async function completes. Useful for synchronizing with external systems.
+ * This is the order CHECK channel: it decides whether the order behind the monitored
+ * signal is still open on the exchange.
  *
  * Emits on every live tick while a signal is monitored, BEFORE completion evaluation,
  * discriminated by `event.type`: "active" — pending signal (open position), "schedule" —
  * scheduled signal (resting entry order). Backtest never emits this event.
+ *
+ * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
+ * `onOrderActiveCheck` / `onOrderScheduleCheck` channel):
+ * - plain Error or {@link OrderTransientError} → "transient": the failed check is
+ *   TOLERATED (order assumed still open, monitoring continues, `event.attempt`
+ *   increments) up to CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures — a network
+ *   blip no longer kills a live position; a successful check resets the streak.
+ *   Exhaustion acts terminally (close "closed" / cancel "user") and signals a fatal
+ *   exit (exitEmitter).
+ * - {@link OrderDeletedError} → "deleted", TERMINAL at once, bypassing the tolerance:
+ *   the CONFIRMED "order not found by `event.signalId`". A FILLED resting order is
+ *   NOT a deleted order — confirm fills via commitActivateScheduled /
+ *   commitCreateTakeProfit / commitCreateStopLoss instead.
+ * - {@link OrderRejectedError} here is a userspace protocol violation (it belongs to
+ *   the GATE channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle check events. If the function returns a promise, signal processing will wait until it resolves.
  * @returns Unsubscribe function to stop listening
@@ -10304,8 +10560,11 @@ declare function listenSyncOnce(filterFn: (event: OrderSyncContract) => boolean,
 declare function listenCheck(fn: (event: OrderCheckContract) => void, warned?: boolean): () => void;
 /**
  * Subscribes to filtered order-check ping events with one-time execution.
- * If throws, the order behind the monitored signal is treated as no longer open on the
- * exchange until the async function completes. Useful for synchronizing with external systems.
+ * This is the order CHECK channel — see {@link listenCheck} for the full throw
+ * semantics (plain Error / {@link OrderTransientError} = tolerated "transient"
+ * failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, {@link OrderDeletedError} =
+ * confirmed not-found terminal at once, {@link OrderRejectedError} = protocol
+ * violation → transient).
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -15096,6 +15355,21 @@ type StrategyData = {
      * independent of the VWAP-based SL check. Drained on the next tick to close with "stop_loss".
      */
     stopLossSignal: ISignalCloseRow | null;
+    /**
+     * Gate-rejected open awaiting an identity-stable retry (CC_ORDER_OPEN_RETRY_ATTEMPTS), or
+     * null if none. The row is re-submitted with its ORIGINAL signalId so an idempotent broker
+     * adapter (clientOrderId = signalId) reconciles a lost-response fill instead of double-buying.
+     * Write-ahead: stays persisted until the open outcome (success / exhaustion / failed
+     * re-validation) is durably recorded — a crash right after the broker confirmed the open
+     * replays the same id and resolves on the exchange side.
+     */
+    retryOpenSignal: ISignalRow | IScheduledSignalRow | null;
+    /**
+     * Number of broker-gate rejections recorded for retryOpenSignal's signalId. Incremented on
+     * every rejection of the same id; once it exceeds CC_ORDER_OPEN_RETRY_ATTEMPTS the retry row
+     * is dropped loudly and signal generation resumes. Reset on successful open or id change.
+     */
+    retryOpenCount: number;
 };
 /**
  * Per-context deferred strategy state persistence instance interface.
@@ -20283,7 +20557,7 @@ declare class BacktestUtils {
         strategyName: string;
         exchangeName: string;
         frameName: string;
-        status: "pending" | "fulfilled" | "rejected" | "ready";
+        status: "rejected" | "pending" | "fulfilled" | "ready";
     }[]>;
 }
 /**
@@ -21801,7 +22075,7 @@ declare class LiveUtils {
         symbol: string;
         strategyName: string;
         exchangeName: string;
-        status: "pending" | "fulfilled" | "rejected" | "ready";
+        status: "rejected" | "pending" | "fulfilled" | "ready";
     }[]>;
 }
 /**
@@ -22870,7 +23144,7 @@ declare class WalkerUtils {
         id: string;
         symbol: string;
         walkerName: string;
-        status: "pending" | "fulfilled" | "rejected" | "ready";
+        status: "rejected" | "pending" | "fulfilled" | "ready";
     }[]>;
 }
 /**
@@ -29176,6 +29450,12 @@ declare const Strategy: StrategyUtils;
  * - Access to strategy context (strategyName, frameName, actionName)
  * - Implements full IPublicAction interface
  *
+ * NOTE: the deprecated order gates (orderSync / orderCheck) deliberately have NO
+ * default implementation here — ActionProxy fires its loud warning only when a user
+ * handler defines them explicitly. Their throw semantics follow IBrokerOrderVerdict:
+ * non-typed throw = "transient" (bounded retry / tolerance), OrderRejectedError
+ * (gates) / OrderDeletedError (checks) = terminal. Prefer Broker.useBrokerAdapter.
+ *
  * Lifecycle:
  * 1. Constructor called with (strategyName, frameName, actionName)
  * 2. init() called once for async initialization
@@ -29579,11 +29859,13 @@ declare class ActionBase implements IPublicAction {
  * Emitted automatically via syncSubject and forwarded to the registered IBroker adapter via
  * `onOrderOpenCommit`. Discriminated by `type`:
  * - "active" — a pending signal is being opened (immediate entry or activation fill of the
- *   resting order); throw = the exchange did not fill the entry, the framework rolls back the
- *   open and retries on the next tick;
- * - "schedule" — the resting entry order is being PLACED (scheduled signal creation); throw =
- *   the exchange did not accept the resting order, the scheduled signal is NOT registered and
- *   the placement retries on the next tick.
+ *   resting order);
+ * - "schedule" — the resting entry order is being PLACED (scheduled signal creation).
+ *
+ * Throw semantics (see IBrokerOrderVerdict): a plain Error / OrderTransientError rolls the
+ * open back and retries identity-stably (same signalId, `attempt` increments) up to
+ * CC_ORDER_OPEN_RETRY_ATTEMPTS; OrderRejectedError drops the open terminally without
+ * arming the retry.
  *
  * @example
  * ```typescript
@@ -29622,6 +29904,14 @@ type BrokerOrderOpenPayload = {
     peakProfit: IStrategyPnL;
     /** Maximum drawdown experienced during the life of this position up to the moment this public signal was created */
     maxDrawdown: IStrategyPnL;
+    /**
+     * Consecutive prior rejections of this open by the gate (0 = first attempt). Managed by
+     * the framework: a rejected open increments the counter carried by the identity-stable
+     * retry (same signalId, bounded by CC_ORDER_OPEN_RETRY_ATTEMPTS); a confirmed open
+     * resets it. Lets the adapter distinguish a fresh placement from a retry of an order
+     * it may have already placed (reconcile by clientOrderId = signalId).
+     */
+    attempt: number;
     /** Strategy/exchange/frame routing context */
     context: {
         strategyName: StrategyName;
@@ -29683,6 +29973,13 @@ type BrokerOrderClosePayload = {
     peakProfit: IStrategyPnL;
     /** Maximum drawdown experienced during the life of this position up to the moment this public signal was created */
     maxDrawdown: IStrategyPnL;
+    /**
+     * Consecutive prior rejections of this close by the gate (0 = first attempt). Managed
+     * by the framework: a rejected close increments the counter carried by the next
+     * attempt (bounded by CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine force-closes);
+     * a confirmed close resets it.
+     */
+    attempt: number;
     /** Strategy/exchange/frame routing context */
     context: {
         strategyName: StrategyName;
@@ -29705,19 +30002,21 @@ type BrokerOrderClosePayload = {
  * - `type: "schedule"` — scheduled signal, before timeout/price-activation evaluation
  *   (the order in question is the resting entry order) — delivered to `onOrderScheduleCheck`.
  *
- * The adapter should query the exchange by `signalId` and THROW ONLY when the order is
- * definitively NOT FOUND by that id (filled, cancelled, or liquidated externally). A throw
- * propagates to CREATE_SYNC_PENDING_FN, which makes the framework close the pending signal with
- * closeReason "closed" (type "active") or cancel the scheduled signal with reason "user"
- * (type "schedule"). Returning normally keeps the signal under normal monitoring.
+ * The adapter should query the exchange by `signalId`. Returning normally keeps the signal
+ * under normal monitoring. Throw semantics (see IBrokerOrderVerdict):
+ * - OrderDeletedError — the CONFIRMED "order not found by id" (filled, cancelled, or
+ *   liquidated externally): terminal AT ONCE — close the pending signal with closeReason
+ *   "closed" (type "active") or cancel the scheduled signal with reason "user"
+ *   (type "schedule"), bypassing the tolerance counter.
+ * - plain Error / OrderTransientError (timeout, 5xx, rate limit, disconnect) — TOLERATED
+ *   as a transient failure: the order is assumed still open, the next ping carries
+ *   `attempt` incremented, up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures
+ *   before the framework acts terminally (a successful check resets the streak).
+ * - OrderRejectedError — protocol violation in this channel, degrades to transient.
  *
  * NOTE for type "schedule": if the resting entry order actually FILLED, confirm the fill via
  * `commitActivateScheduled` instead of throwing — a throw here is a terminal cancel, not an
  * activation.
- *
- * CRITICAL: transient/network errors (timeout, 5xx, rate limit, disconnect) must be SWALLOWED —
- * return normally instead of throwing. A thrown network error would wrongly close an open
- * position. Only a confirmed "order not found by id" response is a valid reason to throw.
  *
  * @example
  * ```typescript
@@ -29760,6 +30059,13 @@ type BrokerOrderCheckPayload = {
     totalEntries: number;
     /** Total number of partial closes executed */
     totalPartials: number;
+    /**
+     * Consecutive prior FAILED checks for this signal (0 = first check / healthy).
+     * Managed by the framework: a failed check increments the counter carried by the
+     * next ping while the failure is tolerated as transient
+     * (CC_ORDER_CHECK_RETRY_ATTEMPTS); a successful check resets it to 0.
+     */
+    attempt: number;
     /** Strategy/exchange/frame routing context */
     context: {
         strategyName: StrategyName;
@@ -30401,11 +30707,22 @@ interface IBroker {
      * syncSubject BEFORE the framework mutates strategy state, so it is also the close **gate**.
      *
      * MANUAL WIRING — EXCEPTION-BASED: place the real exit order here (tag/look up by `payload.signalId`)
-     * and record final PnL. This is the confirmed-close commit; like `onOrderSync` (signal-close) it
-     * shares the gate semantics — a THROW means "the exchange did not close the position" and the
-     * framework SKIPS the close, leaving the position open and retrying on the next tick. Return
-     * normally to let the close proceed. Backtest short-circuits this (no live exchange), so the gate is
-     * live-only.
+     * and record final PnL. Return normally to let the close proceed. THROW semantics
+     * (resolved into IBrokerOrderVerdict):
+     * - plain Error or OrderTransientError ("the network/exchange failed temporarily") →
+     *   "transient": the close is SKIPPED, the position stays open and the close retries on
+     *   the next tick with `payload.attempt` incremented, up to CC_ORDER_CLOSE_RETRY_ATTEMPTS
+     *   consecutive rejections. On exhaustion the engine FORCE-CLOSES its own state with the
+     *   ORIGINAL closeReason and signals a fatal exit (exitEmitter) — the real exchange
+     *   position must then be reconciled by the adapter/operator (the close lifecycle event
+     *   still reaches `onSignalPendingClose`). With the config at 0 the cap is disabled and
+     *   a rejected close retries forever (legacy).
+     * - OrderRejectedError ("no counterparty, retrying is pointless") → "rejected",
+     *   TERMINAL: the engine force-closes immediately, bypassing the retry counter. No fatal
+     *   exit (business outcome, not a network failure).
+     * - OrderDeletedError here is a userspace protocol violation (it belongs to the check
+     *   hooks) and intentionally degrades to "transient".
+     * Backtest short-circuits this (no live exchange), so the gate is live-only.
      *
      * This differs from `onSignalPendingClose`, which is the informational lifecycle hook that fires
      * AFTER the close is committed (and cannot veto it).
@@ -30418,12 +30735,24 @@ interface IBroker {
      * - "schedule" — PLACEMENT of the resting entry order at scheduled-signal creation.
      *
      * MANUAL WIRING — EXCEPTION-BASED: place the real order here (tag the exchange order with
-     * `payload.signalId` so later `onOrderActiveCheck` / `onOrderScheduleCheck` / `onSignalActivePing` can find it). Like `onOrderSync`
-     * (signal-open) it shares the gate semantics — a THROW means "the exchange did not accept/fill the
-     * order" and the framework ROLLS BACK: for type "active" the pending signal returns to idle (a
-     * scheduled activation is cancelled); for type "schedule" the scheduled signal is NOT registered
-     * and the risk reservation is released. Both retry on the next tick. Return normally to let the
-     * open proceed. Backtest short-circuits this, so the gate is live-only.
+     * `clientOrderId = payload.signalId` so later `onOrderActiveCheck` / `onOrderScheduleCheck` /
+     * `onSignalActivePing` can find it). Return normally to let the open proceed. THROW
+     * semantics (resolved into IBrokerOrderVerdict):
+     * - plain Error or OrderTransientError ("the network/exchange failed temporarily, outcome
+     *   unknown") → "transient": the framework ROLLS BACK (type "active": pending returns to
+     *   idle; type "schedule": scheduled not registered, risk reservation released) and
+     *   retries IDENTITY-STABLY — the SAME signal row with the SAME signalId is re-submitted
+     *   on the next tick with `payload.attempt` incremented, up to
+     *   CC_ORDER_OPEN_RETRY_ATTEMPTS. Because the id is stable, a duplicate POST with the
+     *   same clientOrderId lets the exchange deduplicate a lost-response fill instead of
+     *   double-buying. Exhaustion drops the signal and signals a fatal exit (exitEmitter).
+     *   With the config at 0 the retry slot is disabled: the next tick regenerates a FRESH id.
+     * - OrderRejectedError ("the exchange definitively refused, retrying is pointless") →
+     *   "rejected", TERMINAL: the open is dropped at once, no retry armed, an already-armed
+     *   retry for this id is wiped. No fatal exit (business outcome).
+     * - OrderDeletedError here is a userspace protocol violation (it belongs to the check
+     *   hooks) and intentionally degrades to "transient".
+     * Backtest short-circuits this, so the gate is live-only.
      *
      * This differs from `onSignalPendingOpen`, which is the informational lifecycle hook that fires
      * AFTER the open is committed (and cannot veto it).
@@ -30433,13 +30762,19 @@ interface IBroker {
      * Called on every live tick while a pending signal (open position) is monitored,
      * BEFORE TP/SL/time evaluation (`payload.type` is always "active").
      *
-     * Query the exchange by `payload.signalId` and THROW ONLY when the order is NOT FOUND by that id
-     * — the framework will then close the position with closeReason "closed". Return normally to
-     * keep monitoring.
-     *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing, otherwise a connectivity blip would wrongly close an open
-     * position. Throw exclusively on a confirmed "order not found by id" result.
+     * Query the exchange by `payload.signalId`. Return normally to keep monitoring.
+     * THROW semantics (resolved into IBrokerOrderVerdict):
+     * - OrderDeletedError — the CONFIRMED "order not found by id": the framework closes the
+     *   position with closeReason "closed" AT ONCE, bypassing the tolerance counter.
+     * - plain Error or OrderTransientError (timeout, 5xx, rate limit, disconnect) →
+     *   "transient": the failed check is TOLERATED — the order is assumed still open,
+     *   monitoring continues and the next ping carries `payload.attempt` incremented, up to
+     *   CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures (a successful check resets the
+     *   streak to 0). A connectivity blip no longer closes a live position on the spot.
+     *   Exhaustion acts terminally (close "closed") and signals a fatal exit (exitEmitter).
+     *   With the config at 0 any failure is terminal immediately (legacy).
+     * - OrderRejectedError here is a userspace protocol violation (it belongs to the
+     *   open/close gates) and intentionally degrades to "transient".
      *
      * Manual wiring — EXCEPTION-BASED VARIANT
      *
@@ -30461,10 +30796,11 @@ interface IBroker {
      *   try {
      *     order = await this.exchange.getOrderById(payload.signalId);
      *   } catch (networkError) {
-     *     return; // transient — keep the position open, retry next tick
+     *     // transient — tolerated up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures
+     *     throw OrderTransientError.fromError(networkError);
      *   }
      *   if (!order) {
-     *     throw new Error(`Order ${payload.signalId} not found`); // confirmed gone -> close "closed"
+     *     throw new OrderDeletedError(`Order ${payload.signalId} not found`); // confirmed gone -> close "closed" at once
      *   }
      * }
      * ```
@@ -30474,15 +30810,21 @@ interface IBroker {
      * Called on every live tick while a scheduled signal (resting entry order) is monitored,
      * BEFORE timeout/price-activation evaluation (`payload.type` is always "schedule").
      *
-     * Query the exchange by `payload.signalId` and THROW ONLY when the resting order is NOT FOUND
-     * by that id — the framework will then cancel the scheduled signal with reason "user". Return
-     * normally to keep monitoring. A FILLED resting order must be confirmed via
-     * `commitActivateScheduled`, not by throwing here (a throw is a terminal cancel, not an
-     * activation).
-     *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing, otherwise a connectivity blip would wrongly cancel the resting
-     * order. Throw exclusively on a confirmed "order not found by id" result.
+     * Query the exchange by `payload.signalId`. Return normally to keep monitoring.
+     * THROW semantics (resolved into IBrokerOrderVerdict):
+     * - OrderDeletedError — the CONFIRMED "resting order not found by id": the framework
+     *   cancels the scheduled signal with reason "user" AT ONCE, bypassing the tolerance
+     *   counter. A FILLED resting order is NOT a deleted order — confirm the fill via
+     *   `commitActivateScheduled` instead (a throw here is a terminal cancel, not an
+     *   activation).
+     * - plain Error or OrderTransientError (timeout, 5xx, rate limit, disconnect) →
+     *   "transient": the failed check is TOLERATED — the resting order is assumed still
+     *   open, the next ping carries `payload.attempt` incremented, up to
+     *   CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures (a successful check resets the
+     *   streak). Exhaustion cancels the scheduled signal (reason "user") and signals a fatal
+     *   exit (exitEmitter). With the config at 0 any failure is terminal immediately (legacy).
+     * - OrderRejectedError here is a userspace protocol violation (it belongs to the
+     *   open/close gates) and intentionally degrades to "transient".
      *
      * Manual wiring — EXCEPTION-BASED VARIANT: the throw-driven alternative to the imperative
      * commit-function wiring in `onSignalSchedulePing` (`commitActivateScheduled` /
@@ -30495,10 +30837,11 @@ interface IBroker {
      *   try {
      *     order = await this.exchange.getOrderById(payload.signalId);
      *   } catch (networkError) {
-     *     return; // transient — keep the resting order monitored, retry next tick
+     *     // transient — tolerated up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures
+     *     throw OrderTransientError.fromError(networkError);
      *   }
      *   if (!order) {
-     *     throw new Error(`Order ${payload.signalId} not found`); // confirmed gone -> cancel "user"
+     *     throw new OrderDeletedError(`Order ${payload.signalId} not found`); // confirmed gone -> cancel "user" at once
      *   }
      * }
      * ```
@@ -30782,9 +31125,11 @@ declare class BrokerAdapter {
      * while a pending signal (payload.type "active") or a scheduled signal (payload.type
      * "schedule") is monitored — routed to `onOrderActiveCheck` / `onOrderScheduleCheck`
      * respectively. Skipped silently in backtest mode or when no adapter is registered.
-     * Exceptions are NOT swallowed: a throw from the adapter propagates up to
-     * syncPendingSubject.next() → CREATE_SYNC_PENDING_FN, which closes the position with "closed"
-     * (type "active") or cancels the scheduled signal with reason "user" (type "schedule").
+     * Exceptions are NOT swallowed: a throw propagates up to syncPendingSubject.next() →
+     * CREATE_SYNC_PENDING_FN and resolves into an IBrokerOrderVerdict — OrderDeletedError acts
+     * terminally at once (close "closed" / cancel "user"), any other throw (incl.
+     * OrderTransientError) is tolerated up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive
+     * failures before the terminal action fires.
      *
      * @param payload - Order ping details: type, symbol, position, prices, pnl, context, backtest flag
      */
@@ -31186,24 +31531,31 @@ declare class BrokerBase implements IBroker {
      *
      * Default implementation: Logs signal-open event.
      *
-     * Manual wiring — EXCEPTION-BASED GATE: emitted BEFORE the framework mutates state, so a THROW here
-     * (e.g. limit order rejected) rolls back the open — the pending signal returns to idle and retries
-     * next tick; return normally to let it open. Live-only (backtest short-circuits). See
-     * {@link IBroker.onOrderOpenCommit} for the full semantics.
+     * Manual wiring — EXCEPTION-BASED GATE: emitted BEFORE the framework mutates state.
+     * Throw semantics: a plain Error / OrderTransientError rolls back the open and retries
+     * identity-stably (same signalId, `payload.attempt` increments) up to
+     * CC_ORDER_OPEN_RETRY_ATTEMPTS — tag orders with `clientOrderId = payload.signalId` so
+     * a lost-response retry deduplicates on the exchange; OrderRejectedError drops the open
+     * terminally without arming the retry. Return normally to let it open. Live-only
+     * (backtest short-circuits). See {@link IBroker.onOrderOpenCommit} for the full semantics.
      *
-     * @param payload - Signal open details: symbol, cost, position, priceOpen, priceTakeProfit, priceStopLoss, context, backtest
+     * @param payload - Signal open details: symbol, cost, position, priceOpen, priceTakeProfit, priceStopLoss, attempt, context, backtest
      *
      * @example
      * ```typescript
      * async onOrderOpenCommit(payload: BrokerOrderOpenPayload) {
      *   super.onOrderOpenCommit(payload); // Keep parent logging
      *   const order = await this.exchange.placeMarketOrder({
+     *     clientOrderId: payload.signalId, // idempotency key across retries
      *     symbol: payload.symbol,
      *     side: payload.position === "long" ? "BUY" : "SELL",
      *     quantity: payload.cost / payload.priceOpen,
      *   });
+     *   if (order.rejectedByExchange) {
+     *     throw new OrderRejectedError(`Entry refused for ${payload.symbol}`); // terminal, no retry
+     *   }
      *   if (!order.filled) {
-     *     throw new Error(`Entry not filled for ${payload.symbol}`); // -> roll back the open, retry next tick
+     *     throw new OrderTransientError(`Entry not filled for ${payload.symbol}`); // bounded identity-stable retry
      *   }
      * }
      * ```
@@ -31213,40 +31565,41 @@ declare class BrokerBase implements IBroker {
      * Called on every live tick while a pending signal (open position) is monitored, BEFORE
      * TP/SL/time evaluation.
      *
-     * Override to query the exchange for the order by `payload.signalId` and THROW ONLY when it is
-     * definitively NOT FOUND by that id (filled, cancelled, or liquidated externally) — the framework
-     * then closes the position with closeReason "closed". The default implementation logs and returns
-     * normally, which keeps the position under normal TP/SL monitoring.
-     *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing. A thrown network error would wrongly close an open position; only
-     * a confirmed "order not found by id" response is a valid reason to throw.
+     * Override to query the exchange for the order by `payload.signalId`. The default
+     * implementation logs and returns normally, which keeps the position under normal TP/SL
+     * monitoring. Throw semantics: OrderDeletedError = confirmed "order not found by id"
+     * (filled, cancelled, or liquidated externally) — the framework closes the position with
+     * closeReason "closed" at once; a plain Error / OrderTransientError (timeout, 5xx, rate
+     * limit, disconnect) is TOLERATED as a transient failure up to
+     * CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive times (`payload.attempt` increments, a
+     * successful check resets it) before the framework acts terminally — a connectivity blip
+     * no longer closes a live position on the spot.
      *
      * Manual wiring — EXCEPTION-BASED VARIANT: the throw-driven alternative to the imperative
      * commit-function wiring in `onSignalActivePing`. See {@link IBroker.onOrderActiveCheck} for the
      * full comparison and example.
      *
-     * @param payload - Pending ping details: symbol, signalId, position, prices, pnl, context, backtest
+     * @param payload - Pending ping details: symbol, signalId, position, prices, pnl, attempt, context, backtest
      */
     onOrderActiveCheck(payload: BrokerOrderCheckPayload): Promise<void>;
     /**
      * Called on every live tick while a scheduled signal (resting entry order) is monitored, BEFORE
      * timeout/price-activation evaluation.
      *
-     * Override to query the exchange for the resting order by `payload.signalId` and THROW ONLY when
-     * it is definitively NOT FOUND by that id — the framework then cancels the scheduled signal with
-     * reason "user". The default implementation logs and returns normally. A FILLED resting order
-     * must be confirmed via `commitActivateScheduled`, not by throwing here.
-     *
-     * CRITICAL: swallow transient/network errors (timeout, 5xx, rate limit, disconnect) — return
-     * normally instead of throwing; only a confirmed "order not found by id" response is a valid
-     * reason to throw.
+     * Override to query the exchange for the resting order by `payload.signalId`. The default
+     * implementation logs and returns normally. Throw semantics: OrderDeletedError =
+     * confirmed "order not found by id" — the framework cancels the scheduled signal with
+     * reason "user" at once (a FILLED resting order must be confirmed via
+     * `commitActivateScheduled`, not by throwing); a plain Error / OrderTransientError
+     * (timeout, 5xx, rate limit, disconnect) is TOLERATED as a transient failure up to
+     * CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive times (`payload.attempt` increments, a
+     * successful check resets it) before the framework acts terminally.
      *
      * Manual wiring — EXCEPTION-BASED VARIANT: the throw-driven alternative to the imperative
      * commit-function wiring in `onSignalSchedulePing`. See {@link IBroker.onOrderScheduleCheck} for
      * the full comparison and example.
      *
-     * @param payload - Pending ping details: symbol, signalId, position, prices, pnl, context, backtest
+     * @param payload - Pending ping details: symbol, signalId, position, prices, pnl, attempt, context, backtest
      */
     onOrderScheduleCheck(payload: BrokerOrderCheckPayload): Promise<void>;
     /**
@@ -31339,20 +31692,26 @@ declare class BrokerBase implements IBroker {
      *
      * Default implementation: Logs signal-close event.
      *
-     * Manual wiring — EXCEPTION-BASED GATE: emitted BEFORE the framework mutates state, so a THROW here
-     * (e.g. exit order failed) SKIPS the close — the position stays open and the close retries next
-     * tick; return normally to let it close. Live-only (backtest short-circuits). See
+     * Manual wiring — EXCEPTION-BASED GATE: emitted BEFORE the framework mutates state.
+     * Throw semantics: a plain Error / OrderTransientError SKIPS the close — the position
+     * stays open and the close retries next tick (`payload.attempt` increments) up to
+     * CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine force-closes its state with the
+     * original closeReason; OrderRejectedError force-closes terminally at once. Return
+     * normally to let it close. Live-only (backtest short-circuits). See
      * {@link IBroker.onOrderCloseCommit} for the full semantics.
      *
-     * @param payload - Signal close details: symbol, cost, position, currentPrice, pnl, totalEntries, totalPartials, context, backtest
+     * @param payload - Signal close details: symbol, cost, position, currentPrice, pnl, totalEntries, totalPartials, attempt, context, backtest
      *
      * @example
      * ```typescript
      * async onOrderCloseCommit(payload: BrokerOrderClosePayload) {
      *   super.onOrderCloseCommit(payload); // Keep parent logging
-     *   const ok = await this.exchange.closePosition(payload.symbol);
-     *   if (!ok) {
-     *     throw new Error(`Exit not filled for ${payload.symbol}`); // -> keep position open, retry next tick
+     *   const res = await this.exchange.closePosition(payload.symbol);
+     *   if (res.noCounterparty) {
+     *     throw new OrderRejectedError(`No buyer for ${payload.symbol}`); // terminal -> force-close at once
+     *   }
+     *   if (!res.filled) {
+     *     throw new OrderTransientError(`Exit not filled for ${payload.symbol}`); // keep position open, bounded retry
      *   }
      *   await this.db.recordTrade({ symbol: payload.symbol, pnl: payload.pnl });
      * }
@@ -40045,4 +40404,329 @@ declare const getTotalClosed: (signal: Signal) => {
  */
 declare const getPriceScale: (value: number) => number;
 
-export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderOpenContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyStatisticsModel, type StrategyStatus, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addRiskSchema, addSizingSchema, addStrategySchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategySchema, getStrategyStatus, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
+/**
+ * CONFIRMED order-not-found — "the exchange definitively reports there is no order
+ * under this id anymore" (e.g. the user cancelled it manually on the exchange, or it
+ * was liquidated / garbage-collected externally).
+ *
+ * ## Where to throw it
+ *
+ * Only from the ORDER CHECKS (the `onOrderCheck` ping channel), i.e. any of:
+ * - `Broker.useBrokerAdapter` → `onOrderActiveCheck` / `onOrderScheduleCheck`;
+ * - action schema `callbacks.onOrderCheck` / handler `IAction.orderCheck` (deprecated channel);
+ * - a `listenCheck` listener.
+ *
+ * ## What the framework does
+ *
+ * The throw propagates UNWRAPPED through every layer (the runtime brand survives)
+ * and resolves into the `IBrokerOrderVerdict` `{ reason: "deleted" }` — terminal
+ * IMMEDIATELY, bypassing the CC_ORDER_CHECK_RETRY_ATTEMPTS tolerance counter:
+ *
+ * - `event.type === "active"` (open position): the position is closed with
+ *   closeReason "closed" WITHOUT re-confirmation through the close gate — the ping
+ *   already established the order is gone, re-asking the broker would be redundant.
+ * - `event.type === "schedule"` (resting entry order): the scheduled signal is
+ *   cancelled with reason "user". The schedule-cancelled lifecycle event still
+ *   reaches the broker adapter (`onSignalScheduleCancelled`); cancelling an
+ *   already-gone order there is a no-op.
+ *
+ * Loudness: `errorEmitter` fires. `exitEmitter` does NOT fire — a confirmed
+ * not-found is a business fact about ONE order, not a fatal network condition.
+ * Compare with transient-failure exhaustion of the same check, which DOES signal
+ * a fatal exit.
+ *
+ * ## When it is appropriate
+ *
+ * Throw ONLY on the exchange's definitive "order not found by `event.signalId`"
+ * response. Two critical distinctions:
+ *
+ * - **A FILLED resting order is NOT a deleted order.** If the scheduled entry
+ *   actually filled, confirm it via `commitActivateScheduled` instead — a throw here
+ *   is a terminal CANCEL, not an activation. Same for an open position whose TP/SL
+ *   order filled on the exchange: report it via `commitCreateTakeProfit` /
+ *   `commitCreateStopLoss` so the close carries the true closeReason, instead of
+ *   collapsing it into a generic "closed".
+ * - **Network trouble is NOT a deleted order.** On timeout / 5xx / rate limit /
+ *   disconnect throw a plain Error or {@link OrderTransientError}: the framework
+ *   tolerates up to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive transient failures
+ *   (the order is assumed still open, `event.attempt` increments) before acting
+ *   terminally. Reporting a blip as "deleted" kills a live position on the spot.
+ *
+ * ## Nuances
+ *
+ * - **Context-specific.** This error belongs to the CHECKS. Throwing it from a GATE
+ *   (`onOrderOpenCommit` / `onOrderCloseCommit` / `callbacks.onOrderSync`) is a
+ *   userspace protocol violation: it is INTENTIONALLY degraded to the "transient"
+ *   verdict (bounded retry) instead of being honored as terminal.
+ * - **Nominal runtime identification.** Recognized by the
+ *   `__type__ === Symbol.for("OrderDeletedError")` brand via the static guard —
+ *   never by `instanceof`, so it survives duplicated module instances across bundles.
+ * - **Live-only.** Checks never fire in backtest (there is no live exchange to query).
+ * - A successful check resets the consecutive-failure counter (`event.attempt`) to 0;
+ *   this error ignores the counter entirely in both directions — it neither needs
+ *   prior failures nor is delayed by remaining tolerance.
+ * - The `message` is optional and purely informational; routing depends only on the
+ *   brand.
+ *
+ * @example
+ * ```typescript
+ * Broker.useBrokerAdapter({
+ *   async onOrderActiveCheck(payload) {
+ *     let order;
+ *     try {
+ *       order = await exchange.getOrderById(payload.signalId);
+ *     } catch (networkError) {
+ *       throw new OrderTransientError("exchange unreachable"); // tolerated, bounded
+ *     }
+ *     if (order === null) {
+ *       // Definitive: no such order on the exchange anymore
+ *       throw new OrderDeletedError(`order ${payload.signalId} not found`);
+ *     }
+ *   },
+ * });
+ * ```
+ */
+declare class OrderDeletedError extends Error {
+    /** Runtime brand (Symbol.for — survives duplicated module instances) */
+    readonly __type__: symbol;
+    /**
+     * @param message - Optional human-readable reason (logged, not routed on)
+     */
+    constructor(message?: string);
+    /**
+     * Nominal type guard by the runtime brand. Use this instead of `instanceof`:
+     * the check is based on `Symbol.for`, so it recognizes instances created by a
+     * DIFFERENT copy of this module (duplicated bundles, linked packages).
+     *
+     * @param error - Any thrown object
+     * @returns true when the object carries the OrderDeletedError brand
+     */
+    static isOrderDeletedError(error: object): boolean;
+    /**
+     * Nominal constructor for a new OrderDeletedError from any thrown object. Use this
+     * instead of `instanceof` to recognize instances created by a DIFFERENT copy of
+     * this module (duplicated bundles, linked packages).
+     *
+     * @param error - Any thrown object
+     * @returns a new OrderDeletedError with the original message, or a default message
+     *          if the original was not a string
+     */
+    static fromError(error: object): OrderDeletedError;
+}
+
+/**
+ * TERMINAL business rejection of an order operation — "the exchange definitively
+ * refused this order and retrying is pointless".
+ *
+ * ## Where to throw it
+ *
+ * Only from the ORDER GATES (the `onOrderSync` channel), i.e. any of:
+ * - `Broker.useBrokerAdapter` → `onOrderOpenCommit` / `onOrderCloseCommit`;
+ * - action schema `callbacks.onOrderSync` / handler `IAction.orderSync` (deprecated channel);
+ * - a `listenSync` listener.
+ *
+ * ## What the framework does
+ *
+ * The throw propagates UNWRAPPED through every layer (none of them re-wrap errors —
+ * the runtime brand survives) and resolves into the `IBrokerOrderVerdict`
+ * `{ reason: "rejected" }` (see interfaces/Broker.interface). Consequences:
+ *
+ * - **signal-open** (type "active" or "schedule"): the open is DROPPED immediately.
+ *   The identity-stable retry (CC_ORDER_OPEN_RETRY_ATTEMPTS) is NOT armed, and an
+ *   already-armed retry slot for this signalId is wiped from memory and persistence —
+ *   the trade attempt will not resurrect on the next tick or after a restart. The
+ *   interval throttle is rolled back, so the strategy may generate a FRESH signal
+ *   (new id) on the very next tick.
+ * - **signal-close**: the engine FORCE-CLOSES its own position state immediately with
+ *   the ORIGINAL closeReason (take_profit / stop_loss / time_expired / closed),
+ *   bypassing the CC_ORDER_CLOSE_RETRY_ATTEMPTS retry loop. The standard signal-close
+ *   lifecycle event still fires and reaches the broker adapter
+ *   (`onSignalPendingClose`) — the REAL exchange position may still exist, and its
+ *   reconciliation is the adapter's/operator's responsibility.
+ *
+ * Loudness: `errorEmitter` fires (warn + console on every layer). `exitEmitter` does
+ * NOT fire — a business rejection is a normal (if unhappy) outcome, not a fatal
+ * network condition; the process keeps running. Compare with transient exhaustion,
+ * which DOES signal a fatal exit.
+ *
+ * ## When it is appropriate
+ *
+ * Throw only on a CONFIRMED business impossibility reported by the exchange:
+ * no counterparty / no liquidity, symbol delisted or trading halted, min-notional /
+ * lot-size violation, account restriction — anything where repeating the same
+ * request can never succeed. Do NOT throw it on network trouble (timeout, 5xx,
+ * rate limit, lost response): throw a plain Error or {@link OrderTransientError}
+ * instead so the bounded retry machinery gets its chance.
+ *
+ * ## Nuances
+ *
+ * - **Context-specific.** This error belongs to the GATES. Throwing it from the CHECK
+ *   channel (`onOrderActiveCheck` / `onOrderScheduleCheck` / `callbacks.onOrderCheck`
+ *   / `listenCheck`) is a userspace protocol violation: it is INTENTIONALLY degraded
+ *   to the "transient" verdict (counted toward CC_ORDER_CHECK_RETRY_ATTEMPTS) instead
+ *   of being honored as terminal.
+ * - **Nominal runtime identification.** The framework recognizes the error by the
+ *   `__type__ === Symbol.for("OrderRejectedError")` brand via the static guard —
+ *   never by `instanceof`, so it survives duplicated module instances across bundles.
+ *   Any subclass or foreign copy carrying the same global symbol is recognized too.
+ * - **Live-only in production wiring.** In backtest the gates short-circuit to
+ *   "confirmed" before any listener runs, so the error can only matter in live mode
+ *   (or in tests that mock `params.onOrderSync` directly — the client-side guard
+ *   handles that path identically).
+ * - The `message` is optional and purely informational (it ends up in warn logs and
+ *   the errorEmitter payload); routing depends only on the brand.
+ *
+ * @example
+ * ```typescript
+ * Broker.useBrokerAdapter({
+ *   async onOrderOpenCommit(payload) {
+ *     const res = await exchange.placeOrder({ clientOrderId: payload.signalId, ... });
+ *     if (res.code === "MIN_NOTIONAL") {
+ *       // Confirmed business refusal — retrying the same order is pointless
+ *       throw new OrderRejectedError(`min notional violated for ${payload.symbol}`);
+ *     }
+ *   },
+ * });
+ * ```
+ */
+declare class OrderRejectedError extends Error {
+    /** Runtime brand (Symbol.for — survives duplicated module instances) */
+    readonly __type__: symbol;
+    /**
+     * @param message - Optional human-readable reason (logged, not routed on)
+     */
+    constructor(message?: string);
+    /**
+     * Nominal type guard by the runtime brand. Use this instead of `instanceof`:
+     * the check is based on `Symbol.for`, so it recognizes instances created by a
+     * DIFFERENT copy of this module (duplicated bundles, linked packages).
+     *
+     * @param error - Any thrown object
+     * @returns true when the object carries the OrderRejectedError brand
+     */
+    static isOrderRejectedError(error: object): boolean;
+    /**
+     * Nominal constructor for a new OrderRejectedError from any thrown object. Use this
+     * instead of `instanceof` to recognize instances created by a DIFFERENT copy of
+     * this module (duplicated bundles, linked packages).
+     *
+     * @param error - Any thrown object
+     * @returns a new OrderRejectedError with the original message, or a default message
+     *          if the original was not a string
+     */
+    static fromError(error: object): OrderRejectedError;
+}
+
+/**
+ * EXPLICIT transient failure marker — "the operation failed for a temporary /
+ * unknown reason (network blip, lost response, exchange 5xx, rate limit); retry me".
+ *
+ * ## Purpose: declarative sugar, not routing
+ *
+ * The framework treats EVERY non-typed throw from the order gates and checks as the
+ * "transient" verdict already — this class adds NO special handling and is NOT
+ * pattern-matched anywhere in the framework by design. A plain `throw new Error(...)`
+ * behaves identically. The class exists purely so application code states its intent
+ * explicitly: a reader of the adapter sees "transient" spelled out instead of having
+ * to know that unbranded throws default to it. Use it as the third leg of the triad:
+ *
+ * - {@link OrderRejectedError} — terminal business rejection (GATES);
+ * - {@link OrderDeletedError} — confirmed order-not-found (CHECKS);
+ * - OrderTransientError — everything temporary, in EITHER context.
+ *
+ * ## What the "transient" verdict means per channel
+ *
+ * Resolved as `IBrokerOrderVerdict` `{ reason: "transient" }`
+ * (see interfaces/Broker.interface):
+ *
+ * - **Open gate** (`onOrderOpenCommit` type "active"/"schedule",
+ *   `callbacks.onOrderSync`, `listenSync`): the open is retried IDENTITY-STABLY —
+ *   the same signal row with the SAME signalId is re-submitted on the next tick
+ *   (`event.attempt` increments; the armed retry survives a crash via persistence),
+ *   up to CC_ORDER_OPEN_RETRY_ATTEMPTS. Tag exchange orders with
+ *   `clientOrderId = signalId` and a retry after a LOST RESPONSE resolves to
+ *   "duplicate order" on the exchange and reconciles instead of double-buying.
+ *   Exhaustion drops the signal loudly AND signals `exitEmitter` (fatal: the network
+ *   would not let the engine work). With the config at 0 the retry slot is disabled:
+ *   a rejected open is dropped at once and the next tick regenerates a FRESH id.
+ * - **Close gate** (`onOrderCloseCommit`, same listeners): the position stays open
+ *   and the close is re-attempted on the next tick/candle (`event.attempt`
+ *   increments), up to CC_ORDER_CLOSE_RETRY_ATTEMPTS. Exhaustion FORCE-CLOSES the
+ *   engine state with the ORIGINAL closeReason + `errorEmitter` + `exitEmitter`
+ *   (the real exchange position must be reconciled by the adapter/operator).
+ *   With the config at 0 the cap is disabled: the close retries forever (legacy).
+ * - **Checks** (`onOrderActiveCheck` / `onOrderScheduleCheck`,
+ *   `callbacks.onOrderCheck`, `listenCheck`): the failed ping is TOLERATED — the
+ *   order is assumed still open and monitoring continues (`event.attempt`
+ *   increments), up to CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures; a single
+ *   successful check resets the streak to 0. Exhaustion acts terminally (close
+ *   "closed" / cancel "user") + `exitEmitter`. With the config at 0 any failure is
+ *   terminal on the spot (legacy).
+ *
+ * ## Nuances
+ *
+ * - **Counted per consecutive failures, not per elapsed ticks.** For checks the ping
+ *   fires every live tick, so "consecutive" is literal; for the close gate the
+ *   counter advances only when a close actually triggers and gets rejected — gaps
+ *   where no close condition holds do not touch it (only a confirmed gate or a
+ *   position transition resets it).
+ * - **Exhaustion of transient failures is FATAL** (`exitEmitter` after the
+ *   `errorEmitter` log) — unlike the typed terminal errors above, which are business
+ *   outcomes and never signal a process exit.
+ * - **In-memory close/check counters.** They reset on restart (safe direction: the
+ *   broker gets fresh attempts before the dangerous force action); only the OPEN
+ *   retry identity/count is persisted, because losing it would break clientOrderId
+ *   idempotency.
+ * - **Nominal brand for symmetry.** `__type__ === Symbol.for("OrderTransientError")`
+ *   and the static guard exist for consistency with the other two errors (useful in
+ *   the application's own logging/metrics); the framework itself never checks it.
+ * - **Live-only in production wiring.** Backtest short-circuits gates and never
+ *   fires checks.
+ *
+ * @example
+ * ```typescript
+ * Broker.useBrokerAdapter({
+ *   async onOrderOpenCommit(payload) {
+ *     try {
+ *       await exchange.placeOrder({ clientOrderId: payload.signalId, ... });
+ *     } catch (e) {
+ *       if (isNetworkError(e)) {
+ *         // Explicit intent: temporary — let the bounded identity-stable retry run
+ *         throw new OrderTransientError(`binance unreachable: ${e.message}`);
+ *       }
+ *       throw new OrderRejectedError(`order refused: ${e.message}`);
+ *     }
+ *   },
+ * });
+ * ```
+ */
+declare class OrderTransientError extends Error {
+    /** Runtime brand (Symbol.for — survives duplicated module instances) */
+    readonly __type__: symbol;
+    /**
+     * @param message - Optional human-readable reason (logged, not routed on)
+     */
+    constructor(message?: string);
+    /**
+     * Nominal type guard by the runtime brand. Provided for symmetry with
+     * OrderRejectedError / OrderDeletedError (e.g. for application-side logging) —
+     * the framework itself does not branch on it: transient is the default verdict
+     * for ANY non-typed throw.
+     *
+     * @param error - Any thrown object
+     * @returns true when the object carries the OrderTransientError brand
+     */
+    static isOrderTransientError(error: object): boolean;
+    /**
+     * Nominal constructor for a new OrderTransientError from any thrown object. Use this
+     * instead of `instanceof` to recognize instances created by a DIFFERENT copy of
+     * this module (duplicated bundles, linked packages).
+     *
+     * @param error - Any thrown object
+     * @returns a new OrderTransientError with the original message, or a default message
+     *          if the original was not a string
+     */
+    static fromError(error: object): OrderTransientError;
+}
+
+export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, OrderDeletedError, type OrderOpenContract, OrderRejectedError, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyStatisticsModel, type StrategyStatus, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addRiskSchema, addSizingSchema, addStrategySchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategySchema, getStrategyStatus, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };

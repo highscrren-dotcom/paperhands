@@ -10,6 +10,7 @@ import { ActionName } from "./Action.interface";
 import { StrategyCommitContract } from "../contract/StrategyCommit.contract";
 import { OrderSyncContract } from "../contract/OrderSync.contract";
 import { OrderCheckContract } from "../contract/OrderCheck.contract";
+import type { IBrokerOrderVerdict } from "./Broker.interface";
 
 /**
  * Generic key-value type for strategy runtime data.
@@ -61,6 +62,21 @@ export type StrategyStatus = {
    * Drained on the next tick/backtest to close the position with closeReason "stop_loss".
    */
   stopLossSignal: ISignalCloseRow | null;
+  /**
+   * Gate-rejected open awaiting an identity-stable retry (CC_ORDER_OPEN_RETRY_ATTEMPTS), or
+   * null if none. The row is re-submitted with its ORIGINAL signalId so an idempotent broker
+   * adapter (clientOrderId = signalId) reconciles a lost-response fill instead of double-buying.
+   * Write-ahead: stays persisted until the open outcome (success / exhaustion / failed
+   * re-validation) is durably recorded — a crash right after the broker confirmed the open
+   * replays the same id and resolves on the exchange side.
+   */
+  retryOpenSignal: ISignalRow | IScheduledSignalRow | null;
+  /**
+   * Number of broker-gate rejections recorded for retryOpenSignal's signalId. Incremented on
+   * every rejection of the same id; once it exceeds CC_ORDER_OPEN_RETRY_ATTEMPTS the retry row
+   * is dropped loudly and signal generation resumes. Reset on successful open or id change.
+   */
+  retryOpenCount: number;
 };
 
 /**
@@ -622,15 +638,28 @@ export interface IStrategyParams extends IStrategySchema {
   onDispose: (symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean) => Promise<void>;
   /** System callback for commit events (emits to strategyCommitSubject) */
   onCommit: (event: StrategyCommitContract) => Promise<void>;
-  /** System callback for signal synchronization events (emits to syncSubject) */
-  onOrderSync: (event: OrderSyncContract) => Promise<boolean> | boolean;
+  /**
+   * System callback for signal synchronization events (emits to syncSubject).
+   * Resolves to a IBrokerOrderVerdict discriminated by `reason`:
+   * "confirmed" — gate allowed; "transient" — retried (bounded by
+   * CC_ORDER_OPEN_RETRY_ATTEMPTS / CC_ORDER_CLOSE_RETRY_ATTEMPTS); "rejected" —
+   * terminal (OrderRejectedError: open dropped / close force-closed immediately).
+   * Legacy boolean returns are normalized by the caller (true → confirmed,
+   * false → transient).
+   */
+  onOrderSync: (event: OrderSyncContract) => Promise<IBrokerOrderVerdict | boolean> | IBrokerOrderVerdict | boolean;
   /**
    * System callback for pending-order synchronization (emits to syncPendingSubject).
-   * Called on every live tick while a pending signal is monitored, BEFORE TP/SL/time evaluation.
-   * Returns true while the order is still open on the exchange; false (or a thrown listener) means
-   * the order is no longer pending and the framework closes the position with closeReason "closed".
+   * Called on every live tick while a signal is monitored, BEFORE completion evaluation.
+   * Resolves to a IBrokerOrderVerdict discriminated by `reason`: "confirmed" — the
+   * order is still open, keep monitoring; "transient" — failed check, tolerated up to
+   * CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive failures before acting terminally
+   * (close "closed" / cancel "user"); "deleted" — confirmed order-not-found
+   * (OrderDeletedError), terminal immediately, bypassing the tolerance counter.
+   * Legacy boolean returns are normalized by the caller (true → confirmed,
+   * false → transient).
    */
-  onOrderCheck: (event: OrderCheckContract) => Promise<boolean> | boolean;
+  onOrderCheck: (event: OrderCheckContract) => Promise<IBrokerOrderVerdict | boolean> | IBrokerOrderVerdict | boolean;
   /** System callback for highest profit updates (emits to highestProfitSubject) */
   onHighestProfit: (signal: IPublicSignalRow, currentPrice: number, timestamp: number) => Promise<void> | void;
   /** System callback for max drawdown updates (emits to maxDrawdownSubject) */

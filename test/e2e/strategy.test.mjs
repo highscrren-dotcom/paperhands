@@ -10,6 +10,7 @@ import {
   listenSync,
   lib,
   MethodContextService,
+  setConfig,
 } from "../../build/index.mjs";
 
 const alignTimestamp = (timestampMs, intervalMinutes) => {
@@ -864,6 +865,12 @@ test("STRATEGY BACKTEST: closePending from onActivePing closes mid-frame with cl
  * 3. обёртка подменяет params.onOrderSync на каждом выдаваемом инстансе.
  */
 test("STRATEGY BACKTEST: monkey-patched onOrderSync observes and gates orders in backtest", async ({ pass, fail }) => {
+  // Тест закодирован под legacy «отказ → повторная генерация» (второй выпуск
+  // getSignal потребляется ретраем). Идемпотентный ретрай с тем же id
+  // (CC_ORDER_OPEN_RETRY_ATTEMPTS) не зовёт getSignal — выключаем его, иначе
+  // выпуск №2 стал бы второй полноценной позицией после закрытия первой.
+  setConfig({ CC_ORDER_OPEN_RETRY_ATTEMPTS: 0 }, true);
+
   const basePrice = 50000;
   const priceOpen = 40000;
   const t0 = new Date("2024-01-01T00:00:00Z").getTime();
@@ -990,6 +997,11 @@ test("STRATEGY BACKTEST: monkey-patched onOrderSync observes and gates orders in
  * НЕ мешают мониторингу (позиция живёт), а счёт проверок точный.
  */
 test("STRATEGY LIVE: active order-check closes the position on the fifth check after activation", async ({ pass, fail }) => {
+  // Тест закодирован под legacy «один сбой чека = терминальное закрытие».
+  // Толерантность к транзиентным сбоям (CC_ORDER_CHECK_RETRY_ATTEMPTS) выключаем —
+  // её собственные инварианты покрывает verdict.test.mjs.
+  setConfig({ CC_ORDER_CHECK_RETRY_ATTEMPTS: 0 }, true);
+
   const { listenCheck } = await import("../../build/index.mjs");
   const basePrice = 50000;
   const priceOpen = 40000;

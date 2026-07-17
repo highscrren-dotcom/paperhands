@@ -39,7 +39,7 @@ import { getEffectivePriceOpen as GET_EFFECTIVE_PRICE_OPEN } from "../helpers/ge
 import { ICandleData } from "../interfaces/Exchange.interface";
 import { PersistSignalAdapter, PersistScheduleAdapter, PersistRecentAdapter, PersistStrategyAdapter } from "../classes/Persist";
 import { ExecutionContextService } from "../lib/services/context/ExecutionContextService";
-import { errorEmitter, backtestScheduleOpenSubject } from "../config/emitters";
+import { errorEmitter, exitEmitter, backtestScheduleOpenSubject } from "../config/emitters";
 import { GLOBAL_CONFIG } from "../config/params";
 import { getTotalClosed } from "../helpers/getTotalClosed";
 import beginTime from "../utils/beginTime";
@@ -48,6 +48,9 @@ import { OrderCheckContract } from "../contract/OrderCheck.contract";
 import validatePendingSignal from "../validation/validatePendingSignal";
 import validateScheduledSignal from "../validation/validateScheduledSignal";
 import validateSignal from "../validation/validateSignal";
+import OrderRejectedError from "../error/OrderRejectedError";
+import OrderDeletedError from "../error/OrderDeletedError";
+import { BROKER_ORDER_VERDICT, type IBrokerOrderVerdict } from "../interfaces/Broker.interface";
 
 const INTERVAL_MINUTES: Record<SignalInterval, number> = {
   "1m": 1,
@@ -109,6 +112,97 @@ const PARTIAL_CAP_TOLERANCE_FACTOR = 1 + 1e-9;
  */
 const PARTIAL_FULL_CLOSE_EPSILON = 1e-9;
 
+/** Shared immutable verdict instances (see IBrokerOrderVerdict in interfaces/Broker.interface) */
+const VERDICT_CONFIRMED: IBrokerOrderVerdict = Object.freeze({ __type__: BROKER_ORDER_VERDICT, reason: "confirmed" as const });
+const VERDICT_TRANSIENT: IBrokerOrderVerdict = Object.freeze({ __type__: BROKER_ORDER_VERDICT, reason: "transient" as const });
+
+/**
+ * Normalizes a raw onOrderSync/onOrderCheck result into an IBrokerOrderVerdict.
+ *
+ * A verdict is recognized STRICTLY by the runtime brand __type__ ===
+ * BROKER_ORDER_VERDICT (Symbol.for — survives duplicated module instances), never by
+ * shape: a userspace object that merely happens to carry a `reason` key must not be
+ * honored as a framework verdict. Everything unbranded falls back to the legacy
+ * boolean contract — true/void collapse to "confirmed", false to "transient"
+ * (production callbacks CREATE_SYNC_FN / CREATE_SYNC_PENDING_FN always return
+ * branded verdicts; booleans come from legacy/mocked callbacks in tests).
+ */
+const TO_ORDER_VERDICT_FN = (raw: unknown): IBrokerOrderVerdict => {
+  if (raw && typeof raw === "object" && Reflect.get(raw, "__type__") === BROKER_ORDER_VERDICT) {
+    return raw as IBrokerOrderVerdict;
+  }
+  return raw === false ? VERDICT_TRANSIENT : VERDICT_CONFIRMED;
+};
+
+/**
+ * Invokes params.onOrderSync with typed-error translation and verdict normalization.
+ *
+ * A thrown OrderRejectedError is the TERMINAL business rejection ("no counterparty,
+ * retrying is pointless") — resolved to the "rejected" verdict so the callers skip
+ * the bounded retry loop (drop the open / force-close immediately). The production
+ * onOrderSync (StrategyConnectionService CREATE_SYNC_FN) performs the same translation
+ * on its own layer; this guard covers directly-mocked params.onOrderSync (tests) and
+ * keeps the verdict contract independent of the wiring. Any other throw propagates to
+ * the outer trycatch of the calling wrapper (→ "transient" via its defaultValue).
+ */
+const CALL_ORDER_SYNC_GUARDED_FN = async (
+  self: ClientStrategy,
+  event: Parameters<ClientStrategy["params"]["onOrderSync"]>[0]
+): Promise<IBrokerOrderVerdict> => {
+  try {
+    return TO_ORDER_VERDICT_FN(await self.params.onOrderSync(event));
+  } catch (error) {
+    if (OrderRejectedError.isOrderRejectedError(error as object)) {
+      const message = "ClientStrategy CALL_ORDER_SYNC_GUARDED_FN: OrderRejectedError — terminal business rejection";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+        signalId: event.signalId,
+        action: event.action,
+        type: event.type,
+      };
+      self.params.logger.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error as Error);
+      return { __type__: BROKER_ORDER_VERDICT, reason: "rejected", error };
+    }
+    throw error;
+  }
+};
+
+/**
+ * Invokes params.onOrderCheck with typed-error translation and verdict normalization.
+ *
+ * A thrown OrderDeletedError is the adapter's CONFIRMED "order not found by id"
+ * (e.g. the user deleted the order manually) — resolved to the "deleted" verdict
+ * so the caller acts terminally at once, bypassing the CC_ORDER_CHECK_RETRY_ATTEMPTS
+ * tolerance counter. Any other throw propagates to the outer trycatch of the calling
+ * wrapper (→ "transient" via its defaultValue).
+ */
+const CALL_ORDER_CHECK_GUARDED_FN = async (
+  self: ClientStrategy,
+  event: Parameters<ClientStrategy["params"]["onOrderCheck"]>[0]
+): Promise<IBrokerOrderVerdict> => {
+  try {
+    return TO_ORDER_VERDICT_FN(await self.params.onOrderCheck(event));
+  } catch (error) {
+    if (OrderDeletedError.isOrderDeletedError(error as object)) {
+      const message = "ClientStrategy CALL_ORDER_CHECK_GUARDED_FN: OrderDeletedError — confirmed order-not-found";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+        signalId: event.signalId,
+        type: event.type,
+      };
+      self.params.logger.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error as Error);
+      return { __type__: BROKER_ORDER_VERDICT, reason: "deleted", error };
+    }
+    throw error;
+  }
+};
+
 /**
  * Calls onOrderSync callback for signal-open event.
  *
@@ -118,6 +212,8 @@ const PARTIAL_FULL_CLOSE_EPSILON = 1e-9;
  * The framework will retry on the next tick: the rejecting branch rolls back the
  * interval throttle (_lastSignalTimestamp) consumed in GET_SIGNAL_FN, so getSignal
  * runs again immediately instead of waiting for the next interval boundary.
+ * A thrown OrderRejectedError is terminal: the open is dropped without arming the
+ * identity-stable retry (see CALL_ORDER_SYNC_GUARDED_FN).
  */
 const CALL_ORDER_SYNC_OPEN_FN = trycatch(
   async (
@@ -125,11 +221,14 @@ const CALL_ORDER_SYNC_OPEN_FN = trycatch(
     currentPrice: number,
     pendingSignal: ISignalRow,
     self: ClientStrategy
-  ): Promise<boolean> => {
+  ): Promise<IBrokerOrderVerdict> => {
     const publicSignal = TO_PUBLIC_SIGNAL("pending", pendingSignal, currentPrice);
-    return await self.params.onOrderSync({
+    return await CALL_ORDER_SYNC_GUARDED_FN(self, {
       action: "signal-open",
       type: "active",
+      // Consecutive prior gate rejections for THIS id: non-zero only when the
+      // attempt comes from the armed retry slot (identity-stable retry).
+      attempt: self._retryOpenSignal?.id === pendingSignal.id ? self._retryOpenCount : 0,
       symbol: self.params.execution.context.symbol,
       strategyName: self.params.strategyName,
       exchangeName: self.params.exchangeName,
@@ -157,7 +256,7 @@ const CALL_ORDER_SYNC_OPEN_FN = trycatch(
     });
   },
   {
-    defaultValue: false,
+    defaultValue: VERDICT_TRANSIENT,
     fallback: (error, timestamp, currentPrice, pendingSignal, self) => {
       const message = "ClientStrategy CALL_ORDER_SYNC_OPEN_FN thrown";
       const payload = {
@@ -192,11 +291,13 @@ const CALL_ORDER_SYNC_SCHEDULE_OPEN_FN = trycatch(
     currentPrice: number,
     scheduledSignal: IScheduledSignalRow,
     self: ClientStrategy
-  ): Promise<boolean> => {
+  ): Promise<IBrokerOrderVerdict> => {
     const publicSignal = TO_PUBLIC_SIGNAL("scheduled", scheduledSignal, currentPrice);
-    return await self.params.onOrderSync({
+    return await CALL_ORDER_SYNC_GUARDED_FN(self, {
       action: "signal-open",
       type: "schedule",
+      // Consecutive prior gate rejections for THIS id (identity-stable retry slot)
+      attempt: self._retryOpenSignal?.id === scheduledSignal.id ? self._retryOpenCount : 0,
       symbol: self.params.execution.context.symbol,
       strategyName: self.params.strategyName,
       exchangeName: self.params.exchangeName,
@@ -224,7 +325,7 @@ const CALL_ORDER_SYNC_SCHEDULE_OPEN_FN = trycatch(
     });
   },
   {
-    defaultValue: false,
+    defaultValue: VERDICT_TRANSIENT,
     fallback: (error, timestamp, currentPrice, scheduledSignal, self) => {
       const message = "ClientStrategy CALL_ORDER_SYNC_SCHEDULE_OPEN_FN thrown";
       const payload = {
@@ -258,11 +359,13 @@ const CALL_ORDER_SYNC_CLOSE_FN = trycatch(
     closeReason: "time_expired" | "take_profit" | "stop_loss" | "closed",
     signal: ISignalRow,
     self: ClientStrategy
-  ): Promise<boolean> => {
+  ): Promise<IBrokerOrderVerdict> => {
     const publicSignal = TO_PUBLIC_SIGNAL("pending", signal, currentPrice);
-    return await self.params.onOrderSync({
+    return await CALL_ORDER_SYNC_GUARDED_FN(self, {
       action: "signal-close",
       type: "active",
+      // Consecutive prior close-gate rejections for the current position
+      attempt: self._closeAttempt,
       symbol: self.params.execution.context.symbol,
       strategyName: self.params.strategyName,
       exchangeName: self.params.exchangeName,
@@ -290,8 +393,8 @@ const CALL_ORDER_SYNC_CLOSE_FN = trycatch(
     });
   },
   {
-    defaultValue: false,
-    fallback: (error, timestamp, currentPrice, closeReason, signal, self) => {  
+    defaultValue: VERDICT_TRANSIENT,
+    fallback: (error, timestamp, currentPrice, closeReason, signal, self) => {
       const message = "ClientStrategy CALL_ORDER_SYNC_CLOSE_FN thrown";
       const payload = {
         error: errorData(error),
@@ -328,11 +431,13 @@ const CALL_ORDER_CHECK_FN = trycatch(
     currentPrice: number,
     signal: ISignalRow,
     self: ClientStrategy
-  ): Promise<boolean> => {
+  ): Promise<IBrokerOrderVerdict> => {
     const publicSignal = TO_PUBLIC_SIGNAL("pending", signal, currentPrice);
-    return await self.params.onOrderCheck({
+    return await CALL_ORDER_CHECK_GUARDED_FN(self, {
       action: "signal-ping",
       type: "active",
+      // Consecutive prior failed checks tolerated as transient so far
+      attempt: self._orderCheckAttempt,
       symbol: self.params.execution.context.symbol,
       strategyName: self.params.strategyName,
       exchangeName: self.params.exchangeName,
@@ -359,7 +464,7 @@ const CALL_ORDER_CHECK_FN = trycatch(
     });
   },
   {
-    defaultValue: false,
+    defaultValue: VERDICT_TRANSIENT,
     fallback: (error, timestamp, currentPrice, signal, self) => {
       const message = "ClientStrategy CALL_ORDER_CHECK_FN thrown";
       const payload = {
@@ -397,11 +502,13 @@ const CALL_SCHEDULED_ORDER_CHECK_FN = trycatch(
     currentPrice: number,
     scheduled: IScheduledSignalRow,
     self: ClientStrategy
-  ): Promise<boolean> => {
+  ): Promise<IBrokerOrderVerdict> => {
     const publicSignal = TO_PUBLIC_SIGNAL("scheduled", scheduled, currentPrice);
-    return await self.params.onOrderCheck({
+    return await CALL_ORDER_CHECK_GUARDED_FN(self, {
       action: "signal-ping",
       type: "schedule",
+      // Consecutive prior failed checks tolerated as transient so far
+      attempt: self._orderCheckAttempt,
       symbol: self.params.execution.context.symbol,
       strategyName: self.params.strategyName,
       exchangeName: self.params.exchangeName,
@@ -428,7 +535,7 @@ const CALL_SCHEDULED_ORDER_CHECK_FN = trycatch(
     });
   },
   {
-    defaultValue: false,
+    defaultValue: VERDICT_TRANSIENT,
     fallback: (error, timestamp, currentPrice, scheduled, self) => {
       const message = "ClientStrategy CALL_SCHEDULED_ORDER_CHECK_FN thrown";
       const payload = {
@@ -830,8 +937,12 @@ const GET_SIGNAL_FN = trycatch(
       // до целого интервала (час для "1h"). Потребление DTO при этом занимает
       // слот текущего интервала (ниже), так что собственная генерация
       // стратегии не учащается.
+      // Вооружённый open-ретрай (_retryOpenSignal) минует троттл по той же
+      // причине: reject-ветки откатывают троттл сами, но восстановленный после
+      // рестарта слот не должен ждать границы интервала.
       if (
         !self._userSignal &&
+        !self._retryOpenSignal &&
         self._lastSignalTimestamp !== null &&
         alignedTime === self._lastSignalTimestamp
       ) {
@@ -850,7 +961,40 @@ const GET_SIGNAL_FN = trycatch(
     // signal returned by getSignal would.
     let signal: ISignalDto | null | symbol;
 
-    {
+    // PRIORITY 0: гейт-отклонённый open, ждущий ретрая (CC_ORDER_OPEN_RETRY_ATTEMPTS).
+    // Row повторяется с ОРИГИНАЛЬНЫМ id, чтобы адаптер размещал ордер идемпотентно
+    // (clientOrderId = signalId): ретрай после потерянного ответа разрешается на бирже
+    // как "duplicate order" и реконсилируется вместо повторной покупки (REPORT №10).
+    // Слот НЕ очищается при потреблении (write-ahead): его снимает успешный open
+    // (OPEN_NEW_*_FN), исчерпание попыток (STASH_RETRY_OPEN_SIGNAL_FN) или провал
+    // consumption-ревалидации ниже — до дюрабельного исхода крэш реиграет тот же id.
+    // Ревалидация против ТЕКУЩЕЙ цены — как у user-DTO: уплывшая цена убивает ретрай
+    // громко (warn + errorEmitter), и генерация возобновляется на следующем тике.
+    const retrySignal = GLOBAL_CONFIG.CC_ORDER_OPEN_RETRY_ATTEMPTS > 0
+      ? self._retryOpenSignal
+      : null;
+    if (retrySignal) {
+      if (!validateSignal(retrySignal, currentPrice)) {
+        const message = "ClientStrategy GET_SIGNAL_FN: open-retry signal failed consumption re-validation (price moved since the rejected attempt), dropped";
+        const payload = {
+          symbol: self.params.execution.context.symbol,
+          strategyName: self.params.strategyName,
+          signalId: retrySignal.id,
+          note: retrySignal.note,
+          attempts: self._retryOpenCount,
+          currentPrice,
+        };
+        self.params.logger.warn(message, payload);
+        console.warn(message, payload);
+        errorEmitter.next(new Error(message));
+        self._retryOpenSignal = null;
+        self._retryOpenCount = 0;
+        await PERSIST_STRATEGY_FN(self);
+        self._lastSignalTimestamp = null;
+        return null;
+      }
+      signal = retrySignal;
+    } else {
       if (!self._userSignal) {
         const timeoutMs = GLOBAL_CONFIG.CC_MAX_SIGNAL_GENERATION_SECONDS * 1_000;
         // Cancelable timeout instead of a plain sleep: Promise.race does not
@@ -1193,6 +1337,24 @@ const WAIT_FOR_INIT_FN = async (self: ClientStrategy) => {
     if (strategyData.closedSignal) {
       self._commitQueue = strategyData.commitQueue ?? [];
     }
+
+    // Restore the armed open-retry slot (gate-rejected open awaiting an
+    // identity-stable retry) and its per-signalId rejection counter. Restored
+    // unconditionally like the other deferred slots: the retry is write-ahead —
+    // it stays on disk until the open outcome is durable, so a crash right after
+    // the broker confirmed the open (but before the pending snapshot was written)
+    // replays the SAME signalId and the idempotent adapter reconciles instead of
+    // double-buying. Skipped when retries are disabled (slot stays unused; a
+    // snapshot armed under an older config is dropped on the next persist).
+    if (GLOBAL_CONFIG.CC_ORDER_OPEN_RETRY_ATTEMPTS > 0) {
+      self._retryOpenSignal = strategyData.retryOpenSignal ?? null;
+      self._retryOpenCount = strategyData.retryOpenCount ?? 0;
+      // JSON serializes Infinity as null: restore eternal-hold rows the same way
+      // as the pending/scheduled snapshots below.
+      if (self._retryOpenSignal && self._retryOpenSignal.minuteEstimatedTime == null) {
+        self._retryOpenSignal.minuteEstimatedTime = Infinity;
+      }
+    }
   }
 
   // Restore pending signal. A context mismatch skips ONLY this block (not an
@@ -1351,6 +1513,23 @@ const WAIT_FOR_INIT_FN = async (self: ClientStrategy) => {
     );
   }
 
+  // Write-ahead reconciliation for the open-retry slot: a restored retry row whose id
+  // matches the restored pending/scheduled snapshot means the crash happened AFTER the
+  // broker confirmed the open but BEFORE the slot wipe was persisted — the position is
+  // live, the retry row is stale. Finish the interrupted wipe instead of re-opening.
+  if (self._retryOpenSignal && (
+    self._pendingSignal?.id === self._retryOpenSignal.id
+    || self._scheduledSignal?.id === self._retryOpenSignal.id
+  )) {
+    self.params.logger.warn("ClientStrategy waitForInit: persisted open-retry slot superseded by restored pending/scheduled signal, finishing wipe", {
+      symbol: self.params.symbol,
+      signalId: self._retryOpenSignal.id,
+    });
+    self._retryOpenSignal = null;
+    self._retryOpenCount = 0;
+    await PERSIST_STRATEGY_FN(self);
+  }
+
   // Call onInit callback
   await self.params.onInit(
     self.params.symbol,
@@ -1397,11 +1576,152 @@ const PERSIST_STRATEGY_FN = async (self: ClientStrategy): Promise<void> => {
       activatedSignal: self._activatedSignal,
       takeProfitSignal: self._takeProfitSignal,
       stopLossSignal: self._stopLossSignal,
+      retryOpenSignal: self._retryOpenSignal,
+      retryOpenCount: self._retryOpenCount,
     },
     self.params.symbol,
     self.params.strategyName,
     self.params.exchangeName,
   );
+};
+
+/**
+ * Records a broker-gate rejection of a signal-open and arms the identity-stable retry.
+ *
+ * Called from the sync-reject branches of OPEN_NEW_PENDING_SIGNAL_FN and
+ * OPEN_NEW_SCHEDULED_SIGNAL_FN. Increments the per-signalId rejection counter and stores
+ * the rejected row in _retryOpenSignal so the next GET_SIGNAL_FN re-submits it with the
+ * SAME id (clientOrderId idempotency on the adapter side — see REPORT №10: a lost response
+ * to a filled order must reconcile on retry, not double-buy). Once the counter exceeds
+ * CC_ORDER_OPEN_RETRY_ATTEMPTS the row is dropped loudly and generation resumes with a
+ * fresh signal. No-op when CC_ORDER_OPEN_RETRY_ATTEMPTS is 0 (legacy drop-and-regenerate).
+ */
+const STASH_RETRY_OPEN_SIGNAL_FN = async (
+  self: ClientStrategy,
+  signal: ISignalRow | IScheduledSignalRow
+): Promise<void> => {
+  if (GLOBAL_CONFIG.CC_ORDER_OPEN_RETRY_ATTEMPTS <= 0) {
+    return;
+  }
+  const count = self._retryOpenSignal?.id === signal.id ? self._retryOpenCount + 1 : 1;
+  if (count > GLOBAL_CONFIG.CC_ORDER_OPEN_RETRY_ATTEMPTS) {
+    const message = "ClientStrategy STASH_RETRY_OPEN_SIGNAL_FN: open retry attempts exhausted, dropping signal";
+    const payload = {
+      symbol: self.params.execution.context.symbol,
+      strategyName: self.params.strategyName,
+      signalId: signal.id,
+      note: signal.note,
+      attempts: count - 1,
+      maxAttempts: GLOBAL_CONFIG.CC_ORDER_OPEN_RETRY_ATTEMPTS,
+    };
+    self.params.logger.warn(message, payload);
+    console.warn(message, payload);
+    const error = new Error(message);
+    errorEmitter.next(error);
+    // Только транзиентные (сетевые) отказы попадают в STASH — терминальные идут в
+    // DROP_RETRY_OPEN_SIGNAL_FN. Исчерпание = сеть/брокер не дают работать:
+    // фатальный сигнал ПОСЛЕ errorEmitter-лога (Live/Backtest завершаются,
+    // Notification алертит, listenExit — операторский хук).
+    exitEmitter.next(error);
+    self._retryOpenSignal = null;
+    self._retryOpenCount = 0;
+    await PERSIST_STRATEGY_FN(self);
+    return;
+  }
+  self._retryOpenSignal = signal;
+  self._retryOpenCount = count;
+  // Write-ahead: persist the armed retry BEFORE the next tick so a crash in between
+  // restores the same signalId instead of regenerating a fresh one (orphan-order risk).
+  await PERSIST_STRATEGY_FN(self);
+};
+
+/**
+ * Handles the TERMINAL open-gate rejection (verdict "rejected"/"deleted": the broker
+ * threw OrderRejectedError — "no counterparty, retrying is pointless").
+ *
+ * Unlike the transient branch (STASH_RETRY_OPEN_SIGNAL_FN) the open is dropped for
+ * good: no retry is armed, and an already-armed retry slot for this id is wiped so
+ * the exhausted trade attempt does not resurrect on the next tick or after a restart.
+ */
+const DROP_RETRY_OPEN_SIGNAL_FN = async (
+  self: ClientStrategy,
+  signal: ISignalRow | IScheduledSignalRow
+): Promise<void> => {
+  const message = "ClientStrategy DROP_RETRY_OPEN_SIGNAL_FN: terminal broker rejection, open dropped without retry";
+  const payload = {
+    symbol: self.params.execution.context.symbol,
+    strategyName: self.params.strategyName,
+    signalId: signal.id,
+    note: signal.note,
+    attempts: self._retryOpenSignal?.id === signal.id ? self._retryOpenCount : 0,
+  };
+  self.params.logger.warn(message, payload);
+  console.warn(message, payload);
+  if (self._retryOpenSignal?.id === signal.id) {
+    self._retryOpenSignal = null;
+    self._retryOpenCount = 0;
+    await PERSIST_STRATEGY_FN(self);
+  }
+};
+
+/**
+ * Resolves the close-gate outcome into an actionable verdict:
+ *
+ * - "allow" — the broker confirmed the close; the consecutive-rejection counter resets.
+ * - "retry" — transient rejection within CC_ORDER_CLOSE_RETRY_ATTEMPTS; the caller keeps
+ *   the position open and re-attempts the close on the next tick/candle (the next gate
+ *   event carries the incremented `attempt`).
+ * - "force" — attempts exhausted OR terminal rejection (OrderRejectedError): the caller
+ *   proceeds with the close teardown WITHOUT broker confirmation, loudly (errorEmitter).
+ *   The engine records the close with the original closeReason; the adapter/operator
+ *   must reconcile the real exchange position (the standard signal-close lifecycle
+ *   event still fires and reaches the broker adapter). Rationale: an eternally rejected
+ *   close blocks the risk slot and floods logs forever.
+ *
+ * CC_ORDER_CLOSE_RETRY_ATTEMPTS = 0 disables the cap: transient rejections retry
+ * forever (legacy behavior); the terminal verdict still forces the close.
+ */
+const RESOLVE_CLOSE_GATE_FN = (
+  self: ClientStrategy,
+  verdict: IBrokerOrderVerdict,
+  signal: ISignalRow,
+  closeReason: string
+): "allow" | "retry" | "force" => {
+  if (verdict.reason === "confirmed") {
+    self._closeAttempt = 0;
+    return "allow";
+  }
+  self._closeAttempt += 1;
+  const terminal = verdict.reason !== "transient";
+  const exhausted = terminal
+    || (GLOBAL_CONFIG.CC_ORDER_CLOSE_RETRY_ATTEMPTS > 0
+      && self._closeAttempt > GLOBAL_CONFIG.CC_ORDER_CLOSE_RETRY_ATTEMPTS);
+  if (!exhausted) {
+    return "retry";
+  }
+  const message = "ClientStrategy RESOLVE_CLOSE_GATE_FN: close attempts exhausted, force-closing engine state without broker confirmation";
+  const payload = {
+    symbol: self.params.execution.context.symbol,
+    strategyName: self.params.strategyName,
+    signalId: signal.id,
+    closeReason,
+    attempts: self._closeAttempt,
+    terminal,
+  };
+  self.params.logger.warn(message, payload);
+  console.warn(message, payload);
+  const error = new Error(message);
+  errorEmitter.next(error);
+  if (!terminal) {
+    // Исчерпание ТРАНЗИЕНТНЫХ отказов = сеть/брокер не дают закрыть позицию —
+    // продолжать работу нельзя: фатальный сигнал ПОСЛЕ errorEmitter-лога (движок
+    // уже force-close'нул своё состояние, реальную позицию обязан выверить
+    // оператор/адаптер). Терминальный OrderRejectedError — бизнес-исход, не сеть:
+    // без exit.
+    exitEmitter.next(error);
+  }
+  self._closeAttempt = 0;
+  return "force";
 };
 
 const PARTIAL_PROFIT_FN = (
@@ -2383,7 +2703,7 @@ const ACTIVATE_SCHEDULED_SIGNAL_FN = async (
     self
   );
 
-  if (!syncOpenAllowed) {
+  if (syncOpenAllowed.reason !== "confirmed") {
     self.params.logger.info("ClientStrategy scheduled signal activation rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: scheduled.id,
@@ -3430,10 +3750,11 @@ const OPEN_NEW_SCHEDULED_SIGNAL_FN = async (
     self
   );
 
-  if (!syncOpenAllowed) {
+  if (syncOpenAllowed.reason !== "confirmed") {
     self.params.logger.info("ClientStrategy OPEN_NEW_SCHEDULED_SIGNAL_FN rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: signal.id,
+      reason: syncOpenAllowed.reason,
     });
     // Release the slot reserved by checkSignalAndReserve in GET_SIGNAL_FN —
     // otherwise the rejected placement leaks a phantom reservation in the shared risk map.
@@ -3443,8 +3764,18 @@ const OPEN_NEW_SCHEDULED_SIGNAL_FN = async (
       currentTime,
       self.params.execution.context.backtest
     );
-    // Roll back the interval throttle consumed in GET_SIGNAL_FN so the rejected
-    // placement retries on the NEXT TICK, not on the next interval boundary.
+    if (syncOpenAllowed.reason === "transient") {
+      // Arm the identity-stable retry: the next tick re-submits this row with the SAME
+      // signalId so an idempotent adapter (clientOrderId = signalId) reconciles a
+      // lost-response placement instead of double-placing the resting order.
+      await STASH_RETRY_OPEN_SIGNAL_FN(self, signal);
+    } else {
+      // Terminal rejection (OrderRejectedError): retrying is pointless — drop the
+      // trade attempt for good and wipe an already-armed retry slot for this id.
+      await DROP_RETRY_OPEN_SIGNAL_FN(self, signal);
+    }
+    // Roll back the interval throttle consumed in GET_SIGNAL_FN so the strategy
+    // reacts on the NEXT TICK, not on the next interval boundary.
     self._lastSignalTimestamp = null;
     return null;
   }
@@ -3453,6 +3784,15 @@ const OPEN_NEW_SCHEDULED_SIGNAL_FN = async (
   // resting order placement — registering earlier left a phantom scheduled
   // signal (and a persisted resting order that does not exist on the exchange).
   await self.setScheduledSignal(signal);
+
+  // The gate confirmed this id — the retry accounting for it is complete. Finish the
+  // write-ahead wipe of the retry slot (kept on disk until this durable outcome).
+  // Placed BEFORE the stop-race branch below: the resting order is real either way.
+  if (self._retryOpenSignal?.id === signal.id) {
+    self._retryOpenSignal = null;
+    self._retryOpenCount = 0;
+    await PERSIST_STRATEGY_FN(self);
+  }
 
   // Stop raced INTO the placement gate (flag raised after the pre-open checks
   // but before the broker confirmed). The resting order is REAL on the exchange
@@ -3548,10 +3888,11 @@ const OPEN_NEW_PENDING_SIGNAL_FN = async (
     self
   );
 
-  if (!syncOpenAllowed) {
+  if (syncOpenAllowed.reason !== "confirmed") {
     self.params.logger.info("ClientStrategy OPEN_NEW_PENDING_SIGNAL_FN rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: signal.id,
+      reason: syncOpenAllowed.reason,
     });
     // Release the slot reserved by checkSignalAndReserve in GET_SIGNAL_FN —
     // otherwise the rejected open leaks a phantom reservation in the shared risk map.
@@ -3561,9 +3902,19 @@ const OPEN_NEW_PENDING_SIGNAL_FN = async (
       currentTime,
       self.params.execution.context.backtest
     );
-    // Roll back the interval throttle consumed in GET_SIGNAL_FN so the rejected
-    // open retries on the NEXT TICK, not on the next interval boundary (for "1h"
-    // that would be up to an hour of silence while the broker recovers).
+    if (syncOpenAllowed.reason === "transient") {
+      // Arm the identity-stable retry: the next tick re-submits this row with the SAME
+      // signalId so an idempotent adapter (clientOrderId = signalId) reconciles a
+      // lost-response fill instead of double-buying (no-op when retries are disabled).
+      await STASH_RETRY_OPEN_SIGNAL_FN(self, signal);
+    } else {
+      // Terminal rejection (OrderRejectedError): retrying is pointless — drop the
+      // trade attempt for good and wipe an already-armed retry slot for this id.
+      await DROP_RETRY_OPEN_SIGNAL_FN(self, signal);
+    }
+    // Roll back the interval throttle consumed in GET_SIGNAL_FN so the strategy
+    // reacts on the NEXT TICK (retry the same row / generate a fresh signal), not
+    // on the next interval boundary (for "1h" that would be up to an hour of silence).
     self._lastSignalTimestamp = null;
     return null;
   }
@@ -3572,6 +3923,15 @@ const OPEN_NEW_PENDING_SIGNAL_FN = async (
   // persisting earlier left a phantom position on disk if the process crashed
   // between the write and the confirmation.
   await self.setPendingSignal(signal, signal.priceOpen);
+
+  // The gate confirmed this id — the retry accounting for it is complete. Finish the
+  // write-ahead wipe of the retry slot (kept on disk until this durable outcome; a
+  // crash before this point replays the same id and reconciles on the exchange side).
+  if (self._retryOpenSignal?.id === signal.id) {
+    self._retryOpenSignal = null;
+    self._retryOpenCount = 0;
+    await PERSIST_STRATEGY_FN(self);
+  }
 
   // Whipsaw protection: record the id only after a successful open so a
   // rejected open can retry the same deterministic id on the next tick
@@ -3702,14 +4062,19 @@ const CLOSE_PENDING_SIGNAL_FN = async (
     self
   );
 
-  if (!syncCloseAllowed) {
+  const closeVerdict = RESOLVE_CLOSE_GATE_FN(self, syncCloseAllowed, signal, closeReason);
+  if (closeVerdict === "retry") {
     self.params.logger.info(`ClientStrategy signal ${closeReason} rejected by sync`, {
       symbol: self.params.execution.context.symbol,
       signalId: signal.id,
       closeReason,
+      attempt: self._closeAttempt,
     });
     return null;
   }
+  // "allow" | "force" — proceed with the teardown ("force" = attempts exhausted or
+  // terminal rejection; RESOLVE_CLOSE_GATE_FN already screamed via errorEmitter and
+  // the adapter/operator reconciles the real exchange position off the close event).
 
   const publicSignal = TO_PUBLIC_SIGNAL("pending", signal, currentPrice);
 
@@ -4438,7 +4803,7 @@ const ACTIVATE_SCHEDULED_SIGNAL_IN_BACKTEST_FN = async (
     self
   );
 
-  if (!syncOpenAllowed) {
+  if (syncOpenAllowed.reason !== "confirmed") {
     self.params.logger.info("ClientStrategy backtest scheduled signal activation rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: scheduled.id,
@@ -4534,14 +4899,17 @@ const CLOSE_PENDING_SIGNAL_IN_BACKTEST_FN = async (
     self
   );
 
-  if (!syncCloseAllowed) {
+  const closeVerdict = RESOLVE_CLOSE_GATE_FN(self, syncCloseAllowed, signal, closeReason);
+  if (closeVerdict === "retry") {
     self.params.logger.info(`ClientStrategy backtest ${closeReason} rejected by sync`, {
       symbol: self.params.execution.context.symbol,
       signalId: signal.id,
       closeReason,
+      attempt: self._closeAttempt,
     });
     return null;
   }
+  // "allow" | "force" — proceed with the teardown (see RESOLVE_CLOSE_GATE_FN)
 
   const publicSignal = TO_PUBLIC_SIGNAL("pending", signal, averagePrice);
 
@@ -4650,17 +5018,21 @@ const CLOSE_USER_PENDING_SIGNAL_IN_BACKTEST_FN = async (
     self
   );
 
-  if (!syncCloseAllowed) {
+  const closeVerdict = RESOLVE_CLOSE_GATE_FN(self, syncCloseAllowed, closedSignal, "closed");
+  if (closeVerdict === "retry") {
     // Sync close rejected (e.g. broker rejected the order) — keep _closedSignal intact
     // and return null so the candle loop re-attempts on the next candle. Mirrors live
     // tick, which keeps _closedSignal and returns idle on a rejected user close,
-    // re-trying on the following tick.
+    // re-trying on the following tick. Bounded by CC_ORDER_CLOSE_RETRY_ATTEMPTS:
+    // exhaustion (or a terminal rejection) falls through and force-closes.
     self.params.logger.info("ClientStrategy backtest: user-closed signal rejected by sync, will retry on next candle", {
       symbol: self.params.execution.context.symbol,
       signalId: closedSignal.id,
+      attempt: self._closeAttempt,
     });
     return null;
   }
+  // "allow" | "force" — proceed with the teardown (see RESOLVE_CLOSE_GATE_FN)
 
   self._closedSignal = null;
 
@@ -5103,7 +5475,7 @@ const PROCESS_SCHEDULED_SIGNAL_CANDLES_FN = async (
         self
       );
 
-      if (!syncOpenAllowed) {
+      if (syncOpenAllowed.reason !== "confirmed") {
         self.params.logger.info("ClientStrategy backtest user-activated signal rejected by sync", {
           symbol: self.params.execution.context.symbol,
           signalId: activatedSignal.id,
@@ -5823,6 +6195,50 @@ export class ClientStrategy implements IStrategy {
    */
   _userSignal: ISignalDto | null = null;
 
+  /**
+   * Gate-rejected open awaiting an identity-stable retry (CC_ORDER_OPEN_RETRY_ATTEMPTS).
+   * When non-null, the next GET_SIGNAL_FN consumes this row instead of calling
+   * params.getSignal and re-runs the normal open pipeline with the SAME signalId, so a
+   * broker adapter that tags exchange orders with clientOrderId = signalId gets idempotent
+   * placement: a retry after a LOST RESPONSE (order filled, confirmation never arrived)
+   * resolves to "duplicate order" on the exchange and reconciles instead of double-buying.
+   *
+   * Write-ahead lifetime: the slot is persisted at rejection and stays on disk until the
+   * open outcome is durable (successful open persisted / attempts exhausted / consumption
+   * re-validation failed) — a crash right after the broker confirmed the open (but before
+   * the pending snapshot was written) replays the same id and resolves on the exchange side.
+   * Unused when CC_ORDER_OPEN_RETRY_ATTEMPTS is 0.
+   */
+  _retryOpenSignal: ISignalRow | IScheduledSignalRow | null = null;
+  /**
+   * Number of broker-gate rejections recorded for _retryOpenSignal's signalId. Incremented
+   * by STASH_RETRY_OPEN_SIGNAL_FN on every rejection of the same id; once it exceeds
+   * CC_ORDER_OPEN_RETRY_ATTEMPTS the row is dropped loudly and generation resumes.
+   * Reset on successful open or when a different signalId gets rejected.
+   */
+  _retryOpenCount = 0;
+
+  /**
+   * Number of CONSECUTIVE close-gate rejections for the current pending signal. Carried
+   * into the next signal-close event as `attempt`; reset to 0 on a confirmed close and on
+   * any pending-signal transition. Once it exceeds CC_ORDER_CLOSE_RETRY_ATTEMPTS (or the
+   * gate returns the terminal "rejected" verdict) the engine FORCE-CLOSES its state with
+   * the original closeReason, loudly — see RESOLVE_CLOSE_GATE_FN. In-memory only: a
+   * restart resets the tolerance window (safe direction — more retries, never fewer).
+   */
+  _closeAttempt = 0;
+
+  /**
+   * Number of CONSECUTIVE failed order-check pings (active OR scheduled — the states are
+   * mutually exclusive, one counter serves both). Carried into the next signal-ping event
+   * as `attempt`; reset to 0 on a successful check and on any signal transition. While it
+   * stays within CC_ORDER_CHECK_RETRY_ATTEMPTS a failed check is tolerated as transient
+   * (order assumed still open); exhaustion (or the terminal "deleted" verdict) triggers
+   * the terminal action (close "closed" / cancel "user"). In-memory only, same rationale
+   * as _closeAttempt.
+   */
+  _orderCheckAttempt = 0;
+
   /** Queue for commit events to be processed in tick()/backtest() with proper timestamp */
   _commitQueue: ICommitRow[] = [];
 
@@ -5890,6 +6306,11 @@ export class ClientStrategy implements IStrategy {
     this._takeProfitSignal = null;
     this._stopLossSignal = null;
 
+    // Счётчики последовательных сбоев close-гейта/чеков привязаны к позиции —
+    // новая (или закрытая) позиция не должна наследовать чужую историю отказов.
+    this._closeAttempt = 0;
+    this._orderCheckAttempt = 0;
+
     // ЗАЩИТА ИНВАРИАНТА: При установке нового pending сигнала очищаем scheduled
     // Не может быть одновременно pending И scheduled (взаимоисключающие состояния)
     // При null: scheduled может существовать (новый сигнал после закрытия позиции)
@@ -5952,6 +6373,10 @@ export class ClientStrategy implements IStrategy {
     // отложенная отмена стирается здесь, и дренаж не эмитит дубль.
     this._cancelledSignal = null;
     this._activatedSignal = null;
+
+    // Счётчик последовательных сбоев order-check привязан к сигналу — новый
+    // (или снятый) scheduled не должен наследовать чужую историю отказов.
+    this._orderCheckAttempt = 0;
 
     this._scheduledSignal = scheduledSignal;
 
@@ -6950,14 +7375,18 @@ export class ClientStrategy implements IStrategy {
         this
       );
 
-      if (!syncCloseAllowed) {
+      const closeVerdict = RESOLVE_CLOSE_GATE_FN(this, syncCloseAllowed, closedSignal, "closed");
+      if (closeVerdict === "retry") {
         this.params.logger.info("ClientStrategy tick: user-closed signal rejected by sync, will retry", {
           symbol: this.params.execution.context.symbol,
           signalId: closedSignal.id,
+          attempt: this._closeAttempt,
         });
-        // Do NOT clear _closedSignal — retry on next tick
+        // Do NOT clear _closedSignal — retry on next tick (bounded by
+        // CC_ORDER_CLOSE_RETRY_ATTEMPTS; exhaustion falls through and force-closes)
         return await RETURN_IDLE_FN(this, currentPrice);
       }
+      // "allow" | "force" — proceed with the drain teardown (see RESOLVE_CLOSE_GATE_FN)
 
       // Release the risk slot BEFORE persisting the drained flag: a crash in
       // between replays the (idempotent) removal on restart instead of orphaning
@@ -7242,7 +7671,7 @@ export class ClientStrategy implements IStrategy {
       }
 
       const syncOpenAllowed = await CALL_ORDER_SYNC_OPEN_FN(currentTime, currentPrice, pendingSignal, this);
-      if (!syncOpenAllowed) {
+      if (syncOpenAllowed.reason !== "confirmed") {
         this.params.logger.info("ClientStrategy tick: user-activated signal rejected by sync", {
           symbol: this.params.execution.context.symbol,
           signalId: activatedSignal.id,
@@ -7367,10 +7796,12 @@ export class ClientStrategy implements IStrategy {
 
       // Scheduled-order ping (type "schedule"): before evaluating timeout/price
       // activation, confirm the resting entry order is STILL open on the exchange.
-      // Mirrors the pending-order ping: false/throw means the order is gone
-      // (cancelled or liquidated externally) — cancel the scheduled signal. If the
-      // order actually filled, the adapter must call activateScheduled instead of
-      // failing the ping. Skipped in backtest: there is no live exchange to query.
+      // Mirrors the pending-order ping: a FAILED check ("transient") is tolerated up
+      // to CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive times (network blip must not
+      // cancel a real resting order); exhaustion — or the "deleted" verdict
+      // (OrderDeletedError: confirmed not-found) — cancels the scheduled signal.
+      // If the order actually filled, the adapter must call activateScheduled
+      // instead of failing the ping. Skipped in backtest: no live exchange to query.
       if (!this.params.execution.context.backtest) {
         const stillScheduled = await CALL_SCHEDULED_ORDER_CHECK_FN(
           currentTime,
@@ -7385,12 +7816,47 @@ export class ClientStrategy implements IStrategy {
         if (!this._scheduledSignal) {
           return await RETURN_IDLE_FN(this, currentPrice);
         }
-        if (!stillScheduled) {
-          return await CANCEL_SCHEDULED_SIGNAL_AS_CLOSED_FN(
-            this,
-            this._scheduledSignal,
-            currentPrice
-          );
+        if (stillScheduled.reason === "confirmed") {
+          this._orderCheckAttempt = 0;
+        } else {
+          this._orderCheckAttempt += 1;
+          const terminal = stillScheduled.reason !== "transient"
+            || GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS <= 0
+            || this._orderCheckAttempt > GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS;
+          if (terminal) {
+            // Исчерпание толерантности ТРАНЗИЕНТНЫМИ сбоями = сеть не даёт проверить
+            // resting-ордер — продолжать работу нельзя: фатальный сигнал ПОСЛЕ
+            // errorEmitter-лога. "deleted" (подтверждённый not-found) и legacy CC=0 —
+            // не сетевые кейсы, без exit.
+            if (stillScheduled.reason === "transient" && GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS > 0) {
+              const message = "ClientStrategy tick: scheduled-order check attempts exhausted (network), cancelling scheduled signal and signaling fatal exit";
+              const payload = {
+                symbol: this.params.execution.context.symbol,
+                strategyName: this.params.strategyName,
+                signalId: this._scheduledSignal.id,
+                attempts: this._orderCheckAttempt,
+                maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
+              };
+              this.params.logger.warn(message, payload);
+              console.warn(message, payload);
+              const error = new Error(message);
+              errorEmitter.next(error);
+              exitEmitter.next(error);
+            }
+            this._orderCheckAttempt = 0;
+            return await CANCEL_SCHEDULED_SIGNAL_AS_CLOSED_FN(
+              this,
+              this._scheduledSignal,
+              currentPrice
+            );
+          }
+          // Transient failure tolerated: the resting order is assumed still open
+          this.params.logger.warn("ClientStrategy tick: scheduled-order check failed, tolerated as transient", {
+            symbol: this.params.execution.context.symbol,
+            signalId: this._scheduledSignal.id,
+            attempt: this._orderCheckAttempt,
+            maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
+          });
         }
       }
 
@@ -7504,12 +7970,51 @@ export class ClientStrategy implements IStrategy {
       if (!this._pendingSignal) {
         return await RETURN_IDLE_FN(this, averagePrice);
       }
-      if (!stillPending) {
-        return await CLOSE_PENDING_SIGNAL_AS_CLOSED_FN(
-          this,
-          this._pendingSignal,
-          averagePrice
-        );
+      if (stillPending.reason === "confirmed") {
+        this._orderCheckAttempt = 0;
+      } else {
+        this._orderCheckAttempt += 1;
+        // A FAILED check ("transient") is tolerated up to CC_ORDER_CHECK_RETRY_ATTEMPTS
+        // consecutive times — a network blip must not close a live position. Exhaustion
+        // — or the "deleted" verdict (OrderDeletedError: confirmed not-found) — closes
+        // the position with closeReason "closed".
+        const terminal = stillPending.reason !== "transient"
+          || GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS <= 0
+          || this._orderCheckAttempt > GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS;
+        if (terminal) {
+          // Исчерпание толерантности ТРАНЗИЕНТНЫМИ сбоями = сеть не даёт проверить
+          // ордер позиции — продолжать работу нельзя: фатальный сигнал ПОСЛЕ
+          // errorEmitter-лога. "deleted" (подтверждённый not-found) и legacy CC=0 —
+          // не сетевые кейсы, без exit.
+          if (stillPending.reason === "transient" && GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS > 0) {
+            const message = "ClientStrategy tick: pending-order check attempts exhausted (network), closing position and signaling fatal exit";
+            const payload = {
+              symbol: this.params.execution.context.symbol,
+              strategyName: this.params.strategyName,
+              signalId: this._pendingSignal.id,
+              attempts: this._orderCheckAttempt,
+              maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
+            };
+            this.params.logger.warn(message, payload);
+            console.warn(message, payload);
+            const error = new Error(message);
+            errorEmitter.next(error);
+            exitEmitter.next(error);
+          }
+          this._orderCheckAttempt = 0;
+          return await CLOSE_PENDING_SIGNAL_AS_CLOSED_FN(
+            this,
+            this._pendingSignal,
+            averagePrice
+          );
+        }
+        // Transient failure tolerated: the order is assumed still open, monitoring continues
+        this.params.logger.warn("ClientStrategy tick: pending-order check failed, tolerated as transient", {
+          symbol: this.params.execution.context.symbol,
+          signalId: this._pendingSignal.id,
+          attempt: this._orderCheckAttempt,
+          maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
+        });
       }
     }
 
@@ -7688,13 +8193,16 @@ export class ClientStrategy implements IStrategy {
         this
       );
 
-      if (!syncCloseAllowed) {
+      const closeVerdict = RESOLVE_CLOSE_GATE_FN(this, syncCloseAllowed, closedSignal, "closed");
+      if (closeVerdict === "retry") {
         this.params.logger.info("ClientStrategy backtest: user-closed signal rejected by sync, will retry in candle loop", {
           symbol: this.params.execution.context.symbol,
           signalId: closedSignal.id,
+          attempt: this._closeAttempt,
         });
         // Restore _pendingSignal so the candle loop processes the position normally;
-        // _closedSignal is kept so the loop re-attempts the close on each candle.
+        // _closedSignal is kept so the loop re-attempts the close on each candle
+        // (bounded by CC_ORDER_CLOSE_RETRY_ATTEMPTS; exhaustion force-closes there).
         this._pendingSignal = closedSignal;
         return await PROCESS_PENDING_SIGNAL_CANDLES_FN(
           this,
@@ -7703,6 +8211,7 @@ export class ClientStrategy implements IStrategy {
           frameEndTime
         );
       }
+      // "allow" | "force" — proceed with the drain teardown (see RESOLVE_CLOSE_GATE_FN)
 
       this._closedSignal = null; // Clear only after sync confirmed
 
@@ -8034,6 +8543,12 @@ export class ClientStrategy implements IStrategy {
     // - _activatedSignal is converted into a cancellation below — activation is
     //   blocked while stopped, and the resting order behind it must be
     //   cancelled on the exchange rather than silently dropped.
+    // - _retryOpenSignal is KEPT — unlike the queued createSignal DTO, a
+    //   gate-rejected open may have a REAL order on the exchange (the rejection
+    //   could be a lost response to a filled order); dropping it here would
+    //   recreate the orphan-position risk the retry exists to prevent. While
+    //   stopped GET_SIGNAL_FN never drains it, so it stays frozen on disk and
+    //   resumes (idempotently, same signalId) after a restart.
 
     // Route the scheduled signal (or a deferred activation of it) through the
     // deferred-cancel pipeline instead of dropping it silently. The next tick's
@@ -8352,6 +8867,9 @@ export class ClientStrategy implements IStrategy {
     if (this._stopLossSignal) {
       throw new Error(`ClientStrategy createSignal: a stop-loss fill is awaiting for symbol=${symbol}`);
     }
+    if (this._retryOpenSignal) {
+      throw new Error(`ClientStrategy createSignal: a rejected open is awaiting retry for symbol=${symbol}`);
+    }
 
     this._userSignal = dto;
 
@@ -8485,6 +9003,8 @@ export class ClientStrategy implements IStrategy {
       activatedSignal: this._activatedSignal,
       takeProfitSignal: this._takeProfitSignal,
       stopLossSignal: this._stopLossSignal,
+      retryOpenSignal: this._retryOpenSignal,
+      retryOpenCount: this._retryOpenCount,
     };
   }
 

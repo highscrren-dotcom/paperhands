@@ -661,6 +661,11 @@ export {
   BrokerPendingClosePayload,
 } from "./classes/Broker";
 
+export {
+  BROKER_ORDER_VERDICT,
+  IBrokerOrderVerdict,
+} from "./interfaces/Broker.interface";
+
 export { type TickEvent } from "./model/LiveStatistics.model";
 export { type PartialEvent } from "./model/PartialStatistics.model";
 export { type HighestProfitEvent } from "./model/HighestProfitStatistics.model";
@@ -710,3 +715,7 @@ export { toPlainString } from "./helpers/toPlainString";
 export { getEffectivePriceOpen } from "./helpers/getEffectivePriceOpen";
 export { getTotalClosed } from "./helpers/getTotalClosed";
 export { getPriceScale } from "./helpers/getPriceScale";
+
+export { OrderDeletedError } from "./error/OrderDeletedError";
+export { OrderRejectedError } from "./error/OrderRejectedError";
+export { OrderTransientError } from "./error/OrderTransientError";
