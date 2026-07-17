@@ -1,2 +1,4 @@
 {"id":"6a4d4360ca789928f626b1ae","evaluatedAt":"2026-07-07T19:36:57.709Z","symbol":"PENGUUSDT","direction":"short","action":"enter","ts":1783423798000,"result":null}
 {"id":"6a53dd2f78b7b00f68c0f674","evaluatedAt":"2026-07-13T13:58:16.299Z","symbol":"WLDUSDT","direction":"short","action":"invert","ts":1783880298000,"result":null}
+{"id":"6a58e76c32fe9f4590769053","evaluatedAt":"2026-07-16T22:25:05.534Z","symbol":"BTCUSDT","direction":"long","action":"invert","ts":1784210717000,"result":null}
+{"id":"6a591faa32fe9f459076a11c","evaluatedAt":"2026-07-17T02:25:06.160Z","symbol":"PENGUUSDT","direction":"short","action":"invert","ts":1784224934000,"result":null}
