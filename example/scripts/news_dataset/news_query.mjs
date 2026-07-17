@@ -73,6 +73,7 @@ export async function itemsFor({
     id: d.url,
     confidence: d.confidence,
     class: d.class,
+    eventType: d.eventType ?? null, // v2.1; у v1-записей null
   }));
 }
 
