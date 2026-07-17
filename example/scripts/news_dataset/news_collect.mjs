@@ -15,7 +15,15 @@ for (const line of envRaw.split("\n")) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
 }
-if (!process.env.TAVILY_TOKEN) { console.error("TAVILY_TOKEN not found in example/.env"); process.exit(1); }
+// --from-service <url>: забор через news-service (Tavily, лимитер и журнал внутри
+// сервиса, /dev/quant/news-service). Дефолт — прямой Tavily: боевой крон 09:40 не меняется.
+const argv = process.argv.slice(2);
+const svcIdx = argv.indexOf("--from-service");
+const SERVICE = svcIdx >= 0
+  ? (argv[svcIdx + 1]?.startsWith("http") ? argv[svcIdx + 1] : "http://localhost:8080")
+  : null;
+const positional = argv.filter((a, i) => i !== svcIdx && !(svcIdx >= 0 && i === svcIdx + 1 && a.startsWith("http")));
+if (!SERVICE && !process.env.TAVILY_TOKEN) { console.error("TAVILY_TOKEN not found in example/.env"); process.exit(1); }
 
 const DATA_DIR = new URL("../../../agent/notes/news-dataset/", import.meta.url);
 const RAW_PATH = new URL("news-raw.jsonl", DATA_DIR);
@@ -39,8 +47,8 @@ const QUERIES = [
   { cls: "regulation",  query: "Bitcoin SEC CFTC crypto regulation CLARITY Act MiCA ruling" },
 ];
 
-const WINDOW = process.argv[2] === "week" ? "week" : "day";
-const client = tavily({ apiKey: process.env.TAVILY_TOKEN });
+const WINDOW = positional[0] === "week" ? "week" : "day";
+const client = SERVICE ? null : tavily({ apiKey: process.env.TAVILY_TOKEN });
 const domainOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "?"; } };
 // Валидная дата = не полуночная 00:00 UTC (полуночные — артефакт индекса, см. монитор №66).
 const hasValidDate = (r) => {
@@ -60,6 +68,28 @@ if (existsSync(RAW_PATH)) {
 const startedAt = new Date().toISOString();
 let totalCredits = 0, totalNew = 0;
 console.log(`[collect] ${startedAt} window=${WINDOW} pool=${POOL13.length} known_urls=${seen.size}`);
+
+if (SERVICE) {
+  // Сервис сам ходит в Tavily (или отдаёт журнал при NEWS_SERVICE_DRY=1);
+  // здесь только дедуп против jsonl и запись в прежнем формате.
+  const since = new Date(Date.now() - (WINDOW === "week" ? 7 : 1) * 864e5).toISOString();
+  const resp = await fetch(`${SERVICE}/api/v1/news?vendor=tavily&since=${encodeURIComponent(since)}`);
+  if (!resp.ok) { console.error(`[collect] service ${resp.status}: ${(await resp.text()).slice(0, 200)}`); process.exit(1); }
+  let added = 0;
+  for (const r of await resp.json()) {
+    if (!hasValidDate(r) || seen.has(r.url)) continue;
+    seen.add(r.url);
+    added++;
+    appendFileSync(RAW_PATH, JSON.stringify({
+      url: r.url, domain: r.domain, title: r.title || "", content: r.content || "",
+      publishedDate: r.publishedDate, class: r.cls, score: r.score == null ? null : +(+r.score).toFixed(3),
+      collectedAt: startedAt, window: WINDOW, source: "service",
+    }) + "\n");
+  }
+  console.log(`[collect] done (service ${SERVICE}): new=${added} total_dataset=${seen.size}`);
+  process.exit(0);
+}
+
 console.log("cls\tn\tvalid\tnew\tcredits");
 
 for (const q of QUERIES) {
