@@ -6,3 +6,5 @@
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"long","ts":1783698476000,"id":"https://www.kitco.com/opinion/2026-07-10/bitcoin-reclaims-cloud-ethereum-and-altcoin-rotation-strengthen","confidence":0.75,"class":"etf"}
 {"channel":"finance.yahoo.com","symbol":"BTCUSDT","direction":"long","ts":1783944075000,"id":"https://finance.yahoo.com/markets/crypto/articles/trump-invested-crypto-gains-stocks-111144069.html","confidence":0.45,"class":"crash-rally"}
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1783978298000,"id":"https://www.kitco.com/opinion/2026-07-13/crypto-swot-kraken-pursuing-full-european-banking-license","confidence":0.72,"class":"etf"}
+{"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1784210076000,"id":"https://www.kitco.com/opinion/2026-07-16/ethereum-leads-bitcoin-nears-key-pivot-and-exit-signals-build","confidence":0.3,"class":"etf"}
+{"channel":"kitco.com","symbol":"BTCUSDT","direction":"long","ts":1784213701000,"id":"https://www.kitco.com/opinion/2026-07-16/bitcoin-pumps-4-ethereum-dominance-flashes-rotation-warning","confidence":0.6,"class":"etf"}
