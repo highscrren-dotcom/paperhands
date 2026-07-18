@@ -8,3 +8,5 @@
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1783978298000,"id":"https://www.kitco.com/opinion/2026-07-13/crypto-swot-kraken-pursuing-full-european-banking-license","confidence":0.72,"class":"etf"}
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"short","ts":1784210076000,"id":"https://www.kitco.com/opinion/2026-07-16/ethereum-leads-bitcoin-nears-key-pivot-and-exit-signals-build","confidence":0.3,"class":"etf"}
 {"channel":"kitco.com","symbol":"BTCUSDT","direction":"long","ts":1784213701000,"id":"https://www.kitco.com/opinion/2026-07-16/bitcoin-pumps-4-ethereum-dominance-flashes-rotation-warning","confidence":0.6,"class":"etf"}
+{"channel":"coingape.com","symbol":"XRPUSDT","direction":"long","ts":1784291304000,"id":"https://coingape.com/ripple-payments-among-14-new-crypto-firms-added-to-mica-register-by-esma","confidence":0.6,"class":"regulation"}
+{"channel":"kitco.com","symbol":"BTCUSDT","direction":"long","ts":1784296159000,"id":"https://www.kitco.com/opinion/2026-07-17/bitcoin-tests-its-fast-line-global-risk-signals-weaken","confidence":0.3,"class":"etf"}
