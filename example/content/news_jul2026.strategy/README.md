@@ -6,9 +6,13 @@
 (канон автора №76 — look-ahead невозможен по построению), запрос — дословная
 копия `scripts/news_dataset/news_query.itemsFor()`.
 
-**Правило стенда.** Последний непотреблённый ok-item в окне 24ч до `when` →
-сигнал `{position: direction, TP +1.5%, SL −1%, timeout 24ч}`. Один item =
-один сигнал (дедуп по id/url в памяти прогона).
+**Правило стенда (вариант B, с 18.07 — совет автора «никогда не ставь TP/SL
+фиксированным окном»).** Последний непотреблённый ok-item в окне 24ч до `when` →
+сигнал `{position: direction, moonbag(TP +50% символич., жёсткий SL −1%),
+timeout 24ч}`; выходы — trailing take (в профите отдали ≥1 п.п. от пика) и
+peak staleness (пик ≥1% старше 240 мин), константы автора as-is. Один item =
+один сигнал (дедуп по id/url в памяти прогона). Вариант A (фикс TP +1.5% /
+SL −1%) — метрики в notes, сравнение там же.
 
 ## ОГОВОРКИ (читать до цифр)
 
@@ -28,10 +32,16 @@
 
 ```bash
 cd example
-CC_WWWROOT_PORT=60054 npm start -- --backtest --symbol BTCUSDT --ui \
+CC_WWWROOT_PORT=60056 npm start -- --backtest --symbol BTCUSDT --ui \
   ./content/news_jul2026.strategy/news_jul2026.strategy.ts
-# дашборд: http://localhost:60054
+# дашборд: http://localhost:60056 (60054 — живой UI варианта A, 60050/60052 боевые)
 ```
+
+⚠️ Квирк статистики (оба прогона): `portfolioTotalTrades`/`totalPnl` в
+status_info содержат фантомный дубль одного short-SL закрытия (−1.4034…) —
+честные цифры считать по 8 закрытым из `dump/report/backtest.jsonl`;
+подробно — notes/news-backtest-stand.md, квирк №1. Вопрос автору подготовлен
+(отправка — владельцем).
 
 Требуется: локальный mongod с базой `news-audit` (зеркало №85, только чтение);
 mongoose берётся из `../backtest-ollama-crontab` (прецедент news_query.mjs).
