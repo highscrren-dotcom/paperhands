@@ -8,9 +8,17 @@
  * запрос. Прямой импорт news_query.mjs невозможен: его CLI-блок с import.meta
  * не переваривается babel-транспайлом @backtest-kit/cli — фильтр скопирован.
  *
+ * ВЫХОДЫ — ПО СОВЕТУ АВТОРА (телега 17.07 19:44-46, «НИКОГДА НЕ СТАВЬ TP/SL
+ * ФИКСИРОВАННЫМ ОКНОМ»): вместо фикс-окна TP +1.5%/SL −1% (вариант A стенда,
+ * метрики в notes/news-backtest-stand.md) — его moonbag + trailing take по PnL:
+ * - Position.moonbag: TP символический (+50%, «до луны»), жёсткий SL −1%;
+ * - trailing take: в профите отдали ≥1 п.п. от пика → закрыть (listenActivePing);
+ * - peak staleness: пик ≥1% был ≥240 мин назад → закрыть (protracted fade);
+ * - таймаут 24ч остаётся страховкой снизу.
+ * Константы — дословно из сниппета автора (jan_2026 его версии).
+ *
  * ОГОВОРКИ СТЕНДА (сознательные упрощения, помечены по доктрине):
- * - Фикс-параметры сигнала: TP +1.5%, SL −1%, timeout 24ч — честная заглушка.
- *   R/R = 1.5 < 2 из доктрины; min TP 1% соблюдён (1.5%), но подбор не делался.
+ * - Подбор параметров выходов не делался — константы авторские as-is.
  * - «≥1 сигнал/день» доктрины не выполняется: n=9 items за 11.5 дней.
  * - ДВЕ запиненных promptVersion (v1 покрывает 06–13.07, v2.1 — 16.07+);
  *   внутри одного запроса версии НЕ смешиваются (дрейф-урок Vibe), объединение
@@ -21,13 +29,21 @@
  *   считается потреблённым в момент выдачи сигнала (даже если риск-слой отклонит).
  *
  * Правило стенда: последний (самый свежий) непотреблённый ok-item в окне 24ч
- * до when → сигнал {position: direction, TP +1.5%, SL −1%, timeout 24ч}.
+ * до when → сигнал {position: direction, moonbag(SL −1%), timeout 24ч};
+ * выходы — trailing take / peak staleness (см. выше).
  */
 import {
   addStrategySchema,
+  commitClosePending,
+  getPositionHighestPnlPercentage,
+  getPositionHighestProfitDistancePnlPercentage,
+  getPositionHighestProfitMinutes,
+  getPositionPnlPercent,
+  listenActivePing,
   listenDoneBacktest,
   listenError,
   Log,
+  Position,
 } from "backtest-kit";
 import { errorData, getErrorMessage } from "functools-kit";
 import { createRequire } from "module";
@@ -44,9 +60,13 @@ const MONGO = "mongodb://localhost:27017/news-audit"; // НЕ backtest-pro! То
 const PROMPT_VERSIONS = ["v1", "v2.1-vibe-2026-07-15"];
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // окно свежести item'а
-const TP_PERCENT = 1.5; // фикс-заглушка (см. шапку)
-const SL_PERCENT = 1.0;
 const TIMEOUT_MINUTES = 24 * 60;
+
+// Константы автора (телега 17.07 19:45, дословно из его jan_2026-сниппета)
+const PEAK_STALENESS_SINCE_PROFIT = 1.0; // пик ≥1% ...
+const PEAK_STALENESS_SINCE_MINUTES = 240; // ...был ≥240 мин назад → закрыть
+const TRAILING_TAKE = 1.0; // отдали ≥1 п.п. от пика при профите → закрыть
+const HARD_STOP = 1.0; // жёсткий SL moonbag, −1%
 
 let connected = false;
 async function verdicts() {
@@ -108,14 +128,6 @@ addStrategySchema({
     consumed.add(item.id);
 
     const position = item.direction as "long" | "short";
-    const tp =
-      position === "long"
-        ? currentPrice * (1 + TP_PERCENT / 100)
-        : currentPrice * (1 - TP_PERCENT / 100);
-    const sl =
-      position === "long"
-        ? currentPrice * (1 - SL_PERCENT / 100)
-        : currentPrice * (1 + SL_PERCENT / 100);
 
     Log.info("news stand signal", {
       symbol,
@@ -125,13 +137,50 @@ addStrategySchema({
     });
 
     return {
-      position,
-      priceTakeProfit: tp,
-      priceStopLoss: sl,
+      ...Position.moonbag({
+        position,
+        currentPrice,
+        percentStopLoss: HARD_STOP,
+      }),
       minuteEstimatedTime: TIMEOUT_MINUTES,
       note: `news-stand ${item.channel} ${new Date(item.ts).toISOString()} ${item.id}`,
     };
   },
+});
+
+// Выходы по совету автора (17.07): trailing take — в профите отдали ≥1 п.п. от пика.
+listenActivePing(async ({ symbol, data }) => {
+  const peakProfitDistance =
+    await getPositionHighestProfitDistancePnlPercentage(symbol);
+  const currentProfit = await getPositionPnlPercent(symbol);
+  if (currentProfit < 0) {
+    return;
+  }
+  if (peakProfitDistance < TRAILING_TAKE) {
+    return;
+  }
+  Log.info("position closed due to the trailing take", { symbol, data });
+  await commitClosePending(symbol, {
+    id: "unknown",
+    note: "# Позиция закрыта по trailing take",
+  });
+});
+
+// Peak staleness: пик ≥1% случился ≥240 мин назад — движение выдохлось, закрыть.
+listenActivePing(async ({ symbol, data }) => {
+  const peakProfitCost = await getPositionHighestPnlPercentage(symbol);
+  const peakProfitMinutes = await getPositionHighestProfitMinutes(symbol);
+  if (peakProfitCost < PEAK_STALENESS_SINCE_PROFIT) {
+    return;
+  }
+  if (peakProfitMinutes < PEAK_STALENESS_SINCE_MINUTES) {
+    return;
+  }
+  Log.info("position closed due to the peak staleness", { symbol, data });
+  await commitClosePending(symbol, {
+    id: "unknown",
+    note: "# Позиция закрыта по peak staleness",
+  });
 });
 
 listenDoneBacktest(async () => {
