@@ -1,0 +1,76 @@
+# Coolify-ресурс «deps»: mongo + redis + pgcluster + quickchart для quant-стека.
+# Всё только во внутренней docker-сети; наружу порты НЕ публикуются.
+# Другие аппы ходят по именам контейнеров: quant-mongo:27017, quant-redis:6379,
+# quant-pg:5432, quant-quickchart:3400.
+services:
+  mongo:
+    image: mongodb/mongodb-community-server:8.0.4-ubi8
+    container_name: quant-mongo
+    restart: unless-stopped
+    # Ядро 7.x (в т.ч. 7.0.14-5-pve на CT102) + mongod 8.x: tcmalloc-google
+    # сегфолтится о rseq (~30с после старта, выглядит как «чистые» рестарты).
+    # Профиль = дефолт Docker с единственной правкой rseq -> ENOSYS.
+    security_opt:
+      - seccomp:./deploy/seccomp-mongo-norseq.json
+    volumes:
+      - quant_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ping:1}).ok' | grep -q 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    networks: [coolify]
+
+  redis:
+    image: redis:7.4.1
+    container_name: quant-redis
+    restart: unless-stopped
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - quant_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [coolify]
+
+  pgcluster:
+    image: tripolskypetr/pgpool:latest
+    container_name: quant-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-backtest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-backtest-pro}
+      REPL_USER: ${REPL_USER:-replicator}
+      REPL_PASSWORD: ${REPL_PASSWORD}
+      PGCLUSTER_ROOT: /var/lib/pgcluster
+      PGBIN: /usr/local/bin
+    volumes:
+      - quant_pg_data:/var/lib/pgcluster
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=$$POSTGRES_PASSWORD psql -h 127.0.0.1 -p 5432 -U $$POSTGRES_USER -d $$POSTGRES_DB -tAc 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 120s
+    networks: [coolify]
+
+  quickchart:
+    image: ianw/quickchart
+    container_name: quant-quickchart
+    restart: unless-stopped
+    networks: [coolify]
+
+networks:
+  coolify:
+    external: true
+
+volumes:
+  quant_mongo_data: {}
+  quant_redis_data: {}
+  quant_pg_data: {}

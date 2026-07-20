@@ -36,9 +36,9 @@ const OUT = join(HERE, "out");
 const LEDGER = join(OUT, "forward-ledger.jsonl");
 const RESULTS = join(OUT, "forward-results.jsonl");
 const MODEL_FILE = join(HERE, "assets/forward-model-v1.json");
-const MONGO = "mongodb://localhost:27017/backtest-pro";
+const MONGO = process.env.MONGO_URL || "mongodb://localhost:27017/backtest-pro";
 // mongoose берём из живого ingest-форка (у example его нет в deps — не тащим дубль)
-const ingestRequire = createRequire("/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
+const ingestRequire = createRequire(process.env.INGEST_PKG || "/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
 
 const readJsonl = (f) =>
   existsSync(f) ? readFileSync(f, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse) : [];
