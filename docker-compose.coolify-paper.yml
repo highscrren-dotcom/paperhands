@@ -49,10 +49,23 @@ networks:
   coolify:
     external: true
 
+# external + фикс-имена: данные переживают смену compose-project (ручной ↔ Coolify)
 volumes:
-  paper_feb_dump: {}
-  paper_dump: {}
-  paper_out: {}
-  paper_logs: {}
-  pump_out: {}
-  agent_notes: {}
+  paper_feb_dump:
+    external: true
+    name: quant_paper_feb_dump
+  paper_dump:
+    external: true
+    name: quant_paper_dump
+  paper_out:
+    external: true
+    name: quant_paper_out
+  paper_logs:
+    external: true
+    name: quant_paper_logs
+  pump_out:
+    external: true
+    name: quant_pump_out
+  agent_notes:
+    external: true
+    name: quant_agent_notes
