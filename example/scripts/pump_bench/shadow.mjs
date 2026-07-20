@@ -42,9 +42,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, "out");
 const LEDGER = join(OUT, "shadow-ledger.jsonl");
 const MODEL_FILE = join(HERE, "assets/forward-model-v1.json");
-const MONGO = "mongodb://localhost:27017/backtest-pro";
+const MONGO = process.env.MONGO_URL || "mongodb://localhost:27017/backtest-pro";
 const FORWARD_START = Date.parse("2026-07-07T00:00:00Z"); // заморозка forward-model-v1
-const ingestRequire = createRequire("/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
+const ingestRequire = createRequire(process.env.INGEST_PKG || "/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
 
 const readJsonl = (f) =>
   existsSync(f) ? readFileSync(f, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse) : [];
