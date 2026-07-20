@@ -70,7 +70,15 @@ networks:
   coolify:
     external: true
 
+# external + фикс-имена: данные переживают смену compose-project (ручной запуск ↔
+# Coolify-апп). Однократно: docker volume create quant_{mongo,redis,pg}_data
 volumes:
-  quant_mongo_data: {}
-  quant_redis_data: {}
-  quant_pg_data: {}
+  quant_mongo_data:
+    external: true
+    name: quant_mongo_data
+  quant_redis_data:
+    external: true
+    name: quant_redis_data
+  quant_pg_data:
+    external: true
+    name: quant_pg_data
