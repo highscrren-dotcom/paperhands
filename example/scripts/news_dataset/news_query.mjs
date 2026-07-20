@@ -23,10 +23,10 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
 // mongoose из живого ingest-форка (прецедент pump_bench/forward.mjs:41 — дублей в deps не тащим)
-const ingestRequire = createRequire("/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
+const ingestRequire = createRequire(process.env.INGEST_PKG || "/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json");
 const mongoose = ingestRequire("mongoose");
 
-const MONGO = "mongodb://localhost:27017/news-audit"; // НЕ backtest-pro!
+const MONGO = process.env.NEWS_MONGO_URL || "mongodb://localhost:27017/news-audit"; // НЕ backtest-pro!
 
 let connected = false;
 async function verdicts() {

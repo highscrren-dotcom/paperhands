@@ -1,0 +1,17 @@
+.git
+**/node_modules
+# рантайм-данные — живут в volumes, в образ не тянем
+example/dump
+example/out
+example/logs
+example/content/*/dump
+example/scripts/pump_bench/out
+agent
+# тяжёлое и ненужное в рантайме
+docs
+assets
+test
+docker
+**/*.log
+.env
+**/.env
