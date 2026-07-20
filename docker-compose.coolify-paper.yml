@@ -1,0 +1,58 @@
+# Coolify-ресурс «paper»: paper-движок feb_2026 (BTCUSDT) + его кроны.
+# Порт 60052 (веб-UI движка) — только внутренняя сеть, наружу не публикуем.
+x-paper-env: &paper-env
+  TZ: Asia/Yekaterinburg
+  OLLAMA_TOKEN: ${OLLAMA_TOKEN}
+  TAVILY_TOKEN: ${TAVILY_TOKEN}
+  MONGO_URL: ${MONGO_URL:-mongodb://quant-mongo:27017/backtest-pro}
+  NEWS_MONGO_URL: ${NEWS_MONGO_URL:-mongodb://quant-mongo:27017/news-audit}
+  # mongoose для скриптов лежит в example/node_modules (см. Dockerfile)
+  INGEST_PKG: /app/example/package.json
+
+x-paper-volumes: &paper-volumes
+  - paper_feb_dump:/app/example/content/feb_2026.strategy/dump
+  - paper_dump:/app/example/dump
+  - paper_out:/app/example/out
+  - paper_logs:/app/example/logs
+  - pump_out:/app/example/scripts/pump_bench/out
+  - agent_notes:/app/agent/notes
+
+services:
+  paper:
+    build: .
+    container_name: quant-paper
+    restart: unless-stopped
+    init: true
+    tty: true
+    environment: *paper-env
+    volumes: *paper-volumes
+    healthcheck:
+      # живость = слушается порт UI (только UI держит процесс — квирк движка)
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/60052' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    networks: [coolify]
+
+  paper-cron:
+    build: .
+    container_name: quant-paper-cron
+    restart: unless-stopped
+    init: true
+    command: ["supercronic", "-passthrough-logs", "/app/deploy/crontab-paper"]
+    environment: *paper-env
+    volumes: *paper-volumes
+    networks: [coolify]
+
+networks:
+  coolify:
+    external: true
+
+volumes:
+  paper_feb_dump: {}
+  paper_dump: {}
+  paper_out: {}
+  paper_logs: {}
+  pump_out: {}
+  agent_notes: {}
