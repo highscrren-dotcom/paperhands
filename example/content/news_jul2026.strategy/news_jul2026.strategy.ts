@@ -31,6 +31,18 @@
  * Правило стенда: последний (самый свежий) непотреблённый ok-item в окне 24ч
  * до when → сигнал {position: direction, moonbag(SL −1%), timeout 24ч};
  * выходы — trailing take / peak staleness (см. выше).
+ *
+ * РЕЖИМЫ КОНТРОЛЬНЫХ ПРОГОНОВ (env NEWS_STAND_MODE, урок TV-датасета №101 —
+ * без placebo-baseline «эджу» верить нельзя):
+ * - real (дефолт) — направление классификатора as-is;
+ * - placebo   — направление = детерминированный псевдослучайный бит от
+ *               url+NEWS_STAND_SEED (FNV-1a; Math.random запрещён — прогон
+ *               должен воспроизводиться бит-в-бит). Item'ы и даты ТЕ ЖЕ;
+ * - long-only — торгуются только long-вердикты (спот умеет только их);
+ * - invert    — направления перевёрнуты (тест «шорты = анти-сигнал»).
+ * Оговорка: слот позиции один — другой набор направлений меняет длительность
+ * сделок, из-за чего расписание последующих входов может слегка разойтись с
+ * real; это свойство честного движкового placebo, не баг.
  */
 import {
   addStrategySchema,
@@ -63,6 +75,25 @@ const PROMPT_VERSIONS = ["v1", "v2.1-vibe-2026-07-15"];
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // окно свежести item'а
 const TIMEOUT_MINUTES = 24 * 60;
+
+// Режим контрольного прогона (см. шапку). Опечатка = стоп, а не тихий real.
+const STAND_MODES = ["real", "placebo", "long-only", "invert"] as const;
+const MODE = (process.env.NEWS_STAND_MODE ?? "real") as (typeof STAND_MODES)[number];
+if (!STAND_MODES.includes(MODE)) {
+  throw new Error(`NEWS_STAND_MODE=${process.env.NEWS_STAND_MODE} — ожидается ${STAND_MODES.join("|")}`);
+}
+const SEED = process.env.NEWS_STAND_SEED ?? "1";
+
+// FNV-1a 32-bit → бит чётности: детерминированный «случайный» знак для placebo.
+function placeboDirection(id: string): "long" | "short" {
+  let h = 0x811c9dc5;
+  const s = `${id}#${SEED}`;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return ((h >>> 0) & 1) === 0 ? "long" : "short";
+}
 
 // Константы автора (телега 17.07 19:45, дословно из его jan_2026-сниппета)
 const PEAK_STALENESS_SINCE_PROFIT = 1.0; // пик ≥1% ...
@@ -120,7 +151,9 @@ addStrategySchema({
       (i) =>
         i.ts >= windowStart &&
         !consumed.has(i.id) &&
-        (i.direction === "long" || i.direction === "short"),
+        (MODE === "long-only"
+          ? i.direction === "long"
+          : i.direction === "long" || i.direction === "short"),
     );
     if (fresh.length === 0) {
       return null;
@@ -129,15 +162,25 @@ addStrategySchema({
     const item = fresh[fresh.length - 1]; // последний = самый свежий
     consumed.add(item.id);
 
-    const position = item.direction as "long" | "short";
+    const verdictDirection = item.direction as "long" | "short";
+    const position: "long" | "short" =
+      MODE === "placebo"
+        ? placeboDirection(item.id)
+        : MODE === "invert"
+          ? verdictDirection === "long" ? "short" : "long"
+          : verdictDirection;
 
     Log.info("news stand signal", {
       symbol,
       when: when.toISOString(),
+      mode: MODE,
+      ...(MODE === "placebo" ? { seed: SEED } : {}),
       item: { id: item.id, ts: new Date(item.ts).toISOString(), direction: item.direction, confidence: item.confidence },
+      position,
       currentPrice,
     });
 
+    const modeTag = MODE === "real" ? "" : ` [${MODE}${MODE === "placebo" ? `:seed=${SEED}` : ""}]`;
     return {
       ...Position.moonbag({
         position,
@@ -145,7 +188,7 @@ addStrategySchema({
         percentStopLoss: HARD_STOP,
       }),
       minuteEstimatedTime: TIMEOUT_MINUTES,
-      note: `news-stand ${item.channel} ${new Date(item.ts).toISOString()} ${item.id}`,
+      note: `news-stand${modeTag} ${item.channel} ${new Date(item.ts).toISOString()} ${item.id}`,
     };
   },
 });
