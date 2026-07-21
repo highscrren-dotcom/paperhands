@@ -65,6 +65,9 @@ for (const c of cls) {
           domain: c.domain,
           title: c.title,
           class: c.class,
+          // rss → pubDate издания (честная дата); tavily → дата = момент их краула
+          // (лаг ~2ч от публикации, 00:00Z = бэкфил задним числом — ответ Петра 21.07).
+          source: raw?.source ?? (raw ? "tavily" : null),
           tavilyScore: raw?.score ?? null,
           publishedAt,
           fetchedAt,
