@@ -9,13 +9,16 @@ x-paper-env: &paper-env
   # mongoose для скриптов лежит в example/node_modules (см. Dockerfile)
   INGEST_PKG: /app/example/package.json
 
+# host-bind вместо named volumes: Coolify префиксует именованные тома uuid'ом
+# ДАЖЕ при external:true (инцидент 21.07 — аппы уехали на пустые тома),
+# а bind-пути не трогает. Данные: /opt/quant/data/* на cfy.
 x-paper-volumes: &paper-volumes
-  - paper_feb_dump:/app/example/content/feb_2026.strategy/dump
-  - paper_dump:/app/example/dump
-  - paper_out:/app/example/out
-  - paper_logs:/app/example/logs
-  - pump_out:/app/example/scripts/pump_bench/out
-  - agent_notes:/app/agent/notes
+  - /opt/quant/data/paper_feb_dump:/app/example/content/feb_2026.strategy/dump
+  - /opt/quant/data/paper_dump:/app/example/dump
+  - /opt/quant/data/paper_out:/app/example/out
+  - /opt/quant/data/paper_logs:/app/example/logs
+  - /opt/quant/data/pump_out:/app/example/scripts/pump_bench/out
+  - /opt/quant/data/agent_notes:/app/agent/notes
 
 services:
   paper:
@@ -52,23 +55,3 @@ networks:
   coolify:
     external: true
 
-# external + фикс-имена: данные переживают смену compose-project (ручной ↔ Coolify)
-volumes:
-  paper_feb_dump:
-    external: true
-    name: quant_paper_feb_dump
-  paper_dump:
-    external: true
-    name: quant_paper_dump
-  paper_out:
-    external: true
-    name: quant_paper_out
-  paper_logs:
-    external: true
-    name: quant_paper_logs
-  pump_out:
-    external: true
-    name: quant_pump_out
-  agent_notes:
-    external: true
-    name: quant_agent_notes
