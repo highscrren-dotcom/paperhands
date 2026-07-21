@@ -33,7 +33,10 @@ services:
       timeout: 5s
       start_period: 120s
       retries: 3
-    networks: [coolify]
+    networks:
+      coolify:
+        # фикс-имя в сети (Coolify игнорирует container_name; по quant-paper ходит вахта)
+        aliases: [quant-paper]
 
   paper-cron:
     build: .
