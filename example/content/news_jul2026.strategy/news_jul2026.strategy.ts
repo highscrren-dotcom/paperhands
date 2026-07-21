@@ -84,7 +84,11 @@ if (!STAND_MODES.includes(MODE)) {
 }
 const SEED = process.env.NEWS_STAND_SEED ?? "1";
 
-// FNV-1a 32-bit → бит чётности: детерминированный «случайный» знак для placebo.
+// FNV-1a 32-bit + avalanche-финализатор murmur3 (fmix32) → знак для placebo.
+// БЕЗ финализатора нельзя: младший бит FNV = XOR чётностей символов (прайм
+// нечётный, умножение младший бит не перемешивает) — все нечётные сиды давали
+// бы ИДЕНТИЧНЫЙ placebo (проверено на реальных url: 13/15 ↔ 15/13 строго по
+// чётности сида). fmix32 разносит сиды по-настоящему.
 function placeboDirection(id: string): "long" | "short" {
   let h = 0x811c9dc5;
   const s = `${id}#${SEED}`;
@@ -92,7 +96,12 @@ function placeboDirection(id: string): "long" | "short" {
     h ^= s.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  return ((h >>> 0) & 1) === 0 ? "long" : "short";
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return ((h >>> 31) & 1) === 0 ? "long" : "short";
 }
 
 // Константы автора (телега 17.07 19:45, дословно из его jan_2026-сниппета)
