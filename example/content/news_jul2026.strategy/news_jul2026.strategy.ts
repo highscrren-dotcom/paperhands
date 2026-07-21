@@ -48,9 +48,10 @@ import {
 import { errorData, getErrorMessage } from "functools-kit";
 import { createRequire } from "module";
 
-// mongoose из живого ingest-форка (прецедент news_query.mjs:26 — дублей в deps не тащим)
+// mongoose из живого ingest-форка (прецедент news_query.mjs:26 — дублей в deps не тащим).
+// В контейнере форка нет — INGEST_PKG указывает на example (mongoose кладёт Dockerfile).
 const ingestRequire = createRequire(
-  "/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json",
+  process.env.INGEST_PKG || "/home/s1dd1/dev/quant/backtest-ollama-crontab/package.json",
 );
 const mongoose = ingestRequire("mongoose");
 
