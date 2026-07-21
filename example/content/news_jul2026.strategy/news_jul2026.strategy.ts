@@ -54,7 +54,8 @@ const ingestRequire = createRequire(
 );
 const mongoose = ingestRequire("mongoose");
 
-const MONGO = "mongodb://localhost:27017/news-audit"; // НЕ backtest-pro! Только чтение.
+// НЕ backtest-pro! Только чтение. На сервере хост задаётся NEWS_MONGO_URL (quant-mongo).
+const MONGO = process.env.NEWS_MONGO_URL || "mongodb://localhost:27017/news-audit";
 
 // Две запиненных версии: v1 = синк истории (№85), v2.1 = боевой классификатор с 16.07 (№84).
 const PROMPT_VERSIONS = ["v1", "v2.1-vibe-2026-07-15"];
