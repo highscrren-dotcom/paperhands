@@ -10,10 +10,13 @@
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from "node:fs";
 import { tavily } from "@tavily/core";
 
-const envRaw = readFileSync(new URL("../../.env", import.meta.url), "utf8");
-for (const line of envRaw.split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+// В контейнере .env-файла нет (env приходят переменными окружения) — файл опционален.
+const envUrl = new URL("../../.env", import.meta.url);
+if (existsSync(envUrl)) {
+  for (const line of readFileSync(envUrl, "utf8").split("\n")) {
+    const m = line.match(/^([A-Z_]+)=(.*)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  }
 }
 // --from-service <url>: забор через news-service (Tavily, лимитер и журнал внутри
 // сервиса, /dev/quant/news-service). Дефолт — прямой Tavily: боевой крон 09:40 не меняется.
