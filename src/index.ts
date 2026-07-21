@@ -39,6 +39,8 @@ export {
   getScheduledSignal,
   getBreakeven,
   getStrategyStatus,
+  getStrategyPaused,
+  setStrategyPaused,
   getTotalPercentClosed,
   getTotalCostClosed,
   getTotalPercentHeld,
@@ -165,6 +167,8 @@ export {
   listenHighestProfitOnce,
   listenMaxDrawdown,
   listenMaxDrawdownOnce,
+  listenPause,
+  listenPauseOnce,
   listenSignalNotify,
   listenSignalNotifyOnce,
   listenBeforeStart,
@@ -354,6 +358,7 @@ export {
   OrderSyncCheckNotification,
   CancelScheduledCommitNotification,
   ClosePendingCommitNotification,
+  StrategyPauseNotification,
   SignalInfoNotification,
 } from "./model/Notification.model";
 
@@ -389,6 +394,7 @@ export { ActivePingContract } from "./contract/ActivePing.contract";
 export { IdlePingContract } from "./contract/IdlePing.contract";
 export { HighestProfitContract } from "./contract/HighestProfit.contract";
 export { MaxDrawdownContract } from "./contract/MaxDrawdown.contract";
+export { PauseContract } from "./contract/Pause.contract";
 export { SignalInfoContract } from "./contract/SignalInfo.contract";
 export { BreakevenContract } from "./contract/Breakeven.contract";
 export { BeforeStartContract } from "./contract/BeforeStart.contract";
