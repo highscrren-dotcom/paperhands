@@ -18,10 +18,13 @@ import { readFileSync, existsSync, appendFileSync, writeFileSync, statSync, mkdi
 import { Ollama } from "ollama";
 import { jsonrepair } from "jsonrepair";
 
-const envRaw = readFileSync(new URL("../../.env", import.meta.url), "utf8");
-for (const line of envRaw.split("\n")) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+// В контейнере .env-файла нет (env приходят переменными окружения) — файл опционален.
+const envUrl = new URL("../../.env", import.meta.url);
+if (existsSync(envUrl)) {
+  for (const line of readFileSync(envUrl, "utf8").split("\n")) {
+    const m = line.match(/^([A-Z_]+)=(.*)$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+  }
 }
 if (!process.env.OLLAMA_TOKEN) { console.error("OLLAMA_TOKEN not found in example/.env"); process.exit(1); }
 
