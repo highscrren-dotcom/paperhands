@@ -2,4 +2,7 @@
 # Перенос user-crontab ноутбука 1:1; news-сервис — по имени контейнера quant-news.
 25 * * * * cd /app/example && node scripts/pump_bench/forward.mjs >> scripts/pump_bench/out/forward-cron.log 2>&1
 */15 * * * * cd /app/example && node scripts/volume_monitor.mjs >> out/volume-monitor.log 2>&1
-40 9 * * * mkdir -p /app/agent/notes/news-dataset && cd /app/example && ( node scripts/news_dataset/news_collect.mjs day --from-service http://quant-news:8080 && node scripts/news_dataset/news_classify.mjs && node scripts/news_dataset/news_dataset.mjs && node scripts/news_dataset/news_mongo_sync.mjs ) >> /app/agent/notes/news-dataset/news-cron.log 2>&1
+40 9 * * * mkdir -p /app/agent/notes/news-dataset && cd /app/example && ( node scripts/news_dataset/news_collect.mjs day --from-service http://quant-news:8080 && node scripts/news_dataset/news_rss.mjs && node scripts/news_dataset/news_classify.mjs && node scripts/news_dataset/news_dataset.mjs && node scripts/news_dataset/news_mongo_sync.mjs ) >> /app/agent/notes/news-dataset/news-cron.log 2>&1
+# RSS дёшев (без кредитов): добираем raw каждые 4ч (глубина фидов ~сутки, дедуп по url);
+# классификация — раз в день общей цепочкой 09:40
+10 */4 * * * mkdir -p /app/agent/notes/news-dataset && cd /app/example && node scripts/news_dataset/news_rss.mjs >> /app/agent/notes/news-dataset/news-cron.log 2>&1
