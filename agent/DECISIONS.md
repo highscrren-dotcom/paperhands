@@ -6,6 +6,21 @@
 
 ## Session 16 (2026-07-21 ночь) — ПЕРЕЕЗД НА СЕРВЕР: весь стек на CT102, live ВКЛЮЧЁН
 
+104. **✅ COOLIFY-АДОПЦИЯ ЗАВЕРШЕНА (утро): push→авто-деплой работает.**
+     news/paper/live = аппы Coolify (проект quant), билд из ПУБЛИЧНОГО GitHub
+     (Coolify превращает «token@host» в SSH → Forgejo-токен для клона не годится,
+     зеркала остались приватными). Авто-деплой: SHA-поллер на cfy (cron */5,
+     /opt/quant/bin/autodeploy.sh) — news@master, paper@agent-night; **live@deploy-live
+     ТОЛЬКО руками**. E2E проверен маркер-коммитом (8778da→001603, деплой ушёл,
+     контейнер перекатился healthy). Квирки Coolify: игнорирует container_name →
+     network-aliases quant-{news,paper,live}; env-API без is_build_time. Forgejo-вебхуки
+     созданы (news#1, paper#2), но дефолт Forgejo запрещает вебхуки на приватные IP —
+     включение за владельцем: app.ini CT100 `[webhook] ALLOWED_HOST_LIST = private` +
+     restart forgejo (тогда поллер снять). Вахта и алиасы под Coolify проверены
+     (msg=5744, tg=ok). Live перекатился без потерь: cli 16.3.0, mongo-стейт в
+     volumes, MTProto жив. + Владелец дал локальный Ollama CT101 (qwen2.5:14b/coder)
+     для мелких задач — памятка в памяти агента (ollama-local-agent).
+
 103. **🚚 СТЕК ПЕРЕЕХАЛ С НОУТБУКА НА CT102 (Coolify-хост), LIVE ТОРГУЕТ С СЕРВЕРА.**
      Владелец: «переносим весь проект, все в live, все документируем». (а) **Что
      крутится на cfy (/opt/quant, plain compose, сеть coolify):** deps (mongo 8.0.4
