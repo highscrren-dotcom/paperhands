@@ -522,3 +522,305 @@ test("SCHED RETRY: activation after placement retries carries attempt 0 (slot cl
     unsubscribe();
   }
 });
+
+/**
+ * SCHED RETRY: потреблённый терминальным реджектом id ПЕРЕЖИВАЕТ рестарт —
+ * lastPendingId персистится в strategy-снапшоте (DROP_RETRY_OPEN_SIGNAL_FN)
+ * и восстанавливается в waitForInit ПОВЕРХ Recent-фолбэка. Без персиста каждый
+ * рестарт процесса (супервизор после exitEmitter и т.п.) выдавал бы ещё один
+ * реальный отклонённый ордер на тот же детерминированный id.
+ */
+test("SCHED RETRY: a terminally consumed deterministic id survives a crash (no extra real order per restart)", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "sched-consume-persist-strategy",
+    exchangeName: "binance-sched-consume-persist",
+    frameName: "",
+  };
+
+  PersistSignalAdapter.useJson();
+  PersistStrategyAdapter.useJson();
+  PersistScheduleAdapter.useJson();
+  PersistRecentAdapter.useJson();
+
+  try {
+    // Сброс остатков прошлых прогонов сьюта (json-файлы живут на диске)
+    await PersistSignalAdapter.writeSignalData(null, "BTCUSDT", context.strategyName, context.exchangeName);
+    await PersistScheduleAdapter.writeScheduleData(null, "BTCUSDT", context.strategyName, context.exchangeName);
+    await PersistStrategyAdapter.writeStrategyData(
+      {
+        pendingSignalId: null,
+        lastPendingId: null,
+        createdSignal: null,
+        commitQueue: [],
+        closedSignal: null,
+        cancelledSignal: null,
+        activatedSignal: null,
+        takeProfitSignal: null,
+        stopLossSignal: null,
+        retryOpenSignal: null,
+        retryOpenCount: 0,
+        retryCloseCount: 0,
+      },
+      "BTCUSDT", context.strategyName, context.exchangeName,
+    );
+
+    const gateEvents = [];
+
+    makeExchange(context.exchangeName, () => BASE_PRICE);
+    addStrategySchema({
+      strategyName: context.strategyName,
+      interval: "1m",
+      getSignal: async () => ({
+        id: "sched-consume-persist-id",
+        position: "long",
+        note: "consume persist",
+        priceTakeProfit: BASE_PRICE + 5000,
+        priceStopLoss: BASE_PRICE - 5000,
+        minuteEstimatedTime: 120,
+      }),
+    });
+
+    const unsubscribe = listenSync((event) => {
+      if (event.strategyName !== context.strategyName) return;
+      if (event.action !== "signal-open" || event.type !== "active") return;
+      gateEvents.push({ id: event.signalId, attempt: event.attempt });
+      throw new OrderRejectedError("consume-persist: NOTIONAL — order can never be placed");
+    }, true);
+
+    try {
+      const runTick = makeRunTick(context);
+
+      const tick1 = await runTick(new Date(t0));
+      const tick2 = await runTick(new Date(t0 + 1 * MIN));
+      if (tick1.action !== "idle" || tick2.action !== "idle") {
+        fail(`ticks #1/#2 expected "idle" (terminal drop + consumed id), got "${tick1.action}"/"${tick2.action}"`);
+        return;
+      }
+      if (gateEvents.length !== 1) {
+        fail(`expected exactly 1 gate call before the crash, got ${gateEvents.length}`);
+        return;
+      }
+
+      const snapshot = await PersistStrategyAdapter.readStrategyData("BTCUSDT", context.strategyName, context.exchangeName);
+      if (snapshot?.lastPendingId !== "sched-consume-persist-id") {
+        fail(`persisted snapshot must carry the consumed id, got lastPendingId=${snapshot?.lastPendingId}`);
+        return;
+      }
+
+      // «Крэш» после терминального дропа — потребление должно пережить рестарт
+      await lib.strategyConnectionService.clear({
+        symbol: "BTCUSDT",
+        strategyName: context.strategyName,
+        exchangeName: context.exchangeName,
+        frameName: context.frameName,
+        backtest: false,
+      });
+
+      const tick3 = await runTick(new Date(t0 + 2 * MIN));
+      const tick4 = await runTick(new Date(t0 + 3 * MIN));
+      if (tick3.action !== "idle" || tick4.action !== "idle") {
+        fail(`ticks #3/#4 after crash expected "idle" (restored consumption), got "${tick3.action}"/"${tick4.action}"`);
+        return;
+      }
+      if (gateEvents.length !== 1) {
+        fail(`REGRESSION: restart must NOT replay the consumed id to the exchange, got ${gateEvents.length} gate calls: ${JSON.stringify(gateEvents)}`);
+        return;
+      }
+
+      pass(`consumed id survived the crash: 1 gate call total, restored lastPendingId blocked the replay`);
+    } finally {
+      unsubscribe();
+    }
+  } finally {
+    PersistSignalAdapter.useDummy();
+    PersistStrategyAdapter.useDummy();
+    PersistScheduleAdapter.useDummy();
+    PersistRecentAdapter.useDummy();
+  }
+});
+
+/**
+ * SCHED RETRY: терминальный реджект АКТИВАЦИИ (OrderRejectedError на createOrder,
+ * напр. Binance NOTIONAL) потребляет детерминированный id — регрессия прод-цикла:
+ * placement подтверждён → цена в entry-диапазоне → активация реджектится →
+ * scheduled отменяется, но без консумации стратегия ре-издавала ТОТ ЖЕ id каждый
+ * тик: новое реальное размещение + новый реальный реджект активации на бирже,
+ * поминутно, пока цена в диапазоне (наблюдалось 148 отклонённых ордеров за ~2ч).
+ */
+test("SCHED RETRY: terminal activation rejection consumes the deterministic id (no re-placement loop)", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "sched-act-consume-strategy",
+    exchangeName: "binance-sched-act-consume",
+    frameName: "",
+  };
+
+  const DEAD_ID = "sched-act-consume-id";
+  const gateEvents = [];
+  let getSignalCalls = 0;
+  let currentPrice = BASE_PRICE;
+
+  makeExchange(context.exchangeName, () => currentPrice);
+  addStrategySchema({
+    strategyName: context.strategyName,
+    interval: "1m",
+    getSignal: async () => {
+      getSignalCalls += 1;
+      return {
+        id: DEAD_ID,
+        position: "long",
+        note: "sched act consume",
+        priceOpen: PRICE_OPEN,
+        priceTakeProfit: PRICE_OPEN + 4000,
+        priceStopLoss: PRICE_OPEN - 2000,
+        minuteEstimatedTime: 120,
+      };
+    },
+  });
+
+  const unsubscribe = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open") return;
+    gateEvents.push({ type: event.type, id: event.signalId });
+    // Размещение resting-ордера подтверждается, активация (реальный createOrder)
+    // терминально реджектится — сценарий Binance NOTIONAL
+    if (event.type === "active") {
+      throw new OrderRejectedError("act-consume: NOTIONAL — cost exceeds free balance");
+    }
+  }, true);
+
+  try {
+    const runTick = makeRunTick(context);
+
+    // tick1: placement подтверждён → scheduled
+    const tick1 = await runTick(new Date(t0));
+    if (tick1.action !== "scheduled") {
+      fail(`tick #1 expected "scheduled", got "${tick1.action}"`);
+      return;
+    }
+
+    // Цена входит в entry-диапазон → tick2: активация → терминальный реджект → отмена
+    currentPrice = PRICE_OPEN;
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+    if (tick2.action !== "idle") {
+      fail(`tick #2 expected "idle" (activation terminally rejected, scheduled cancelled), got "${tick2.action}"`);
+      return;
+    }
+    if (gateEvents.length !== 2 || gateEvents[0].type !== "schedule" || gateEvents[1].type !== "active") {
+      fail(`expected gate calls [schedule, active] before consumption, got ${JSON.stringify(gateEvents)}`);
+      return;
+    }
+
+    // Цена ОСТАЁТСЯ в entry-диапазоне: без консумации каждый следующий тик
+    // ре-издавал тот же id → новое РЕАЛЬНОЕ размещение + новый реальный реджект
+    for (let i = 2; i <= 5; i++) {
+      const tick = await runTick(new Date(t0 + i * MIN));
+      if (tick.action !== "idle") {
+        fail(`tick #${i + 1} expected "idle" (consumed id blocked by whipsaw guard), got "${tick.action}"`);
+        return;
+      }
+    }
+
+    if (gateEvents.length !== 2) {
+      fail(`REGRESSION: consumed id re-hit the exchange — expected exactly 2 gate calls (1 placement + 1 rejected activation), got ${gateEvents.length}: ${JSON.stringify(gateEvents)}`);
+      return;
+    }
+    if (getSignalCalls < 2) {
+      fail(`getSignal must keep running after the drop (guard blocks at consumption, not generation), got ${getSignalCalls} calls`);
+      return;
+    }
+
+    pass(`terminal activation rejection consumed "${DEAD_ID}": 2 gate calls total, ${getSignalCalls - 1} re-issues blocked without touching the exchange`);
+  } finally {
+    unsubscribe();
+  }
+});
+
+/**
+ * SCHED RETRY: терминальный реджект активации в DRAIN-ветке tick (адаптер/юзер
+ * вызвал activateScheduled, брокер реджектит createOrder) тоже потребляет
+ * детерминированный id — зеркало price-активации: без консумации следующий тик
+ * ре-издаёт тот же сигнал и размещает НОВЫЙ реальный resting-ордер за цикл.
+ */
+test("SCHED RETRY: terminal rejection of a user activation consumes the deterministic id", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "sched-useract-consume-strategy",
+    exchangeName: "binance-sched-useract-consume",
+    frameName: "",
+  };
+
+  const DEAD_ID = "sched-useract-consume-id";
+  const gateEvents = [];
+
+  // Цена НЕ входит в entry-диапазон — активацию триггерит только activateScheduled
+  makeExchange(context.exchangeName, () => BASE_PRICE);
+  addStrategySchema({
+    strategyName: context.strategyName,
+    interval: "1m",
+    getSignal: async () => ({
+      id: DEAD_ID,
+      position: "long",
+      note: "sched useract consume",
+      priceOpen: PRICE_OPEN,
+      priceTakeProfit: PRICE_OPEN + 4000,
+      priceStopLoss: PRICE_OPEN - 2000,
+      minuteEstimatedTime: 120,
+    }),
+  });
+
+  const unsubscribe = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open") return;
+    gateEvents.push({ type: event.type, id: event.signalId });
+    // Размещение подтверждается, активация терминально реджектится (NOTIONAL)
+    if (event.type === "active") {
+      throw new OrderRejectedError("useract-consume: NOTIONAL — cost exceeds free balance");
+    }
+  }, true);
+
+  try {
+    const runTick = makeRunTick(context);
+    const inCtx = (fn) => MethodContextService.runInContext(fn, context);
+
+    const tick1 = await runTick(new Date(t0));
+    if (tick1.action !== "scheduled") {
+      fail(`tick #1 expected "scheduled", got "${tick1.action}"`);
+      return;
+    }
+
+    // Адаптер сообщает «resting-ордер исполнился» → отложенная активация
+    await inCtx(() => lib.strategyCoreService.activateScheduled(false, "BTCUSDT", context, { id: "useract-1" }));
+
+    // tick2: дренаж _activatedSignal → sync open реджектится терминально → отмена
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+    if (tick2.action !== "idle") {
+      fail(`tick #2 expected "idle" (user activation terminally rejected), got "${tick2.action}"`);
+      return;
+    }
+    if (gateEvents.length !== 2 || gateEvents[0].type !== "schedule" || gateEvents[1].type !== "active") {
+      fail(`expected gate calls [schedule, active] before consumption, got ${JSON.stringify(gateEvents)}`);
+      return;
+    }
+
+    // Без консумации каждый следующий тик ре-издавал тот же id и РАЗМЕЩАЛ новый
+    // реальный resting-ордер (gate call type "schedule" за цикл)
+    for (let i = 2; i <= 5; i++) {
+      const tick = await runTick(new Date(t0 + i * MIN));
+      if (tick.action !== "idle") {
+        fail(`tick #${i + 1} expected "idle" (consumed id blocked by whipsaw guard), got "${tick.action}"`);
+        return;
+      }
+    }
+
+    if (gateEvents.length !== 2) {
+      fail(`REGRESSION: consumed id re-hit the exchange after the rejected user activation — expected exactly 2 gate calls, got ${gateEvents.length}: ${JSON.stringify(gateEvents)}`);
+      return;
+    }
+
+    pass(`terminal user-activation rejection consumed "${DEAD_ID}": 2 gate calls total, re-issues blocked`);
+  } finally {
+    unsubscribe();
+  }
+});

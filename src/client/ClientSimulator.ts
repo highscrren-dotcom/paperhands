@@ -1,3 +1,4 @@
+import { getErrorMessage } from "functools-kit";
 import { Exchange } from "../classes/Exchange";
 import { ICandleData } from "../interfaces/Exchange.interface";
 import {
@@ -11,6 +12,7 @@ import {
   ISimulatorParams,
   ISimulatorPointReport,
   ISimulatorResult,
+  ISimulatorTestResult,
   ISimulatorTrade,
   SimulatorExitReason,
   SimulatorRankingCriterion,
@@ -44,9 +46,13 @@ const ALIGNED_LOOKBACK_MINUTES = 4 * 60;
 const AUTHOR_DEDUPE_MINUTES = 8 * 60;
 
 /**
- * Sortino sentinel for a series with profit and zero losing trades.
+ * Sortino of a profitable series with zero losing days is
+ * mathematically infinite. Infinity is used deliberately — a finite
+ * sentinel (e.g. 999) misleads because real Sortino values can
+ * exceed it. Consistent with profitFactor: Infinity when no losses.
+ * NB: JSON.stringify turns Infinity into null in saved artifacts.
  */
-const SORTINO_NO_LOSSES = 999;
+const SORTINO_NO_LOSSES = Number.POSITIVE_INFINITY;
 
 /**
  * Minimum trades for a grid point to become a ranking winner
@@ -63,14 +69,34 @@ async function* ITERATE_CANDLES_FN(
     let emitted = 0;
     let cursor = intervalStart(fromTs, "1m");
     while (emitted < count) {
-      const chunk = await Exchange.getRawCandles(
-        symbol,
-        "1m",
-        { exchangeName: self.params.exchangeName },
-        GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST,
-        cursor,
-        cursor + GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST * MINUTE_MS,
-      );
+      let chunk: ICandleData[];
+      try {
+        chunk = await Exchange.getRawCandles(
+          symbol,
+          "1m",
+          { exchangeName: self.params.exchangeName },
+          GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST,
+          cursor,
+          cursor + GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST * MINUTE_MS,
+        );
+      } catch (error) {
+        // контракт Exchange строг: пропуски заблокированы, адаптер
+        // обязан вернуть ровно limit свечей — поэтому конец доступной
+        // истории приходит сюда ИСКЛЮЧЕНИЕМ (пустой или неполный
+        // чанк). Для симулятора это штатный случай: идея у края
+        // данных получает обрезанный профиль (truncated), а не валит
+        // весь прогон. Обрезка идёт по границе последнего полного
+        // чанка; следствие — у идей, чей ПЕРВЫЙ чанк задевает край,
+        // свечей не будет вовсе (null-профиль): у края истории есть
+        // теневая зона глубиной в один чанк. Реальные транзиентные
+        // сбои сети гасятся ретраями Exchange до этой точки.
+        self.params.logger.debug("ClientSimulator candle feed exhausted", {
+          symbol,
+          cursor,
+          error: `${getErrorMessage(error)}`,
+        });
+        return;
+      }
       if (!chunk.length) {
         return;
       }
@@ -83,6 +109,13 @@ async function* ITERATE_CANDLES_FN(
         if (emitted >= count) {
           return;
         }
+      }
+      // частичный чанк = конец доступной истории: следующий запрос
+      // был бы полностью за краем данных, а пустой ответ адаптера —
+      // ошибка контракта Exchange (пропуски заблокированы на его
+      // уровне). Останавливаемся — профиль будет помечен truncated.
+      if (chunk.length < GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST) {
+        return;
       }
       cursor += GLOBAL_CONFIG.CC_MAX_CANDLES_PER_REQUEST * MINUTE_MS;
     }
@@ -149,6 +182,43 @@ const COUNT_ALIGNED_AUTHORS_FN = (
     authors.add(idea.author);
   }
   return authors.size;
+};
+
+/**
+ * Sums Laplace-smoothed track-record weights of UNIQUE same-direction
+ * unbanned authors within the rolling lookback window. The weight of
+ * an author is (hits+1)/(ideas+2): a proven 15/15 veteran approaches
+ * 1, a fresh 2/2 stays modest, a banned author contributes nothing.
+ *
+ * @param ideas - All ideas of the symbol
+ * @param direction - Direction to sum votes for
+ * @param ts - Minute timestamp to sum at
+ * @param weightOf - Author weight resolver (0 for banned)
+ * @returns Sum of unique aligned author weights
+ */
+const SUM_ALIGNED_WEIGHT_FN = (
+  ideas: ISimulatorIdea[],
+  direction: "LONG" | "SHORT",
+  ts: number,
+  weightOf: (author: string) => number,
+): number => {
+  const authors = new Set<string>();
+  const from = ts - ALIGNED_LOOKBACK_MINUTES * MINUTE_MS;
+  for (const idea of ideas) {
+    if (idea.direction !== direction) {
+      continue;
+    }
+    const ideaTs = intervalStart(idea.ts, "1m") + MINUTE_MS;
+    if (ideaTs > ts || ideaTs <= from) {
+      continue;
+    }
+    authors.add(idea.author);
+  }
+  let sum = 0;
+  for (const author of authors) {
+    sum += weightOf(author);
+  }
+  return sum;
 };
 
 /**
@@ -248,6 +318,11 @@ interface IAuthorFilterContext {
   profileBanned: boolean[];
   /** Aligned unbanned authors at entry per profile index. */
   alignedFiltered: number[];
+  /**
+   * Sum of Laplace-smoothed track-record weights of aligned unbanned
+   * authors at entry per profile index (weighted consensus).
+   */
+  weightAligned: number[];
 }
 
 /**
@@ -296,6 +371,14 @@ const TRAIN_AUTHOR_FILTER_FN = (
   const banned = new Set(
     stats.filter(({ banned }) => banned).map(({ author }) => author),
   );
+  // вес голоса автора — сглаженная по Лапласу правота (hits+1)/(ideas+2):
+  // новичок 2/2 весит меньше ветерана 15/15, забаненный — ноль
+  const weightByAuthor = new Map<string, number>(
+    stats
+      .filter(({ banned }) => !banned)
+      .map(({ author, ideas: n, hits }) => [author, (hits + 1) / (n + 2)]),
+  );
+  const weightOf = (author: string) => weightByAuthor.get(author) ?? 0;
   const profileBanned = profiles.map(({ idea }) => banned.has(idea.author));
   const alignedFiltered = profiles.map((profile) =>
     COUNT_ALIGNED_AUTHORS_FN(
@@ -305,12 +388,99 @@ const TRAIN_AUTHOR_FILTER_FN = (
       (author) => !banned.has(author),
     ),
   );
+  const weightAligned = profiles.map((profile) =>
+    SUM_ALIGNED_WEIGHT_FN(
+      ideas,
+      profile.idea.direction as "LONG" | "SHORT",
+      profile.entryTimestamp,
+      weightOf,
+    ),
+  );
   return {
     stats: stats.sort((a, b) => b.ideas - a.ideas),
     banned,
     bannedIdeas: profileBanned.filter(Boolean).length,
     profileBanned,
     alignedFiltered,
+    weightAligned,
+  };
+};
+
+/**
+ * Builds the author filter context for an out-of-sample test from a
+ * FROZEN track record — the exact opposite of TRAIN_AUTHOR_FILTER_FN:
+ * nothing is learned from the given profiles, the raw ideas/hits come
+ * from the train run verbatim and only the banned flag is re-derived
+ * under the tested point's ban rule (same formulas as in train).
+ *
+ * Default-ban semantics survive freezing: an author present in the
+ * test feed but absent from the frozen stats has proven nothing on
+ * the train range — banned, zero vote weight.
+ *
+ * @param profiles - Profiles of the TEST ideas
+ * @param ideas - All test ideas of the symbol (for aligned counting)
+ * @param authorStats - Frozen per-author track record from a train run
+ * @param minAuthorTrack - Minimum known-outcome ideas to be allowed
+ * @param minAuthorHitRate - Minimum hit rate (0..1) to be allowed
+ * @returns Filter context with frozen stats (sorted by idea count)
+ */
+const FREEZE_AUTHOR_FILTER_FN = (
+  profiles: ISimulatorIdeaProfile[],
+  ideas: ISimulatorIdea[],
+  authorStats: ISimulatorAuthorStat[],
+  minAuthorTrack: number,
+  minAuthorHitRate: number,
+): IAuthorFilterContext => {
+  const stats: ISimulatorAuthorStat[] = authorStats.map(
+    ({ author, ideas: n, hits }) => ({
+      author,
+      ideas: n,
+      hits,
+      hitRate: n ? hits / n : 0,
+      banned: n < minAuthorTrack || hits / n < minAuthorHitRate,
+    }),
+  );
+  const allowed = new Set(
+    stats.filter(({ banned }) => !banned).map(({ author }) => author),
+  );
+  // в бане: провалившие правило по замороженному треку ПЛЮС авторы,
+  // которых в трейне не было вовсе (недоказанный = забанен)
+  const banned = new Set(
+    [
+      ...stats.map(({ author }) => author),
+      ...ideas.map(({ author }) => author),
+    ].filter((author) => !allowed.has(author)),
+  );
+  const weightByAuthor = new Map<string, number>(
+    stats
+      .filter(({ banned }) => !banned)
+      .map(({ author, ideas: n, hits }) => [author, (hits + 1) / (n + 2)]),
+  );
+  const weightOf = (author: string) => weightByAuthor.get(author) ?? 0;
+  const profileBanned = profiles.map(({ idea }) => !allowed.has(idea.author));
+  const alignedFiltered = profiles.map((profile) =>
+    COUNT_ALIGNED_AUTHORS_FN(
+      ideas,
+      profile.idea.direction as "LONG" | "SHORT",
+      profile.entryTimestamp,
+      (author) => allowed.has(author),
+    ),
+  );
+  const weightAligned = profiles.map((profile) =>
+    SUM_ALIGNED_WEIGHT_FN(
+      ideas,
+      profile.idea.direction as "LONG" | "SHORT",
+      profile.entryTimestamp,
+      weightOf,
+    ),
+  );
+  return {
+    stats: stats.sort((a, b) => b.ideas - a.ideas),
+    banned,
+    bannedIdeas: profileBanned.filter(Boolean).length,
+    profileBanned,
+    alignedFiltered,
+    weightAligned,
   };
 };
 
@@ -324,7 +494,14 @@ const TRAIN_AUTHOR_FILTER_FN = (
  * - trailing take arms from the peak of PREVIOUS candles only (the
  *   current candle peak updates after the checks) and only when the
  *   locked level is not worse than the entry;
- * - stop and trailing reachable inside one candle -> stop wins;
+ * - profit lock arms from previous-candle peaks the same way: once
+ *   price has touched +lock% from entry, a FIXED floor sits at that
+ *   level and a pullback to it exits; a runner is untouched — when
+ *   the peak clears the lock, the trailing floor rises above it and
+ *   the pullback hits the trailing level first;
+ * - stop and any profit floor reachable inside one candle -> stop
+ *   wins; both floors reachable -> the HIGHER one fills (falling
+ *   price crosses it first);
  * - fees are charged separately: 2 x CC_PERCENT_FEE.
  *
  * @param profile - Idea profile (candle trajectory)
@@ -347,6 +524,10 @@ const SIMULATE_TRADE_FN = (
    * short: peak*(1+r) <= entry =>  peak <= entry/(1+r)
    */
   const armLevel = entryFill / (1 - direction * trailRatio);
+  const lockLevel =
+    point.profitLockPercent > 0
+      ? entryFill * (1 + (direction * point.profitLockPercent) / 100)
+      : null;
 
   let peak = entryFill;
   let exitLevel: number | null = null;
@@ -364,15 +545,37 @@ const SIMULATE_TRADE_FN = (
     const trailHit =
       trailArmed &&
       (direction > 0 ? adverse <= trailLevel : adverse >= trailLevel);
+    const lockArmed =
+      lockLevel !== null &&
+      (direction > 0 ? peak >= lockLevel : peak <= lockLevel);
+    const lockHit =
+      lockArmed &&
+      (direction > 0 ? adverse <= lockLevel! : adverse >= lockLevel!);
     if (stopHit) {
       exitLevel = stopLevel;
       exitReason = "hard_stop";
       exitIndex = i;
       break;
     }
+    // оба пола пробиты одной свечой: падающая цена сперва проходит
+    // ВЕРХНИЙ из взведённых уровней — он и исполняется
+    if (trailHit && lockHit) {
+      const trailBetter =
+        direction > 0 ? trailLevel >= lockLevel! : trailLevel <= lockLevel!;
+      exitLevel = trailBetter ? trailLevel : lockLevel!;
+      exitReason = trailBetter ? "trailing_take" : "profit_lock";
+      exitIndex = i;
+      break;
+    }
     if (trailHit) {
       exitLevel = trailLevel;
       exitReason = "trailing_take";
+      exitIndex = i;
+      break;
+    }
+    if (lockHit) {
+      exitLevel = lockLevel!;
+      exitReason = "profit_lock";
       exitIndex = i;
       break;
     }
@@ -471,6 +674,7 @@ const EVALUATE_POINT_FN = (
   const exitReasons: Record<SimulatorExitReason, number> = {
     hard_stop: 0,
     trailing_take: 0,
+    profit_lock: 0,
     time_expired: 0,
     data_truncated: 0,
   };
@@ -485,6 +689,11 @@ const EVALUATE_POINT_FN = (
       continue;
     }
     if (filter.alignedFiltered[index] < point.minIdeasAligned) {
+      continue;
+    }
+    // взвешенный консенсус: сумма Лаплас-весов однонаправленных
+    // незабаненных авторов окна; 0 = гейт выключен
+    if (filter.weightAligned[index] < point.minWeightAligned) {
       continue;
     }
     if (profile.entryTimestamp < busyUntil) {
@@ -560,6 +769,25 @@ const EVALUATE_POINT_FN = (
     trades.map(({ holdMinutesActual }) => holdMinutesActual),
   );
 
+  // Calmar — годовая доходность к просадке кривой (окно корзин общее
+  // для всех точек), recovery — сырой PnL к той же просадке; без
+  // просадки при положительном PnL оба бесконечны (как profitFactor)
+  const annualizedPnlPercent = rangeDays > 0
+    ? totalPnlPercent * (365 / rangeDays)
+    : 0;
+  const calmarRatio =
+    maxSeriesDrawdownPercent > 0
+      ? annualizedPnlPercent / maxSeriesDrawdownPercent
+      : totalPnlPercent > 0
+        ? Number.POSITIVE_INFINITY
+        : 0;
+  const recoveryFactor =
+    maxSeriesDrawdownPercent > 0
+      ? totalPnlPercent / maxSeriesDrawdownPercent
+      : totalPnlPercent > 0
+        ? Number.POSITIVE_INFINITY
+        : 0;
+
   return {
     report: {
       point,
@@ -570,6 +798,8 @@ const EVALUATE_POINT_FN = (
       winRate: trades.length ? wins / trades.length : 0,
       profitFactor: grossLoss > 0 ? grossProfit / grossLoss : Infinity,
       maxSeriesDrawdownPercent,
+      calmarRatio,
+      recoveryFactor,
       avgHoldMinutes: holdStats.avgHoldMinutes,
       p95HoldMinutes: holdStats.p95HoldMinutes,
       p99HoldMinutes: holdStats.p99HoldMinutes,
@@ -593,14 +823,20 @@ const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
       axes.holdMinutes.flatMap((holdMinutes) =>
         axes.minIdeasAligned.flatMap((minIdeasAligned) =>
           axes.minAuthorTrack.flatMap((minAuthorTrack) =>
-            axes.minAuthorHitRate.map((minAuthorHitRate) => ({
-              hardStopPercent,
-              trailingTakePercent,
-              holdMinutes,
-              minIdeasAligned,
-              minAuthorTrack,
-              minAuthorHitRate,
-            })),
+            axes.minAuthorHitRate.flatMap((minAuthorHitRate) =>
+              axes.minWeightAligned.flatMap((minWeightAligned) =>
+                axes.profitLockPercent.map((profitLockPercent) => ({
+                  hardStopPercent,
+                  trailingTakePercent,
+                  holdMinutes,
+                  minIdeasAligned,
+                  minAuthorTrack,
+                  minAuthorHitRate,
+                  minWeightAligned,
+                  profitLockPercent,
+                })),
+              ),
+            ),
           ),
         ),
       ),
@@ -639,6 +875,15 @@ const ASSERT_TRADE_INVARIANTS_FN = (
           `(idea ${trade.ideaId}, ${JSON.stringify(point)})`,
       );
     }
+    if (
+      trade.exitReason === "profit_lock" &&
+      trade.pnlPercent < point.profitLockPercent - costFloor
+    ) {
+      throw new Error(
+        `ClientSimulator invariant: profit lock filled below its level ${trade.pnlPercent.toFixed(3)} ` +
+          `(idea ${trade.ideaId}, ${JSON.stringify(point)})`,
+      );
+    }
     if (trade.exitTimestamp < trade.entryTimestamp) {
       throw new Error(
         `ClientSimulator invariant: exit before entry (idea ${trade.ideaId})`,
@@ -649,7 +894,7 @@ const ASSERT_TRADE_INVARIANTS_FN = (
 
 /**
  * Full simulation run for a symbol: ideas -> profiles -> author
- * filter training -> grid evaluation -> three rankings.
+ * filter training -> grid evaluation -> four rankings.
  *
  * Every progress point the reference Sweep script printed to console
  * is emitted through ISimulatorCallbacks instead.
@@ -778,17 +1023,29 @@ const RUN_FN = async (
     { criterion: "sharpe", value: ({ sharpe }) => sharpe },
     { criterion: "sortino", value: ({ sortino }) => sortino },
     { criterion: "pnl", value: ({ totalPnlPercent }) => totalPnlPercent },
+    { criterion: "recovery", value: ({ recoveryFactor }) => recoveryFactor },
   ];
   const eligible = reports.filter(
     ({ trades }) => trades >= MIN_TRADES_FOR_BEST,
   );
   const best: ISimulatorBest[] = [];
+  // равенство проверяется до вычитания: Infinity - Infinity = NaN
+  // ломает контракт компаратора (sortino/profitFactor бесконечны
+  // на сериях без убытков)
+  const byRankingDesc =
+    (value: (report: ISimulatorPointReport) => number) =>
+    (a: ISimulatorPointReport, b: ISimulatorPointReport) => {
+      const va = value(a);
+      const vb = value(b);
+      if (va === vb) {
+        return 0;
+      }
+      return vb - va;
+    };
   for (const ranking of rankings) {
-    const sorted = [...reports].sort(
-      (a, b) => ranking.value(b) - ranking.value(a),
-    );
+    const sorted = [...reports].sort(byRankingDesc(ranking.value));
     const winner =
-      [...eligible].sort((a, b) => ranking.value(b) - ranking.value(a))[0] ??
+      [...eligible].sort(byRankingDesc(ranking.value))[0] ??
       sorted[0] ??
       null;
     const bestEntry: ISimulatorBest = {
@@ -845,6 +1102,127 @@ const RUN_FN = async (
 };
 
 /**
+ * Out-of-sample test for a symbol: fresh ideas -> profiles -> ONE
+ * frozen grid point evaluated with a FROZEN author track record.
+ *
+ * This is the honesty counterpart of RUN_FN: run() trains the author
+ * filter with deliberate lookahead inside the train range, test()
+ * proves the picked parameters on data the training never saw —
+ * nothing here feeds back into the stats.
+ *
+ * @param self - ClientSimulator instance reference
+ * @param symbol - Trading pair symbol
+ * @param allIdeas - Test ideas (other symbols are filtered out)
+ * @param point - Frozen grid point from the train run
+ * @param authorStats - Frozen per-author track record from the train run
+ * @returns Out-of-sample result with the point report and trades
+ */
+const TEST_FN = async (
+  self: ClientSimulator,
+  symbol: string,
+  allIdeas: ISimulatorIdea[],
+  point: ISimulatorGridPoint,
+  authorStats: ISimulatorAuthorStat[],
+): Promise<ISimulatorTestResult> => {
+  const ideas = allIdeas
+    .filter((idea) => idea.symbol === symbol)
+    .sort((a, b) => a.ts - b.ts);
+  const directional = DEDUPE_IDEAS_FN(
+    ideas.filter(({ direction }) => direction !== "NEUTRAL"),
+  );
+  if (self.params.callbacks?.onIdeas) {
+    self.params.callbacks?.onIdeas(symbol, ideas.length, directional.length);
+  }
+
+  const profiles: ISimulatorIdeaProfile[] = [];
+  for (let index = 0; index < directional.length; index++) {
+    const profile = await BUILD_PROFILE_FN(
+      self,
+      symbol,
+      directional[index],
+      directional,
+    );
+    if (profile) {
+      profiles.push(profile);
+    }
+    if (self.params.callbacks?.onProgress) {
+      self.params.callbacks?.onProgress(
+        symbol,
+        "profiles",
+        index + 1,
+        directional.length,
+      );
+    }
+  }
+  const truncatedCount = profiles.filter(({ truncated }) => truncated).length;
+  if (self.params.callbacks?.onProfiles) {
+    self.params.callbacks?.onProfiles(symbol, profiles, truncatedCount);
+  }
+
+  // фильтр авторов ЗАМОРОЖЕН: правило точки применяется к train-треку,
+  // onAuthorsTrained намеренно не эмитится — здесь ничего не обучается
+  const filter = FREEZE_AUTHOR_FILTER_FN(
+    profiles,
+    directional,
+    authorStats,
+    point.minAuthorTrack,
+    point.minAuthorHitRate,
+  );
+
+  // окно суточных корзин — по тестовому диапазону: метрики отчёта
+  // считаются той же математикой, что в run(), но по свежим данным
+  const rangeStartTs = profiles.length
+    ? Math.min(...profiles.map(({ entryTimestamp }) => entryTimestamp))
+    : 0;
+  const rangeEndTs = profiles.length
+    ? Math.max(...profiles.map(({ outcomeKnownAt }) => outcomeKnownAt))
+    : 0;
+  const rangeDays = Math.max(1, Math.ceil((rangeEndTs - rangeStartTs) / DAY_MS));
+
+  const { report, trades } = EVALUATE_POINT_FN(
+    profiles,
+    point,
+    filter,
+    rangeStartTs,
+    rangeDays,
+  );
+  ASSERT_TRADE_INVARIANTS_FN(trades, point);
+  if (self.params.callbacks?.onGridPoint) {
+    self.params.callbacks?.onGridPoint(symbol, report, trades);
+  }
+  if (self.params.callbacks?.onProgress) {
+    self.params.callbacks?.onProgress(symbol, "grid", 1, 1);
+  }
+
+  const holdStats = COMPUTE_HOLD_STATS_FN(
+    trades.map(({ holdMinutesActual }) => holdMinutesActual),
+  );
+
+  const result: ISimulatorTestResult = {
+    symbol,
+    ideasTotal: ideas.length,
+    ideasDirectional: directional.length,
+    profileCount: profiles.length,
+    truncatedCount,
+    point,
+    report,
+    trades,
+    authorStats: filter.stats,
+    allowedAuthors: filter.stats
+      .filter(({ banned }) => !banned)
+      .map(({ author }) => author),
+    bannedAuthors: [...filter.banned],
+    avgHoldMinutes: holdStats.avgHoldMinutes,
+    p95HoldMinutes: holdStats.p95HoldMinutes,
+    p99HoldMinutes: holdStats.p99HoldMinutes,
+  };
+  if (self.params.callbacks?.onTestDone) {
+    self.params.callbacks?.onTestDone(symbol, result);
+  }
+  return result;
+};
+
+/**
  * Parameter sweep engine over crowd trading ideas (the "Simulator").
  *
  * Finds production strategy parameters (hard stop, trailing take,
@@ -871,7 +1249,7 @@ const RUN_FN = async (
  *    stop wins inside an ambiguous candle, trailing arms only from
  *    previous-candle peaks, fees and slippage from GLOBAL_CONFIG on
  *    both legs.
- * 4. Grid winners are picked by three rankings (Sharpe, Sortino,
+ * 4. Grid winners are picked by four rankings (Sharpe, Sortino, PnL,
  *    total PnL) with an anti-fluke minimum-trades guard.
  *
  * Every stage emits an ISimulatorCallbacks hook; the client itself
@@ -911,7 +1289,7 @@ export class ClientSimulator implements ISimulator {
    * @param symbol - Trading pair symbol to simulate (e.g., "BTCUSDT")
    * @param ideas - Ideas feed (other symbols are filtered out)
    * @returns Final result: all grid point reports (sorted by Sharpe),
-   * winners of the three rankings with their trade lists, and the
+   * winners of the four rankings with their trade lists, and the
    * trained author filter artifact (stats + ban list)
    * @throws Error when a grid point produces a trade violating the
    * arithmetic invariants (PnL below the hard stop floor, trailing
@@ -926,5 +1304,46 @@ export class ClientSimulator implements ISimulator {
       ideasLen: ideas.length,
     });
     return await RUN_FN(this, symbol, ideas);
+  }
+
+  /**
+   * Out-of-sample test: evaluates ONE frozen grid point over fresh
+   * ideas with a FROZEN author track record from a train run.
+   *
+   * Steps and emitted callbacks:
+   * 1. Filters the input array by symbol, sorts by publication time,
+   *    drops NEUTRAL ideas and flood duplicates (same preprocessing
+   *    as run()) -> onIdeas(symbol, total, directional).
+   * 2. Builds one trajectory profile per test idea
+   *    -> onProfiles(symbol, profiles, truncatedCount).
+   * 3. FREEZES the author filter: the point's ban rule is applied to
+   *    the given train stats verbatim; authors unseen in the stats
+   *    are banned by default. onAuthorsTrained never fires — nothing
+   *    is trained on the test data.
+   * 4. Evaluates the single point with production slot semantics and
+   *    the same metric math as run()
+   *    -> onGridPoint(symbol, report, trades).
+   * 5. Assembles the result -> onTestDone(symbol, result).
+   *
+   * @param symbol - Trading pair symbol to test (e.g., "BTCUSDT")
+   * @param ideas - Out-of-sample ideas feed (other symbols filtered out)
+   * @param point - Frozen grid point (e.g., the train Sharpe winner)
+   * @param authorStats - Frozen author track record from the train run
+   * @returns Out-of-sample result: the point report, trades and the
+   * frozen author artifact as applied on the test range
+   * @throws Error when a trade violates the arithmetic invariants
+   */
+  public test = async (
+    symbol: string,
+    ideas: ISimulatorIdea[],
+    point: ISimulatorGridPoint,
+    authorStats: ISimulatorAuthorStat[],
+  ): Promise<ISimulatorTestResult> => {
+    this.params.logger.debug("ClientSimulator test", {
+      symbol,
+      ideasLen: ideas.length,
+      point,
+    });
+    return await TEST_FN(this, symbol, ideas, point, authorStats);
   }
 }

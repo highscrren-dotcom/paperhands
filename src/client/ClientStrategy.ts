@@ -39,7 +39,7 @@ import { getEffectivePriceOpen as GET_EFFECTIVE_PRICE_OPEN } from "../helpers/ge
 import { ICandleData } from "../interfaces/Exchange.interface";
 import { PersistSignalAdapter, PersistScheduleAdapter, PersistRecentAdapter, PersistStrategyAdapter } from "../classes/Persist";
 import { ExecutionContextService } from "../lib/services/context/ExecutionContextService";
-import { errorEmitter, exitEmitter, backtestScheduleOpenSubject } from "../config/emitters";
+import { errorEmitter, exitEmitter } from "../config/emitters";
 import { GLOBAL_CONFIG } from "../config/params";
 import { getTotalClosed } from "../helpers/getTotalClosed";
 import beginTime from "../utils/beginTime";
@@ -568,6 +568,128 @@ const CALL_SCHEDULED_ORDER_CHECK_FN = trycatch(
 );
 
 /**
+ * Emits the post-verdict order-check CONTINUE event via params.onOrderContinue
+ * (StrategyConnectionService forwards it to orderContinueSubject): the check
+ * resolved NON-terminally — confirmed (attempt 0) or tolerated transient
+ * failure (attempt > 0) — and monitoring continues. Called from the live tick
+ * right after the decision, for both monitored states (type "active"/"schedule").
+ * Notification-only: the trycatch fallback swallows a throwing listener so it
+ * can never affect the already-made monitoring decision.
+ */
+const CALL_ORDER_CONTINUE_EMIT_FN = trycatch(
+  async (
+    self: ClientStrategy,
+    type: "schedule" | "active",
+    signal: ISignalRow | IScheduledSignalRow,
+    currentPrice: number,
+    timestamp: number
+  ): Promise<void> => {
+    const publicSignal = TO_PUBLIC_SIGNAL(type === "active" ? "pending" : "scheduled", signal, currentPrice);
+    await self.params.onOrderContinue({
+      type,
+      symbol: self.params.execution.context.symbol,
+      strategyName: self.params.strategyName,
+      exchangeName: self.params.exchangeName,
+      frameName: self.params.frameName,
+      backtest: self.params.execution.context.backtest,
+      signalId: signal.id,
+      timestamp,
+      signal: publicSignal,
+      attempt: self._orderCheckAttempt,
+      currentPrice,
+      pnl: publicSignal.pnl,
+      peakProfit: publicSignal.peakProfit,
+      maxDrawdown: publicSignal.maxDrawdown,
+      position: publicSignal.position,
+      priceOpen: publicSignal.priceOpen,
+      priceTakeProfit: publicSignal.priceTakeProfit,
+      priceStopLoss: publicSignal.priceStopLoss,
+      originalPriceTakeProfit: publicSignal.originalPriceTakeProfit,
+      originalPriceStopLoss: publicSignal.originalPriceStopLoss,
+      originalPriceOpen: publicSignal.originalPriceOpen,
+      scheduledAt: publicSignal.scheduledAt,
+      pendingAt: publicSignal.pendingAt,
+      totalEntries: publicSignal.totalEntries,
+      totalPartials: publicSignal.totalPartials,
+    });
+  },
+  {
+    fallback: (error, self) => {
+      const message = "ClientStrategy CALL_ORDER_CONTINUE_EMIT_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      self.params.logger.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  }
+);
+
+/**
+ * Emits the post-verdict order-check STOP event via params.onOrderStop
+ * (StrategyConnectionService forwards it to orderStopSubject): the check
+ * resolved TERMINALLY — OrderDeletedError ("deleted") or spent transient
+ * tolerance ("exhausted") — right before the teardown (close "closed" for
+ * "active" / cancel "user" for "schedule"). Called with the final failure
+ * streak, BEFORE the counter reset. Notification-only: the trycatch fallback
+ * swallows a throwing listener so it can never affect the terminal decision.
+ */
+const CALL_ORDER_STOP_EMIT_FN = trycatch(
+  async (
+    self: ClientStrategy,
+    type: "schedule" | "active",
+    reason: "deleted" | "exhausted",
+    signal: ISignalRow | IScheduledSignalRow,
+    currentPrice: number,
+    timestamp: number
+  ): Promise<void> => {
+    const publicSignal = TO_PUBLIC_SIGNAL(type === "active" ? "pending" : "scheduled", signal, currentPrice);
+    await self.params.onOrderStop({
+      type,
+      reason,
+      symbol: self.params.execution.context.symbol,
+      strategyName: self.params.strategyName,
+      exchangeName: self.params.exchangeName,
+      frameName: self.params.frameName,
+      backtest: self.params.execution.context.backtest,
+      signalId: signal.id,
+      timestamp,
+      signal: publicSignal,
+      attempt: self._orderCheckAttempt,
+      currentPrice,
+      pnl: publicSignal.pnl,
+      peakProfit: publicSignal.peakProfit,
+      maxDrawdown: publicSignal.maxDrawdown,
+      position: publicSignal.position,
+      priceOpen: publicSignal.priceOpen,
+      priceTakeProfit: publicSignal.priceTakeProfit,
+      priceStopLoss: publicSignal.priceStopLoss,
+      originalPriceTakeProfit: publicSignal.originalPriceTakeProfit,
+      originalPriceStopLoss: publicSignal.originalPriceStopLoss,
+      originalPriceOpen: publicSignal.originalPriceOpen,
+      scheduledAt: publicSignal.scheduledAt,
+      pendingAt: publicSignal.pendingAt,
+      totalEntries: publicSignal.totalEntries,
+      totalPartials: publicSignal.totalPartials,
+    });
+  },
+  {
+    fallback: (error, self) => {
+      const message = "ClientStrategy CALL_ORDER_STOP_EMIT_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      self.params.logger.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  }
+);
+
+/**
  * Calls onCommit callback with strategy commit event.
  *
  * Wraps the callback in trycatch to prevent errors from breaking the flow.
@@ -1004,10 +1126,19 @@ const GET_SIGNAL_FN = trycatch(
       console.warn(message, payload);
       const error = new Error(message);
       errorEmitter.next(error);
-      exitEmitter.next(error);
+      // Потребить мёртвый id + зачистить слот и ПЕРСИСТНУТЬ ДО exitEmitter:
+      // слушатель exit может завершить процесс синхронно внутри next(), и
+      // незаписанный дроп восстановил бы тот же retryOpenSignal на рестарте —
+      // повторное исчерпание, повторный exit, вечный цикл рестартов одного
+      // мёртвого сигнала. Консумация в _lastPendingId (как у терминального
+      // дропа) закрывает вторую половину цикла: детерминированная стратегия,
+      // ре-эмитящая тот же id, не откроет ещё один реальный ордер ни этим же
+      // тиком (fall-through ниже), ни после рестарта.
+      self._lastPendingId = retrySignal.id;
       self._retryOpenSignal = null;
       self._retryOpenCount = 0;
       await PERSIST_STRATEGY_FN(self);
+      exitEmitter.next(error);
       retrySignal = null;
     }
     if (retrySignal) {
@@ -1367,6 +1498,16 @@ const WAIT_FOR_INIT_FN = async (self: ClientStrategy) => {
     // setPaused(false). Old snapshots without the field read as not-paused.
     self._isPaused = strategyData.isPaused ?? false;
 
+    // Whipsaw-guard restore: the snapshot value reflects the ACTUAL in-memory
+    // _lastPendingId at the last persist — including a TERMINALLY REJECTED id
+    // (consumed, never written to Recent). It supersedes the Recent-based
+    // fallback above; without this a terminally rejected deterministic id
+    // re-hit the exchange with one more real order after every restart.
+    // Old snapshots without the field keep the Recent-based value.
+    if (strategyData.lastPendingId) {
+      self._lastPendingId = strategyData.lastPendingId;
+    }
+
     // Deferred user actions are restored unconditionally. They are persisted BEFORE
     // the pending/scheduled snapshot is wiped from disk (write-ahead order), so a
     // crash between those two writes can leave a stale pending/scheduled snapshot
@@ -1641,6 +1782,7 @@ const PERSIST_STRATEGY_FN = async (self: ClientStrategy): Promise<void> => {
   await PersistStrategyAdapter.writeStrategyData(
     {
       pendingSignalId: self._pendingSignal?.id ?? null,
+      lastPendingId: self._lastPendingId,
       createdSignal: self._userSignal,
       commitQueue: self._commitQueue,
       closedSignal: self._closedSignal,
@@ -1697,6 +1839,11 @@ const ARM_RETRY_OPEN_SIGNAL_FN = async (
  * Unlike the transient branch (STASH_RETRY_OPEN_SIGNAL_FN) the open is dropped for
  * good: no retry is armed, and an already-armed retry slot for this id is wiped so
  * the exhausted trade attempt does not resurrect on the next tick or after a restart.
+ *
+ * The snapshot is persisted UNCONDITIONALLY (not only when the slot was armed): the
+ * callers consume the rejected id into _lastPendingId right before this call, and
+ * that consumption must reach disk even with CC_ORDER_OPEN_RETRY_ATTEMPTS = 0
+ * (no armed slot) — otherwise a restart replays one more real rejected order.
  */
 const DROP_RETRY_OPEN_SIGNAL_FN = async (
   self: ClientStrategy,
@@ -1715,8 +1862,8 @@ const DROP_RETRY_OPEN_SIGNAL_FN = async (
   if (self._retryOpenSignal?.id === signal.id) {
     self._retryOpenSignal = null;
     self._retryOpenCount = 0;
-    await PERSIST_STRATEGY_FN(self);
   }
+  await PERSIST_STRATEGY_FN(self);
 };
 
 /**
@@ -2763,7 +2910,18 @@ const ACTIVATE_SCHEDULED_SIGNAL_FN = async (
     self.params.logger.info("ClientStrategy scheduled signal activation rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: scheduled.id,
+      reason: syncOpenAllowed.reason,
     });
+    // Терминальный реджект активации (OrderRejectedError: NOTIONAL и т.п.) —
+    // потребить id ДО teardown, как в терминальных ветках open-гейтов. Без
+    // консумации детерминированная стратегия ре-издаёт тот же сигнал следующим
+    // тиком: новое РЕАЛЬНОЕ размещение resting-ордера → новая активация → новый
+    // реальный реджект — по паре отклонённых ордеров на бирже за цикл, вечно,
+    // пока цена в entry-диапазоне. Транзиентный реджект id не потребляет.
+    if (syncOpenAllowed.reason !== "transient") {
+      self._lastPendingId = scheduled.id;
+      await PERSIST_STRATEGY_FN(self);
+    }
     await self.setScheduledSignal(null);
     // Release the slot reserved by checkSignalAndReserve above
     await CALL_RISK_REMOVE_SIGNAL_FN(
@@ -3710,7 +3868,9 @@ const CALL_BACKTEST_SCHEDULE_OPEN_FN = trycatch(
     backtest: boolean
   ): Promise<void> => {
     await ExecutionContextService.runInContext(async () => {
-      backtestScheduleOpenSubject.next({
+      // Forwarded via params.onBacktestScheduleOpen — StrategyConnectionService
+      // emits it to backtestScheduleOpenSubject (mirrors the onOrder* callbacks)
+      await self.params.onBacktestScheduleOpen({
         action: "opened",
         signal: TO_PUBLIC_SIGNAL("pending", signal, signal.priceOpen),
         strategyName: self.params.method.context.strategyName,
@@ -3831,6 +3991,12 @@ const OPEN_NEW_SCHEDULED_SIGNAL_FN = async (
       // (clientOrderId = signalId, reconcile-before-send at attempt > 0) resolves a
       // lost-response placement instead of double-placing the resting order.
     } else {
+      // Consume the id BEFORE the drop persists (mirrors OPEN_NEW_PENDING_SIGNAL_FN):
+      // a deterministic strategy re-emits the SAME id every tick — without the
+      // whipsaw block the terminal drop degenerates into one REAL rejected
+      // placement per tick, and without the persist (via the drop below) the
+      // consumption would not survive a restart.
+      self._lastPendingId = signal.id;
       // Terminal rejection (OrderRejectedError): retrying is pointless — drop the
       // trade attempt for good and wipe an already-armed retry slot for this id.
       await DROP_RETRY_OPEN_SIGNAL_FN(self, signal);
@@ -3975,6 +4141,15 @@ const OPEN_NEW_PENDING_SIGNAL_FN = async (
       // lost-response fill instead of double-buying. Exhaustion of the started-attempts
       // budget is checked at consumption in GET_SIGNAL_FN.
     } else {
+      // Consume the id BEFORE the drop persists: a deterministic strategy (e.g. a
+      // channel signal) re-emits the SAME id every tick, and with the throttle
+      // rolled back below "dropped for good" otherwise degenerates into one REAL
+      // rejected exchange order per tick until the signal condition passes. The
+      // whipsaw guard in GET_SIGNAL_FN filters the repeat before the risk check;
+      // a FRESH id is a new trade attempt. Set first so DROP_RETRY_OPEN_SIGNAL_FN
+      // writes it into the strategy snapshot — the consumption must survive a
+      // restart (one extra real order per supervisor restart otherwise).
+      self._lastPendingId = signal.id;
       // Terminal rejection (OrderRejectedError): retrying is pointless — drop the
       // trade attempt for good and wipe the pre-armed retry slot for this id.
       await DROP_RETRY_OPEN_SIGNAL_FN(self, signal);
@@ -4874,7 +5049,13 @@ const ACTIVATE_SCHEDULED_SIGNAL_IN_BACKTEST_FN = async (
     self.params.logger.info("ClientStrategy backtest scheduled signal activation rejected by sync", {
       symbol: self.params.execution.context.symbol,
       signalId: scheduled.id,
+      reason: syncOpenAllowed.reason,
     });
+    // Терминальный реджект активации — потребить id (зеркало live-ветки):
+    // иначе детерминированная стратегия реиграет тот же сигнал каждую свечу.
+    if (syncOpenAllowed.reason !== "transient") {
+      self._lastPendingId = scheduled.id;
+    }
     await self.setScheduledSignal(null);
     // Release the slot reserved by checkSignalAndReserve above
     await CALL_RISK_REMOVE_SIGNAL_FN(
@@ -5546,7 +5727,13 @@ const PROCESS_SCHEDULED_SIGNAL_CANDLES_FN = async (
         self.params.logger.info("ClientStrategy backtest user-activated signal rejected by sync", {
           symbol: self.params.execution.context.symbol,
           signalId: activatedSignal.id,
+          reason: syncOpenAllowed.reason,
         });
+        // Терминальный реджект активации — потребить id (зеркало live-ветки):
+        // иначе детерминированная стратегия реиграет тот же сигнал каждую свечу.
+        if (syncOpenAllowed.reason !== "transient") {
+          self._lastPendingId = activatedSignal.id;
+        }
         await self.setScheduledSignal(null);
         // Release the slot reserved by checkSignalAndReserve above
         await CALL_RISK_REMOVE_SIGNAL_FN(
@@ -7826,7 +8013,16 @@ export class ClientStrategy implements IStrategy {
         this.params.logger.info("ClientStrategy tick: user-activated signal rejected by sync", {
           symbol: this.params.execution.context.symbol,
           signalId: activatedSignal.id,
+          reason: syncOpenAllowed.reason,
         });
+        // Терминальный реджект активации — потребить id ДО teardown (зеркало
+        // ACTIVATE_SCHEDULED_SIGNAL_FN): без консумации детерминированная
+        // стратегия ре-издаёт тот же id и выдаёт по реальному отклонённому
+        // ордеру за цикл. Транзиентный реджект id не потребляет.
+        if (syncOpenAllowed.reason !== "transient") {
+          this._lastPendingId = activatedSignal.id;
+          await PERSIST_STRATEGY_FN(this);
+        }
         await this.setScheduledSignal(null);
         // Release the slot reserved by checkSignalAndReserve above
         await CALL_RISK_REMOVE_SIGNAL_FN(
@@ -7969,6 +8165,8 @@ export class ClientStrategy implements IStrategy {
         }
         if (stillScheduled.reason === "confirmed") {
           this._orderCheckAttempt = 0;
+          // Post-verdict CONTINUE: the resting order is confirmed still open
+          await CALL_ORDER_CONTINUE_EMIT_FN(this, "schedule", this._scheduledSignal, currentPrice, currentTime);
         } else {
           this._orderCheckAttempt += 1;
           const terminal = stillScheduled.reason !== "transient"
@@ -7976,9 +8174,15 @@ export class ClientStrategy implements IStrategy {
             || this._orderCheckAttempt > GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS;
           if (terminal) {
             // Исчерпание толерантности ТРАНЗИЕНТНЫМИ сбоями = сеть не даёт проверить
-            // resting-ордер — продолжать работу нельзя: фатальный сигнал ПОСЛЕ
-            // errorEmitter-лога. "deleted" (подтверждённый not-found) и legacy CC=0 —
-            // не сетевые кейсы, без exit.
+            // resting-ордер — продолжать работу нельзя. НО фатальный сигнал стреляет
+            // ПОСЛЕ терминального teardown ниже: слушатель exit может звать
+            // process.exit синхронно внутри next(), и выстрел до персиста зачистки
+            // (CANCEL_..._AS_CLOSED_FN → setScheduledSignal(null)) оставлял
+            // scheduled-снапшот на диске — рестарт восстанавливал тот же сигнал,
+            // чек снова исчерпывался, снова exit: вечный цикл рестартов одного
+            // сигнала без дюрабельного прогресса. "deleted" (подтверждённый
+            // not-found) и legacy CC=0 — не сетевые кейсы, без exit.
+            let fatalError: Error | null = null;
             if (stillScheduled.reason === "transient" && GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS > 0) {
               const message = "ClientStrategy tick: scheduled-order check attempts exhausted (network), cancelling scheduled signal and signaling fatal exit";
               const payload = {
@@ -7990,16 +8194,31 @@ export class ClientStrategy implements IStrategy {
               };
               this.params.logger.warn(message, payload);
               console.warn(message, payload);
-              const error = new Error(message);
-              errorEmitter.next(error);
-              exitEmitter.next(error);
+              fatalError = new Error(message);
+              errorEmitter.next(fatalError);
             }
+            // Post-verdict STOP: emitted with the FINAL failure streak, before the
+            // counter reset and the cancel teardown below
+            await CALL_ORDER_STOP_EMIT_FN(
+              this,
+              "schedule",
+              stillScheduled.reason !== "transient" ? "deleted" : "exhausted",
+              this._scheduledSignal,
+              currentPrice,
+              currentTime
+            );
             this._orderCheckAttempt = 0;
-            return await CANCEL_SCHEDULED_SIGNAL_AS_CLOSED_FN(
+            const cancelResult = await CANCEL_SCHEDULED_SIGNAL_AS_CLOSED_FN(
               this,
               this._scheduledSignal,
               currentPrice
             );
+            // Фатальный сигнал — только теперь: отмена дюрабельна (scheduled-снапшот
+            // зачищен на диске, cancel-события дошли до брокер-адаптера).
+            if (fatalError) {
+              exitEmitter.next(fatalError);
+            }
+            return cancelResult;
           }
           // Transient failure tolerated: the resting order is assumed still open
           this.params.logger.warn("ClientStrategy tick: scheduled-order check failed, tolerated as transient", {
@@ -8008,6 +8227,8 @@ export class ClientStrategy implements IStrategy {
             attempt: this._orderCheckAttempt,
             maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
           });
+          // Post-verdict CONTINUE: tolerated transient failure, monitoring continues
+          await CALL_ORDER_CONTINUE_EMIT_FN(this, "schedule", this._scheduledSignal, currentPrice, currentTime);
         }
       }
 
@@ -8123,6 +8344,8 @@ export class ClientStrategy implements IStrategy {
       }
       if (stillPending.reason === "confirmed") {
         this._orderCheckAttempt = 0;
+        // Post-verdict CONTINUE: the position order is confirmed still open
+        await CALL_ORDER_CONTINUE_EMIT_FN(this, "active", this._pendingSignal, averagePrice, currentTime);
       } else {
         this._orderCheckAttempt += 1;
         // A FAILED check ("transient") is tolerated up to CC_ORDER_CHECK_RETRY_ATTEMPTS
@@ -8134,9 +8357,15 @@ export class ClientStrategy implements IStrategy {
           || this._orderCheckAttempt > GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS;
         if (terminal) {
           // Исчерпание толерантности ТРАНЗИЕНТНЫМИ сбоями = сеть не даёт проверить
-          // ордер позиции — продолжать работу нельзя: фатальный сигнал ПОСЛЕ
-          // errorEmitter-лога. "deleted" (подтверждённый not-found) и legacy CC=0 —
-          // не сетевые кейсы, без exit.
+          // ордер позиции — продолжать работу нельзя. НО фатальный сигнал стреляет
+          // ПОСЛЕ терминального teardown ниже: слушатель exit может звать
+          // process.exit синхронно внутри next(), и выстрел до персиста зачистки
+          // (CLOSE_..._AS_CLOSED_FN → setPendingSignal(null)) оставлял pending-
+          // снапшот на диске — рестарт восстанавливал ту же позицию, чек снова
+          // исчерпывался, снова exit: вечный цикл рестартов одного сигнала без
+          // дюрабельного прогресса. "deleted" (подтверждённый not-found) и legacy
+          // CC=0 — не сетевые кейсы, без exit.
+          let fatalError: Error | null = null;
           if (stillPending.reason === "transient" && GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS > 0) {
             const message = "ClientStrategy tick: pending-order check attempts exhausted (network), closing position and signaling fatal exit";
             const payload = {
@@ -8148,16 +8377,31 @@ export class ClientStrategy implements IStrategy {
             };
             this.params.logger.warn(message, payload);
             console.warn(message, payload);
-            const error = new Error(message);
-            errorEmitter.next(error);
-            exitEmitter.next(error);
+            fatalError = new Error(message);
+            errorEmitter.next(fatalError);
           }
+          // Post-verdict STOP: emitted with the FINAL failure streak, before the
+          // counter reset and the close teardown below
+          await CALL_ORDER_STOP_EMIT_FN(
+            this,
+            "active",
+            stillPending.reason !== "transient" ? "deleted" : "exhausted",
+            this._pendingSignal,
+            averagePrice,
+            currentTime
+          );
           this._orderCheckAttempt = 0;
-          return await CLOSE_PENDING_SIGNAL_AS_CLOSED_FN(
+          const closeResult = await CLOSE_PENDING_SIGNAL_AS_CLOSED_FN(
             this,
             this._pendingSignal,
             averagePrice
           );
+          // Фатальный сигнал — только теперь: закрытие дюрабельно (pending-снапшот
+          // зачищен на диске, close-события дошли до брокер-адаптера).
+          if (fatalError) {
+            exitEmitter.next(fatalError);
+          }
+          return closeResult;
         }
         // Transient failure tolerated: the order is assumed still open, monitoring continues
         this.params.logger.warn("ClientStrategy tick: pending-order check failed, tolerated as transient", {
@@ -8166,6 +8410,8 @@ export class ClientStrategy implements IStrategy {
           attempt: this._orderCheckAttempt,
           maxAttempts: GLOBAL_CONFIG.CC_ORDER_CHECK_RETRY_ATTEMPTS,
         });
+        // Post-verdict CONTINUE: tolerated transient failure, monitoring continues
+        await CALL_ORDER_CONTINUE_EMIT_FN(this, "active", this._pendingSignal, averagePrice, currentTime);
       }
     }
 
@@ -9147,6 +9393,7 @@ export class ClientStrategy implements IStrategy {
     this.params.logger.debug("ClientStrategy getStatus", { symbol });
     return {
       pendingSignalId: this._pendingSignal?.id ?? null,
+      lastPendingId: this._lastPendingId,
       createdSignal: this._userSignal,
       commitQueue: this._commitQueue,
       closedSignal: this._closedSignal,

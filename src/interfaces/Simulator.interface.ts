@@ -81,6 +81,26 @@ export interface ISimulatorGridAxes {
    * to be allowed (worse -> banned).
    */
   minAuthorHitRate: number[];
+  /**
+   * Weighted consensus thresholds to sweep. An author's vote weight
+   * is his Laplace-smoothed track record (hits+1)/(ideas+2) — a 2/2
+   * newcomer weighs less than a 15/15 veteran. Entry requires the
+   * SUM of weights of unique aligned unbanned authors in the rolling
+   * window to reach the threshold. 0 disables the weighted gate
+   * (binary minIdeasAligned counting only).
+   */
+  minWeightAligned: number[];
+  /**
+   * Profit lock levels to sweep, percent from entry; 0 disables.
+   * When price TOUCHES +X% a fixed floor arms at that level and the
+   * trade exits only on a PULLBACK to the floor — unlike a plain
+   * fixed take, a runner keeps running and is later handled by the
+   * trailing take (whose floor rises above the lock once the peak
+   * clears it). Covers the zone where the trailing take is not armed
+   * yet (peak below entry/(1 - r)) and profit would otherwise bleed
+   * back to zero.
+   */
+  profitLockPercent: number[];
 }
 
 /**
@@ -99,6 +119,16 @@ export interface ISimulatorGridPoint {
   minAuthorTrack: number;
   /** Author ban rule: minimum hit rate (0..1) to be allowed. */
   minAuthorHitRate: number;
+  /**
+   * Weighted consensus threshold: required sum of Laplace-smoothed
+   * track-record weights of aligned unbanned authors; 0 = disabled.
+   */
+  minWeightAligned: number;
+  /**
+   * Profit lock: fixed floor armed when price touches +X% from
+   * entry, exit on pullback to the floor; 0 = disabled.
+   */
+  profitLockPercent: number;
 }
 
 /**
@@ -107,6 +137,7 @@ export interface ISimulatorGridPoint {
 export type SimulatorExitReason =
   | "hard_stop"
   | "trailing_take"
+  | "profit_lock"
   | "time_expired"
   | "data_truncated";
 
@@ -156,6 +187,19 @@ export interface ISimulatorPointReport {
   profitFactor: number;
   /** Maximum drawdown of the cumulative trade PnL curve, percent. */
   maxSeriesDrawdownPercent: number;
+  /**
+   * Calmar ratio: total PnL annualized over the shared daily bucket
+   * window (x 365/days) divided by maxSeriesDrawdownPercent.
+   * Infinity when the curve has no drawdown and PnL is positive
+   * (JSON-serializes to null, same as profitFactor/sortino).
+   */
+  calmarRatio: number;
+  /**
+   * Recovery factor: total PnL divided by maxSeriesDrawdownPercent.
+   * Infinity when the curve has no drawdown and PnL is positive
+   * (JSON-serializes to null, same as profitFactor/sortino).
+   */
+  recoveryFactor: number;
   /** Mean holding time per trade, minutes. */
   avgHoldMinutes: number;
   /** 95th percentile of holding time, minutes — spots eternal holds. */
@@ -171,7 +215,10 @@ export interface ISimulatorPointReport {
   sharpe: number;
   /**
    * Time-based Sortino: like sharpe but deviation is computed over
-   * negative daily increments only; 999 when no losing days.
+   * negative daily increments only. Infinity when the series has no
+   * losing day (consistent with profitFactor; a finite sentinel would
+   * mislead — real values can exceed any constant). NB: Infinity
+   * JSON-serializes to null in saved artifacts.
    */
   sortino: number;
   /** Trade counts per exit reason. */
@@ -204,9 +251,13 @@ export interface ISimulatorAuthorStat {
 }
 
 /**
- * Ranking criterion for picking grid winners.
+ * Ranking criterion for picking grid winners. "recovery" ranks by
+ * recoveryFactor (total PnL / max series drawdown); a calmar ranking
+ * would produce the IDENTICAL ordering — within one run calmar is
+ * recoveryFactor times a constant (365/days of the shared bucket
+ * window) — so only the raw criterion exists.
  */
-export type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl";
+export type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
 
 /**
  * Winner of one ranking criterion with its trade list.
@@ -221,7 +272,7 @@ export interface ISimulatorBest {
 }
 
 /**
- * Final result of a simulation run: grid reports, three ranking
+ * Final result of a simulation run: grid reports, four ranking
  * winners and the trained author filter artifact.
  */
 export interface ISimulatorResult {
@@ -258,8 +309,53 @@ export interface ISimulatorResult {
   p99HoldMinutes: number;
   /** All grid point reports, sorted by Sharpe descending. */
   reports: ISimulatorPointReport[];
-  /** Winners of the three rankings: sharpe, sortino, pnl. */
+  /** Winners of the rankings: sharpe, sortino, pnl, recovery. */
   best: ISimulatorBest[];
+}
+
+/**
+ * Result of an out-of-sample test: ONE frozen grid point evaluated
+ * over fresh ideas with a FROZEN author track record. Nothing is
+ * trained on the test data — the honesty run() deliberately skips
+ * (lookahead inside train) is provided here.
+ */
+export interface ISimulatorTestResult {
+  /** Trading pair symbol the test ran for. */
+  symbol: string;
+  /** Total ideas of the symbol received (including NEUTRAL). */
+  ideasTotal: number;
+  /** Directional ideas tested (NEUTRAL and flood duplicates excluded). */
+  ideasDirectional: number;
+  /** Number of idea profiles built (ideas with candle data). */
+  profileCount: number;
+  /** Profiles cut short by end of candle data. */
+  truncatedCount: number;
+  /** The frozen grid point the test evaluated (from the train run). */
+  point: ISimulatorGridPoint;
+  /** Out-of-sample report of the point (same metrics as in run()). */
+  report: ISimulatorPointReport;
+  /** Trades of the point over the test range. */
+  trades: ISimulatorTrade[];
+  /**
+   * The FROZEN author stats the test was gated by: raw ideas/hits
+   * come from the train run verbatim, the banned flag is re-derived
+   * under the tested point's ban rule. Test outcomes never feed back
+   * into these numbers.
+   */
+  authorStats: ISimulatorAuthorStat[];
+  /** Logins allowed under the frozen stats and the point's ban rule. */
+  allowedAuthors: string[];
+  /**
+   * Logins banned on the test range: train authors failing the rule
+   * PLUS authors seen only in the test feed (unproven = banned).
+   */
+  bannedAuthors: string[];
+  /** Mean holding time across the test trades, minutes. */
+  avgHoldMinutes: number;
+  /** 95th percentile of holding time, minutes. */
+  p95HoldMinutes: number;
+  /** 99th percentile of holding time, minutes. */
+  p99HoldMinutes: number;
 }
 
 /**
@@ -342,6 +438,11 @@ export interface ISimulatorCallbacks {
   ): void;
   /** Simulation finished. */
   onDone(symbol: string, result: ISimulatorResult): void;
+  /**
+   * Out-of-sample test finished. onAuthorsTrained deliberately never
+   * fires during a test — nothing is trained on the test data.
+   */
+  onTestDone(symbol: string, result: ISimulatorTestResult): void;
 }
 
 /**
@@ -364,6 +465,19 @@ export interface ISimulator {
    * profiles -> author filter -> grid evaluation -> rankings.
    */
   run(symbol: string, ideas: ISimulatorIdea[]): Promise<ISimulatorResult>;
+  /**
+   * Out-of-sample test: evaluates ONE frozen grid point over fresh
+   * ideas with a FROZEN author track record from a train run.
+   * Profiles are built for the test ideas, but the author filter is
+   * NOT retrained — authors unseen in the frozen stats are banned by
+   * default (unproven = banned).
+   */
+  test(
+    symbol: string,
+    ideas: ISimulatorIdea[],
+    point: ISimulatorGridPoint,
+    authorStats: ISimulatorAuthorStat[],
+  ): Promise<ISimulatorTestResult>;
 }
 
 /**

@@ -6,10 +6,15 @@ import {
   addActionSchema,
   setConfig,
   listenSync,
+  listenOrderFill,
+  listenOrderReject,
+  listenOrderContinue,
+  listenOrderStop,
   listenCheck,
   listenExit,
   OrderRejectedError,
   OrderDeletedError,
+  Notification,
   lib,
   MethodContextService,
 } from "../../build/index.mjs";
@@ -375,6 +380,425 @@ test("VERDICT: OrderRejectedError on open drops the attempt without arming the r
     pass(`terminal open rejection dropped id ${openIds[0]}, fresh id ${openIds[1]} opened`);
   } finally {
     unsubscribe();
+  }
+});
+
+/**
+ * VERDICT: терминальный отказ ПОТРЕБЛЯЕТ детерминированный id — стратегия,
+ * переиздающая ТОТ ЖЕ id каждый тик (канальный сигнал), не должна долбить
+ * биржу реальным ордером поминутно: whipsaw-гард фильтрует повтор, open-гейт
+ * вызывается ровно один раз.
+ */
+test("VERDICT: terminal open rejection consumes a deterministic signal id (no per-tick broker spam)", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-open-terminal-deterministic-strategy",
+    exchangeName: "binance-verdict-open-terminal-deterministic",
+    frameName: "",
+  };
+
+  let openCalls = 0;
+
+  makeExchange(context.exchangeName, () => 50000);
+  addStrategySchema({
+    strategyName: context.strategyName,
+    interval: "1m",
+    getSignal: async () => ({
+      id: "verdict-deterministic-open-id",
+      position: "long",
+      note: "verdict deterministic terminal",
+      priceTakeProfit: 65000,
+      priceStopLoss: 35000,
+      minuteEstimatedTime: 120,
+    }),
+  });
+
+  const unsubscribe = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open" || event.type !== "active") return;
+    openCalls += 1;
+    throw new OrderRejectedError("verdict: NOTIONAL — order can never be placed");
+  }, true);
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const actions = [];
+    for (let i = 0; i < 4; i++) {
+      const tick = await runTick(new Date(t0 + i * MIN));
+      actions.push(tick.action);
+    }
+
+    if (actions.some((action) => action !== "idle")) {
+      fail(`expected 4 idle ticks (terminal drop consumed the id), got ${actions.join(",")}`);
+      return;
+    }
+    if (openCalls !== 1) {
+      fail(`REGRESSION: expected exactly 1 open-gate call for the deterministic id, got ${openCalls} (per-tick broker spam)`);
+      return;
+    }
+
+    pass(`terminal rejection consumed deterministic id after ${openCalls} gate call, ${actions.length} idle ticks`);
+  } finally {
+    unsubscribe();
+  }
+});
+
+/**
+ * VERDICT: то же потребление id для SCHEDULE-гейта — терминальный отказ
+ * размещения resting-ордера не должен переразмещать тот же детерминированный
+ * id каждый тик.
+ */
+test("VERDICT: terminal schedule-placement rejection consumes a deterministic signal id", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-schedule-terminal-deterministic-strategy",
+    exchangeName: "binance-verdict-schedule-terminal-deterministic",
+    frameName: "",
+  };
+
+  let placementCalls = 0;
+
+  makeExchange(context.exchangeName, () => 50000);
+  addStrategySchema({
+    strategyName: context.strategyName,
+    interval: "1m",
+    getSignal: async () => ({
+      id: "verdict-deterministic-schedule-id",
+      position: "long",
+      note: "verdict deterministic schedule terminal",
+      priceOpen: 45000,
+      priceTakeProfit: 65000,
+      priceStopLoss: 35000,
+      minuteEstimatedTime: 120,
+    }),
+  });
+
+  const unsubscribe = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open" || event.type !== "schedule") return;
+    placementCalls += 1;
+    throw new OrderRejectedError("verdict: NOTIONAL — resting order can never be placed");
+  }, true);
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const actions = [];
+    for (let i = 0; i < 4; i++) {
+      const tick = await runTick(new Date(t0 + i * MIN));
+      actions.push(tick.action);
+    }
+
+    if (actions.some((action) => action !== "idle")) {
+      fail(`expected 4 idle ticks (terminal drop consumed the id), got ${actions.join(",")}`);
+      return;
+    }
+    if (placementCalls !== 1) {
+      fail(`REGRESSION: expected exactly 1 schedule-gate call for the deterministic id, got ${placementCalls} (per-tick broker spam)`);
+      return;
+    }
+
+    pass(`terminal schedule rejection consumed deterministic id after ${placementCalls} gate call, ${actions.length} idle ticks`);
+  } finally {
+    unsubscribe();
+  }
+});
+
+/**
+ * VERDICT: listenOrderFill — post-verdict канал: события ТОЛЬКО после
+ * подтверждённого вердикта. Две транзиентные попытки + подтверждение дают
+ * 3 sync-события (каждая попытка) и ровно 1 fill (подтверждённый open);
+ * терминальный реджект не эмитит fill вовсе.
+ */
+test("VERDICT: listenOrderFill fires only on the confirmed verdict, never on attempts", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-order-fill-strategy",
+    exchangeName: "binance-verdict-order-fill",
+    frameName: "",
+  };
+
+  let syncCalls = 0;
+  const fills = [];
+
+  makeExchange(context.exchangeName, () => 50000);
+  makeStrategy(context, { minuteEstimatedTime: 120, once: false });
+
+  const unsubscribeSync = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open" || event.type !== "active") return;
+    syncCalls += 1;
+    if (syncCalls <= 2) {
+      throw new Error("verdict: transient network failure on open");
+    }
+  }, true);
+
+  const unsubscribeFill = listenOrderFill((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    fills.push({ action: event.action, type: event.type, id: event.signalId, attempt: event.attempt });
+  });
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const tick1 = await runTick(new Date(t0));
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+    const tick3 = await runTick(new Date(t0 + 2 * MIN));
+
+    if (tick1.action !== "idle" || tick2.action !== "idle" || tick3.action !== "opened") {
+      fail(`expected idle, idle, opened — got ${tick1.action}, ${tick2.action}, ${tick3.action}`);
+      return;
+    }
+    if (syncCalls !== 3) {
+      fail(`expected 3 sync attempts, got ${syncCalls}`);
+      return;
+    }
+    const openFills = fills.filter(({ action }) => action === "signal-open");
+    if (openFills.length !== 1) {
+      fail(`expected exactly 1 confirmed open fill, got ${openFills.length}: ${JSON.stringify(fills)}`);
+      return;
+    }
+
+    pass(`3 sync attempts produced exactly 1 confirmed fill (attempt=${openFills[0].attempt})`);
+  } finally {
+    unsubscribeSync();
+    unsubscribeFill();
+  }
+});
+
+/**
+ * VERDICT: терминальный реджект НЕ эмитит fill-событие, но эмитит РОВНО ОДНО
+ * reject-событие (listenOrderReject) с текстом причины из OrderRejectedError.
+ */
+test("VERDICT: terminal open rejection emits no order-fill event", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-order-fill-terminal-strategy",
+    exchangeName: "binance-verdict-order-fill-terminal",
+    frameName: "",
+  };
+
+  let fillCount = 0;
+  const rejects = [];
+
+  makeExchange(context.exchangeName, () => 50000);
+  addStrategySchema({
+    strategyName: context.strategyName,
+    interval: "1m",
+    getSignal: async () => ({
+      id: "verdict-fill-terminal-id",
+      position: "long",
+      note: "verdict fill terminal",
+      priceTakeProfit: 65000,
+      priceStopLoss: 35000,
+      minuteEstimatedTime: 120,
+    }),
+  });
+
+  const unsubscribeSync = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open" || event.type !== "active") return;
+    throw new OrderRejectedError("verdict: NOTIONAL — order can never be placed");
+  }, true);
+
+  const unsubscribeFill = listenOrderFill((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    fillCount += 1;
+  });
+
+  const unsubscribeReject = listenOrderReject((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    rejects.push({ action: event.action, id: event.signalId, message: event.message });
+  });
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const tick1 = await runTick(new Date(t0));
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+
+    if (tick1.action !== "idle" || tick2.action !== "idle") {
+      fail(`expected idle, idle — got ${tick1.action}, ${tick2.action}`);
+      return;
+    }
+    if (fillCount !== 0) {
+      fail(`REGRESSION: terminal rejection must emit NO fill events, got ${fillCount}`);
+      return;
+    }
+    if (rejects.length !== 1) {
+      fail(`expected exactly 1 order-reject event (id consumed, no per-tick repeats), got ${rejects.length}: ${JSON.stringify(rejects)}`);
+      return;
+    }
+    if (!rejects[0].message.includes("NOTIONAL")) {
+      fail(`expected the OrderRejectedError message in the reject event, got "${rejects[0].message}"`);
+      return;
+    }
+
+    pass(`terminal rejection emitted 0 fill events and exactly 1 reject event (${rejects[0].message})`);
+  } finally {
+    unsubscribeSync();
+    unsubscribeFill();
+    unsubscribeReject();
+  }
+});
+
+/**
+ * VERDICT: пост-вердиктные события доезжают до ленты нотификаций —
+ * терминальный реджект кладёт ровно один order_reject.open (с message из
+ * OrderRejectedError), подтверждённый open — ровно один order_fill.open.
+ */
+test("VERDICT: order fill and reject land in the notification feed", async ({ pass, fail }) => {
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-notify-feed-strategy",
+    exchangeName: "binance-verdict-notify-feed",
+    frameName: "",
+  };
+
+  makeExchange(context.exchangeName, () => 50000);
+  makeStrategy(context, { minuteEstimatedTime: 120, once: false });
+
+  let gateCalls = 0;
+  const unsubscribe = listenSync((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    if (event.action !== "signal-open" || event.type !== "active") return;
+    gateCalls += 1;
+    if (gateCalls === 1) {
+      throw new OrderRejectedError("verdict: NOTIONAL — feed test rejection");
+    }
+  }, true);
+
+  const disableNotification = Notification.enable();
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const tick1 = await runTick(new Date(t0));
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+    if (tick1.action !== "idle" || tick2.action !== "opened") {
+      fail(`expected idle, opened — got ${tick1.action}, ${tick2.action}`);
+      return;
+    }
+
+    const feed = (await Notification.getData(false))
+      .filter((row) => row.strategyName === context.strategyName);
+    const rejects = feed.filter(({ type }) => type === "order_reject.open");
+    const fills = feed.filter(({ type }) => type === "order_fill.open");
+
+    if (rejects.length !== 1) {
+      fail(`expected exactly 1 order_reject.open notification, got ${rejects.length}`);
+      return;
+    }
+    if (!rejects[0].message.includes("NOTIONAL")) {
+      fail(`reject notification must carry the OrderRejectedError message, got "${rejects[0].message}"`);
+      return;
+    }
+    if (fills.length !== 1) {
+      fail(`expected exactly 1 order_fill.open notification, got ${fills.length}`);
+      return;
+    }
+    if (fills[0].signalId !== tick2.signal.id) {
+      fail(`fill notification must carry the OPENED signal id ${tick2.signal.id}, got ${fills[0].signalId}`);
+      return;
+    }
+    if (rejects[0].signalId === fills[0].signalId) {
+      fail(`reject and fill must belong to different signal ids, got the same "${fills[0].signalId}"`);
+      return;
+    }
+
+    pass(`feed carries 1 order_reject.open ("${rejects[0].message}") and 1 order_fill.open (${fills[0].signalId})`);
+  } finally {
+    disableNotification();
+    unsubscribe();
+  }
+});
+
+/**
+ * VERDICT: пост-вердиктная пара чека — listenOrderContinue отдаёт толерантные
+ * решения (attempt 1,2), listenOrderStop — ровно одно терминальное
+ * ("exhausted", финальный стрик 3); в ленту нотификаций попадает один
+ * order_continue.check (TTL-троттл глушит повторы) и один order_stop.check.
+ */
+test("VERDICT: check decisions land on continue/stop channels and the notification feed", async ({ pass, fail }) => {
+  setConfig({ CC_ORDER_CHECK_RETRY_ATTEMPTS: 2 }, true);
+
+  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
+  const context = {
+    strategyName: "verdict-check-feed-strategy",
+    exchangeName: "binance-verdict-check-feed",
+    frameName: "",
+  };
+
+  const continues = [];
+  const stops = [];
+
+  makeExchange(context.exchangeName, () => 50000);
+  makeStrategy(context, { minuteEstimatedTime: 120, once: true });
+
+  const unsubscribeExit = listenExit(() => void 0);
+  const unsubscribeCheck = listenCheck((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    throw new Error("verdict: check always fails");
+  }, true);
+
+  const unsubscribeContinue = listenOrderContinue((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    continues.push({ type: event.type, attempt: event.attempt });
+  });
+
+  const unsubscribeStop = listenOrderStop((event) => {
+    if (event.strategyName !== context.strategyName) return;
+    stops.push({ type: event.type, reason: event.reason, attempt: event.attempt });
+  });
+
+  const disableNotification = Notification.enable();
+
+  try {
+    const runTick = makeRunTick(context);
+
+    const tick1 = await runTick(new Date(t0));
+    const tick2 = await runTick(new Date(t0 + 1 * MIN));
+    const tick3 = await runTick(new Date(t0 + 2 * MIN));
+    const tick4 = await runTick(new Date(t0 + 3 * MIN));
+    if (tick1.action !== "opened" || tick2.action !== "active" || tick3.action !== "active" || tick4.action !== "closed") {
+      fail(`expected opened, active, active, closed — got ${tick1.action}, ${tick2.action}, ${tick3.action}, ${tick4.action}`);
+      return;
+    }
+
+    const flatContinues = continues.map(({ type, attempt }) => `${type}:${attempt}`).join(",");
+    if (flatContinues !== "active:1,active:2") {
+      fail(`expected tolerated continues "active:1,active:2", got "${flatContinues}"`);
+      return;
+    }
+    if (stops.length !== 1 || stops[0].type !== "active" || stops[0].reason !== "exhausted" || stops[0].attempt !== 3) {
+      fail(`expected exactly 1 stop {active, exhausted, attempt 3}, got ${JSON.stringify(stops)}`);
+      return;
+    }
+
+    const feed = (await Notification.getData(false))
+      .filter((row) => row.strategyName === context.strategyName);
+    const feedContinues = feed.filter(({ type }) => type === "order_continue.check");
+    const feedStops = feed.filter(({ type }) => type === "order_stop.check");
+
+    // TTL-троттл (CC_NOTIFICATION_ORDER_CHECK_TTL, 15 мин по умолчанию) глушит
+    // второе continue на минутных тиках — в ленте остаётся только первое
+    if (feedContinues.length !== 1 || feedContinues[0].attempt !== 1) {
+      fail(`expected exactly 1 throttled order_continue.check (attempt 1), got ${JSON.stringify(feedContinues.map(({ attempt }) => attempt))}`);
+      return;
+    }
+    if (feedStops.length !== 1 || feedStops[0].reason !== "exhausted") {
+      fail(`expected exactly 1 order_stop.check (exhausted), got ${JSON.stringify(feedStops)}`);
+      return;
+    }
+
+    pass(`continues "${flatContinues}", stop {${stops[0].reason}, attempt ${stops[0].attempt}}, feed: 1 continue (throttled) + 1 stop`);
+  } finally {
+    disableNotification();
+    unsubscribeContinue();
+    unsubscribeStop();
+    unsubscribeCheck();
+    unsubscribeExit();
   }
 });
 

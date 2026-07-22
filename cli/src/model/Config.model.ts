@@ -12,8 +12,12 @@ import {
   RiskContract,
   TrailingStopCommit,
   TrailingTakeCommit,
-  OrderOpenContract,
-  OrderCloseContract,
+  OrderFillOpenContract,
+  OrderFillCloseContract,
+  OrderRejectOpenContract,
+  OrderRejectCloseContract,
+  OrderContinueContract,
+  OrderStopContract,
   SignalInfoContract,
 } from "backtest-kit";
 
@@ -40,6 +44,10 @@ export interface NotificationConfig {
   partial_profit: boolean;
   order_sync: boolean;
   order_check: boolean;
+  order_fill: boolean;
+  order_reject: boolean;
+  order_continue: boolean;
+  order_stop: boolean;
   strategy_commit: boolean;
 }
 
@@ -55,8 +63,12 @@ export interface TelegramConfig {
   getClosedMarkdown(event: IStrategyTickResultClosed): Promise<string>;
   getRiskMarkdown(event: RiskContract): Promise<string>;
   getAverageBuyMarkdown(event: AverageBuyCommit): Promise<string>;
-  getSignalOpenMarkdown(event: OrderOpenContract): Promise<string>;
-  getSignalCloseMarkdown(event: OrderCloseContract): Promise<string>;
+  getOrderFillOpenMarkdown(event: OrderFillOpenContract): Promise<string>;
+  getOrderFillCloseMarkdown(event: OrderFillCloseContract): Promise<string>;
+  getOrderRejectOpenMarkdown(event: OrderRejectOpenContract): Promise<string>;
+  getOrderRejectCloseMarkdown(event: OrderRejectCloseContract): Promise<string>;
+  getOrderContinueMarkdown(event: OrderContinueContract): Promise<string>;
+  getOrderStopMarkdown(event: OrderStopContract): Promise<string>;
   getCancelScheduledMarkdown(event: CancelScheduledCommit): Promise<string>;
   getClosePendingMarkdown(event: ClosePendingCommit): Promise<string>;
   getSignalInfoMarkdown(event: SignalInfoContract): Promise<string>;

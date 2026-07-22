@@ -159,7 +159,7 @@ Simulator flags (--simulator):
   Runs the backtest-kit Simulator entity: one 5-day candle pass per idea, flood
   dedupe (one idea per author per direction per 8h), default-ban author filter
   (ban thresholds are grid axes), grid evaluation with time-based Sharpe/Sortino,
-  three ranking winners. The report includes the production author whitelist.
+  four ranking winners. The report includes the production author whitelist.
   Ideas of other symbols are filtered out — one shared feed serves any --symbol.
 
   No output flag → print the Markdown summary to stdout. With --verbose every
@@ -231,8 +231,8 @@ Examples:
   node ${ENTRY_PATH} --pnldebug --priceopen 67956.73 --direction long --when 1772064000000 --minutes 60 --markdown
   node ${ENTRY_PATH} --brokerdebug --commit signal-open --symbol BTCUSDT
   node ${ENTRY_PATH} --brokerdebug --commit partial-profit --symbol ETHUSDT
-  node ${ENTRY_PATH} --simulator --symbol BTCUSDT ./assets/ts-ideas.normalized.jsonl
-  node ${ENTRY_PATH} --simulator --symbol BTCUSDT --json --output jun_2026_sweep ./assets/ts-ideas.normalized.jsonl
+  node ${ENTRY_PATH} --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
+  node ${ENTRY_PATH} --simulator --symbol BTCUSDT --json --output jun_2026_sweep ./assets/tv-ideas.normalized.jsonl
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts ./content/feb_2026.strategy/feb_2026.test.ts
   node ${ENTRY_PATH} --init --output my-trading-bot

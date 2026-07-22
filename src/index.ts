@@ -165,6 +165,14 @@ export {
   listenStrategyCommitOnce,
   listenSync,
   listenSyncOnce,
+  listenOrderFill,
+  listenOrderFillOnce,
+  listenOrderReject,
+  listenOrderRejectOnce,
+  listenOrderContinue,
+  listenOrderContinueOnce,
+  listenOrderStop,
+  listenOrderStopOnce,
   listenCheck,
   listenCheckOnce,
   listenHighestProfit,
@@ -247,6 +255,7 @@ export {
   ISimulatorGridAxes,
   ISimulatorBest,
   ISimulatorResult,
+  ISimulatorTestResult,
   ISimulatorSchema,
 } from "./interfaces/Simulator.interface";
 
@@ -435,6 +444,26 @@ export {
   OrderOpenContract,
   OrderSyncContract
 } from "./contract/OrderSync.contract";
+
+export {
+  OrderFillContract,
+  OrderFillOpenContract,
+  OrderFillCloseContract
+} from "./contract/OrderFill.contract";
+
+export {
+  OrderRejectContract,
+  OrderRejectOpenContract,
+  OrderRejectCloseContract
+} from "./contract/OrderReject.contract";
+
+export {
+  OrderContinueContract
+} from "./contract/OrderContinue.contract";
+
+export {
+  OrderStopContract
+} from "./contract/OrderStop.contract";
 
 export {
   OrderCheckContract

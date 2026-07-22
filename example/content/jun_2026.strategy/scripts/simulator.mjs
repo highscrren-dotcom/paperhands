@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync } from "fs";
 import ccxt from "ccxt";
 
 const ASSETS_URL = new URL("../assets/", import.meta.url);
-const IDEAS_PATH = new URL("ts-ideas.normalized.jsonl", ASSETS_URL);
+const IDEAS_PATH = new URL("tv-ideas.normalized.jsonl", ASSETS_URL);
 const REPORT_PATH = new URL("sweep.report.BTCUSDT.json", ASSETS_URL);
 
 const getExchange = singleshot(async () => {
@@ -68,6 +68,10 @@ addSimulatorSchema({
     // правило бана авторов — тоже оси перебора
     minAuthorTrack: [2, 3, 5],
     minAuthorHitRate: [0.5, 0.6],
+    // взвешенный консенсус: 0 = выкл, 0.6 ~ соло доказанного автора,
+    // 1.1 ~ пара авторов (вес Лапласа (hits+1)/(ideas+2))
+    minWeightAligned: [0],
+    profitLockPercent: [0],
   },
 });
 

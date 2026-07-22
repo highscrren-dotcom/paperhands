@@ -16,8 +16,12 @@ import {
   RiskContract,
   TrailingStopCommit,
   TrailingTakeCommit,
-  OrderOpenContract,
-  OrderCloseContract,
+  OrderFillOpenContract,
+  OrderFillCloseContract,
+  OrderRejectOpenContract,
+  OrderRejectCloseContract,
+  OrderContinueContract,
+  OrderStopContract,
   SignalInfoContract,
 } from "backtest-kit";
 import ResolveService from "../core/ResolveService";
@@ -42,8 +46,12 @@ type Data =
   | TrailingTakeCommit
   | AverageBuyCommit
   | RiskContract
-  | OrderOpenContract
-  | OrderCloseContract
+  | OrderFillOpenContract
+  | OrderFillCloseContract
+  | OrderRejectOpenContract
+  | OrderRejectCloseContract
+  | OrderContinueContract
+  | OrderStopContract
   | SignalInfoContract;
 
 const READ_TEMPLATE_FN = memoize(
@@ -218,26 +226,70 @@ export class TelegramTemplateService implements TelegramConfig {
     return await RENDER_TEMPLATE_FN("average-buy.mustache", event, this);
   };
 
-  public getSignalOpenMarkdown = async (event: OrderOpenContract) => {
-    this.loggerService.log("telegramTemplateService getSignalOpenMarkdown", {
+  public getOrderFillOpenMarkdown = async (event: OrderFillOpenContract) => {
+    this.loggerService.log("telegramTemplateService getOrderFillOpenMarkdown", {
       event,
     });
     const adapter = await this.getTelegramAdapter();
-    if (adapter?.getSignalOpenMarkdown) {
-      return await adapter.getSignalOpenMarkdown(event);
+    if (adapter?.getOrderFillOpenMarkdown) {
+      return await adapter.getOrderFillOpenMarkdown(event);
     }
-    return await RENDER_TEMPLATE_FN("signal-open.mustache", event, this);
+    return await RENDER_TEMPLATE_FN("order-fill-open.mustache", event, this);
   };
 
-  public getSignalCloseMarkdown = async (event: OrderCloseContract) => {
-    this.loggerService.log("telegramTemplateService getSignalCloseMarkdown", {
+  public getOrderFillCloseMarkdown = async (event: OrderFillCloseContract) => {
+    this.loggerService.log("telegramTemplateService getOrderFillCloseMarkdown", {
       event,
     });
     const adapter = await this.getTelegramAdapter();
-    if (adapter?.getSignalCloseMarkdown) {
-      return await adapter.getSignalCloseMarkdown(event);
+    if (adapter?.getOrderFillCloseMarkdown) {
+      return await adapter.getOrderFillCloseMarkdown(event);
     }
-    return await RENDER_TEMPLATE_FN("signal-close.mustache", event, this);
+    return await RENDER_TEMPLATE_FN("order-fill-close.mustache", event, this);
+  };
+
+  public getOrderRejectOpenMarkdown = async (event: OrderRejectOpenContract) => {
+    this.loggerService.log("telegramTemplateService getOrderRejectOpenMarkdown", {
+      event,
+    });
+    const adapter = await this.getTelegramAdapter();
+    if (adapter?.getOrderRejectOpenMarkdown) {
+      return await adapter.getOrderRejectOpenMarkdown(event);
+    }
+    return await RENDER_TEMPLATE_FN("order-reject-open.mustache", event, this);
+  };
+
+  public getOrderRejectCloseMarkdown = async (event: OrderRejectCloseContract) => {
+    this.loggerService.log("telegramTemplateService getOrderRejectCloseMarkdown", {
+      event,
+    });
+    const adapter = await this.getTelegramAdapter();
+    if (adapter?.getOrderRejectCloseMarkdown) {
+      return await adapter.getOrderRejectCloseMarkdown(event);
+    }
+    return await RENDER_TEMPLATE_FN("order-reject-close.mustache", event, this);
+  };
+
+  public getOrderContinueMarkdown = async (event: OrderContinueContract) => {
+    this.loggerService.log("telegramTemplateService getOrderContinueMarkdown", {
+      event,
+    });
+    const adapter = await this.getTelegramAdapter();
+    if (adapter?.getOrderContinueMarkdown) {
+      return await adapter.getOrderContinueMarkdown(event);
+    }
+    return await RENDER_TEMPLATE_FN("order-continue.mustache", event, this);
+  };
+
+  public getOrderStopMarkdown = async (event: OrderStopContract) => {
+    this.loggerService.log("telegramTemplateService getOrderStopMarkdown", {
+      event,
+    });
+    const adapter = await this.getTelegramAdapter();
+    if (adapter?.getOrderStopMarkdown) {
+      return await adapter.getOrderStopMarkdown(event);
+    }
+    return await RENDER_TEMPLATE_FN("order-stop.mustache", event, this);
   };
 
   public getCancelScheduledMarkdown = async (event: CancelScheduledCommit) => {

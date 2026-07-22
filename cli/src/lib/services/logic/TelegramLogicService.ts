@@ -1,7 +1,7 @@
 import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import TYPES from "../../../lib/core/types";
-import { compose, singleshot, trycatch } from "functools-kit";
+import { compose, singleshot, trycatch, ttl } from "functools-kit";
 import { getTelegram } from "../../../config/telegram";
 import {
   BreakevenCommit,
@@ -14,15 +14,22 @@ import {
   listenRisk,
   listenSignal,
   listenStrategyCommit,
-  listenSync,
+  listenOrderFill,
+  listenOrderReject,
+  listenOrderContinue,
+  listenOrderStop,
   PartialLossCommit,
   PartialProfitCommit,
   RiskContract,
   TrailingStopCommit,
   TrailingTakeCommit,
   AverageBuyCommit,
-  OrderOpenContract,
-  OrderCloseContract,
+  OrderFillOpenContract,
+  OrderFillCloseContract,
+  OrderRejectOpenContract,
+  OrderRejectCloseContract,
+  OrderContinueContract,
+  OrderStopContract,
   SignalInfoContract,
   listenSignalNotify,
 } from "backtest-kit";
@@ -33,6 +40,14 @@ const STOP_BOT_FN = singleshot(async () => {
   const { stopBot } = await getTelegram();
   stopBot();
 });
+
+/**
+ * Throttle window for the per-tick order_continue decision channel: at most one
+ * Telegram notification per signalId per 15 minutes via functools-kit ttl. The
+ * terminal order_stop is NOT throttled (fires once per signal) and clears the
+ * throttle slot for its signalId.
+ */
+const ORDER_CHECK_NOTIFY_TTL = 15 * 60 * 1_000;
 
 export class TelegramLogicService {
   private readonly loggerService = inject<LoggerService>(TYPES.loggerService);
@@ -207,11 +222,11 @@ export class TelegramLogicService {
     });
   };
 
-  private notifySignalOpen = trycatch(async (event: OrderOpenContract) => {
-    this.loggerService.log("telegramLogicService notifySignalOpen", {
+  private notifyOrderFillOpen = trycatch(async (event: OrderFillOpenContract) => {
+    this.loggerService.log("telegramLogicService notifyOrderFillOpen", {
       event,
     });
-    const markdown = await this.telegramTemplateService.getSignalOpenMarkdown(event);
+    const markdown = await this.telegramTemplateService.getOrderFillOpenMarkdown(event);
     if (!markdown) {
       return;
     }
@@ -221,11 +236,84 @@ export class TelegramLogicService {
     });
   });
 
-  private notifySignalClose = trycatch(async (event: OrderCloseContract) => {
-    this.loggerService.log("telegramLogicService notifySignalClose", {
+  private notifyOrderFillClose = trycatch(async (event: OrderFillCloseContract) => {
+    this.loggerService.log("telegramLogicService notifyOrderFillClose", {
       event,
     });
-    const markdown = await this.telegramTemplateService.getSignalCloseMarkdown(event);
+    const markdown = await this.telegramTemplateService.getOrderFillCloseMarkdown(event);
+    if (!markdown) {
+      return;
+    }
+    await this.telegramWebService.publishNotify({
+      symbol: event.symbol,
+      markdown,
+    });
+  });
+
+  private notifyOrderRejectOpen = trycatch(async (event: OrderRejectOpenContract) => {
+    this.loggerService.log("telegramLogicService notifyOrderRejectOpen", {
+      event,
+    });
+    const markdown = await this.telegramTemplateService.getOrderRejectOpenMarkdown(event);
+    if (!markdown) {
+      return;
+    }
+    await this.telegramWebService.publishNotify({
+      symbol: event.symbol,
+      markdown,
+    });
+  });
+
+  private notifyOrderRejectClose = trycatch(async (event: OrderRejectCloseContract) => {
+    this.loggerService.log("telegramLogicService notifyOrderRejectClose", {
+      event,
+    });
+    const markdown = await this.telegramTemplateService.getOrderRejectCloseMarkdown(event);
+    if (!markdown) {
+      return;
+    }
+    await this.telegramWebService.publishNotify({
+      symbol: event.symbol,
+      markdown,
+    });
+  });
+
+  /**
+   * Post-verdict order-check CONTINUE (order_continue). Fires every live tick the
+   * order survives the check, so it is throttled via functools-kit ttl:
+   * one message per signalId per ORDER_CHECK_NOTIFY_TTL (15 minutes).
+   */
+  private notifyOrderContinue = ttl(
+    trycatch(async (event: OrderContinueContract) => {
+      this.loggerService.log("telegramLogicService notifyOrderContinue", {
+        event,
+      });
+      const markdown = await this.telegramTemplateService.getOrderContinueMarkdown(event);
+      if (!markdown) {
+        return;
+      }
+      await this.telegramWebService.publishNotify({
+        symbol: event.symbol,
+        markdown,
+      });
+    }),
+    {
+      key: ([event]) => event.signalId,
+      timeout: ORDER_CHECK_NOTIFY_TTL,
+    },
+  );
+
+  /**
+   * Post-verdict order-check STOP (order_stop). Terminal — fires once per signal,
+   * so no throttle; drops the continue throttle slot for this signalId
+   * (the signal leaves monitoring, the ttl entry would only leak otherwise).
+   */
+  private notifyOrderStop = trycatch(async (event: OrderStopContract) => {
+    this.loggerService.log("telegramLogicService notifyOrderStop", {
+      event,
+    });
+    this.notifyOrderContinue.clear(event.signalId);
+    const markdown = await this.telegramTemplateService.getOrderStopMarkdown(event);
     if (!markdown) {
       return;
     }
@@ -338,20 +426,48 @@ export class TelegramLogicService {
       }
     });
 
-    const unSync = listenSync(async (event) => {
+    // Broker-CONFIRMED fills only (post-verdict orderFillSubject): a rejected or
+    // transient gate attempt never reaches this channel, so "Order Filled" is
+    // guaranteed truthful. The pre-verdict syncSubject is NOT consumed here.
+    const unOrderFill = listenOrderFill(async (event) => {
       if (event.action === "signal-open") {
-        // type "schedule" is a resting-order PLACEMENT, not a position open:
-        // the user already got the "scheduled" notification from listenSignal
-        if (event.type !== "active") {
-          return;
-        }
-        await this.notifySignalOpen(event);
+        // Both open outcomes notify: type "active" — the order opened at once
+        // (immediate fill, no schedule phase), type "schedule" — the resting
+        // order was placed on the exchange. Either way the broker confirmed a
+        // real order; the template's Order field carries the type.
+        await this.notifyOrderFillOpen(event);
         return;
       }
       if (event.action === "signal-close") {
-        await this.notifySignalClose(event);
+        await this.notifyOrderFillClose(event);
         return;
       }
+    });
+
+    // Terminal broker rejection (post-verdict orderRejectSubject): exactly one
+    // event per dropped order attempt — the engine consumes the rejected signal
+    // id, so this cannot repeat per-tick for the same signal. Dispatched by
+    // action to the dedicated open/close notifications (single responsibility).
+    const unOrderReject = listenOrderReject(async (event) => {
+      if (event.action === "signal-open") {
+        await this.notifyOrderRejectOpen(event);
+        return;
+      }
+      if (event.action === "signal-close") {
+        await this.notifyOrderRejectClose(event);
+        return;
+      }
+    });
+
+    // Post-verdict check decisions: CONTINUE fires every surviving tick and is
+    // throttled to one message per signalId per 15 minutes via ttl; terminal
+    // STOP fires once per signal, unthrottled.
+    const unOrderContinue = listenOrderContinue(async (event) => {
+      await this.notifyOrderContinue(event);
+    });
+
+    const unOrderStop = listenOrderStop(async (event) => {
+      await this.notifyOrderStop(event);
     });
 
     const unSignalNotify = listenSignalNotify(async (event) => {
@@ -364,7 +480,11 @@ export class TelegramLogicService {
       () => unRisk(),
       () => unSignal(),
       () => unCommit(),
-      () => unSync(),
+      () => unOrderFill(),
+      () => unOrderReject(),
+      () => unOrderContinue(),
+      () => unOrderStop(),
+      () => this.notifyOrderContinue.clear(),
       () => unSignalNotify(),
       () => unConnect(),
     );
