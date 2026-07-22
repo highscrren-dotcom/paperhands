@@ -1,0 +1,1175 @@
+{
+  "generatedAtNote": "run on server, see run dir mtime",
+  "sharpeBest": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 2,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.6
+  },
+  "pnlBest": {
+    "hardStopPercent": 3,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.6
+  },
+  "wlSharpe": [
+    "TradingShot",
+    "MarketStrategysignals",
+    "PremiumTrader57",
+    "XAUxBTC_Pro",
+    "melikatrader94",
+    "Alpha_Trade_Scope",
+    "davidjulien369",
+    "KennyYenKen",
+    "Prime_X_Trader",
+    "Rowland-Australia",
+    "ProfessorSingapore",
+    "Sheezy_Gold_Trades",
+    "Wenlambo"
+  ],
+  "wlPnlSize": 5,
+  "eligiblePool": 40,
+  "oosSharpeWinner": {
+    "label": "OOS sharpe-winner WL13",
+    "ideasFed": 41,
+    "trades": 4,
+    "skippedBusy": 6,
+    "totalPnlPercent": 0.521,
+    "avgPnlPercent": 0.13,
+    "winRate": 0.5,
+    "exitReasons": {
+      "hard_stop": 0,
+      "trailing_take": 0,
+      "time_expired": 4,
+      "data_truncated": 0
+    },
+    "tradeList": [
+      {
+        "dir": "LONG",
+        "entry": "07-01T18:47",
+        "exit": "time_expired",
+        "pnl": 4.49
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-05T18:08",
+        "exit": "time_expired",
+        "pnl": 0.44
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-09T10:06",
+        "exit": "time_expired",
+        "pnl": -1.97
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-13T11:01",
+        "exit": "time_expired",
+        "pnl": -2.44
+      }
+    ]
+  },
+  "oosPnlWinner": {
+    "label": "OOS pnl-winner",
+    "ideasFed": 23,
+    "trades": 5,
+    "skippedBusy": 15,
+    "totalPnlPercent": 1.62,
+    "avgPnlPercent": 0.324,
+    "winRate": 0.6,
+    "exitReasons": {
+      "hard_stop": 1,
+      "trailing_take": 0,
+      "time_expired": 4,
+      "data_truncated": 0
+    },
+    "tradeList": [
+      {
+        "dir": "LONG",
+        "entry": "07-01T20:45",
+        "exit": "time_expired",
+        "pnl": 5
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-05T18:08",
+        "exit": "hard_stop",
+        "pnl": -3.3
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-07T11:16",
+        "exit": "time_expired",
+        "pnl": -2.5
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-11T09:45",
+        "exit": "time_expired",
+        "pnl": 2.14
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-14T20:40",
+        "exit": "time_expired",
+        "pnl": 0.29
+      }
+    ]
+  },
+  "crowdBaseline": {
+    "label": "crowd baseline (no WL)",
+    "ideasFed": 564,
+    "trades": 5,
+    "skippedBusy": 274,
+    "totalPnlPercent": -5.886,
+    "avgPnlPercent": -1.177,
+    "winRate": 0.6,
+    "exitReasons": {
+      "hard_stop": 0,
+      "trailing_take": 0,
+      "time_expired": 5,
+      "data_truncated": 0
+    },
+    "tradeList": [
+      {
+        "dir": "SHORT",
+        "entry": "07-01T02:53",
+        "exit": "time_expired",
+        "pnl": -6.39
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-04T04:24",
+        "exit": "time_expired",
+        "pnl": 0.36
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-07T07:26",
+        "exit": "time_expired",
+        "pnl": 0.73
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-10T07:46",
+        "exit": "time_expired",
+        "pnl": -1.86
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-13T08:30",
+        "exit": "time_expired",
+        "pnl": 1.28
+      }
+    ]
+  },
+  "placebo": [
+    {
+      "seed": 1000,
+      "wl": [
+        "Sheezy_Gold_Trades",
+        "salahuddin20041",
+        "melikatrader94",
+        "Aryan_yadav2612",
+        "zayn-trader",
+        "InvestingScope",
+        "PRIMEALPHA-FX",
+        "SavageExecution",
+        "Cryptollica",
+        "BitCoinGuide",
+        "Prime_X_Trader",
+        "ArmanShabanTrading",
+        "prodigy5284"
+      ],
+      "label": "placebo s0",
+      "ideasFed": 32,
+      "trades": 2,
+      "skippedBusy": 1,
+      "totalPnlPercent": 1.452,
+      "avgPnlPercent": 0.726,
+      "winRate": 0.5,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-04T07:16",
+          "exit": "time_expired",
+          "pnl": -1.77
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-08T09:00",
+          "exit": "time_expired",
+          "pnl": 3.22
+        }
+      ]
+    },
+    {
+      "seed": 1001,
+      "wl": [
+        "Apex_Legends",
+        "InvestingScope",
+        "TradingShot",
+        "CobraVanguard",
+        "coinpediamarkets",
+        "Osssda",
+        "peterbokma",
+        "SavageExecution",
+        "PremiumTrader57",
+        "trader_kyeol",
+        "brokerchampionofficial",
+        "zayn-trader",
+        "davidjulien369"
+      ],
+      "label": "placebo s1",
+      "ideasFed": 23,
+      "trades": 1,
+      "skippedBusy": 0,
+      "totalPnlPercent": -0.998,
+      "avgPnlPercent": -0.998,
+      "winRate": 0,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-14T10:55",
+          "exit": "time_expired",
+          "pnl": -1
+        }
+      ]
+    },
+    {
+      "seed": 1002,
+      "wl": [
+        "VasilyTrader",
+        "SavageExecution",
+        "prodigy5284",
+        "Wenlambo",
+        "Rowland-Australia",
+        "Sheezy_Gold_Trades",
+        "InvestingScope",
+        "zayn-trader",
+        "PRIMEALPHA-FX",
+        "Insidertrader489",
+        "Apex_Legends",
+        "CryptoSkullSignal",
+        "Vili_Wealth_Plan"
+      ],
+      "label": "placebo s2",
+      "ideasFed": 20,
+      "trades": 0,
+      "skippedBusy": 0,
+      "totalPnlPercent": 0,
+      "avgPnlPercent": 0,
+      "winRate": 0,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 0,
+        "data_truncated": 0
+      },
+      "tradeList": []
+    },
+    {
+      "seed": 1003,
+      "wl": [
+        "KennyYenKen",
+        "melikatrader94",
+        "TradingShot",
+        "VasilyTrader",
+        "zayn-trader",
+        "PRIMEALPHA-FX",
+        "prodigy5284",
+        "CryptoSkullSignal",
+        "CandleKing09",
+        "MasterAnanda",
+        "Prime_X_Trader",
+        "Alpha_Trade_Scope",
+        "Wenlambo"
+      ],
+      "label": "placebo s3",
+      "ideasFed": 35,
+      "trades": 2,
+      "skippedBusy": 1,
+      "totalPnlPercent": 1.784,
+      "avgPnlPercent": 0.892,
+      "winRate": 0.5,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T18:47",
+          "exit": "time_expired",
+          "pnl": 4.49
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T15:39",
+          "exit": "time_expired",
+          "pnl": -2.71
+        }
+      ]
+    },
+    {
+      "seed": 1004,
+      "wl": [
+        "salahuddin20041",
+        "brokerchampionofficial",
+        "Wenlambo",
+        "MarketStrategysignals",
+        "CryptoSkullSignal",
+        "virDeStatera",
+        "mrsignalll",
+        "coinpediamarkets",
+        "ProfessorSingapore",
+        "CobraVanguard",
+        "Apex_Legends",
+        "Vili_Wealth_Plan",
+        "VasilyTrader"
+      ],
+      "label": "placebo s4",
+      "ideasFed": 38,
+      "trades": 2,
+      "skippedBusy": 2,
+      "totalPnlPercent": -5.171,
+      "avgPnlPercent": -2.585,
+      "winRate": 0.5,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 0,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-01T08:46",
+          "exit": "hard_stop",
+          "pnl": -7.31
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-11T09:45",
+          "exit": "time_expired",
+          "pnl": 2.14
+        }
+      ]
+    },
+    {
+      "seed": 1005,
+      "wl": [
+        "peterbokma",
+        "SavageExecution",
+        "davidjulien369",
+        "Aryan_yadav2612",
+        "Vili_Wealth_Plan",
+        "MasterAnanda",
+        "XAUxBTC_Pro",
+        "Rowland-Australia",
+        "KennyYenKen",
+        "Wenlambo",
+        "coinpediamarkets",
+        "CobraVanguard",
+        "PremiumTrader57"
+      ],
+      "label": "placebo s5",
+      "ideasFed": 32,
+      "trades": 3,
+      "skippedBusy": 5,
+      "totalPnlPercent": -2.502,
+      "avgPnlPercent": -0.834,
+      "winRate": 0.333,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T09:41",
+          "exit": "time_expired",
+          "pnl": -3.05
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T10:57",
+          "exit": "time_expired",
+          "pnl": -0.5
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T09:17",
+          "exit": "trailing_take",
+          "pnl": 1.05
+        }
+      ]
+    },
+    {
+      "seed": 1006,
+      "wl": [
+        "CryptoSkullSignal",
+        "KennyYenKen",
+        "virDeStatera",
+        "Aryan_yadav2612",
+        "ArmanShabanTrading",
+        "BitCoinGuide",
+        "salahuddin20041",
+        "PremiumTrader57",
+        "InvestingScope",
+        "PRIMEALPHA-FX",
+        "Insidertrader489",
+        "mrsignalll",
+        "TradingShot"
+      ],
+      "label": "placebo s6",
+      "ideasFed": 48,
+      "trades": 3,
+      "skippedBusy": 9,
+      "totalPnlPercent": 4.771,
+      "avgPnlPercent": 1.59,
+      "winRate": 0.667,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T16:01",
+          "exit": "time_expired",
+          "pnl": 4.22
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T10:57",
+          "exit": "time_expired",
+          "pnl": -0.5
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T09:17",
+          "exit": "trailing_take",
+          "pnl": 1.05
+        }
+      ]
+    },
+    {
+      "seed": 1007,
+      "wl": [
+        "virDeStatera",
+        "Sheezy_Gold_Trades",
+        "XAUxBTC_Pro",
+        "Vili_Wealth_Plan",
+        "salahuddin20041",
+        "mrsignalll",
+        "MarketStrategysignals",
+        "zayn-trader",
+        "Aryan_yadav2612",
+        "Prime_X_Trader",
+        "PremiumTrader57",
+        "MohsenNirumand",
+        "PRIMEALPHA-FX"
+      ],
+      "label": "placebo s7",
+      "ideasFed": 44,
+      "trades": 3,
+      "skippedBusy": 3,
+      "totalPnlPercent": 1.825,
+      "avgPnlPercent": 0.608,
+      "winRate": 0.667,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T20:45",
+          "exit": "time_expired",
+          "pnl": 5
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-08T12:29",
+          "exit": "time_expired",
+          "pnl": -3.48
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T21:26",
+          "exit": "time_expired",
+          "pnl": 0.31
+        }
+      ]
+    },
+    {
+      "seed": 1008,
+      "wl": [
+        "ProfessorSingapore",
+        "XAUxBTC_Pro",
+        "PremiumTrader57",
+        "VasilyTrader",
+        "CobraVanguard",
+        "ExpertTraderASK",
+        "MohsenNirumand",
+        "PRIMEALPHA-FX",
+        "Osssda",
+        "brokerchampionofficial",
+        "Aryan_yadav2612",
+        "KennyYenKen",
+        "BitCoinGuide"
+      ],
+      "label": "placebo s8",
+      "ideasFed": 39,
+      "trades": 4,
+      "skippedBusy": 9,
+      "totalPnlPercent": 6.607,
+      "avgPnlPercent": 1.652,
+      "winRate": 0.75,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T16:01",
+          "exit": "time_expired",
+          "pnl": 4.22
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T10:57",
+          "exit": "time_expired",
+          "pnl": -0.5
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T16:34",
+          "exit": "time_expired",
+          "pnl": 1.84
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T09:17",
+          "exit": "trailing_take",
+          "pnl": 1.05
+        }
+      ]
+    },
+    {
+      "seed": 1009,
+      "wl": [
+        "coinpediamarkets",
+        "Alpha_Trade_Scope",
+        "VasilyTrader",
+        "TradingShot",
+        "trader_kyeol",
+        "Osssda",
+        "Aryan_yadav2612",
+        "ExpertTraderASK",
+        "Insidertrader489",
+        "zayn-trader",
+        "melikatrader94",
+        "PremiumTrader57",
+        "Rowland-Australia"
+      ],
+      "label": "placebo s9",
+      "ideasFed": 27,
+      "trades": 3,
+      "skippedBusy": 1,
+      "totalPnlPercent": -5.915,
+      "avgPnlPercent": -1.972,
+      "winRate": 0,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-04T11:03",
+          "exit": "time_expired",
+          "pnl": -1.49
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-08T12:48",
+          "exit": "time_expired",
+          "pnl": -3.74
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T09:17",
+          "exit": "time_expired",
+          "pnl": -0.69
+        }
+      ]
+    },
+    {
+      "seed": 1010,
+      "wl": [
+        "Cryptollica",
+        "PRIMEALPHA-FX",
+        "Osssda",
+        "MohsenNirumand",
+        "Apex_Legends",
+        "Rowland-Australia",
+        "ArmanShabanTrading",
+        "TradingShot",
+        "coinpediamarkets",
+        "MasterAnanda",
+        "Prime_X_Trader",
+        "VasilyTrader",
+        "virDeStatera"
+      ],
+      "label": "placebo s10",
+      "ideasFed": 37,
+      "trades": 3,
+      "skippedBusy": 2,
+      "totalPnlPercent": -0.218,
+      "avgPnlPercent": -0.073,
+      "winRate": 0.333,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T21:14",
+          "exit": "time_expired",
+          "pnl": 4.52
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-08T12:48",
+          "exit": "time_expired",
+          "pnl": -3.74
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T10:55",
+          "exit": "time_expired",
+          "pnl": -1
+        }
+      ]
+    },
+    {
+      "seed": 1011,
+      "wl": [
+        "zayn-trader",
+        "ProfessorSingapore",
+        "brokerchampionofficial",
+        "CobraVanguard",
+        "ArmanShabanTrading",
+        "BitCoinGuide",
+        "ExpertTraderASK",
+        "PremiumTrader57",
+        "SavageExecution",
+        "melikatrader94",
+        "Sheezy_Gold_Trades",
+        "Apex_Legends",
+        "PRIMEALPHA-FX"
+      ],
+      "label": "placebo s11",
+      "ideasFed": 35,
+      "trades": 3,
+      "skippedBusy": 4,
+      "totalPnlPercent": 1.95,
+      "avgPnlPercent": 0.65,
+      "winRate": 0.667,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-03T10:19",
+          "exit": "time_expired",
+          "pnl": 1.51
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T11:14",
+          "exit": "time_expired",
+          "pnl": -0.41
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T12:00",
+          "exit": "trailing_take",
+          "pnl": 0.85
+        }
+      ]
+    },
+    {
+      "seed": 1012,
+      "wl": [
+        "XAUxBTC_Pro",
+        "mrsignalll",
+        "MarketStrategysignals",
+        "Apex_Legends",
+        "Aryan_yadav2612",
+        "ProfessorSingapore",
+        "CryptoSkullSignal",
+        "coinpediamarkets",
+        "Alpha_Trade_Scope",
+        "Wenlambo",
+        "virDeStatera",
+        "prodigy5284",
+        "TradingShot"
+      ],
+      "label": "placebo s12",
+      "ideasFed": 40,
+      "trades": 4,
+      "skippedBusy": 7,
+      "totalPnlPercent": -10.235,
+      "avgPnlPercent": -2.559,
+      "winRate": 0.25,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-01T11:54",
+          "exit": "hard_stop",
+          "pnl": -7.31
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-05T15:11",
+          "exit": "time_expired",
+          "pnl": 1.48
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-09T10:06",
+          "exit": "time_expired",
+          "pnl": -1.97
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T11:01",
+          "exit": "time_expired",
+          "pnl": -2.44
+        }
+      ]
+    },
+    {
+      "seed": 1013,
+      "wl": [
+        "CobraVanguard",
+        "melikatrader94",
+        "PRIMEALPHA-FX",
+        "Aryan_yadav2612",
+        "virDeStatera",
+        "MarketStrategysignals",
+        "zayn-trader",
+        "ArmanShabanTrading",
+        "prodigy5284",
+        "XAUxBTC_Pro",
+        "Osssda",
+        "Rowland-Australia",
+        "MohsenNirumand"
+      ],
+      "label": "placebo s13",
+      "ideasFed": 31,
+      "trades": 3,
+      "skippedBusy": 1,
+      "totalPnlPercent": 1.346,
+      "avgPnlPercent": 0.449,
+      "winRate": 0.667,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T21:14",
+          "exit": "time_expired",
+          "pnl": 4.52
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-08T12:29",
+          "exit": "time_expired",
+          "pnl": -3.48
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T21:26",
+          "exit": "time_expired",
+          "pnl": 0.31
+        }
+      ]
+    },
+    {
+      "seed": 1014,
+      "wl": [
+        "coinpediamarkets",
+        "davidjulien369",
+        "ProfessorSingapore",
+        "BitCoinGuide",
+        "brokerchampionofficial",
+        "PremiumTrader57",
+        "XAUxBTC_Pro",
+        "KennyYenKen",
+        "CryptoSkullSignal",
+        "CobraVanguard",
+        "VasilyTrader",
+        "Cryptollica",
+        "Rowland-Australia"
+      ],
+      "label": "placebo s14",
+      "ideasFed": 38,
+      "trades": 4,
+      "skippedBusy": 9,
+      "totalPnlPercent": 6.278,
+      "avgPnlPercent": 1.569,
+      "winRate": 0.75,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T16:01",
+          "exit": "time_expired",
+          "pnl": 4.22
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T10:57",
+          "exit": "time_expired",
+          "pnl": -0.5
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T15:39",
+          "exit": "time_expired",
+          "pnl": 1.51
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T09:17",
+          "exit": "trailing_take",
+          "pnl": 1.05
+        }
+      ]
+    },
+    {
+      "seed": 1015,
+      "wl": [
+        "MasterAnanda",
+        "Rowland-Australia",
+        "mrsignalll",
+        "CryptoSkullSignal",
+        "Alpha_Trade_Scope",
+        "Wenlambo",
+        "Apex_Legends",
+        "PremiumTrader57",
+        "MohsenNirumand",
+        "Prime_X_Trader",
+        "KennyYenKen",
+        "TradingShot",
+        "CobraVanguard"
+      ],
+      "label": "placebo s15",
+      "ideasFed": 33,
+      "trades": 3,
+      "skippedBusy": 4,
+      "totalPnlPercent": 7.024,
+      "avgPnlPercent": 2.341,
+      "winRate": 1,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T18:47",
+          "exit": "time_expired",
+          "pnl": 4.49
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-05T15:11",
+          "exit": "time_expired",
+          "pnl": 1.48
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T09:17",
+          "exit": "trailing_take",
+          "pnl": 1.05
+        }
+      ]
+    },
+    {
+      "seed": 1016,
+      "wl": [
+        "TradingShot",
+        "prodigy5284",
+        "ExpertTraderASK",
+        "MohsenNirumand",
+        "peterbokma",
+        "zayn-trader",
+        "trader_kyeol",
+        "CandleKing09",
+        "coinpediamarkets",
+        "BitCoinGuide",
+        "davidjulien369",
+        "brokerchampionofficial",
+        "ProfessorSingapore"
+      ],
+      "label": "placebo s16",
+      "ideasFed": 38,
+      "trades": 4,
+      "skippedBusy": 3,
+      "totalPnlPercent": -5.917,
+      "avgPnlPercent": -1.479,
+      "winRate": 0.25,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 4,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T07:19",
+          "exit": "time_expired",
+          "pnl": -4.66
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T11:26",
+          "exit": "time_expired",
+          "pnl": -0.65
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T16:34",
+          "exit": "time_expired",
+          "pnl": 1.84
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T11:01",
+          "exit": "time_expired",
+          "pnl": -2.44
+        }
+      ]
+    },
+    {
+      "seed": 1017,
+      "wl": [
+        "Prime_X_Trader",
+        "Vili_Wealth_Plan",
+        "KennyYenKen",
+        "Rowland-Australia",
+        "Alpha_Trade_Scope",
+        "ArmanShabanTrading",
+        "CryptoSkullSignal",
+        "Apex_Legends",
+        "MarketStrategysignals",
+        "MohsenNirumand",
+        "XAUxBTC_Pro",
+        "BitCoinGuide",
+        "mrsignalll"
+      ],
+      "label": "placebo s17",
+      "ideasFed": 41,
+      "trades": 4,
+      "skippedBusy": 9,
+      "totalPnlPercent": 6.363,
+      "avgPnlPercent": 1.591,
+      "winRate": 0.75,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 4,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T16:01",
+          "exit": "time_expired",
+          "pnl": 4.22
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-05T15:11",
+          "exit": "time_expired",
+          "pnl": 1.48
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-10T13:53",
+          "exit": "time_expired",
+          "pnl": 3.37
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T15:39",
+          "exit": "time_expired",
+          "pnl": -2.71
+        }
+      ]
+    },
+    {
+      "seed": 1018,
+      "wl": [
+        "BitCoinGuide",
+        "peterbokma",
+        "Cryptollica",
+        "Prime_X_Trader",
+        "TradingShot",
+        "Rowland-Australia",
+        "melikatrader94",
+        "trader_kyeol",
+        "CryptoSkullSignal",
+        "ExpertTraderASK",
+        "MarketStrategysignals",
+        "Apex_Legends",
+        "Sheezy_Gold_Trades"
+      ],
+      "label": "placebo s18",
+      "ideasFed": 45,
+      "trades": 3,
+      "skippedBusy": 3,
+      "totalPnlPercent": 7.527,
+      "avgPnlPercent": 2.509,
+      "winRate": 0.667,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 3,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T20:45",
+          "exit": "time_expired",
+          "pnl": 5
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-08T09:00",
+          "exit": "time_expired",
+          "pnl": 3.22
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T09:17",
+          "exit": "time_expired",
+          "pnl": -0.69
+        }
+      ]
+    },
+    {
+      "seed": 1019,
+      "wl": [
+        "brokerchampionofficial",
+        "trader_kyeol",
+        "peterbokma",
+        "SavageExecution",
+        "Vili_Wealth_Plan",
+        "CobraVanguard",
+        "Cryptollica",
+        "salahuddin20041",
+        "MohsenNirumand",
+        "PremiumTrader57",
+        "CandleKing09",
+        "zayn-trader",
+        "CryptoSkullSignal"
+      ],
+      "label": "placebo s19",
+      "ideasFed": 33,
+      "trades": 2,
+      "skippedBusy": 1,
+      "totalPnlPercent": -0.595,
+      "avgPnlPercent": -0.298,
+      "winRate": 0.5,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T15:33",
+          "exit": "time_expired",
+          "pnl": -2.1
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T15:39",
+          "exit": "time_expired",
+          "pnl": 1.51
+        }
+      ]
+    }
+  ],
+  "placeboSummary": {
+    "n": 20,
+    "min": -10.235,
+    "max": 7.527,
+    "mean": 0.769,
+    "realRankAmongPlacebo": 9
+  }
+}
