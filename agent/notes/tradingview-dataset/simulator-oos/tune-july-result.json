@@ -1,0 +1,1207 @@
+{
+  "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 2,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+  },
+  "real": {
+    "label": "real июльский OOS",
+    "trades": 7,
+    "pnl": 3.9151781671573462,
+    "wr": 0.5714285714285714,
+    "sharpe": 0.8905027908923043,
+    "exitReasons": {
+      "hard_stop": 0,
+      "trailing_take": 3,
+      "profit_lock": 3,
+      "time_expired": 1,
+      "data_truncated": 0
+    },
+    "tradeList": [
+      {
+        "dir": "LONG",
+        "entry": "07-01T20:45",
+        "exit": "trailing_take",
+        "pnl": -0.29
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-03T05:51",
+        "exit": "profit_lock",
+        "pnl": 2.2
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-05T11:25",
+        "exit": "trailing_take",
+        "pnl": -0.24
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-07T11:16",
+        "exit": "trailing_take",
+        "pnl": 0.19
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-09T09:44",
+        "exit": "time_expired",
+        "pnl": -2.33
+      },
+      {
+        "dir": "LONG",
+        "entry": "07-13T07:25",
+        "exit": "profit_lock",
+        "pnl": 2.2
+      },
+      {
+        "dir": "SHORT",
+        "entry": "07-14T18:32",
+        "exit": "profit_lock",
+        "pnl": 2.2
+      }
+    ]
+  },
+  "realRaw": {
+    "symbol": "BTCUSDT",
+    "ideasTotal": 564,
+    "ideasDirectional": 324,
+    "profileCount": 324,
+    "truncatedCount": 0,
+    "point": {
+      "hardStopPercent": 5,
+      "trailingTakePercent": 2,
+      "holdMinutes": 4320,
+      "minIdeasAligned": 1,
+      "minAuthorTrack": 5,
+      "minAuthorHitRate": 0.5,
+      "minWeightAligned": 0,
+      "profitLockPercent": 2.5
+    },
+    "report": {
+      "point": {
+        "hardStopPercent": 5,
+        "trailingTakePercent": 2,
+        "holdMinutes": 4320,
+        "minIdeasAligned": 1,
+        "minAuthorTrack": 5,
+        "minAuthorHitRate": 0.5,
+        "minWeightAligned": 0,
+        "profitLockPercent": 2.5
+      },
+      "trades": 7,
+      "skippedBusy": 17,
+      "totalPnlPercent": 3.9151781671573462,
+      "avgPnlPercent": 0.5593111667367637,
+      "winRate": 0.5714285714285714,
+      "profitFactor": 2.3641216665965277,
+      "maxSeriesDrawdownPercent": 2.3886987068949157,
+      "calmarRatio": 31.486864791311397,
+      "recoveryFactor": 1.6390422768079909,
+      "avgHoldMinutes": 2341.8571428571427,
+      "p95HoldMinutes": 4320,
+      "p99HoldMinutes": 4320,
+      "sharpe": 0.8905027908923043,
+      "sortino": 1.6555715435470593,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 3,
+        "profit_lock": 3,
+        "time_expired": 1,
+        "data_truncated": 0
+      }
+    },
+    "trades": [
+      {
+        "ideaId": 22291163,
+        "direction": "LONG",
+        "entryTimestamp": 1782938700000,
+        "exitTimestamp": 1782948900000,
+        "exitReason": "trailing_take",
+        "holdMinutesActual": 171,
+        "pnlPercent": -0.293623125947722,
+        "absorbedIdeaIds": []
+      },
+      {
+        "ideaId": 22299736,
+        "direction": "LONG",
+        "entryTimestamp": 1783057860000,
+        "exitTimestamp": 1783187520000,
+        "exitReason": "profit_lock",
+        "holdMinutesActual": 2162,
+        "pnlPercent": 2.1974999999999834,
+        "absorbedIdeaIds": [
+          22302415,
+          22302611,
+          22304102,
+          22305482
+        ]
+      },
+      {
+        "ideaId": 23310779,
+        "direction": "SHORT",
+        "entryTimestamp": 1783250700000,
+        "exitTimestamp": 1783350540000,
+        "exitReason": "trailing_take",
+        "holdMinutesActual": 1665,
+        "pnlPercent": -0.2424992591509081,
+        "absorbedIdeaIds": [
+          23315604
+        ]
+      },
+      {
+        "ideaId": 23323722,
+        "direction": "SHORT",
+        "entryTimestamp": 1783422960000,
+        "exitTimestamp": 1783578420000,
+        "exitReason": "trailing_take",
+        "holdMinutesActual": 2592,
+        "pnlPercent": 0.18778738324047273,
+        "absorbedIdeaIds": [
+          23329616,
+          23330970
+        ]
+      },
+      {
+        "ideaId": 23336731,
+        "direction": "SHORT",
+        "entryTimestamp": 1783590240000,
+        "exitTimestamp": 1783849380000,
+        "exitReason": "time_expired",
+        "holdMinutesActual": 4320,
+        "pnlPercent": -2.3339868309844802,
+        "absorbedIdeaIds": [
+          23336838,
+          23337995,
+          23340223,
+          23344682,
+          23348425
+        ]
+      },
+      {
+        "ideaId": 23357936,
+        "direction": "LONG",
+        "entryTimestamp": 1783927500000,
+        "exitTimestamp": 1784043060000,
+        "exitReason": "profit_lock",
+        "holdMinutesActual": 1927,
+        "pnlPercent": 2.197499999999983,
+        "absorbedIdeaIds": [
+          23359210,
+          23362453,
+          23365751,
+          23365753
+        ]
+      },
+      {
+        "ideaId": 23369046,
+        "direction": "SHORT",
+        "entryTimestamp": 1784053920000,
+        "exitTimestamp": 1784267220000,
+        "exitReason": "profit_lock",
+        "holdMinutesActual": 3556,
+        "pnlPercent": 2.2025000000000174,
+        "absorbedIdeaIds": [
+          23369537
+        ]
+      }
+    ],
+    "authorStats": [
+      {
+        "author": "MasterAnanda",
+        "ideas": 16,
+        "hits": 7,
+        "hitRate": 0.4375,
+        "banned": true
+      },
+      {
+        "author": "TradingShot",
+        "ideas": 10,
+        "hits": 6,
+        "hitRate": 0.6,
+        "banned": false
+      },
+      {
+        "author": "Apex_Legends",
+        "ideas": 7,
+        "hits": 4,
+        "hitRate": 0.5714285714285714,
+        "banned": false
+      },
+      {
+        "author": "BitCoinGuide",
+        "ideas": 7,
+        "hits": 3,
+        "hitRate": 0.42857142857142855,
+        "banned": true
+      },
+      {
+        "author": "Cryptollica",
+        "ideas": 6,
+        "hits": 3,
+        "hitRate": 0.5,
+        "banned": false
+      },
+      {
+        "author": "MarketStrategysignals",
+        "ideas": 6,
+        "hits": 4,
+        "hitRate": 0.6666666666666666,
+        "banned": false
+      },
+      {
+        "author": "ExpertTraderASK",
+        "ideas": 6,
+        "hits": 2,
+        "hitRate": 0.3333333333333333,
+        "banned": true
+      },
+      {
+        "author": "melikatrader94",
+        "ideas": 5,
+        "hits": 3,
+        "hitRate": 0.6,
+        "banned": false
+      },
+      {
+        "author": "CryptoSkullSignal",
+        "ideas": 5,
+        "hits": 2,
+        "hitRate": 0.4,
+        "banned": true
+      },
+      {
+        "author": "PremiumTrader57",
+        "ideas": 5,
+        "hits": 3,
+        "hitRate": 0.6,
+        "banned": false
+      },
+      {
+        "author": "InvestingScope",
+        "ideas": 5,
+        "hits": 3,
+        "hitRate": 0.6,
+        "banned": false
+      },
+      {
+        "author": "XAUxBTC_Pro",
+        "ideas": 4,
+        "hits": 3,
+        "hitRate": 0.75,
+        "banned": true
+      },
+      {
+        "author": "CobraVanguard",
+        "ideas": 3,
+        "hits": 1,
+        "hitRate": 0.3333333333333333,
+        "banned": true
+      },
+      {
+        "author": "coinpediamarkets",
+        "ideas": 3,
+        "hits": 1,
+        "hitRate": 0.3333333333333333,
+        "banned": true
+      },
+      {
+        "author": "salahuddin20041",
+        "ideas": 2,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "Alpha_Trade_Scope",
+        "ideas": 2,
+        "hits": 1,
+        "hitRate": 0.5,
+        "banned": true
+      },
+      {
+        "author": "PRIMEALPHA-FX",
+        "ideas": 2,
+        "hits": 1,
+        "hitRate": 0.5,
+        "banned": true
+      },
+      {
+        "author": "tomas_jntx",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "JupahduhX",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "Rowland-Australia",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "brokerchampionofficial",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "CrowdWisdomTrading",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "EbonyFalcon",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "NastyPipz",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "isahebdadi",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "Ifiok-Trades",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "TheCryptagon",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "MohsenNirumand",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "ProfittoPath",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "Rendon1",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "byggjan",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "FXSMARTT",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "pistissophiacapital",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "DivergenceSeeker",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      },
+      {
+        "author": "davidjulien369",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "mrsignalll",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "VasilyTrader",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "propfirmwise",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "TheTraderPhil",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "JRnehco",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "Expert_Travis",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true
+      },
+      {
+        "author": "BIGBULL-RUN",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true
+      }
+    ],
+    "allowedAuthors": [
+      "TradingShot",
+      "Apex_Legends",
+      "Cryptollica",
+      "MarketStrategysignals",
+      "melikatrader94",
+      "PremiumTrader57",
+      "InvestingScope"
+    ],
+    "bannedAuthors": [
+      "MasterAnanda",
+      "BitCoinGuide",
+      "ExpertTraderASK",
+      "CryptoSkullSignal",
+      "XAUxBTC_Pro",
+      "CobraVanguard",
+      "coinpediamarkets",
+      "salahuddin20041",
+      "Alpha_Trade_Scope",
+      "PRIMEALPHA-FX",
+      "tomas_jntx",
+      "JupahduhX",
+      "Rowland-Australia",
+      "brokerchampionofficial",
+      "CrowdWisdomTrading",
+      "EbonyFalcon",
+      "NastyPipz",
+      "isahebdadi",
+      "Ifiok-Trades",
+      "TheCryptagon",
+      "MohsenNirumand",
+      "ProfittoPath",
+      "Rendon1",
+      "byggjan",
+      "FXSMARTT",
+      "pistissophiacapital",
+      "DivergenceSeeker",
+      "davidjulien369",
+      "mrsignalll",
+      "VasilyTrader",
+      "propfirmwise",
+      "TheTraderPhil",
+      "JRnehco",
+      "Expert_Travis",
+      "BIGBULL-RUN",
+      "SlickkNickk",
+      "ewhite41",
+      "ProSignalsFx",
+      "MR_YTA",
+      "JohnsonForexTrader",
+      "Joopooranski",
+      "Sheezy_Gold_Trades",
+      "ProfessorSingapore",
+      "Discombobulate1",
+      "ApexMarketExpert",
+      "Smart_money_Fx",
+      "ELCapitalFX",
+      "BerlinGoldInsights",
+      "virDeStatera",
+      "lunarsyndicate9",
+      "SEMIX_OFFICIAL",
+      "TheeSnipeGoat",
+      "KennyYenKen",
+      "CRT-ICT-MARKET-GOLD-SIGNALS",
+      "Prime_X_Trader",
+      "Cartela",
+      "smwajeeh",
+      "FxPro",
+      "Osssda",
+      "VaultX_Trader",
+      "JakeTrader7",
+      "Fm254",
+      "SNIPERSTN",
+      "RichmondHillCM",
+      "fxtraderanthony",
+      "peterbokma",
+      "Sive-Morten",
+      "platinum_growth",
+      "Adrian_NovaTrader",
+      "Gold-Thoughts-by-Selena",
+      "ChartPro_Data",
+      "Elibri_Eugen",
+      "Vili_Wealth_Plan",
+      "Gold_pro_traders",
+      "SignalProvider",
+      "navneet.nayak.77",
+      "Top_Analyst_Chuck",
+      "Gaunter-O-Dimm",
+      "CandleKing09",
+      "SMART_MONEY_CIRCLE",
+      "Setupsfx_",
+      "Trade_Action",
+      "Gold_Market_Mind",
+      "MrBeto5",
+      "DomicChaina",
+      "PouyanFa",
+      "timothysmith78",
+      "Pip_Capture",
+      "Urbanmove",
+      "Richard_PrimeInsights",
+      "CEO_OF_GOLD",
+      "Khiwe",
+      "Hsan_Benhmed",
+      "ArmanShabanTrading",
+      "TheZimpact",
+      "Forex_Market_Insights",
+      "JRockets",
+      "IGT_Traders",
+      "Technical_AnalystZAR",
+      "EliteTradingSignals",
+      "KhaniTechnical",
+      "Lunadigital",
+      "Mrbigman",
+      "SHAY_ANALYTICS",
+      "Candle_Cubs",
+      "ZYLOSTAR_EDUCATION",
+      "Mehdi_Abbasi_EWP",
+      "SILICIDE",
+      "zayn-trader",
+      "boye369",
+      "ansazahid",
+      "wahajshani",
+      "vishalpatil1110",
+      "UnitedSignals",
+      "RampageXBT",
+      "jamalfowzy",
+      "jordansk82",
+      "SM_Fx7",
+      "MtICHI",
+      "Xau_Insightss",
+      "Vysky_Ma",
+      "RubenK99",
+      "X_MiraNI_313",
+      "robo414",
+      "AnabelSignals",
+      "ScrMcDuck",
+      "Torik2x",
+      "ibraheeemz",
+      "Jettyfx",
+      "Xanrox",
+      "meisam_fp",
+      "simismohs",
+      "dotcom880",
+      "D9SECCTIONofKIWI",
+      "Market_Education_Academy",
+      "ClearTradingMind",
+      "Gems-Trades",
+      "erc_markets",
+      "currencynerd",
+      "Dynamic_Trade_Strategies",
+      "morrisgitau",
+      "3Commas",
+      "Leveraged_Labs",
+      "parkhan886",
+      "BTCryptowatch",
+      "ProTraderTA008",
+      "royeo",
+      "FirstMarketLook",
+      "Aryan_yadav2612",
+      "Abirstock",
+      "TheTradingStar",
+      "CIPHERCHART",
+      "Niggislosh",
+      "FrankAgbo",
+      "Swagge_77",
+      "MakFX3",
+      "Theperfectionist",
+      "SroshMayi",
+      "inchartswetrust",
+      "cyawodi",
+      "DatTong",
+      "Champ_of_Gold",
+      "AnhbaCong_",
+      "ImSoloInvestor",
+      "bag_dad",
+      "Jasmine-Flower",
+      "i_am_siew",
+      "keylevelfx101",
+      "BK_QuantDesk",
+      "davidtaylortrading",
+      "ForexMasters2000",
+      "prodigy5284",
+      "Humblebeginningss",
+      "edawgtrades",
+      "AliTesla",
+      "Dollar_Bolt",
+      "MR_SAHIL_4X",
+      "Sajefallah",
+      "Milo-Blake",
+      "Trix_N",
+      "Asif_Brain_Waves",
+      "Mr_expert_08",
+      "DayoBecks",
+      "apalopez97",
+      "Bintkhalifa",
+      "TaxpayerTrades",
+      "NouzTrader",
+      "TheChartCore",
+      "goldenBear88",
+      "FOREX_PROFESSOR01",
+      "traderzg17",
+      "sandstone14",
+      "ericmwendacapital",
+      "ThEDeViL18",
+      "goldsnipersignals",
+      "Kap_Waves",
+      "FX_Professor",
+      "Tootough254",
+      "TRW300",
+      "Dark9yt1",
+      "laynecapital",
+      "Ansshhhh9",
+      "SmartMarketRobbers"
+    ],
+    "avgHoldMinutes": 2341.8571428571427,
+    "p95HoldMinutes": 4320,
+    "p99HoldMinutes": 4320
+  },
+  "placebo": [
+    {
+      "seed": 2000,
+      "label": "placebo s0",
+      "trades": 6,
+      "pnl": 5.583851239734449,
+      "wr": 0.6666666666666666,
+      "sharpe": 1.0730932664097441,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "profit_lock": 4,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T09:41",
+          "exit": "time_expired",
+          "pnl": -3.05
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-05T18:08",
+          "exit": "trailing_take",
+          "pnl": -0.16
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-08T08:22",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-10T10:22",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-13T07:25",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T21:26",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        }
+      ]
+    },
+    {
+      "seed": 2001,
+      "label": "placebo s1",
+      "trades": 6,
+      "pnl": 0.42697790324073237,
+      "wr": 0.6666666666666666,
+      "sharpe": 0.061478505787856325,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 0,
+        "profit_lock": 3,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T12:46",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-02T03:06",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T11:14",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-07T13:31",
+          "exit": "time_expired",
+          "pnl": 1.19
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-13T11:26",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T23:49",
+          "exit": "time_expired",
+          "pnl": -2.05
+        }
+      ]
+    },
+    {
+      "seed": 2002,
+      "label": "placebo s2",
+      "trades": 5,
+      "pnl": -10.562222588133004,
+      "wr": 0.2,
+      "sharpe": -1.3728391592478772,
+      "exitReasons": {
+        "hard_stop": 2,
+        "trailing_take": 1,
+        "profit_lock": 1,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-01T05:21",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-03T21:18",
+          "exit": "trailing_take",
+          "pnl": -0.18
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-06T16:39",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-09T10:06",
+          "exit": "time_expired",
+          "pnl": -1.97
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T20:22",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        }
+      ]
+    },
+    {
+      "seed": 2003,
+      "label": "placebo s3",
+      "trades": 7,
+      "pnl": 4.034772136309891,
+      "wr": 0.5714285714285714,
+      "sharpe": 0.5651284988527954,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 2,
+        "profit_lock": 3,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T12:46",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-01T20:45",
+          "exit": "trailing_take",
+          "pnl": -0.29
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-02T11:18",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-03T21:18",
+          "exit": "trailing_take",
+          "pnl": -0.18
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-08T09:00",
+          "exit": "time_expired",
+          "pnl": 3.22
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-11T09:45",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T20:22",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        }
+      ]
+    },
+    {
+      "seed": 2004,
+      "label": "placebo s4",
+      "trades": 3,
+      "pnl": 0.962299824396208,
+      "wr": 0.3333333333333333,
+      "sharpe": 0.39764179497061947,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 1,
+        "profit_lock": 1,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-05T11:25",
+          "exit": "trailing_take",
+          "pnl": -0.24
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-10T13:53",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T10:55",
+          "exit": "time_expired",
+          "pnl": -1
+        }
+      ]
+    },
+    {
+      "seed": 2005,
+      "label": "placebo s5",
+      "trades": 5,
+      "pnl": 7.034974465356063,
+      "wr": 0.8,
+      "sharpe": 1.5781834940205823,
+      "exitReasons": {
+        "hard_stop": 0,
+        "trailing_take": 0,
+        "profit_lock": 4,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-04T07:16",
+          "exit": "time_expired",
+          "pnl": -1.77
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-07T18:08",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T15:39",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-12T18:10",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-14T00:48",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        }
+      ]
+    },
+    {
+      "seed": 2006,
+      "label": "placebo s6",
+      "trades": 4,
+      "pnl": -7.7533457140807425,
+      "wr": 0,
+      "sharpe": -1.4399337519583533,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 2,
+        "profit_lock": 0,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T20:45",
+          "exit": "trailing_take",
+          "pnl": -0.29
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-03T21:18",
+          "exit": "trailing_take",
+          "pnl": -0.18
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-09T10:06",
+          "exit": "time_expired",
+          "pnl": -1.97
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T20:22",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        }
+      ]
+    },
+    {
+      "seed": 2007,
+      "label": "placebo s7",
+      "trades": 4,
+      "pnl": -7.7533457140807425,
+      "wr": 0,
+      "sharpe": -1.4399337519583533,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 2,
+        "profit_lock": 0,
+        "time_expired": 1,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "LONG",
+          "entry": "07-01T20:45",
+          "exit": "trailing_take",
+          "pnl": -0.29
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-03T21:18",
+          "exit": "trailing_take",
+          "pnl": -0.18
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-09T10:06",
+          "exit": "time_expired",
+          "pnl": -1.97
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T20:22",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        }
+      ]
+    },
+    {
+      "seed": 2008,
+      "label": "placebo s8",
+      "trades": 5,
+      "pnl": -9.867928312978153,
+      "wr": 0.4,
+      "sharpe": -1.6815336290936314,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 2,
+        "profit_lock": 0,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T03:06",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-05T06:30",
+          "exit": "trailing_take",
+          "pnl": 0.02
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-07T11:16",
+          "exit": "trailing_take",
+          "pnl": 0.19
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-09T09:44",
+          "exit": "time_expired",
+          "pnl": -2.33
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-13T11:01",
+          "exit": "time_expired",
+          "pnl": -2.44
+        }
+      ]
+    },
+    {
+      "seed": 2009,
+      "label": "placebo s9",
+      "trades": 5,
+      "pnl": -4.856890551335374,
+      "wr": 0.4,
+      "sharpe": -0.713753797490557,
+      "exitReasons": {
+        "hard_stop": 1,
+        "trailing_take": 0,
+        "profit_lock": 2,
+        "time_expired": 2,
+        "data_truncated": 0
+      },
+      "tradeList": [
+        {
+          "dir": "SHORT",
+          "entry": "07-02T03:06",
+          "exit": "hard_stop",
+          "pnl": -5.3
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-06T01:00",
+          "exit": "time_expired",
+          "pnl": -2.95
+        },
+        {
+          "dir": "LONG",
+          "entry": "07-09T16:34",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-12T18:10",
+          "exit": "profit_lock",
+          "pnl": 2.2
+        },
+        {
+          "dir": "SHORT",
+          "entry": "07-14T10:55",
+          "exit": "time_expired",
+          "pnl": -1
+        }
+      ]
+    }
+  ],
+  "placeboSummary": {
+    "n": 10,
+    "min": -10.562222588133004,
+    "max": 7.034974465356063,
+    "mean": -2.275,
+    "realRank": 7
+  }
+}
