@@ -1,0 +1,1146 @@
+{
+ "variants": [
+  {
+   "key": "K4_r55",
+   "K": 4,
+   "rate": 0.55
+  },
+  {
+   "key": "K4_r60",
+   "K": 4,
+   "rate": 0.6
+  },
+  {
+   "key": "K6_r55",
+   "K": 6,
+   "rate": 0.55
+  },
+  {
+   "key": "K6_r60",
+   "K": 6,
+   "rate": 0.6
+  }
+ ],
+ "matrix": {
+  "K4_r55": [
+   {
+    "month": "2022-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-12",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 47,
+      "winHits": 31,
+      "winRate": 0.66,
+      "longShare": 0.672
+     }
+    ]
+   },
+   {
+    "month": "2025-01",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 46,
+      "winHits": 30,
+      "winRate": 0.652,
+      "longShare": 0.652
+     }
+    ]
+   },
+   {
+    "month": "2025-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-07",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 49,
+      "winHits": 31,
+      "winRate": 0.633,
+      "longShare": 1
+     }
+    ]
+   },
+   {
+    "month": "2025-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-07",
+    "size": 0,
+    "authors": []
+   }
+  ],
+  "K4_r60": [
+   {
+    "month": "2022-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-12",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 47,
+      "winHits": 31,
+      "winRate": 0.66,
+      "longShare": 0.672
+     }
+    ]
+   },
+   {
+    "month": "2025-01",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 46,
+      "winHits": 30,
+      "winRate": 0.652,
+      "longShare": 0.652
+     }
+    ]
+   },
+   {
+    "month": "2025-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-07",
+    "size": 0,
+    "authors": []
+   }
+  ],
+  "K6_r55": [
+   {
+    "month": "2022-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-01",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 59,
+      "winHits": 36,
+      "winRate": 0.61,
+      "longShare": 0.64
+     }
+    ]
+   },
+   {
+    "month": "2025-02",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 61,
+      "winHits": 39,
+      "winRate": 0.639,
+      "longShare": 0.651
+     }
+    ]
+   },
+   {
+    "month": "2025-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-05",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 43,
+      "winHits": 25,
+      "winRate": 0.581,
+      "longShare": 0.977
+     }
+    ]
+   },
+   {
+    "month": "2025-06",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 51,
+      "winHits": 30,
+      "winRate": 0.588,
+      "longShare": 0.981
+     }
+    ]
+   },
+   {
+    "month": "2025-07",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 62,
+      "winHits": 36,
+      "winRate": 0.581,
+      "longShare": 0.984
+     }
+    ]
+   },
+   {
+    "month": "2025-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-07",
+    "size": 0,
+    "authors": []
+   }
+  ],
+  "K6_r60": [
+   {
+    "month": "2022-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2022-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2023-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2024-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-01",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 59,
+      "winHits": 36,
+      "winRate": 0.61,
+      "longShare": 0.64
+     }
+    ]
+   },
+   {
+    "month": "2025-02",
+    "size": 1,
+    "authors": [
+     {
+      "author": "BitCoinGuide",
+      "winIdeas": 61,
+      "winHits": 39,
+      "winRate": 0.639,
+      "longShare": 0.651
+     }
+    ]
+   },
+   {
+    "month": "2025-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-05",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 43,
+      "winHits": 25,
+      "winRate": 0.581,
+      "longShare": 0.977
+     }
+    ]
+   },
+   {
+    "month": "2025-06",
+    "size": 1,
+    "authors": [
+     {
+      "author": "InvestingScope",
+      "winIdeas": 51,
+      "winHits": 30,
+      "winRate": 0.588,
+      "longShare": 0.981
+     }
+    ]
+   },
+   {
+    "month": "2025-07",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-08",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-09",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-10",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-11",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2025-12",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-01",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-02",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-03",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-04",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-05",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-06",
+    "size": 0,
+    "authors": []
+   },
+   {
+    "month": "2026-07",
+    "size": 0,
+    "authors": []
+   }
+  ]
+ }
+}
