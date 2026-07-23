@@ -1,0 +1,104 @@
+[logreg/real] 615 rows, 21 features, device=cuda
+[logreg/real] pooled: AUC=0.7256 PR-AUC=0.8291 Brier=0.2079 | PF before=1.6354493597560373 after=2.8936259564386355 (n 400 -> 264)
+[logreg/invert] 615 rows, 21 features, device=cuda
+[logreg/invert] pooled: AUC=0.7256 PR-AUC=0.8291 Brier=0.2079 | PF before=1.6354493597560373 after=2.8936259564386355 (n 400 -> 264) | invert AUC=0.2744
+[logreg/placebo] 615 rows, 21 features, device=cuda
+  placebo 1/20: pooled AUC=0.4599
+  placebo 2/20: pooled AUC=0.5023
+  placebo 3/20: pooled AUC=0.3867
+  placebo 4/20: pooled AUC=0.6890
+  placebo 5/20: pooled AUC=0.3941
+  placebo 6/20: pooled AUC=0.4779
+  placebo 7/20: pooled AUC=0.5347
+  placebo 8/20: pooled AUC=0.4560
+  placebo 9/20: pooled AUC=0.6436
+  placebo 10/20: pooled AUC=0.3907
+  placebo 11/20: pooled AUC=0.5545
+  placebo 12/20: pooled AUC=0.6477
+  placebo 13/20: pooled AUC=0.5495
+  placebo 14/20: pooled AUC=0.4243
+  placebo 15/20: pooled AUC=0.5745
+  placebo 16/20: pooled AUC=0.6133
+  placebo 17/20: pooled AUC=0.5999
+  placebo 18/20: pooled AUC=0.3831
+  placebo 19/20: pooled AUC=0.5470
+  placebo 20/20: pooled AUC=0.6247
+[logreg/placebo] pooled: AUC=0.7256 PR-AUC=0.8291 Brier=0.2079 | PF before=1.6354493597560373 after=2.8936259564386355 (n 400 -> 264) | placebo p=0.0476
+[lgbm/real] 615 rows, 21 features, device=cuda
+[lgbm/real] pooled: AUC=0.5361 PR-AUC=0.6742 Brier=0.2537 | PF before=1.6354493597560373 after=1.1909482835269705 (n 400 -> 216)
+[lgbm/invert] 615 rows, 21 features, device=cuda
+[lgbm/invert] pooled: AUC=0.5361 PR-AUC=0.6742 Brier=0.2537 | PF before=1.6354493597560373 after=1.1909482835269705 (n 400 -> 216) | invert AUC=0.4639
+[lgbm/placebo] 615 rows, 21 features, device=cuda
+  placebo 1/20: pooled AUC=0.3995
+  placebo 2/20: pooled AUC=0.5274
+  placebo 3/20: pooled AUC=0.4928
+  placebo 4/20: pooled AUC=0.4310
+  placebo 5/20: pooled AUC=0.4836
+  placebo 6/20: pooled AUC=0.4862
+  placebo 7/20: pooled AUC=0.4982
+  placebo 8/20: pooled AUC=0.5245
+  placebo 9/20: pooled AUC=0.4664
+  placebo 10/20: pooled AUC=0.5756
+  placebo 11/20: pooled AUC=0.5320
+  placebo 12/20: pooled AUC=0.5745
+  placebo 13/20: pooled AUC=0.6052
+  placebo 14/20: pooled AUC=0.4864
+  placebo 15/20: pooled AUC=0.4885
+  placebo 16/20: pooled AUC=0.5198
+  placebo 17/20: pooled AUC=0.5086
+  placebo 18/20: pooled AUC=0.4773
+  placebo 19/20: pooled AUC=0.5704
+  placebo 20/20: pooled AUC=0.4952
+[lgbm/placebo] pooled: AUC=0.5361 PR-AUC=0.6742 Brier=0.2537 | PF before=1.6354493597560373 after=1.1909482835269705 (n 400 -> 216) | placebo p=0.2381
+[kan_eff/real] 615 rows, 21 features, device=cuda
+[kan_eff/real] pooled: AUC=0.4644 PR-AUC=0.6339 Brier=0.2791 | PF before=1.6354493597560373 after=1.3418807077674815 (n 400 -> 238)
+[kan_eff/invert] 615 rows, 21 features, device=cuda
+[kan_eff/invert] pooled: AUC=0.4644 PR-AUC=0.6339 Brier=0.2791 | PF before=1.6354493597560373 after=1.3418807077674815 (n 400 -> 238) | invert AUC=0.4191
+[kan_eff/placebo] 615 rows, 21 features, device=cuda
+  placebo 1/20: pooled AUC=0.4849
+  placebo 2/20: pooled AUC=0.4039
+  placebo 3/20: pooled AUC=0.4596
+  placebo 4/20: pooled AUC=0.5332
+  placebo 5/20: pooled AUC=0.5079
+  placebo 6/20: pooled AUC=0.5708
+  placebo 7/20: pooled AUC=0.6588
+  placebo 8/20: pooled AUC=0.6142
+  placebo 9/20: pooled AUC=0.5604
+  placebo 10/20: pooled AUC=0.3566
+  placebo 11/20: pooled AUC=0.4676
+  placebo 12/20: pooled AUC=0.3694
+  placebo 13/20: pooled AUC=0.3919
+  placebo 14/20: pooled AUC=0.4511
+  placebo 15/20: pooled AUC=0.6148
+  placebo 16/20: pooled AUC=0.4981
+  placebo 17/20: pooled AUC=0.5241
+  placebo 18/20: pooled AUC=0.5714
+  placebo 19/20: pooled AUC=0.4808
+  placebo 20/20: pooled AUC=0.4937
+[kan_eff/placebo] pooled: AUC=0.4644 PR-AUC=0.6339 Brier=0.2791 | PF before=1.6354493597560373 after=1.3418807077674815 (n 400 -> 238) | placebo p=0.7143
+[kan_cheby/real] 615 rows, 21 features, device=cuda
+[kan_cheby/real] pooled: AUC=0.6493 PR-AUC=0.7470 Brier=0.2472 | PF before=1.6354493597560373 after=1.5080800261535638 (n 400 -> 198)
+[kan_cheby/invert] 615 rows, 21 features, device=cuda
+[kan_cheby/invert] pooled: AUC=0.6493 PR-AUC=0.7470 Brier=0.2472 | PF before=1.6354493597560373 after=1.5080800261535638 (n 400 -> 198) | invert AUC=0.3807
+[kan_cheby/placebo] 615 rows, 21 features, device=cuda
+  placebo 1/20: pooled AUC=0.3916
+  placebo 2/20: pooled AUC=0.3711
+  placebo 3/20: pooled AUC=0.3563
+  placebo 4/20: pooled AUC=0.6099
+  placebo 5/20: pooled AUC=0.5017
+  placebo 6/20: pooled AUC=0.4826
+  placebo 7/20: pooled AUC=0.4884
+  placebo 8/20: pooled AUC=0.4896
+  placebo 9/20: pooled AUC=0.4914
+  placebo 10/20: pooled AUC=0.3627
+  placebo 11/20: pooled AUC=0.4936
+  placebo 12/20: pooled AUC=0.5736
+  placebo 13/20: pooled AUC=0.4468
+  placebo 14/20: pooled AUC=0.4544
+  placebo 15/20: pooled AUC=0.5378
+  placebo 16/20: pooled AUC=0.4685
+  placebo 17/20: pooled AUC=0.5239
+  placebo 18/20: pooled AUC=0.4637
+  placebo 19/20: pooled AUC=0.5922
+  placebo 20/20: pooled AUC=0.5432
+[kan_cheby/placebo] pooled: AUC=0.6493 PR-AUC=0.7470 Brier=0.2472 | PF before=1.6354493597560373 after=1.5080800261535638 (n 400 -> 198) | placebo p=0.0476
