@@ -1,0 +1,3306 @@
+{
+ "summary": {
+  "pairs": 54,
+  "evaluated": 54,
+  "realBeatsPlaceboMedian": "24/54",
+  "medianRealPnl": -3.013,
+  "medianPlaceboPnl": -1.301,
+  "medianRealTrades": 10
+ },
+ "rows": [
+  {
+   "pair": "2022-01->2022-02",
+   "trainIdeas": 77,
+   "testIdeas": 50,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 16,
+    "pnl": 16.308,
+    "wr": 0.938,
+    "sharpe": 3.356
+   },
+   "real": {
+    "trades": 12,
+    "pnl": -12.045,
+    "wr": 0.667,
+    "sharpe": -1.012
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": -15.646,
+     "wr": 0.556,
+     "sharpe": -1.351
+    },
+    {
+     "trades": 7,
+     "pnl": -13.837,
+     "wr": 0.571,
+     "sharpe": -1.236
+    },
+    {
+     "trades": 11,
+     "pnl": -9.04,
+     "wr": 0.727,
+     "sharpe": -0.771
+    },
+    {
+     "trades": 8,
+     "pnl": -7.386,
+     "wr": 0.75,
+     "sharpe": -0.694
+    },
+    {
+     "trades": 12,
+     "pnl": -7.839,
+     "wr": 0.75,
+     "sharpe": -0.663
+    }
+   ],
+   "placeboMedian": -9.04,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2022-02->2022-03",
+   "trainIdeas": 50,
+   "testIdeas": 47,
+   "point": {
+    "hardStopPercent": 2,
+    "trailingTakePercent": 3,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 4,
+    "pnl": 15.412,
+    "wr": 0.75,
+    "sharpe": 1.394
+   },
+   "real": {
+    "trades": 0,
+    "pnl": 0,
+    "wr": 0,
+    "sharpe": 0
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": 0.283,
+     "wr": 0.375,
+     "sharpe": 0.041
+    },
+    {
+     "trades": 8,
+     "pnl": 0.283,
+     "wr": 0.375,
+     "sharpe": 0.041
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 13,
+     "pnl": 9.849,
+     "wr": 0.538,
+     "sharpe": 0.947
+    },
+    {
+     "trades": 8,
+     "pnl": 0.283,
+     "wr": 0.375,
+     "sharpe": 0.041
+    }
+   ],
+   "placeboMedian": 0.283,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2022-03->2022-04",
+   "trainIdeas": 47,
+   "testIdeas": 38,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 2,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 15,
+    "pnl": 19.475,
+    "wr": 0.8,
+    "sharpe": 1.617
+   },
+   "real": {
+    "trades": 15,
+    "pnl": 1.477,
+    "wr": 0.6,
+    "sharpe": 0.13
+   },
+   "placebo": [
+    {
+     "trades": 13,
+     "pnl": -3.958,
+     "wr": 0.462,
+     "sharpe": -0.344
+    },
+    {
+     "trades": 13,
+     "pnl": -3.958,
+     "wr": 0.462,
+     "sharpe": -0.344
+    },
+    {
+     "trades": 10,
+     "pnl": -7.292,
+     "wr": 0.5,
+     "sharpe": -1.063
+    },
+    {
+     "trades": 13,
+     "pnl": -3.958,
+     "wr": 0.462,
+     "sharpe": -0.344
+    },
+    {
+     "trades": 13,
+     "pnl": -3.958,
+     "wr": 0.462,
+     "sharpe": -0.344
+    }
+   ],
+   "placeboMedian": -3.958,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-04->2022-05",
+   "trainIdeas": 38,
+   "testIdeas": 47,
+   "point": {
+    "hardStopPercent": 1,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 2,
+    "pnl": 5.012,
+    "wr": 0.5,
+    "sharpe": 0.785
+   },
+   "real": {
+    "trades": 4,
+    "pnl": 4.758,
+    "wr": 0.5,
+    "sharpe": 0.654
+   },
+   "placebo": [
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 2,
+     "pnl": -2.598,
+     "wr": 0,
+     "sharpe": -1.456
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 6,
+     "pnl": -5.125,
+     "wr": 0.167,
+     "sharpe": -1.654
+    }
+   ],
+   "placeboMedian": 0,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-05->2022-06",
+   "trainIdeas": 47,
+   "testIdeas": 59,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 4,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 0.187,
+    "wr": 0.5,
+    "sharpe": 0.016
+   },
+   "real": {
+    "trades": 9,
+    "pnl": 6.096,
+    "wr": 0.667,
+    "sharpe": 0.498
+   },
+   "placebo": [
+    {
+     "trades": 5,
+     "pnl": 7.976,
+     "wr": 0.8,
+     "sharpe": 0.76
+    },
+    {
+     "trades": 13,
+     "pnl": -9.081,
+     "wr": 0.462,
+     "sharpe": -0.57
+    },
+    {
+     "trades": 13,
+     "pnl": 0.433,
+     "wr": 0.538,
+     "sharpe": 0.031
+    },
+    {
+     "trades": 5,
+     "pnl": 2.506,
+     "wr": 0.6,
+     "sharpe": 0.224
+    },
+    {
+     "trades": 7,
+     "pnl": 3.76,
+     "wr": 0.714,
+     "sharpe": 0.316
+    }
+   ],
+   "placeboMedian": 2.506,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-06->2022-07",
+   "trainIdeas": 59,
+   "testIdeas": 60,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 13,
+    "pnl": 20.002,
+    "wr": 0.769,
+    "sharpe": 1.424
+   },
+   "real": {
+    "trades": 11,
+    "pnl": 9.293,
+    "wr": 0.636,
+    "sharpe": 0.724
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": 0.518,
+     "wr": 0.375,
+     "sharpe": 0.068
+    },
+    {
+     "trades": 11,
+     "pnl": 8.489,
+     "wr": 0.636,
+     "sharpe": 0.663
+    },
+    {
+     "trades": 8,
+     "pnl": 0.518,
+     "wr": 0.375,
+     "sharpe": 0.068
+    },
+    {
+     "trades": 9,
+     "pnl": 10.995,
+     "wr": 0.778,
+     "sharpe": 0.866
+    },
+    {
+     "trades": 13,
+     "pnl": -43.028,
+     "wr": 0.077,
+     "sharpe": -3.315
+    }
+   ],
+   "placeboMedian": 0.518,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-07->2022-08",
+   "trainIdeas": 60,
+   "testIdeas": 51,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 12,
+    "pnl": 16.875,
+    "wr": 0.917,
+    "sharpe": 1.629
+   },
+   "real": {
+    "trades": 12,
+    "pnl": 4.507,
+    "wr": 0.667,
+    "sharpe": 0.49
+   },
+   "placebo": [
+    {
+     "trades": 10,
+     "pnl": 1.802,
+     "wr": 0.6,
+     "sharpe": 0.201
+    },
+    {
+     "trades": 6,
+     "pnl": -2.67,
+     "wr": 0.167,
+     "sharpe": -0.817
+    },
+    {
+     "trades": 7,
+     "pnl": 7.438,
+     "wr": 0.714,
+     "sharpe": 1.638
+    },
+    {
+     "trades": 11,
+     "pnl": -8.384,
+     "wr": 0.455,
+     "sharpe": -0.905
+    },
+    {
+     "trades": 7,
+     "pnl": 0.433,
+     "wr": 0.571,
+     "sharpe": 0.071
+    }
+   ],
+   "placeboMedian": 0.433,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-08->2022-09",
+   "trainIdeas": 51,
+   "testIdeas": 47,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 1,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 12,
+    "pnl": 4.927,
+    "wr": 0.75,
+    "sharpe": 1.662
+   },
+   "real": {
+    "trades": 7,
+    "pnl": 4.159,
+    "wr": 0.857,
+    "sharpe": 1.38
+   },
+   "placebo": [
+    {
+     "trades": 14,
+     "pnl": -7.885,
+     "wr": 0.571,
+     "sharpe": -0.678
+    },
+    {
+     "trades": 7,
+     "pnl": 2.568,
+     "wr": 0.714,
+     "sharpe": 1.564
+    },
+    {
+     "trades": 13,
+     "pnl": -0.335,
+     "wr": 0.692,
+     "sharpe": -0.036
+    },
+    {
+     "trades": 13,
+     "pnl": 2.861,
+     "wr": 0.769,
+     "sharpe": 0.284
+    },
+    {
+     "trades": 4,
+     "pnl": 3.59,
+     "wr": 0.75,
+     "sharpe": 1.818
+    }
+   ],
+   "placeboMedian": 2.568,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-09->2022-10",
+   "trainIdeas": 47,
+   "testIdeas": 30,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 14,
+    "pnl": 11.013,
+    "wr": 0.857,
+    "sharpe": 1.928
+   },
+   "real": {
+    "trades": 11,
+    "pnl": -3.385,
+    "wr": 0.455,
+    "sharpe": -0.458
+   },
+   "placebo": [
+    {
+     "trades": 4,
+     "pnl": 3.347,
+     "wr": 0.75,
+     "sharpe": 1.659
+    },
+    {
+     "trades": 3,
+     "pnl": -1.22,
+     "wr": 0.667,
+     "sharpe": -0.306
+    },
+    {
+     "trades": 5,
+     "pnl": 6.005,
+     "wr": 1,
+     "sharpe": 2.421
+    },
+    {
+     "trades": 1,
+     "pnl": 1.202,
+     "wr": 1,
+     "sharpe": 1.015
+    },
+    {
+     "trades": 13,
+     "pnl": 0.161,
+     "wr": 0.538,
+     "sharpe": 0.02
+    }
+   ],
+   "placeboMedian": 1.202,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2022-10->2022-11",
+   "trainIdeas": 30,
+   "testIdeas": 45,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 11,
+    "pnl": 3.976,
+    "wr": 0.545,
+    "sharpe": 0.488
+   },
+   "real": {
+    "trades": 13,
+    "pnl": -2.646,
+    "wr": 0.692,
+    "sharpe": -0.303
+   },
+   "placebo": [
+    {
+     "trades": 3,
+     "pnl": -0.085,
+     "wr": 0.667,
+     "sharpe": -0.028
+    },
+    {
+     "trades": 5,
+     "pnl": 3.845,
+     "wr": 0.8,
+     "sharpe": 1.535
+    },
+    {
+     "trades": 12,
+     "pnl": -3.844,
+     "wr": 0.667,
+     "sharpe": -0.454
+    },
+    {
+     "trades": 12,
+     "pnl": -3.844,
+     "wr": 0.667,
+     "sharpe": -0.454
+    },
+    {
+     "trades": 13,
+     "pnl": -2.643,
+     "wr": 0.692,
+     "sharpe": -0.303
+    }
+   ],
+   "placeboMedian": -2.643,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2022-11->2022-12",
+   "trainIdeas": 45,
+   "testIdeas": 50,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 3,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 13.714,
+    "wr": 0.75,
+    "sharpe": 1.949
+   },
+   "real": {
+    "trades": 2,
+    "pnl": -0.374,
+    "wr": 0,
+    "sharpe": -1.178
+   },
+   "placebo": [
+    {
+     "trades": 3,
+     "pnl": -0.628,
+     "wr": 0.333,
+     "sharpe": -0.249
+    },
+    {
+     "trades": 8,
+     "pnl": -2.856,
+     "wr": 0.375,
+     "sharpe": -0.383
+    },
+    {
+     "trades": 8,
+     "pnl": -2.856,
+     "wr": 0.375,
+     "sharpe": -0.383
+    },
+    {
+     "trades": 4,
+     "pnl": -0.678,
+     "wr": 0.25,
+     "sharpe": -0.269
+    },
+    {
+     "trades": 3,
+     "pnl": -0.628,
+     "wr": 0.333,
+     "sharpe": -0.249
+    }
+   ],
+   "placeboMedian": -0.678,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2022-12->2023-01",
+   "trainIdeas": 50,
+   "testIdeas": 59,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 9.835,
+    "wr": 0.7,
+    "sharpe": 1.95
+   },
+   "real": {
+    "trades": 10,
+    "pnl": 8.257,
+    "wr": 0.9,
+    "sharpe": 1.079
+   },
+   "placebo": [
+    {
+     "trades": 2,
+     "pnl": 0.273,
+     "wr": 0.5,
+     "sharpe": 0.429
+    },
+    {
+     "trades": 6,
+     "pnl": 1.826,
+     "wr": 0.833,
+     "sharpe": 0.274
+    },
+    {
+     "trades": 7,
+     "pnl": 3.18,
+     "wr": 0.857,
+     "sharpe": 0.468
+    },
+    {
+     "trades": 2,
+     "pnl": 1.064,
+     "wr": 0.5,
+     "sharpe": 0.777
+    },
+    {
+     "trades": 2,
+     "pnl": 0.273,
+     "wr": 0.5,
+     "sharpe": 0.429
+    }
+   ],
+   "placeboMedian": 1.064,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2023-01->2023-02",
+   "trainIdeas": 59,
+   "testIdeas": 84,
+   "point": {
+    "hardStopPercent": 2,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 22,
+    "pnl": 14.065,
+    "wr": 0.727,
+    "sharpe": 1.992
+   },
+   "real": {
+    "trades": 24,
+    "pnl": -12.948,
+    "wr": 0.458,
+    "sharpe": -1.784
+   },
+   "placebo": [
+    {
+     "trades": 5,
+     "pnl": 0.338,
+     "wr": 0.6,
+     "sharpe": 0.118
+    },
+    {
+     "trades": 6,
+     "pnl": 1.539,
+     "wr": 0.667,
+     "sharpe": 0.496
+    },
+    {
+     "trades": 15,
+     "pnl": -10.475,
+     "wr": 0.4,
+     "sharpe": -1.706
+    },
+    {
+     "trades": 17,
+     "pnl": -9.702,
+     "wr": 0.412,
+     "sharpe": -1.658
+    },
+    {
+     "trades": 16,
+     "pnl": -15.249,
+     "wr": 0.313,
+     "sharpe": -2.27
+    }
+   ],
+   "placeboMedian": -9.702,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-02->2023-03",
+   "trainIdeas": 84,
+   "testIdeas": 75,
+   "point": {
+    "hardStopPercent": 2,
+    "trailingTakePercent": 1,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 8.643,
+    "wr": 0.8,
+    "sharpe": 1.749
+   },
+   "real": {
+    "trades": 4,
+    "pnl": -4.478,
+    "wr": 0.25,
+    "sharpe": -1.413
+   },
+   "placebo": [
+    {
+     "trades": 3,
+     "pnl": -1.26,
+     "wr": 0.667,
+     "sharpe": -0.523
+    },
+    {
+     "trades": 6,
+     "pnl": -2.275,
+     "wr": 0.333,
+     "sharpe": -0.578
+    },
+    {
+     "trades": 17,
+     "pnl": -9.504,
+     "wr": 0.294,
+     "sharpe": -1.492
+    },
+    {
+     "trades": 3,
+     "pnl": -1.26,
+     "wr": 0.667,
+     "sharpe": -0.523
+    },
+    {
+     "trades": 3,
+     "pnl": -1.26,
+     "wr": 0.667,
+     "sharpe": -0.523
+    }
+   ],
+   "placeboMedian": -1.26,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-03->2023-04",
+   "trainIdeas": 75,
+   "testIdeas": 66,
+   "point": {
+    "hardStopPercent": 3,
+    "trailingTakePercent": 2,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 7.928,
+    "wr": 0.75,
+    "sharpe": 1.064
+   },
+   "real": {
+    "trades": 5,
+    "pnl": -3.007,
+    "wr": 0.4,
+    "sharpe": -0.521
+   },
+   "placebo": [
+    {
+     "trades": 1,
+     "pnl": 6.998,
+     "wr": 1,
+     "sharpe": 1.015
+    },
+    {
+     "trades": 13,
+     "pnl": -3.32,
+     "wr": 0.385,
+     "sharpe": -0.377
+    },
+    {
+     "trades": 11,
+     "pnl": -0.492,
+     "wr": 0.455,
+     "sharpe": -0.047
+    },
+    {
+     "trades": 10,
+     "pnl": 2.401,
+     "wr": 0.6,
+     "sharpe": 0.276
+    },
+    {
+     "trades": 10,
+     "pnl": 0.069,
+     "wr": 0.5,
+     "sharpe": 0.008
+    }
+   ],
+   "placeboMedian": 0.069,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-04->2023-05",
+   "trainIdeas": 66,
+   "testIdeas": 76,
+   "point": {
+    "hardStopPercent": 2.5,
+    "trailingTakePercent": 4,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 17.594,
+    "wr": 1,
+    "sharpe": 2.318
+   },
+   "real": {
+    "trades": 11,
+    "pnl": -15.469,
+    "wr": 0.273,
+    "sharpe": -2.209
+   },
+   "placebo": [
+    {
+     "trades": 13,
+     "pnl": -7.393,
+     "wr": 0.308,
+     "sharpe": -0.898
+    },
+    {
+     "trades": 10,
+     "pnl": -14.449,
+     "wr": 0.3,
+     "sharpe": -2.23
+    },
+    {
+     "trades": 11,
+     "pnl": -15.469,
+     "wr": 0.273,
+     "sharpe": -2.209
+    },
+    {
+     "trades": 12,
+     "pnl": -17.451,
+     "wr": 0.333,
+     "sharpe": -2.621
+    },
+    {
+     "trades": 14,
+     "pnl": -18.016,
+     "wr": 0.214,
+     "sharpe": -2.047
+    }
+   ],
+   "placeboMedian": -15.469,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-05->2023-06",
+   "trainIdeas": 76,
+   "testIdeas": 83,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 5,
+    "pnl": 8.293,
+    "wr": 0.8,
+    "sharpe": 1.974
+   },
+   "real": {
+    "trades": 10,
+    "pnl": -0.23,
+    "wr": 0.5,
+    "sharpe": -0.029
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": 1.36,
+     "wr": 0.556,
+     "sharpe": 0.176
+    },
+    {
+     "trades": 10,
+     "pnl": -6.657,
+     "wr": 0.5,
+     "sharpe": -0.709
+    },
+    {
+     "trades": 10,
+     "pnl": -6.657,
+     "wr": 0.5,
+     "sharpe": -0.709
+    },
+    {
+     "trades": 10,
+     "pnl": 0.846,
+     "wr": 0.6,
+     "sharpe": 0.104
+    },
+    {
+     "trades": 11,
+     "pnl": -0.915,
+     "wr": 0.545,
+     "sharpe": -0.097
+    }
+   ],
+   "placeboMedian": -0.915,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2023-06->2023-07",
+   "trainIdeas": 83,
+   "testIdeas": 86,
+   "point": {
+    "hardStopPercent": 3,
+    "trailingTakePercent": 1,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 1.2,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 5.269,
+    "wr": 0.875,
+    "sharpe": 1.753
+   },
+   "real": {
+    "trades": 3,
+    "pnl": 1.667,
+    "wr": 1,
+    "sharpe": 1.372
+   },
+   "placebo": [
+    {
+     "trades": 3,
+     "pnl": 0.134,
+     "wr": 0.333,
+     "sharpe": 0.091
+    },
+    {
+     "trades": 5,
+     "pnl": 1.509,
+     "wr": 0.6,
+     "sharpe": 0.797
+    },
+    {
+     "trades": 3,
+     "pnl": 0.134,
+     "wr": 0.333,
+     "sharpe": 0.091
+    },
+    {
+     "trades": 1,
+     "pnl": 0.176,
+     "wr": 1,
+     "sharpe": 1.014
+    },
+    {
+     "trades": 1,
+     "pnl": 0.097,
+     "wr": 1,
+     "sharpe": 1.014
+    }
+   ],
+   "placeboMedian": 0.134,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2023-07->2023-08",
+   "trainIdeas": 86,
+   "testIdeas": 97,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 0.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 11,
+    "pnl": -0.302,
+    "wr": 0.364,
+    "sharpe": -0.15
+   },
+   "real": {
+    "trades": 12,
+    "pnl": -9.429,
+    "wr": 0.417,
+    "sharpe": -1.567
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": -3.444,
+     "wr": 0.25,
+     "sharpe": -1.82
+    },
+    {
+     "trades": 9,
+     "pnl": -6.667,
+     "wr": 0.444,
+     "sharpe": -1.118
+    },
+    {
+     "trades": 2,
+     "pnl": -0.797,
+     "wr": 0.5,
+     "sharpe": -0.63
+    },
+    {
+     "trades": 8,
+     "pnl": -1.48,
+     "wr": 0.375,
+     "sharpe": -0.556
+    },
+    {
+     "trades": 10,
+     "pnl": -0.228,
+     "wr": 0.4,
+     "sharpe": -0.078
+    }
+   ],
+   "placeboMedian": -1.48,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-08->2023-09",
+   "trainIdeas": 97,
+   "testIdeas": 77,
+   "point": {
+    "hardStopPercent": 3,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 13.521,
+    "wr": 0.7,
+    "sharpe": 1.915
+   },
+   "real": {
+    "trades": 8,
+    "pnl": -11.418,
+    "wr": 0.125,
+    "sharpe": -1.795
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": -9.144,
+     "wr": 0.25,
+     "sharpe": -1.339
+    },
+    {
+     "trades": 12,
+     "pnl": -1.069,
+     "wr": 0.417,
+     "sharpe": -0.167
+    },
+    {
+     "trades": 9,
+     "pnl": -3.004,
+     "wr": 0.333,
+     "sharpe": -0.502
+    },
+    {
+     "trades": 9,
+     "pnl": -5.313,
+     "wr": 0.333,
+     "sharpe": -0.959
+    },
+    {
+     "trades": 12,
+     "pnl": -1.069,
+     "wr": 0.417,
+     "sharpe": -0.167
+    }
+   ],
+   "placeboMedian": -3.004,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-09->2023-10",
+   "trainIdeas": 77,
+   "testIdeas": 102,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 6.477,
+    "wr": 0.5,
+    "sharpe": 1.461
+   },
+   "real": {
+    "trades": 14,
+    "pnl": 10.682,
+    "wr": 0.714,
+    "sharpe": 1.258
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": -9.648,
+     "wr": 0.222,
+     "sharpe": -1.443
+    },
+    {
+     "trades": 14,
+     "pnl": -18.304,
+     "wr": 0.286,
+     "sharpe": -2.446
+    },
+    {
+     "trades": 15,
+     "pnl": -10.519,
+     "wr": 0.533,
+     "sharpe": -1.311
+    },
+    {
+     "trades": 8,
+     "pnl": -3.193,
+     "wr": 0.5,
+     "sharpe": -0.626
+    },
+    {
+     "trades": 14,
+     "pnl": -11.731,
+     "wr": 0.5,
+     "sharpe": -1.809
+    }
+   ],
+   "placeboMedian": -10.519,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2023-10->2023-11",
+   "trainIdeas": 102,
+   "testIdeas": 76,
+   "point": {
+    "hardStopPercent": 1.5,
+    "trailingTakePercent": 4,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 17,
+    "pnl": 12.064,
+    "wr": 0.471,
+    "sharpe": 1.994
+   },
+   "real": {
+    "trades": 18,
+    "pnl": 0.514,
+    "wr": 0.444,
+    "sharpe": 0.078
+   },
+   "placebo": [
+    {
+     "trades": 19,
+     "pnl": -2.766,
+     "wr": 0.368,
+     "sharpe": -0.428
+    },
+    {
+     "trades": 20,
+     "pnl": -0.823,
+     "wr": 0.5,
+     "sharpe": -0.097
+    },
+    {
+     "trades": 17,
+     "pnl": 1.073,
+     "wr": 0.471,
+     "sharpe": 0.16
+    },
+    {
+     "trades": 15,
+     "pnl": -1.674,
+     "wr": 0.4,
+     "sharpe": -0.264
+    },
+    {
+     "trades": 13,
+     "pnl": 1.034,
+     "wr": 0.462,
+     "sharpe": 0.163
+    }
+   ],
+   "placeboMedian": -0.823,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2023-11->2023-12",
+   "trainIdeas": 76,
+   "testIdeas": 72,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 9,
+    "pnl": 14.983,
+    "wr": 0.889,
+    "sharpe": 2.504
+   },
+   "real": {
+    "trades": 10,
+    "pnl": 3.87,
+    "wr": 0.4,
+    "sharpe": 0.287
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": 9.82,
+     "wr": 0.5,
+     "sharpe": 0.8
+    },
+    {
+     "trades": 9,
+     "pnl": 5.269,
+     "wr": 0.444,
+     "sharpe": 0.4
+    },
+    {
+     "trades": 9,
+     "pnl": 4.149,
+     "wr": 0.444,
+     "sharpe": 0.375
+    },
+    {
+     "trades": 10,
+     "pnl": 6.501,
+     "wr": 0.4,
+     "sharpe": 0.487
+    },
+    {
+     "trades": 8,
+     "pnl": 3.147,
+     "wr": 0.5,
+     "sharpe": 0.26
+    }
+   ],
+   "placeboMedian": 5.269,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2023-12->2024-01",
+   "trainIdeas": 72,
+   "testIdeas": 60,
+   "point": {
+    "hardStopPercent": 2.5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 11,
+    "pnl": 12.031,
+    "wr": 1,
+    "sharpe": 3.76
+   },
+   "real": {
+    "trades": 6,
+    "pnl": -4.799,
+    "wr": 0.5,
+    "sharpe": -1.061
+   },
+   "placebo": [
+    {
+     "trades": 12,
+     "pnl": -9.834,
+     "wr": 0.417,
+     "sharpe": -1.452
+    },
+    {
+     "trades": 6,
+     "pnl": -8.795,
+     "wr": 0.333,
+     "sharpe": -1.749
+    },
+    {
+     "trades": 5,
+     "pnl": -9.991,
+     "wr": 0.2,
+     "sharpe": -1.481
+    },
+    {
+     "trades": 16,
+     "pnl": -9.033,
+     "wr": 0.5,
+     "sharpe": -1.164
+    },
+    {
+     "trades": 20,
+     "pnl": -4.234,
+     "wr": 0.6,
+     "sharpe": -0.499
+    }
+   ],
+   "placeboMedian": -9.033,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2024-01->2024-02",
+   "trainIdeas": 60,
+   "testIdeas": 46,
+   "point": {
+    "hardStopPercent": 2.5,
+    "trailingTakePercent": 0.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 5.291,
+    "wr": 0.8,
+    "sharpe": 1.907
+   },
+   "real": {
+    "trades": 6,
+    "pnl": -0.669,
+    "wr": 0.833,
+    "sharpe": -0.214
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": 2.601,
+     "wr": 0.667,
+     "sharpe": 1.663
+    },
+    {
+     "trades": 3,
+     "pnl": 1.629,
+     "wr": 1,
+     "sharpe": 1.329
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 1,
+     "pnl": 0.538,
+     "wr": 1,
+     "sharpe": 1.015
+    }
+   ],
+   "placeboMedian": 0.538,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-02->2024-03",
+   "trainIdeas": 46,
+   "testIdeas": 69,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 9,
+    "pnl": 29.851,
+    "wr": 0.778,
+    "sharpe": 2.05
+   },
+   "real": {
+    "trades": 11,
+    "pnl": -8.291,
+    "wr": 0.545,
+    "sharpe": -0.859
+   },
+   "placebo": [
+    {
+     "trades": 6,
+     "pnl": 2.312,
+     "wr": 0.5,
+     "sharpe": 0.239
+    },
+    {
+     "trades": 5,
+     "pnl": -0.757,
+     "wr": 0.6,
+     "sharpe": -0.095
+    },
+    {
+     "trades": 7,
+     "pnl": -4.058,
+     "wr": 0.429,
+     "sharpe": -0.396
+    },
+    {
+     "trades": 11,
+     "pnl": -6.459,
+     "wr": 0.545,
+     "sharpe": -0.615
+    },
+    {
+     "trades": 6,
+     "pnl": 2.322,
+     "wr": 0.5,
+     "sharpe": 0.235
+    }
+   ],
+   "placeboMedian": -0.757,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-03->2024-04",
+   "trainIdeas": 69,
+   "testIdeas": 85,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 16,
+    "pnl": 13.693,
+    "wr": 0.938,
+    "sharpe": 2.244
+   },
+   "real": {
+    "trades": 15,
+    "pnl": 4.456,
+    "wr": 0.8,
+    "sharpe": 0.507
+   },
+   "placebo": [
+    {
+     "trades": 15,
+     "pnl": -9.494,
+     "wr": 0.667,
+     "sharpe": -0.893
+    },
+    {
+     "trades": 20,
+     "pnl": -29.889,
+     "wr": 0.5,
+     "sharpe": -2.461
+    },
+    {
+     "trades": 21,
+     "pnl": -28.69,
+     "wr": 0.524,
+     "sharpe": -2.358
+    },
+    {
+     "trades": 19,
+     "pnl": -21.28,
+     "wr": 0.526,
+     "sharpe": -1.924
+    },
+    {
+     "trades": 10,
+     "pnl": 3.947,
+     "wr": 0.8,
+     "sharpe": 0.744
+    }
+   ],
+   "placeboMedian": -21.28,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2024-04->2024-05",
+   "trainIdeas": 85,
+   "testIdeas": 71,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 1,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 6.139,
+    "wr": 0.875,
+    "sharpe": 1.591
+   },
+   "real": {
+    "trades": 7,
+    "pnl": -3.854,
+    "wr": 0.571,
+    "sharpe": -0.611
+   },
+   "placebo": [
+    {
+     "trades": 6,
+     "pnl": 2.504,
+     "wr": 0.667,
+     "sharpe": 1.047
+    },
+    {
+     "trades": 10,
+     "pnl": -7.116,
+     "wr": 0.6,
+     "sharpe": -0.732
+    },
+    {
+     "trades": 5,
+     "pnl": 2.148,
+     "wr": 0.8,
+     "sharpe": 0.605
+    },
+    {
+     "trades": 9,
+     "pnl": 0.773,
+     "wr": 0.556,
+     "sharpe": 0.11
+    },
+    {
+     "trades": 2,
+     "pnl": 2.397,
+     "wr": 1,
+     "sharpe": 1.456
+    }
+   ],
+   "placeboMedian": 2.148,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-05->2024-06",
+   "trainIdeas": 71,
+   "testIdeas": 67,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 9,
+    "pnl": 6.057,
+    "wr": 0.778,
+    "sharpe": 1.23
+   },
+   "real": {
+    "trades": 8,
+    "pnl": -3.574,
+    "wr": 0.625,
+    "sharpe": -0.539
+   },
+   "placebo": [
+    {
+     "trades": 7,
+     "pnl": -7.188,
+     "wr": 0.429,
+     "sharpe": -1.261
+    },
+    {
+     "trades": 2,
+     "pnl": 2.397,
+     "wr": 1,
+     "sharpe": 1.456
+    },
+    {
+     "trades": 5,
+     "pnl": -5.71,
+     "wr": 0.4,
+     "sharpe": -0.977
+    },
+    {
+     "trades": 8,
+     "pnl": -3.574,
+     "wr": 0.625,
+     "sharpe": -0.539
+    },
+    {
+     "trades": 7,
+     "pnl": -5.234,
+     "wr": 0.571,
+     "sharpe": -0.787
+    }
+   ],
+   "placeboMedian": -5.234,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2024-06->2024-07",
+   "trainIdeas": 67,
+   "testIdeas": 73,
+   "point": {
+    "hardStopPercent": 1,
+    "trailingTakePercent": 1,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 4,
+    "pnl": 0.61,
+    "wr": 0.25,
+    "sharpe": 0.237
+   },
+   "real": {
+    "trades": 8,
+    "pnl": -7.41,
+    "wr": 0.125,
+    "sharpe": -2.48
+   },
+   "placebo": [
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 12,
+     "pnl": -7.491,
+     "wr": 0.167,
+     "sharpe": -1.636
+    },
+    {
+     "trades": 1,
+     "pnl": -1.301,
+     "wr": 0,
+     "sharpe": -1.015
+    },
+    {
+     "trades": 1,
+     "pnl": 0.677,
+     "wr": 1,
+     "sharpe": 1.015
+    },
+    {
+     "trades": 1,
+     "pnl": 0.76,
+     "wr": 1,
+     "sharpe": 1.015
+    }
+   ],
+   "placeboMedian": 0,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-07->2024-08",
+   "trainIdeas": 73,
+   "testIdeas": 64,
+   "point": {
+    "hardStopPercent": 2,
+    "trailingTakePercent": 1,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 18,
+    "pnl": 1.797,
+    "wr": 0.667,
+    "sharpe": 0.239
+   },
+   "real": {
+    "trades": 5,
+    "pnl": -3.366,
+    "wr": 0.6,
+    "sharpe": -1.017
+   },
+   "placebo": [
+    {
+     "trades": 17,
+     "pnl": -13.631,
+     "wr": 0.471,
+     "sharpe": -2.492
+    },
+    {
+     "trades": 15,
+     "pnl": -6.766,
+     "wr": 0.667,
+     "sharpe": -1.259
+    },
+    {
+     "trades": 21,
+     "pnl": -11.954,
+     "wr": 0.524,
+     "sharpe": -1.743
+    },
+    {
+     "trades": 11,
+     "pnl": -6.083,
+     "wr": 0.636,
+     "sharpe": -1.372
+    },
+    {
+     "trades": 8,
+     "pnl": -1.989,
+     "wr": 0.5,
+     "sharpe": -0.512
+    }
+   ],
+   "placeboMedian": -6.766,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2024-08->2024-09",
+   "trainIdeas": 64,
+   "testIdeas": 129,
+   "point": {
+    "hardStopPercent": 1,
+    "trailingTakePercent": 3,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 12,
+    "pnl": 11.292,
+    "wr": 0.583,
+    "sharpe": 1.53
+   },
+   "real": {
+    "trades": 10,
+    "pnl": -8.303,
+    "wr": 0.2,
+    "sharpe": -2.009
+   },
+   "placebo": [
+    {
+     "trades": 14,
+     "pnl": -1.789,
+     "wr": 0.286,
+     "sharpe": -0.324
+    },
+    {
+     "trades": 4,
+     "pnl": -3.657,
+     "wr": 0.25,
+     "sharpe": -1.682
+    },
+    {
+     "trades": 9,
+     "pnl": -5.138,
+     "wr": 0.333,
+     "sharpe": -1.359
+    },
+    {
+     "trades": 6,
+     "pnl": 3.709,
+     "wr": 0.5,
+     "sharpe": 0.747
+    },
+    {
+     "trades": 10,
+     "pnl": -8.303,
+     "wr": 0.2,
+     "sharpe": -1.836
+    }
+   ],
+   "placeboMedian": -3.657,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-09->2024-10",
+   "trainIdeas": 129,
+   "testIdeas": 144,
+   "point": {
+    "hardStopPercent": 2,
+    "trailingTakePercent": 0.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 1.2,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 2.424,
+    "wr": 0.375,
+    "sharpe": 1.433
+   },
+   "real": {
+    "trades": 6,
+    "pnl": -1.425,
+    "wr": 0.5,
+    "sharpe": -0.794
+   },
+   "placebo": [
+    {
+     "trades": 7,
+     "pnl": -0.197,
+     "wr": 0.286,
+     "sharpe": -0.452
+    },
+    {
+     "trades": 9,
+     "pnl": -4.475,
+     "wr": 0.333,
+     "sharpe": -1.397
+    },
+    {
+     "trades": 3,
+     "pnl": 0.111,
+     "wr": 0.667,
+     "sharpe": 0.254
+    },
+    {
+     "trades": 7,
+     "pnl": -2.471,
+     "wr": 0.286,
+     "sharpe": -1.076
+    },
+    {
+     "trades": 5,
+     "pnl": -0.364,
+     "wr": 0.2,
+     "sharpe": -1.04
+    }
+   ],
+   "placeboMedian": -0.364,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-10->2024-11",
+   "trainIdeas": 144,
+   "testIdeas": 172,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.6,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 14,
+    "pnl": 14.996,
+    "wr": 0.929,
+    "sharpe": 3.787
+   },
+   "real": {
+    "trades": 14,
+    "pnl": -17.14,
+    "wr": 0.5,
+    "sharpe": -1.463
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": 0.925,
+     "wr": 0.667,
+     "sharpe": 0.146
+    },
+    {
+     "trades": 12,
+     "pnl": 9.363,
+     "wr": 0.917,
+     "sharpe": 2.01
+    },
+    {
+     "trades": 11,
+     "pnl": 1.636,
+     "wr": 0.727,
+     "sharpe": 0.157
+    },
+    {
+     "trades": 10,
+     "pnl": 5.318,
+     "wr": 0.8,
+     "sharpe": 1.21
+    },
+    {
+     "trades": 7,
+     "pnl": 3.495,
+     "wr": 0.857,
+     "sharpe": 0.93
+    }
+   ],
+   "placeboMedian": 3.495,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-11->2024-12",
+   "trainIdeas": 172,
+   "testIdeas": 181,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 2,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 10.452,
+    "wr": 0.9,
+    "sharpe": 3.319
+   },
+   "real": {
+    "trades": 7,
+    "pnl": -9.071,
+    "wr": 0.571,
+    "sharpe": -1.082
+   },
+   "placebo": [
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 4,
+     "pnl": -5.979,
+     "wr": 0.5,
+     "sharpe": -0.724
+    },
+    {
+     "trades": 6,
+     "pnl": -1.943,
+     "wr": 0.667,
+     "sharpe": -0.263
+    },
+    {
+     "trades": 7,
+     "pnl": -2.384,
+     "wr": 0.714,
+     "sharpe": -0.278
+    },
+    {
+     "trades": 3,
+     "pnl": -6.097,
+     "wr": 0.333,
+     "sharpe": -1.372
+    }
+   ],
+   "placeboMedian": -2.384,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2024-12->2025-01",
+   "trainIdeas": 181,
+   "testIdeas": 146,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 17,
+    "pnl": 18.614,
+    "wr": 0.941,
+    "sharpe": 4.569
+   },
+   "real": {
+    "trades": 18,
+    "pnl": -24.848,
+    "wr": 0.667,
+    "sharpe": -1.601
+   },
+   "placebo": [
+    {
+     "trades": 15,
+     "pnl": -2.913,
+     "wr": 0.733,
+     "sharpe": -0.258
+    },
+    {
+     "trades": 19,
+     "pnl": -10.744,
+     "wr": 0.737,
+     "sharpe": -0.773
+    },
+    {
+     "trades": 20,
+     "pnl": 0.658,
+     "wr": 0.8,
+     "sharpe": 0.055
+    },
+    {
+     "trades": 15,
+     "pnl": -19.286,
+     "wr": 0.6,
+     "sharpe": -1.427
+    },
+    {
+     "trades": 24,
+     "pnl": 5.865,
+     "wr": 0.833,
+     "sharpe": 0.515
+    }
+   ],
+   "placeboMedian": -2.913,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2025-01->2025-02",
+   "trainIdeas": 146,
+   "testIdeas": 131,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 3,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 21,
+    "pnl": 28.994,
+    "wr": 0.81,
+    "sharpe": 3.15
+   },
+   "real": {
+    "trades": 15,
+    "pnl": -18.763,
+    "wr": 0.4,
+    "sharpe": -1.64
+   },
+   "placebo": [
+    {
+     "trades": 17,
+     "pnl": -34.062,
+     "wr": 0.353,
+     "sharpe": -2.442
+    },
+    {
+     "trades": 17,
+     "pnl": -39.595,
+     "wr": 0.353,
+     "sharpe": -2.481
+    },
+    {
+     "trades": 15,
+     "pnl": -38.52,
+     "wr": 0.333,
+     "sharpe": -2.883
+    },
+    {
+     "trades": 15,
+     "pnl": -25.609,
+     "wr": 0.333,
+     "sharpe": -1.844
+    },
+    {
+     "trades": 16,
+     "pnl": -43.283,
+     "wr": 0.313,
+     "sharpe": -2.769
+    }
+   ],
+   "placeboMedian": -38.52,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-02->2025-03",
+   "trainIdeas": 131,
+   "testIdeas": 138,
+   "point": {
+    "hardStopPercent": 1.5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 1440,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 9.134,
+    "wr": 0.625,
+    "sharpe": 1.579
+   },
+   "real": {
+    "trades": 6,
+    "pnl": -5.709,
+    "wr": 0.167,
+    "sharpe": -1.368
+   },
+   "placebo": [
+    {
+     "trades": 4,
+     "pnl": -1.981,
+     "wr": 0.5,
+     "sharpe": -0.691
+    },
+    {
+     "trades": 3,
+     "pnl": 1.958,
+     "wr": 0.667,
+     "sharpe": 0.837
+    },
+    {
+     "trades": 8,
+     "pnl": -4.127,
+     "wr": 0.375,
+     "sharpe": -0.929
+    },
+    {
+     "trades": 4,
+     "pnl": -0.059,
+     "wr": 0.5,
+     "sharpe": -0.016
+    },
+    {
+     "trades": 6,
+     "pnl": -5.224,
+     "wr": 0.333,
+     "sharpe": -1.363
+    }
+   ],
+   "placeboMedian": -1.981,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2025-03->2025-04",
+   "trainIdeas": 138,
+   "testIdeas": 136,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 11,
+    "pnl": 32.73,
+    "wr": 0.818,
+    "sharpe": 2.089
+   },
+   "real": {
+    "trades": 11,
+    "pnl": 20.138,
+    "wr": 0.727,
+    "sharpe": 2.205
+   },
+   "placebo": [
+    {
+     "trades": 7,
+     "pnl": 2.419,
+     "wr": 0.714,
+     "sharpe": 0.211
+    },
+    {
+     "trades": 10,
+     "pnl": 12.933,
+     "wr": 0.7,
+     "sharpe": 1.867
+    },
+    {
+     "trades": 11,
+     "pnl": 14.362,
+     "wr": 0.727,
+     "sharpe": 2.748
+    },
+    {
+     "trades": 11,
+     "pnl": 18.315,
+     "wr": 0.636,
+     "sharpe": 1.622
+    },
+    {
+     "trades": 12,
+     "pnl": 27.097,
+     "wr": 0.75,
+     "sharpe": 2.162
+    }
+   ],
+   "placeboMedian": 14.362,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-04->2025-05",
+   "trainIdeas": 136,
+   "testIdeas": 128,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 31,
+    "pnl": 33.591,
+    "wr": 0.968,
+    "sharpe": 5.298
+   },
+   "real": {
+    "trades": 17,
+    "pnl": 13.711,
+    "wr": 0.765,
+    "sharpe": 1.454
+   },
+   "placebo": [
+    {
+     "trades": 15,
+     "pnl": -8.324,
+     "wr": 0.533,
+     "sharpe": -0.944
+    },
+    {
+     "trades": 17,
+     "pnl": -0.623,
+     "wr": 0.647,
+     "sharpe": -0.071
+    },
+    {
+     "trades": 17,
+     "pnl": 2.526,
+     "wr": 0.706,
+     "sharpe": 0.298
+    },
+    {
+     "trades": 17,
+     "pnl": 16.935,
+     "wr": 0.824,
+     "sharpe": 1.816
+    },
+    {
+     "trades": 16,
+     "pnl": -1.822,
+     "wr": 0.625,
+     "sharpe": -0.223
+    }
+   ],
+   "placeboMedian": -0.623,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-05->2025-06",
+   "trainIdeas": 128,
+   "testIdeas": 129,
+   "point": {
+    "hardStopPercent": 2.5,
+    "trailingTakePercent": 0.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 2,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 16,
+    "pnl": 6.704,
+    "wr": 0.625,
+    "sharpe": 1.986
+   },
+   "real": {
+    "trades": 5,
+    "pnl": -4.018,
+    "wr": 0.6,
+    "sharpe": -0.963
+   },
+   "placebo": [
+    {
+     "trades": 4,
+     "pnl": -2.794,
+     "wr": 0.25,
+     "sharpe": -0.821
+    },
+    {
+     "trades": 4,
+     "pnl": -1.454,
+     "wr": 0.5,
+     "sharpe": -0.457
+    },
+    {
+     "trades": 2,
+     "pnl": -3.046,
+     "wr": 0,
+     "sharpe": -1.103
+    },
+    {
+     "trades": 5,
+     "pnl": -3.359,
+     "wr": 0.4,
+     "sharpe": -1.062
+    },
+    {
+     "trades": 2,
+     "pnl": -4.123,
+     "wr": 0,
+     "sharpe": -1.367
+    }
+   ],
+   "placeboMedian": -3.046,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2025-06->2025-07",
+   "trainIdeas": 129,
+   "testIdeas": 121,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 2,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.6,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 12,
+    "pnl": 5.364,
+    "wr": 0.667,
+    "sharpe": 0.909
+   },
+   "real": {
+    "trades": 12,
+    "pnl": -3.377,
+    "wr": 0.25,
+    "sharpe": -0.391
+   },
+   "placebo": [
+    {
+     "trades": 11,
+     "pnl": 5.833,
+     "wr": 0.455,
+     "sharpe": 0.845
+    },
+    {
+     "trades": 12,
+     "pnl": 8.183,
+     "wr": 0.5,
+     "sharpe": 1.11
+    },
+    {
+     "trades": 10,
+     "pnl": 7.406,
+     "wr": 0.4,
+     "sharpe": 1.154
+    },
+    {
+     "trades": 12,
+     "pnl": 6.935,
+     "wr": 0.417,
+     "sharpe": 0.901
+    },
+    {
+     "trades": 4,
+     "pnl": -6.218,
+     "wr": 0.25,
+     "sharpe": -1.315
+    }
+   ],
+   "placeboMedian": 6.935,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2025-07->2025-08",
+   "trainIdeas": 121,
+   "testIdeas": 145,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 9,
+    "pnl": 9.277,
+    "wr": 0.667,
+    "sharpe": 1.883
+   },
+   "real": {
+    "trades": 9,
+    "pnl": 5.31,
+    "wr": 0.667,
+    "sharpe": 0.923
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": -4.266,
+     "wr": 0.375,
+     "sharpe": -0.786
+    },
+    {
+     "trades": 10,
+     "pnl": 4.698,
+     "wr": 0.7,
+     "sharpe": 0.832
+    },
+    {
+     "trades": 7,
+     "pnl": 7.133,
+     "wr": 0.714,
+     "sharpe": 1.463
+    },
+    {
+     "trades": 6,
+     "pnl": 2.872,
+     "wr": 0.5,
+     "sharpe": 0.641
+    },
+    {
+     "trades": 10,
+     "pnl": -4.56,
+     "wr": 0.5,
+     "sharpe": -0.572
+    }
+   ],
+   "placeboMedian": 2.872,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-08->2025-09",
+   "trainIdeas": 145,
+   "testIdeas": 132,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 11.115,
+    "wr": 1,
+    "sharpe": 2.816
+   },
+   "real": {
+    "trades": 6,
+    "pnl": 0.334,
+    "wr": 0.5,
+    "sharpe": 0.076
+   },
+   "placebo": [
+    {
+     "trades": 6,
+     "pnl": -1.772,
+     "wr": 0.667,
+     "sharpe": -0.331
+    },
+    {
+     "trades": 5,
+     "pnl": -2.27,
+     "wr": 0.4,
+     "sharpe": -0.571
+    },
+    {
+     "trades": 5,
+     "pnl": -7.298,
+     "wr": 0.4,
+     "sharpe": -1.233
+    },
+    {
+     "trades": 7,
+     "pnl": -7.483,
+     "wr": 0.429,
+     "sharpe": -1.115
+    },
+    {
+     "trades": 5,
+     "pnl": 2.571,
+     "wr": 0.6,
+     "sharpe": 0.659
+    }
+   ],
+   "placeboMedian": -2.27,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-09->2025-10",
+   "trainIdeas": 132,
+   "testIdeas": 171,
+   "point": {
+    "hardStopPercent": 2.5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 1.2,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 8,
+    "pnl": 6.623,
+    "wr": 0.875,
+    "sharpe": 2.447
+   },
+   "real": {
+    "trades": 10,
+    "pnl": -0.645,
+    "wr": 0.7,
+    "sharpe": -0.112
+   },
+   "placebo": [
+    {
+     "trades": 9,
+     "pnl": -5.195,
+     "wr": 0.556,
+     "sharpe": -0.933
+    },
+    {
+     "trades": 3,
+     "pnl": -1.483,
+     "wr": 0.667,
+     "sharpe": -0.488
+    },
+    {
+     "trades": 7,
+     "pnl": -7.044,
+     "wr": 0.429,
+     "sharpe": -1.256
+    },
+    {
+     "trades": 7,
+     "pnl": 0.397,
+     "wr": 0.714,
+     "sharpe": 0.083
+    },
+    {
+     "trades": 7,
+     "pnl": -3.599,
+     "wr": 0.571,
+     "sharpe": -0.67
+    }
+   ],
+   "placeboMedian": -3.599,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-10->2025-11",
+   "trainIdeas": 171,
+   "testIdeas": 163,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 19,
+    "pnl": 16.137,
+    "wr": 0.842,
+    "sharpe": 1.963
+   },
+   "real": {
+    "trades": 20,
+    "pnl": 5.547,
+    "wr": 0.55,
+    "sharpe": 0.501
+   },
+   "placebo": [
+    {
+     "trades": 13,
+     "pnl": -7.524,
+     "wr": 0.538,
+     "sharpe": -0.791
+    },
+    {
+     "trades": 10,
+     "pnl": -19.02,
+     "wr": 0.3,
+     "sharpe": -1.984
+    },
+    {
+     "trades": 16,
+     "pnl": 1.504,
+     "wr": 0.563,
+     "sharpe": 0.124
+    },
+    {
+     "trades": 11,
+     "pnl": -12.266,
+     "wr": 0.455,
+     "sharpe": -1.209
+    },
+    {
+     "trades": 12,
+     "pnl": -2.233,
+     "wr": 0.5,
+     "sharpe": -0.26
+    }
+   ],
+   "placeboMedian": -7.524,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2025-11->2025-12",
+   "trainIdeas": 163,
+   "testIdeas": 143,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 17,
+    "pnl": 17.354,
+    "wr": 0.765,
+    "sharpe": 1.916
+   },
+   "real": {
+    "trades": 14,
+    "pnl": -1.962,
+    "wr": 0.571,
+    "sharpe": -0.258
+   },
+   "placebo": [
+    {
+     "trades": 11,
+     "pnl": 7.337,
+     "wr": 0.636,
+     "sharpe": 1.262
+    },
+    {
+     "trades": 7,
+     "pnl": -0.841,
+     "wr": 0.571,
+     "sharpe": -0.131
+    },
+    {
+     "trades": 10,
+     "pnl": -8.063,
+     "wr": 0.5,
+     "sharpe": -1.545
+    },
+    {
+     "trades": 2,
+     "pnl": -0.466,
+     "wr": 0.5,
+     "sharpe": -0.287
+    },
+    {
+     "trades": 7,
+     "pnl": 7.113,
+     "wr": 0.857,
+     "sharpe": 1.822
+    }
+   ],
+   "placeboMedian": -0.466,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2025-12->2026-01",
+   "trainIdeas": 143,
+   "testIdeas": 161,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.6,
+    "minWeightAligned": 0,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 11,
+    "pnl": 9.016,
+    "wr": 0.818,
+    "sharpe": 2.463
+   },
+   "real": {
+    "trades": 11,
+    "pnl": -10.447,
+    "wr": 0.455,
+    "sharpe": -1.361
+   },
+   "placebo": [
+    {
+     "trades": 8,
+     "pnl": -3.008,
+     "wr": 0.375,
+     "sharpe": -0.784
+    },
+    {
+     "trades": 6,
+     "pnl": 7.306,
+     "wr": 1,
+     "sharpe": 2.689
+    },
+    {
+     "trades": 8,
+     "pnl": -9.661,
+     "wr": 0.375,
+     "sharpe": -1.38
+    },
+    {
+     "trades": 4,
+     "pnl": -6.014,
+     "wr": 0.25,
+     "sharpe": -1.209
+    },
+    {
+     "trades": 9,
+     "pnl": -6.505,
+     "wr": 0.333,
+     "sharpe": -1.124
+    }
+   ],
+   "placeboMedian": -6.014,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2026-01->2026-02",
+   "trainIdeas": 161,
+   "testIdeas": 187,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 1.5,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.6,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 13,
+    "pnl": 14.477,
+    "wr": 0.769,
+    "sharpe": 2.884
+   },
+   "real": {
+    "trades": 23,
+    "pnl": -12.362,
+    "wr": 0.609,
+    "sharpe": -1.018
+   },
+   "placebo": [
+    {
+     "trades": 16,
+     "pnl": 3.356,
+     "wr": 0.625,
+     "sharpe": 0.353
+    },
+    {
+     "trades": 17,
+     "pnl": -20.528,
+     "wr": 0.471,
+     "sharpe": -1.892
+    },
+    {
+     "trades": 16,
+     "pnl": -10.101,
+     "wr": 0.438,
+     "sharpe": -0.943
+    },
+    {
+     "trades": 22,
+     "pnl": -0.716,
+     "wr": 0.682,
+     "sharpe": -0.078
+    },
+    {
+     "trades": 13,
+     "pnl": -12.262,
+     "wr": 0.462,
+     "sharpe": -1.181
+    }
+   ],
+   "placeboMedian": -10.101,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2026-02->2026-03",
+   "trainIdeas": 187,
+   "testIdeas": 211,
+   "point": {
+    "hardStopPercent": 7,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 2,
+    "minAuthorHitRate": 0.6,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 18,
+    "pnl": 25.025,
+    "wr": 0.889,
+    "sharpe": 2.327
+   },
+   "real": {
+    "trades": 13,
+    "pnl": -6.147,
+    "wr": 0.538,
+    "sharpe": -0.576
+   },
+   "placebo": [
+    {
+     "trades": 11,
+     "pnl": -1.068,
+     "wr": 0.727,
+     "sharpe": -0.098
+    },
+    {
+     "trades": 10,
+     "pnl": -18.054,
+     "wr": 0.4,
+     "sharpe": -1.471
+    },
+    {
+     "trades": 12,
+     "pnl": -5.473,
+     "wr": 0.583,
+     "sharpe": -0.443
+    },
+    {
+     "trades": 11,
+     "pnl": -18.906,
+     "wr": 0.545,
+     "sharpe": -1.335
+    },
+    {
+     "trades": 13,
+     "pnl": 0.779,
+     "wr": 0.769,
+     "sharpe": 0.067
+    }
+   ],
+   "placeboMedian": -5.473,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2026-03->2026-04",
+   "trainIdeas": 211,
+   "testIdeas": 187,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 2,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 14,
+    "pnl": 20.707,
+    "wr": 0.714,
+    "sharpe": 3.498
+   },
+   "real": {
+    "trades": 10,
+    "pnl": -3.013,
+    "wr": 0.5,
+    "sharpe": -0.485
+   },
+   "placebo": [
+    {
+     "trades": 5,
+     "pnl": -6.512,
+     "wr": 0.4,
+     "sharpe": -0.914
+    },
+    {
+     "trades": 14,
+     "pnl": 2.155,
+     "wr": 0.643,
+     "sharpe": 0.254
+    },
+    {
+     "trades": 5,
+     "pnl": -3.574,
+     "wr": 0.4,
+     "sharpe": -0.714
+    },
+    {
+     "trades": 12,
+     "pnl": -17.692,
+     "wr": 0.333,
+     "sharpe": -1.825
+    },
+    {
+     "trades": 7,
+     "pnl": -10.1,
+     "wr": 0.429,
+     "sharpe": -1.315
+    }
+   ],
+   "placeboMedian": -6.512,
+   "realBeatsMedian": true
+  },
+  {
+   "pair": "2026-04->2026-05",
+   "trainIdeas": 187,
+   "testIdeas": 233,
+   "point": {
+    "hardStopPercent": 5,
+    "trailingTakePercent": 3,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 3,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 1.2,
+    "profitLockPercent": 1.5
+   },
+   "train": {
+    "trades": 10,
+    "pnl": 10.435,
+    "wr": 0.9,
+    "sharpe": 2.313
+   },
+   "real": {
+    "trades": 4,
+    "pnl": -8.119,
+    "wr": 0.25,
+    "sharpe": -1.344
+   },
+   "placebo": [
+    {
+     "trades": 4,
+     "pnl": -9.117,
+     "wr": 0,
+     "sharpe": -1.884
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 1,
+     "pnl": -1.905,
+     "wr": 0,
+     "sharpe": -1.014
+    },
+    {
+     "trades": 2,
+     "pnl": -2.952,
+     "wr": 0,
+     "sharpe": -1.191
+    },
+    {
+     "trades": 2,
+     "pnl": 2.397,
+     "wr": 1,
+     "sharpe": 1.455
+    }
+   ],
+   "placeboMedian": -1.905,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2026-05->2026-06",
+   "trainIdeas": 233,
+   "testIdeas": 462,
+   "point": {
+    "hardStopPercent": 1,
+    "trailingTakePercent": 3,
+    "holdMinutes": 2880,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 0
+   },
+   "train": {
+    "trades": 14,
+    "pnl": 9.171,
+    "wr": 0.643,
+    "sharpe": 1.417
+   },
+   "real": {
+    "trades": 18,
+    "pnl": -5.082,
+    "wr": 0.222,
+    "sharpe": -0.558
+   },
+   "placebo": [
+    {
+     "trades": 16,
+     "pnl": -7.422,
+     "wr": 0.25,
+     "sharpe": -1.337
+    },
+    {
+     "trades": 11,
+     "pnl": -3.226,
+     "wr": 0.182,
+     "sharpe": -0.383
+    },
+    {
+     "trades": 6,
+     "pnl": 1.487,
+     "wr": 0.333,
+     "sharpe": 0.271
+    },
+    {
+     "trades": 11,
+     "pnl": -7.038,
+     "wr": 0.273,
+     "sharpe": -1.692
+    },
+    {
+     "trades": 16,
+     "pnl": -4.073,
+     "wr": 0.188,
+     "sharpe": -0.471
+    }
+   ],
+   "placeboMedian": -4.073,
+   "realBeatsMedian": false
+  },
+  {
+   "pair": "2026-06->2026-07",
+   "trainIdeas": 462,
+   "testIdeas": 739,
+   "point": {
+    "hardStopPercent": 4,
+    "trailingTakePercent": 4,
+    "holdMinutes": 4320,
+    "minIdeasAligned": 1,
+    "minAuthorTrack": 5,
+    "minAuthorHitRate": 0.5,
+    "minWeightAligned": 0.6,
+    "profitLockPercent": 2.5
+   },
+   "train": {
+    "trades": 14,
+    "pnl": 27.199,
+    "wr": 0.929,
+    "sharpe": 4.301
+   },
+   "real": {
+    "trades": 4,
+    "pnl": -3.637,
+    "wr": 0.5,
+    "sharpe": -0.703
+   },
+   "placebo": [
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 0,
+     "pnl": 0,
+     "wr": 0,
+     "sharpe": 0
+    },
+    {
+     "trades": 6,
+     "pnl": 0.23,
+     "wr": 0.5,
+     "sharpe": 0.038
+    },
+    {
+     "trades": 6,
+     "pnl": 4.969,
+     "wr": 0.833,
+     "sharpe": 0.819
+    },
+    {
+     "trades": 2,
+     "pnl": 4.4,
+     "wr": 1,
+     "sharpe": 1.495
+    }
+   ],
+   "placeboMedian": 0.23,
+   "realBeatsMedian": false
+  }
+ ]
+}
