@@ -1,0 +1,88 @@
+[logreg/real] pooled: AUC=0.5647 PR-AUC=0.4989 Brier=0.2636 | PF before=0.8251801425204849 after=1.3662933370785562 (n 222 -> 103)
+  placebo 1/20: pooled AUC=0.5378
+  placebo 2/20: pooled AUC=0.5692
+  placebo 3/20: pooled AUC=0.5125
+  placebo 4/20: pooled AUC=0.4076
+  placebo 5/20: pooled AUC=0.5007
+  placebo 6/20: pooled AUC=0.4720
+  placebo 7/20: pooled AUC=0.5164
+  placebo 8/20: pooled AUC=0.5071
+  placebo 9/20: pooled AUC=0.4197
+  placebo 10/20: pooled AUC=0.4815
+  placebo 11/20: pooled AUC=0.5166
+  placebo 12/20: pooled AUC=0.5142
+  placebo 13/20: pooled AUC=0.5124
+  placebo 14/20: pooled AUC=0.4858
+  placebo 15/20: pooled AUC=0.5795
+  placebo 16/20: pooled AUC=0.5573
+  placebo 17/20: pooled AUC=0.5381
+  placebo 18/20: pooled AUC=0.4651
+  placebo 19/20: pooled AUC=0.5474
+  placebo 20/20: pooled AUC=0.3973
+[logreg/placebo] pooled: AUC=0.5647 PR-AUC=0.4989 Brier=0.2636 | PF before=0.8251801425204849 after=1.3662933370785562 (n 222 -> 103) | placebo p=0.1429
+[lgbm/real] pooled: AUC=0.5199 PR-AUC=0.4355 Brier=0.2501 | PF before=0.8251801425204849 after=1.1474710056701727 (n 222 -> 143)
+  placebo 1/20: pooled AUC=0.5269
+  placebo 2/20: pooled AUC=0.5477
+  placebo 3/20: pooled AUC=0.5450
+  placebo 4/20: pooled AUC=0.4965
+  placebo 5/20: pooled AUC=0.4617
+  placebo 6/20: pooled AUC=0.4992
+  placebo 7/20: pooled AUC=0.4893
+  placebo 8/20: pooled AUC=0.4988
+  placebo 9/20: pooled AUC=0.4721
+  placebo 10/20: pooled AUC=0.5108
+  placebo 11/20: pooled AUC=0.5281
+  placebo 12/20: pooled AUC=0.4795
+  placebo 13/20: pooled AUC=0.5379
+  placebo 14/20: pooled AUC=0.4974
+  placebo 15/20: pooled AUC=0.4297
+  placebo 16/20: pooled AUC=0.4561
+  placebo 17/20: pooled AUC=0.4702
+  placebo 18/20: pooled AUC=0.5264
+  placebo 19/20: pooled AUC=0.4790
+  placebo 20/20: pooled AUC=0.4844
+[lgbm/placebo] pooled: AUC=0.5199 PR-AUC=0.4355 Brier=0.2501 | PF before=0.8251801425204849 after=1.1474710056701727 (n 222 -> 143) | placebo p=0.3333
+[kan_eff/real] pooled: AUC=0.5125 PR-AUC=0.4187 Brier=0.2516 | PF before=0.8251801425204849 after=0.954988922504994 (n 222 -> 132)
+  placebo 1/20: pooled AUC=0.5042
+  placebo 2/20: pooled AUC=0.5874
+  placebo 3/20: pooled AUC=0.5254
+  placebo 4/20: pooled AUC=0.4451
+  placebo 5/20: pooled AUC=0.5166
+  placebo 6/20: pooled AUC=0.4131
+  placebo 7/20: pooled AUC=0.4189
+  placebo 8/20: pooled AUC=0.4896
+  placebo 9/20: pooled AUC=0.4624
+  placebo 10/20: pooled AUC=0.4791
+  placebo 11/20: pooled AUC=0.4783
+  placebo 12/20: pooled AUC=0.5378
+  placebo 13/20: pooled AUC=0.5312
+  placebo 14/20: pooled AUC=0.4495
+  placebo 15/20: pooled AUC=0.5212
+  placebo 16/20: pooled AUC=0.4472
+  placebo 17/20: pooled AUC=0.4546
+  placebo 18/20: pooled AUC=0.5157
+  placebo 19/20: pooled AUC=0.5336
+  placebo 20/20: pooled AUC=0.4422
+[kan_eff/placebo] pooled: AUC=0.5125 PR-AUC=0.4187 Brier=0.2516 | PF before=0.8251801425204849 after=0.954988922504994 (n 222 -> 132) | placebo p=0.4286
+[kan_cheby/real] pooled: AUC=0.4436 PR-AUC=0.3943 Brier=0.2505 | PF before=0.8251801425204849 after=0.8150974376242237 (n 222 -> 96)
+  placebo 1/20: pooled AUC=0.5151
+  placebo 2/20: pooled AUC=0.4658
+  placebo 3/20: pooled AUC=0.5229
+  placebo 4/20: pooled AUC=0.4885
+  placebo 5/20: pooled AUC=0.5510
+  placebo 6/20: pooled AUC=0.5147
+  placebo 7/20: pooled AUC=0.4294
+  placebo 8/20: pooled AUC=0.5565
+  placebo 9/20: pooled AUC=0.4173
+  placebo 10/20: pooled AUC=0.4479
+  placebo 11/20: pooled AUC=0.4372
+  placebo 12/20: pooled AUC=0.5664
+  placebo 13/20: pooled AUC=0.5630
+  placebo 14/20: pooled AUC=0.4478
+  placebo 15/20: pooled AUC=0.5439
+  placebo 16/20: pooled AUC=0.5490
+  placebo 17/20: pooled AUC=0.4678
+  placebo 18/20: pooled AUC=0.5034
+  placebo 19/20: pooled AUC=0.4636
+  placebo 20/20: pooled AUC=0.4378
+[kan_cheby/placebo] pooled: AUC=0.4436 PR-AUC=0.3943 Brier=0.2505 | PF before=0.8251801425204849 after=0.8150974376242237 (n 222 -> 96) | placebo p=0.8095
