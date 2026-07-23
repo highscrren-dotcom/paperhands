@@ -64,6 +64,8 @@ test("SIM: dataset with no good author — everyone banned, zero trades, no cras
       minAuthorHitRate: [0.5],
       minWeightAligned: [0],
       profitLockPercent: [0],
+      minAuthorWilson: [0],
+      authorMetric: ["close"],
     },
     callbacks: {
       onGridPoint: (_symbol, report) => pointReports.push(report),
@@ -89,21 +91,21 @@ test("SIM: dataset with no good author — everyone banned, zero trades, no cras
   }
 
   // белый список пуст, в бане все трое
-  if (result.allowedAuthors.length !== 0) {
-    fail(`allowedAuthors must be empty, got ${JSON.stringify(result.allowedAuthors)}`);
+  if (result.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors.length !== 0) {
+    fail(`allowedAuthors must be empty, got ${JSON.stringify(result.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors)}`);
     return;
   }
-  const banned = new Set(result.bannedAuthors);
+  const banned = new Set(result.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors);
   for (const author of ["wrong1", "wrong2", "rookie"]) {
     if (!banned.has(author)) {
-      fail(`${author} must be banned, bannedAuthors=${JSON.stringify(result.bannedAuthors)}`);
+      fail(`${author} must be banned, bannedAuthors=${JSON.stringify(result.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors)}`);
       return;
     }
   }
 
   // статистика авторов честная: у wrong-авторов нулевая правота,
   // у rookie — правота есть, трека нет
-  const stats = Object.fromEntries(result.authorStats.map((s) => [s.author, s]));
+  const stats = Object.fromEntries(result.best.find(({ criterion }) => criterion === "sharpe").authorStats.map((s) => [s.author, s]));
   if (stats.wrong1.hitRate !== 0 || stats.wrong2.hitRate !== 0) {
     fail(`wrong authors must have hitRate 0, got ${stats.wrong1.hitRate}/${stats.wrong2.hitRate}`);
     return;

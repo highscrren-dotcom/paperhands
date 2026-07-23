@@ -14,6 +14,7 @@ import {
   ISimulatorResult,
   ISimulatorTestResult,
   ISimulatorTrade,
+  SimulatorAuthorRule,
   SimulatorExitReason,
   SimulatorRankingCriterion,
 } from "../interfaces/Simulator.interface";
@@ -59,6 +60,37 @@ const SORTINO_NO_LOSSES = Number.POSITIVE_INFINITY;
  * (anti-fluke guard: a two-trade point must not lead a ranking).
  */
 const MIN_TRADES_FOR_BEST = 8;
+
+/**
+ * z-score of the Wilson lower bound (95% confidence). A constant,
+ * not an axis: the CONFIDENCE of the estimate is a methodology
+ * choice, the required QUALITY is the swept threshold.
+ */
+const WILSON_Z = 1.96;
+
+/**
+ * Lower bound of the Wilson score interval for a hit rate: the
+ * proven-quality estimate that prices the track length in — a 3/3
+ * newcomer (~0.44) sits far below a 15/15 veteran (~0.80) even
+ * though both observe a 100% hit rate. Zero known outcomes -> 0
+ * (default-ban preserved).
+ *
+ * @param hits - Author hits under the rule's metric
+ * @param ideas - Author ideas with a known outcome
+ * @returns Lower bound of the 95% Wilson interval, 0..1
+ */
+const WILSON_LOWER_BOUND_FN = (hits: number, ideas: number): number => {
+  if (!ideas) {
+    return 0;
+  }
+  const p = hits / ideas;
+  const z2 = WILSON_Z * WILSON_Z;
+  const denominator = 1 + z2 / ideas;
+  const center = p + z2 / (2 * ideas);
+  const spread =
+    WILSON_Z * Math.sqrt((p * (1 - p)) / ideas + z2 / (4 * ideas * ideas));
+  return Math.max(0, (center - spread) / denominator);
+};
 
 async function* ITERATE_CANDLES_FN(
   self: ClientSimulator,
@@ -326,10 +358,76 @@ interface IAuthorFilterContext {
 }
 
 /**
+ * Derives the ban-filter rule from a grid point as a discriminated
+ * union — the ONLY place the metric fallback lives. The "close" rule
+ * structurally carries no lock/stop fields: with authorMetric
+ * "close" the point's profitLockPercent/hardStopPercent do not
+ * affect ban-list training at all (see the filter cache key — they
+ * are not part of it either). A reach point with lock = 0 has
+ * nothing to grade reachability against and degenerates into the
+ * "close" rule here, not via scattered runtime branches.
+ *
+ * @param point - Grid point carrying the rule fields
+ * @returns Discriminated ban-filter rule
+ */
+const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
+  if (point.authorMetric === "reach" && point.profitLockPercent > 0) {
+    return {
+      metric: "reach",
+      minAuthorTrack: point.minAuthorTrack,
+      minAuthorHitRate: point.minAuthorHitRate,
+      minAuthorWilson: point.minAuthorWilson ?? 0,
+      profitLockPercent: point.profitLockPercent,
+      hardStopPercent: point.hardStopPercent,
+    };
+  }
+  return {
+    metric: "close",
+    minAuthorTrack: point.minAuthorTrack,
+    minAuthorHitRate: point.minAuthorHitRate,
+    minAuthorWilson: point.minAuthorWilson ?? 0,
+  };
+};
+
+/**
+ * Author "hit" under a discriminated ban-filter rule.
+ *
+ * "close" — the idea's horizon close moved in its direction (the
+ * profile's precomputed hit); the rule has no lock/stop fields by
+ * construction. "reach" — the idea was HARVESTABLE by the rule's
+ * lock machinery: MFE reached the profit-lock level and the worst
+ * pre-peak pullback (shakeout) stayed above the hard stop. An author
+ * whose calls spike to the lock within hours and then die by the
+ * horizon close is a miss for "close" and a hit for "reach" —
+ * exactly the author a lock point earns on.
+ *
+ * Same-candle ambiguity (lock and stop both reachable in the candle
+ * of the MFE peak) reads as a hit here while SIMULATE_TRADE_FN gives
+ * that candle to the stop — the filter metric is slightly more
+ * optimistic than execution; it grades authors, not PnL.
+ *
+ * @param profile - Idea profile
+ * @param rule - Discriminated ban-filter rule (see AUTHOR_RULE_FN)
+ * @returns Whether the idea counts as the author's hit
+ */
+const AUTHOR_HIT_FN = (
+  profile: ISimulatorIdeaProfile,
+  rule: SimulatorAuthorRule,
+): boolean => {
+  if (rule.metric === "reach") {
+    return (
+      profile.maxMfePercent >= rule.profitLockPercent &&
+      profile.shakeoutMaePercent > -rule.hardStopPercent
+    );
+  }
+  return profile.hit;
+};
+
+/**
  * Trains the author ban list on the whole simulated range for ONE
- * ban-rule combination (lookahead inside train is deliberate —
- * honesty is provided by out-of-sample validation, not by causality
- * inside the train range).
+ * rule combination — thresholds AND hit metric (lookahead inside
+ * train is deliberate — honesty is provided by out-of-sample
+ * validation, not by causality inside the train range).
  *
  * Ban is the default: when the author's correctness cannot be proven
  * unambiguously under the given rule, he is banned. Only ideas with
@@ -338,22 +436,23 @@ interface IAuthorFilterContext {
  *
  * @param profiles - Profiles of all directional ideas
  * @param ideas - All ideas of the symbol
- * @param minAuthorTrack - Minimum known-outcome ideas to be allowed
- * @param minAuthorHitRate - Minimum hit rate (0..1) to be allowed
+ * @param rule - Discriminated ban-filter rule: thresholds + metric;
+ * lock/stop levels exist ONLY on the "reach" variant — a "close"
+ * rule cannot depend on them by construction
  * @returns Filter context for the rule (stats sorted by idea count)
  */
 const TRAIN_AUTHOR_FILTER_FN = (
   profiles: ISimulatorIdeaProfile[],
   ideas: ISimulatorIdea[],
-  minAuthorTrack: number,
-  minAuthorHitRate: number,
+  rule: SimulatorAuthorRule,
 ): IAuthorFilterContext => {
+  const { minAuthorTrack, minAuthorHitRate, minAuthorWilson } = rule;
   const byAuthor = new Map<string, { ideas: number; hits: number }>();
   for (const profile of profiles) {
     const stat = byAuthor.get(profile.idea.author) ?? { ideas: 0, hits: 0 };
     if (!profile.truncated) {
       stat.ideas += 1;
-      if (profile.hit) {
+      if (AUTHOR_HIT_FN(profile, rule)) {
         stat.hits += 1;
       }
     }
@@ -366,7 +465,9 @@ const TRAIN_AUTHOR_FILTER_FN = (
     hitRate: stat.ideas ? stat.hits / stat.ideas : 0,
     banned:
       stat.ideas < minAuthorTrack ||
-      stat.hits / stat.ideas < minAuthorHitRate,
+      stat.hits / stat.ideas < minAuthorHitRate ||
+      (minAuthorWilson > 0 &&
+        WILSON_LOWER_BOUND_FN(stat.hits, stat.ideas) < minAuthorWilson),
   }));
   const banned = new Set(
     stats.filter(({ banned }) => banned).map(({ author }) => author),
@@ -422,6 +523,7 @@ const TRAIN_AUTHOR_FILTER_FN = (
  * @param authorStats - Frozen per-author track record from a train run
  * @param minAuthorTrack - Minimum known-outcome ideas to be allowed
  * @param minAuthorHitRate - Minimum hit rate (0..1) to be allowed
+ * @param minAuthorWilson - Minimum Wilson lower bound (0..1); 0 = off
  * @returns Filter context with frozen stats (sorted by idea count)
  */
 const FREEZE_AUTHOR_FILTER_FN = (
@@ -430,6 +532,7 @@ const FREEZE_AUTHOR_FILTER_FN = (
   authorStats: ISimulatorAuthorStat[],
   minAuthorTrack: number,
   minAuthorHitRate: number,
+  minAuthorWilson: number,
 ): IAuthorFilterContext => {
   const stats: ISimulatorAuthorStat[] = authorStats.map(
     ({ author, ideas: n, hits }) => ({
@@ -437,7 +540,11 @@ const FREEZE_AUTHOR_FILTER_FN = (
       ideas: n,
       hits,
       hitRate: n ? hits / n : 0,
-      banned: n < minAuthorTrack || hits / n < minAuthorHitRate,
+      banned:
+        n < minAuthorTrack ||
+        hits / n < minAuthorHitRate ||
+        (minAuthorWilson > 0 &&
+          WILSON_LOWER_BOUND_FN(hits, n) < minAuthorWilson),
     }),
   );
   const allowed = new Set(
@@ -824,17 +931,23 @@ const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
         axes.minIdeasAligned.flatMap((minIdeasAligned) =>
           axes.minAuthorTrack.flatMap((minAuthorTrack) =>
             axes.minAuthorHitRate.flatMap((minAuthorHitRate) =>
-              axes.minWeightAligned.flatMap((minWeightAligned) =>
-                axes.profitLockPercent.map((profitLockPercent) => ({
-                  hardStopPercent,
-                  trailingTakePercent,
-                  holdMinutes,
-                  minIdeasAligned,
-                  minAuthorTrack,
-                  minAuthorHitRate,
-                  minWeightAligned,
-                  profitLockPercent,
-                })),
+              axes.minAuthorWilson.flatMap((minAuthorWilson) =>
+                axes.minWeightAligned.flatMap((minWeightAligned) =>
+                  axes.profitLockPercent.flatMap((profitLockPercent) =>
+                    axes.authorMetric.map((authorMetric) => ({
+                      hardStopPercent,
+                      trailingTakePercent,
+                      holdMinutes,
+                      minIdeasAligned,
+                      minAuthorTrack,
+                      minAuthorHitRate,
+                      minAuthorWilson,
+                      minWeightAligned,
+                      profitLockPercent,
+                      authorMetric,
+                    })),
+                  ),
+                ),
               ),
             ),
           ),
@@ -902,7 +1015,7 @@ const ASSERT_TRADE_INVARIANTS_FN = (
  * @param self - ClientSimulator instance reference
  * @param symbol - Trading pair symbol
  * @param allIdeas - Ideas to simulate (other symbols are filtered out)
- * @returns Final result with reports, rankings and the author artifact
+ * @returns Final result with reports and rankings; the author artifact lives per-winner in best[]
  */
 const RUN_FN = async (
   self: ClientSimulator,
@@ -944,22 +1057,21 @@ const RUN_FN = async (
     self.params.callbacks?.onProfiles(symbol, profiles, truncatedCount);
   }
 
-  // фильтр авторов обучается по разу на каждую уникальную комбинацию
-  // правила бана из сетки (пороги — такие же оси перебора, как окна)
+  // фильтр авторов обучается по разу на каждое уникальное ПРАВИЛО —
+  // дискриминирующий юнион AUTHOR_RULE_FN канонизирует его: у close
+  // полей lock/stop нет по построению (они НЕ влияют на бан-лист и в
+  // ключ не входят), reach несёт lock/stop своей точки, reach с
+  // lock=0 деградирует в close ещё в билдере
   const filterByRule = new Map<string, IAuthorFilterContext>();
-  const getFilter = (
-    minAuthorTrack: number,
-    minAuthorHitRate: number,
-  ): IAuthorFilterContext => {
-    const key = `${minAuthorTrack}:${minAuthorHitRate}`;
+  const getFilter = (point: ISimulatorGridPoint): IAuthorFilterContext => {
+    const rule = AUTHOR_RULE_FN(point);
+    const key =
+      rule.metric === "reach"
+        ? `reach:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.minAuthorWilson}:${rule.profitLockPercent}:${rule.hardStopPercent}`
+        : `close:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.minAuthorWilson}`;
     let filter = filterByRule.get(key);
     if (!filter) {
-      filter = TRAIN_AUTHOR_FILTER_FN(
-        profiles,
-        directional,
-        minAuthorTrack,
-        minAuthorHitRate,
-      );
+      filter = TRAIN_AUTHOR_FILTER_FN(profiles, directional, rule);
       filterByRule.set(key, filter);
       if (self.params.callbacks?.onAuthorsTrained) {
         self.params.callbacks?.onAuthorsTrained(
@@ -992,7 +1104,7 @@ const RUN_FN = async (
     const { report, trades } = EVALUATE_POINT_FN(
       profiles,
       point,
-      getFilter(point.minAuthorTrack, point.minAuthorHitRate),
+      getFilter(point),
       rangeStartTs,
       rangeDays,
     );
@@ -1048,10 +1160,21 @@ const RUN_FN = async (
       [...eligible].sort(byRankingDesc(ranking.value))[0] ??
       sorted[0] ??
       null;
+    // артефакт авторов — под правило бана ИМЕННО ЭТОГО победителя:
+    // критерии могут выбрать точки с разными правилами, и белый
+    // список — свойство точки, а не глобаль прогона
+    const winnerStats = winner ? getFilter(winner.point).stats : [];
     const bestEntry: ISimulatorBest = {
       criterion: ranking.criterion,
       report: winner,
       trades: winner ? (tradesByReport.get(winner) ?? []) : [],
+      authorStats: winnerStats,
+      allowedAuthors: winnerStats
+        .filter(({ banned }) => !banned)
+        .map(({ author }) => author),
+      bannedAuthors: winnerStats
+        .filter(({ banned }) => banned)
+        .map(({ author }) => author),
     };
     best.push(bestEntry);
     if (self.params.callbacks?.onRanking) {
@@ -1063,32 +1186,59 @@ const RUN_FN = async (
       );
     }
   }
-  reports.sort((a, b) => b.sharpe - a.sharpe);
+  // порядок reports в результате — контракт потребителя run():
+  // критерий задаёт схема (reportOrder, дефолт подставлен на уровне
+  // params в connection-сервисе), компаратор — защищённый (наивное
+  // вычитание ломается на Infinity sortino/recovery серий без
+  // убытков)
+  const orderValue =
+    rankings.find(({ criterion }) => criterion === self.params.reportOrder)
+      ?.value ?? rankings[0].value;
+  reports.sort(byRankingDesc(orderValue));
 
-  // прод-артефакт (белый список авторов) — по правилу бана
-  // Sharpe-победителя; сырые ideas/hits/hitRate от правила не зависят
-  const winnerPoint =
-    best.find(({ criterion }) => criterion === "sharpe")?.report?.point ??
-    points[0] ??
-    null;
-  const winnerFilter = winnerPoint
-    ? getFilter(winnerPoint.minAuthorTrack, winnerPoint.minAuthorHitRate)
-    : null;
-  const authorStats = winnerFilter ? winnerFilter.stats : [];
-
+  // ран-левел артефакт агрегируется по победителям критериев из
+  // gridAxes.banCriteria (конфиг прогона, не ось перебора): allowed =
+  // союз их белых списков, banned = забанен каждым из них. BC-ручка:
+  // схема с banCriteria ["sharpe"] получает прежний артефакт ровно по
+  // Sharpe-победителю. Полная разбивка — в best[].authorStats
+  const banCriteria = new Set(self.params.gridAxes.banCriteria);
+  const valueByCriterion = new Map(
+    rankings.map(({ criterion, value }) => [criterion, value]),
+  );
+  const allowedUnion = new Set<string>();
+  const everyAuthor = new Set<string>();
+  for (const bestEntry of best) {
+    if (!banCriteria.has(bestEntry.criterion)) {
+      continue;
+    }
+    for (const { author } of bestEntry.authorStats) {
+      everyAuthor.add(author);
+    }
+    // победитель с нефинитным значением рейтинга (Infinity у
+    // sortino/recovery на кривой без просадки, NaN) — представитель
+    // класса ничьих, выбранный порядком сетки, а не превосходством.
+    // Хуй-пойми-какое число — не основание раздавать допуски: его
+    // авторы учтены в пуле (дефолт-бан), но белый список не входит
+    const value = bestEntry.report
+      ? valueByCriterion.get(bestEntry.criterion)!(bestEntry.report)
+      : Number.NaN;
+    if (!Number.isFinite(value)) {
+      continue;
+    }
+    for (const author of bestEntry.allowedAuthors) {
+      allowedUnion.add(author);
+    }
+  }
   const result: ISimulatorResult = {
     symbol,
     ideasTotal: ideas.length,
     ideasDirectional: directional.length,
     profileCount: profiles.length,
     truncatedCount,
-    authorStats,
-    allowedAuthors: authorStats
-      .filter(({ banned }) => !banned)
-      .map(({ author }) => author),
-    bannedAuthors: authorStats
-      .filter(({ banned }) => banned)
-      .map(({ author }) => author),
+    allowedAuthors: [...allowedUnion],
+    bannedAuthors: [...everyAuthor].filter(
+      (author) => !allowedUnion.has(author),
+    ),
     avgHoldMinutes: holdStats.avgHoldMinutes,
     p95HoldMinutes: holdStats.p95HoldMinutes,
     p99HoldMinutes: holdStats.p99HoldMinutes,
@@ -1167,6 +1317,8 @@ const TEST_FN = async (
     authorStats,
     point.minAuthorTrack,
     point.minAuthorHitRate,
+    // замороженные точки старых артефактов не несут поля — 0 = выкл
+    point.minAuthorWilson ?? 0,
   );
 
   // окно суточных корзин — по тестовому диапазону: метрики отчёта

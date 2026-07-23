@@ -7,17 +7,56 @@ const METHOD_NAME_TEST = "Simulator.test";
 
 /**
  * Public API of the Simulator entity — parameter sweep over crowd
- * trading ideas.
+ * trading ideas. Profiles every idea with ONE candle pass and
+ * evaluates the whole grid arithmetically from the profiles; the
+ * result carries four ranking winners (sharpe / sortino / pnl /
+ * recovery), each with the author artifact under ITS OWN ban rule,
+ * plus per-point reports with trade-level detail.
  *
- * Finds production strategy parameters (hard stop, trailing take,
- * hold duration, entry consensus threshold) by profiling every idea
- * with one candle pass and evaluating the whole grid arithmetically
- * from the profiles. The result carries four ranking winners
- * (Sharpe, Sortino, PnL), the trained author whitelist/ban list and
- * per-point reports with trade-level detail.
+ * Parameter map — what each knob tunes and when it is ignored
+ * (full per-field contracts live in ISimulatorGridAxes and
+ * ISimulatorSchema):
  *
- * The simulator picks candidates — validation of the chosen
- * parameters MUST be a real engine backtest (Backtest.run).
+ * Exit axes (always active in trade simulation):
+ * - hardStopPercent — catastrophe exit; wins an ambiguous candle.
+ * - trailingTakePercent — pullback from the peak; inert for trades
+ *   whose peak never reaches the arm level entry/(1 - r).
+ * - profitLockPercent — floor armed by touching +X%, exit on the
+ *   pullback to it; 0 disables; runners are picked up by the
+ *   trailing take instead.
+ * - holdMinutes — slot turnover cap; a busy slot absorbs qualified
+ *   ideas (absorbedIdeaIds); time_expired is the worst-case exit.
+ *
+ * Entry gates (preprocessing of every candidate entry):
+ * - minIdeasAligned — unique UNBANNED aligned authors in the 4h
+ *   window; banned authors are invisible to the count.
+ * - minWeightAligned — sum of Laplace weights (hits+1)/(ideas+2) of
+ *   those authors; 0 disables the weighted gate.
+ *
+ * Ban rule (author filter, trained on the whole run range):
+ * - minAuthorTrack / minAuthorHitRate — default-ban thresholds;
+ *   truncated profiles prove nothing; the ban is strictly below the
+ *   rate threshold.
+ * - minAuthorWilson — minimum Wilson 95% lower bound of the hit
+ *   rate: proven quality that prices the track length in; 0
+ *   disables (pair-only baseline), and with the pair pinned inert
+ *   (track [0], rate [0]) the bound bans alone.
+ * - authorMetric — hit definition: "close" = 5-day horizon close
+ *   (lock/stop do NOT affect ban training), "reach" =
+ *   lock-reachability against the point's lock/stop; reach with
+ *   lock = 0 falls back to close.
+ *
+ * Run-level aggregation (not swept, ignored by test()):
+ * - banCriteria — which ranking winners feed result.allowedAuthors
+ *   (union) / bannedAuthors (banned by all); a winner elected by a
+ *   non-finite value (Infinity sortino/recovery) grants nothing.
+ * - reportOrder — ranking criterion ordering result.reports
+ *   (descending, tie-guarded comparator); default "sharpe". Purely
+ *   presentational: never affects winners, callbacks or ban lists.
+ *
+ * The simulator picks candidates — honest confirmation is a
+ * walk-forward test() shot, and the final arbiter for the chosen
+ * parameters is a real engine backtest (Backtest.run).
  */
 export class SimulatorUtils {
     /**
@@ -27,11 +66,35 @@ export class SimulatorUtils {
      * rankings. The referenced simulator schema must be registered
      * via addSimulatorSchema beforehand.
      *
+     * What is silently dropped from the input before any math —
+     * ideas of OTHER symbols (one shared feed serves every run),
+     * NEUTRAL ideas, and flood duplicates (at most one idea per
+     * author per direction per 8h; a dropped repost neither extends
+     * the window nor votes). Ideas at the data edge get truncated
+     * profiles: they trade to the edge but are IGNORED as
+     * ban-training evidence; an idea whose first candle chunk is
+     * beyond the edge is dropped entirely (null profile).
+     *
+     * How the grid is applied — the schema's gridAxes merge PER-AXIS
+     * over the engine defaults (an omitted axis is swept with the
+     * default list; a single-value list freezes it), then every
+     * point of the cartesian product is evaluated arithmetically
+     * from the same profiles; see ISimulatorGridAxes for each axis'
+     * tune/ignore contract. Ranking winners honor the anti-fluke
+     * floor (a point below MIN_TRADES_FOR_BEST trades can win only
+     * when NO point clears the floor), and the run-level author
+     * lists aggregate ONLY the banCriteria winners with finite
+     * ranking values — an Infinity sortino/recovery winner grants
+     * no allowances.
+     *
      * @param dto.symbol - Trading pair symbol to simulate (e.g., "BTCUSDT")
      * @param dto.simulatorName - Registered simulator name
      * @param dto.ideas - Ideas feed; other symbols are filtered out,
      * so one shared feed can be passed for every symbol
-     * @returns Final simulation result (reports, rankings, author artifact)
+     * @returns Final simulation result (reports sorted by sharpe,
+     * four ranking winners each carrying authorStats /
+     * allowedAuthors / bannedAuthors under ITS OWN rule, run-level
+     * union lists per banCriteria, hold-time distribution)
      * @throws Error when the simulator or its exchange is not registered
      *
      * @example
@@ -43,8 +106,8 @@ export class SimulatorUtils {
      *   simulatorName: "tv-ideas-simulator",
      *   ideas,
      * });
-     * // result.best -> winners by sharpe / sortino / pnl
-     * // result.allowedAuthors -> production whitelist
+     * // result.best -> winners by sharpe / sortino / pnl / recovery,
+     * // each with authorStats/allowedAuthors under ITS OWN rule
      * ```
      */
     public run = async (
@@ -77,9 +140,10 @@ export class SimulatorUtils {
      * filtered out, so one shared feed can be passed for every symbol
      * @param dto.point - Frozen grid point from the train run
      * (e.g., the Sharpe winner's `best.report.point`)
-     * @param dto.authorStats - Frozen author track record from the
-     * train run (`result.authorStats` — raw ideas/hits are reused,
-     * the banned flag is re-derived under the point's ban rule)
+     * @param dto.authorStats - Frozen author track record of the
+     * CHOSEN winner (`best.authorStats` — hits are counted under that
+     * winner's rule metric, so take them from the same best[] entry
+     * as the point; the banned flag is re-derived under the rule)
      * @returns Out-of-sample result: the point report with the same
      * metrics as run(), the trade list and the frozen author artifact
      * @throws Error when the simulator or its exchange is not registered
@@ -102,7 +166,7 @@ export class SimulatorUtils {
      *   simulatorName: "tv-ideas-simulator",
      *   ideas: julyIdeas,
      *   point: winner.report.point,
-     *   authorStats: train.authorStats,
+     *   authorStats: winner.authorStats,
      * });
      * // test.report -> out-of-sample sharpe / pnl / drawdown
      * ```

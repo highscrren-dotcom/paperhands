@@ -1,10 +1,17 @@
 import { inject } from "../../core/di";
 import { TLoggerService } from "../base/LoggerService";
 import TYPES from "../../core/types";
-import { SimulatorName, ISimulator, ISimulatorIdea, ISimulatorGridPoint, ISimulatorAuthorStat, ISimulatorGridAxes } from "../../../interfaces/Simulator.interface";
+import { SimulatorName, ISimulator, ISimulatorIdea, ISimulatorGridPoint, ISimulatorAuthorStat, ISimulatorGridAxes, SimulatorRankingCriterion } from "../../../interfaces/Simulator.interface";
 import { memoize } from "functools-kit";
 import SimulatorSchemaService from "../schema/SimulatorSchemaService";
 import { ClientSimulator } from "../../../client/ClientSimulator";
+
+/**
+ * Report order applied when the schema omits reportOrder: the flat
+ * result.reports list is sorted by Sharpe descending — the pre-knob
+ * canonical order.
+ */
+const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
 
 /**
  * Grid axes applied per-axis when the schema omits them (schema
@@ -22,6 +29,11 @@ import { ClientSimulator } from "../../../client/ClientSimulator";
  *   systematically too short for peaks that ripen for days;
  * - author QUALITY threshold (hit rate) mattered more than track
  *   length on every criterion — both are swept;
+ * - Wilson lower bound: an alternative ban arithmetic that prices
+ *   the track length into the quality estimate (3/3 newcomer ~0.44
+ *   vs 15/15 veteran ~0.80 at the same observed rate); 0 keeps the
+ *   pair-only baseline, 0.6 demands veteran-grade proof — the sweep
+ *   decides which arithmetic wins;
  * - weighted consensus: 0 keeps the unweighted baseline in the
  *   sweep, 0.6 ~ a solo proven author (Laplace (hits+1)/(ideas+2)),
  *   1.2 ~ a pair — the sweep itself decides whether weighting helps;
@@ -29,7 +41,14 @@ import { ClientSimulator } from "../../../client/ClientSimulator";
  *   (trailing arms only from peak >= entry/(1-r), so a +1.5..2.5%
  *   run that dumps gives everything back without a lock); 0 keeps
  *   the lock-free baseline, runners are untouched — above the lock
- *   the trailing floor is higher and fills first.
+ *   the trailing floor is higher and fills first;
+ * - author metric: "close" grades authors by horizon close (feeds
+ *   long-hold points), "reach" by lock-reachability of their ideas
+ *   (feeds lock points) — the sweep decides which grading wins;
+ * - ban criteria (NOT a swept axis — run() aggregation config): all
+ *   four ranking winners feed the run-level author artifact by
+ *   default; a schema pins ["sharpe"] to restore the pre-union
+ *   Sharpe-only artifact.
  */
 const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
   hardStopPercent: [1, 1.5, 2, 2.5, 3, 4, 5, 7],
@@ -38,8 +57,11 @@ const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
   minIdeasAligned: [1, 2, 3],
   minAuthorTrack: [2, 3, 5],
   minAuthorHitRate: [0.5, 0.6],
+  minAuthorWilson: [0, 0.6],
   minWeightAligned: [0, 0.6, 1.2],
   profitLockPercent: [0, 1.5, 2.5],
+  authorMetric: ["close", "reach"],
+  banCriteria: ["sharpe", "pnl"],
 };
 
 /**
@@ -76,13 +98,14 @@ export class SimulatorConnectionService implements TSimulator {
   public getSimulator = memoize(
     ([simulatorName]) => `${simulatorName}`,
     (simulatorName: SimulatorName) => {
-      const { exchangeName, gridAxes, callbacks } =
+      const { exchangeName, gridAxes, reportOrder, callbacks } =
         this.simulatorSchemaService.get(simulatorName);
       return new ClientSimulator({
         simulatorName,
         logger: this.loggerService,
         exchangeName,
         gridAxes: { ...DEFAULT_GRID_AXES, ...gridAxes },
+        reportOrder: reportOrder ?? DEFAULT_REPORT_ORDER,
         callbacks,
       });
     }
@@ -95,7 +118,7 @@ export class SimulatorConnectionService implements TSimulator {
    * @param dto.symbol - Trading pair symbol to simulate
    * @param dto.simulatorName - Registered simulator name
    * @param dto.ideas - Ideas feed (other symbols are filtered out by the client)
-   * @returns Final simulation result (reports, rankings, author artifact)
+   * @returns Final simulation result (reports, rankings; the author artifact lives per-winner in best[])
    */
   public run = async (dto: {
     symbol: string;

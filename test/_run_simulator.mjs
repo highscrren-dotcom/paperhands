@@ -22,6 +22,23 @@ import "./sim/grid_cartesian.test.mjs";
 import "./sim/weighted_consensus.test.mjs";
 import "./sim/out_of_sample.test.mjs";
 import "./sim/profit_lock.test.mjs";
+import "./sim/author_metric.test.mjs";
+import "./sim/author_metric_edges.test.mjs";
+import "./sim/ban_criteria.test.mjs";
+import "./sim/lock_collision.test.mjs";
+import "./sim/short_lock.test.mjs";
+import "./sim/reach_stop_dependence.test.mjs";
+import "./sim/weighted_reach.test.mjs";
+import "./sim/oos_reach.test.mjs";
+import "./sim/best_fallback.test.mjs";
+import "./sim/callbacks_done.test.mjs";
+import "./sim/input_normalization.test.mjs";
+import "./sim/hold_beyond_horizon.test.mjs";
+import "./sim/aligned_window_boundary.test.mjs";
+import "./sim/weight_sum_pair.test.mjs";
+import "./sim/entity_lifecycle.test.mjs";
+import "./sim/wilson_ban.test.mjs";
+import "./sim/report_order.test.mjs";
 
 run(import.meta.url, () => {
     console.log("All tests are finished");

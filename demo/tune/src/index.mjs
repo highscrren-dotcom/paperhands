@@ -35,15 +35,25 @@ addSimulatorSchema({
     simulatorName: "tune_default", 
     exchangeName: "ccxt_exchange", 
     gridAxes: {
-        hardStopPercent: [1, 1.5, 2, 2.5, 3, 4, 5, 7],
-        trailingTakePercent: [0.5, 1, 1.5, 2, 3, 4],
+        // стопы < 2% сидят внутри медианного шейкаута (p25 MAE-до-пика
+        // ~ -2.7%) и ни разу не выигрывали ни одного рейтинга
+        hardStopPercent: [2, 2.5, 3, 4, 5, 7],
+        // 0.5% — шум уровня 1m-свечи, ни одной победы ни в одном прогоне
+        trailingTakePercent: [1, 1.5, 2, 3, 4],
         holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60],
-        minIdeasAligned: [1, 2, 3],
+        // N=3 не выигрывал нигде: побеждают 1 (соло проверенного) и 2
+        minIdeasAligned: [1, 2],
         minAuthorTrack: [2, 3, 5],
         minAuthorHitRate: [0.5, 0.6],
         minWeightAligned: [0, 0.6, 1.2],
         profitLockPercent: [0, 1.5, 2.5],
-    }
+        minAuthorWilson: [0, 0.6],
+        // обе метрики авторского hit'а — перебор решает, какая
+        // арифметика кормит какой стиль выхода (BC не сохраняем)
+        authorMetric: ["close", "reach"],
+        banCriteria: ["sharpe"],
+    },
+    reportOrder: "sharpe",
 });
 
 
@@ -60,7 +70,11 @@ addSimulatorSchema({
         minAuthorHitRate: [0.5, 0.6],
         minWeightAligned: [0, 0.6, 1.2],
         profitLockPercent: [0, 1, 2],
-    }
+        minAuthorWilson: [0, 0.6],
+        authorMetric: ["close", "reach"],
+        banCriteria: ["sharpe"],
+    },
+    reportOrder: "sharpe",
 });
 
 // плотный перебор замка при умеренных холдах
@@ -76,7 +90,11 @@ addSimulatorSchema({
         minAuthorHitRate: [0.5, 0.6],
         minWeightAligned: [0, 0.6],
         profitLockPercent: [0, 0.5, 1, 1.5, 2, 2.5, 3],
+        minAuthorWilson: [0, 0.6],
+        authorMetric: ["close", "reach"],
+        banCriteria: ["sharpe"],
     },
+    reportOrder: "sharpe",
 });
 
 // широкий компромисс: холды от 4ч до 72ч + замок
@@ -92,7 +110,11 @@ addSimulatorSchema({
         minAuthorHitRate: [0.5, 0.6],
         minWeightAligned: [0, 0.6, 1.2],
         profitLockPercent: [0, 1, 2],
+        minAuthorWilson: [0, 0.6],
+        authorMetric: ["close", "reach"],
+        banCriteria: ["sharpe"],
     },
+    reportOrder: "sharpe",
 });
 
 const fmt = (value) => (Number.isFinite(value) ? +value.toFixed(2) : "inf");
@@ -114,7 +136,7 @@ const runTune = async (simulatorName) => {
     result.push({
       config: simulatorName,
       by: best.criterion,
-      point: `H=${p.hardStopPercent} TT=${p.trailingTakePercent} hold=${p.holdMinutes / 60}h N=${p.minIdeasAligned} track=${p.minAuthorTrack} rate=${p.minAuthorHitRate} W=${p.minWeightAligned} lock=${p.profitLockPercent}`,
+      point: `H=${p.hardStopPercent} TT=${p.trailingTakePercent} hold=${p.holdMinutes / 60}h N=${p.minIdeasAligned} track=${p.minAuthorTrack} rate=${p.minAuthorHitRate} wilson=${p.minAuthorWilson} W=${p.minWeightAligned} lock=${p.profitLockPercent} metric=${p.authorMetric}`,
       train: {
         trades: best.report.trades,
         pnl: fmt(best.report.totalPnlPercent),
@@ -128,10 +150,12 @@ const runTune = async (simulatorName) => {
   }
 
   // сырой трек-рекорд под правило Sharpe-победителя — источник
-  // для AUTHOR_STATS в src/test.mjs
+  // для AUTHOR_STATS в src/test.mjs (артефакт авторов живёт
+  // по-победительно в best[], ран-левел authorStats больше нет)
+  const sharpeBest = train.best.find(({ criterion }) => criterion === "sharpe");
   result.push({
     config: simulatorName,
-    authorStats: train.authorStats.map(({ author, ideas, hits }) => ({ author, ideas, hits })),
+    authorStats: (sharpeBest?.authorStats ?? []).map(({ author, ideas, hits }) => ({ author, ideas, hits })),
   });
 };
 

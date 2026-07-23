@@ -86,6 +86,8 @@ test("SIM: default-ban — unproven and coin-flipping authors are banned, ban ru
       minAuthorHitRate: [0.5],
       minWeightAligned: [0],
       profitLockPercent: [0],
+      minAuthorWilson: [0],
+      authorMetric: ["close"],
     },
     callbacks: {
       onAuthorsTrained: (_symbol, stats, bannedIdeas) => {
@@ -145,12 +147,12 @@ test("SIM: default-ban — unproven and coin-flipping authors are banned, ban ru
   }
 
   // итоговый белый список — по правилу Sharpe-победителя (track=3)
-  if (JSON.stringify(result.allowedAuthors) !== JSON.stringify(["prophet"])) {
-    fail(`allowedAuthors must be ["prophet"], got ${JSON.stringify(result.allowedAuthors)}`);
+  if (JSON.stringify(result.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors) !== JSON.stringify(["prophet"])) {
+    fail(`allowedAuthors must be ["prophet"], got ${JSON.stringify(result.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors)}`);
     return;
   }
-  if (!result.bannedAuthors.includes("loser") || !result.bannedAuthors.includes("newbie")) {
-    fail(`bannedAuthors must include loser and newbie, got ${JSON.stringify(result.bannedAuthors)}`);
+  if (!result.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors.includes("loser") || !result.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors.includes("newbie")) {
+    fail(`bannedAuthors must include loser and newbie, got ${JSON.stringify(result.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors)}`);
     return;
   }
 

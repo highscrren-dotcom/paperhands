@@ -2,7 +2,7 @@
   {
     "config": "tune_default",
     "by": "sharpe",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2.5",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2.5 metric=close",
     "train": {
       "trades": 9,
       "pnl": 12.22,
@@ -15,7 +15,7 @@
   {
     "config": "tune_default",
     "by": "sortino",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2.5",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2.5 metric=close",
     "train": {
       "trades": 9,
       "pnl": 12.22,
@@ -28,7 +28,7 @@
   {
     "config": "tune_default",
     "by": "pnl",
-    "point": "H=3 TT=4 hold=72h N=1 track=2 rate=0.5 W=0 lock=0",
+    "point": "H=3 TT=4 hold=72h N=1 track=2 rate=0.5 wilson=0 W=0 lock=0 metric=close",
     "train": {
       "trades": 8,
       "pnl": 17.4,
@@ -41,7 +41,7 @@
   {
     "config": "tune_default",
     "by": "recovery",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2.5",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2.5 metric=close",
     "train": {
       "trades": 9,
       "pnl": 12.22,
@@ -269,7 +269,7 @@
   {
     "config": "tune_shorthold",
     "by": "sharpe",
-    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 W=0.6 lock=2",
+    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 wilson=0 W=0.6 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 8.7,
@@ -282,7 +282,7 @@
   {
     "config": "tune_shorthold",
     "by": "sortino",
-    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 W=0.6 lock=2",
+    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 wilson=0 W=0.6 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 8.7,
@@ -295,7 +295,7 @@
   {
     "config": "tune_shorthold",
     "by": "pnl",
-    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 W=0.6 lock=2",
+    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 wilson=0 W=0.6 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 8.7,
@@ -308,7 +308,7 @@
   {
     "config": "tune_shorthold",
     "by": "recovery",
-    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 W=0.6 lock=2",
+    "point": "H=3 TT=1.5 hold=48h N=1 track=5 rate=0.5 wilson=0 W=0.6 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 8.7,
@@ -536,7 +536,7 @@
   {
     "config": "tune_lockrich",
     "by": "sharpe",
-    "point": "H=5 TT=3 hold=72h N=1 track=3 rate=0.5 W=0.6 lock=2.5",
+    "point": "H=5 TT=3 hold=72h N=1 track=3 rate=0.5 wilson=0 W=0.6 lock=2.5 metric=close",
     "train": {
       "trades": 9,
       "pnl": 12.82,
@@ -549,7 +549,7 @@
   {
     "config": "tune_lockrich",
     "by": "sortino",
-    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.6 W=0.6 lock=3",
+    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.6 wilson=0 W=0.6 lock=3 metric=close",
     "train": {
       "trades": 8,
       "pnl": 13.62,
@@ -562,20 +562,20 @@
   {
     "config": "tune_lockrich",
     "by": "pnl",
-    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.5 W=0 lock=0",
+    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.6 wilson=0 W=0.6 lock=3 metric=reach",
     "train": {
-      "trades": 9,
-      "pnl": 15.61,
-      "wr": 0.89,
-      "dd": 5.29,
-      "sharpe": 1.42,
-      "sortino": 2.95
+      "trades": 10,
+      "pnl": 16.08,
+      "wr": 0.9,
+      "dd": 5.3,
+      "sharpe": 1.87,
+      "sortino": 3.03
     }
   },
   {
     "config": "tune_lockrich",
     "by": "recovery",
-    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.6 W=0.6 lock=3",
+    "point": "H=5 TT=3 hold=72h N=1 track=2 rate=0.6 wilson=0 W=0.6 lock=3 metric=close",
     "train": {
       "trades": 8,
       "pnl": 13.62,
@@ -803,7 +803,7 @@
   {
     "config": "tune_wide",
     "by": "sharpe",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 9.21,
@@ -816,7 +816,7 @@
   {
     "config": "tune_wide",
     "by": "sortino",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 9.21,
@@ -829,7 +829,7 @@
   {
     "config": "tune_wide",
     "by": "pnl",
-    "point": "H=3 TT=4 hold=72h N=1 track=2 rate=0.5 W=0 lock=0",
+    "point": "H=3 TT=4 hold=72h N=1 track=2 rate=0.5 wilson=0 W=0 lock=0 metric=close",
     "train": {
       "trades": 8,
       "pnl": 17.4,
@@ -842,7 +842,7 @@
   {
     "config": "tune_wide",
     "by": "recovery",
-    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 W=0 lock=2",
+    "point": "H=5 TT=2 hold=72h N=1 track=5 rate=0.5 wilson=0 W=0 lock=2 metric=close",
     "train": {
       "trades": 9,
       "pnl": 9.21,
