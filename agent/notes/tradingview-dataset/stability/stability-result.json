@@ -1,0 +1,272 @@
+{
+ "variants": {
+  "K4_r55": {
+   "full": {
+    "months": 3,
+    "medianRealPnl": -1.795,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": -1.079,
+    "medianAlwaysShort": 3.484,
+    "signTest": {
+     "n": 2,
+     "k": 0,
+     "p": 1
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2024-12",
+      "real": -10.771,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-07",
+      "real": 0,
+      "placeboMed": 0
+     }
+    ]
+   },
+   "from2024": {
+    "months": 3,
+    "medianRealPnl": -1.795,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": -1.079,
+    "medianAlwaysShort": 3.484,
+    "signTest": {
+     "n": 2,
+     "k": 0,
+     "p": 1
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2024-12",
+      "real": -10.771,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-07",
+      "real": 0,
+      "placeboMed": 0
+     }
+    ]
+   }
+  },
+  "K4_r60": {
+   "full": {
+    "months": 2,
+    "medianRealPnl": -1.795,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": -1.079,
+    "medianAlwaysShort": 4.06,
+    "signTest": {
+     "n": 2,
+     "k": 0,
+     "p": 1
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2024-12",
+      "real": -10.771,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     }
+    ]
+   },
+   "from2024": {
+    "months": 2,
+    "medianRealPnl": -1.795,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": -1.079,
+    "medianAlwaysShort": 4.06,
+    "signTest": {
+     "n": 2,
+     "k": 0,
+     "p": 1
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2024-12",
+      "real": -10.771,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     }
+    ]
+   }
+  },
+  "K6_r55": {
+   "full": {
+    "months": 5,
+    "medianRealPnl": 0,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": 0,
+    "medianAlwaysShort": 1.006,
+    "signTest": {
+     "n": 4,
+     "k": 2,
+     "p": 0.6875
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-02",
+      "real": -9.078,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-05",
+      "real": 2.065,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-06",
+      "real": 0.972,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-07",
+      "real": 0,
+      "placeboMed": 0
+     }
+    ]
+   },
+   "from2024": {
+    "months": 5,
+    "medianRealPnl": 0,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": 0,
+    "medianAlwaysShort": 1.006,
+    "signTest": {
+     "n": 4,
+     "k": 2,
+     "p": 0.6875
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-02",
+      "real": -9.078,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-05",
+      "real": 2.065,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-06",
+      "real": 0.972,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-07",
+      "real": 0,
+      "placeboMed": 0
+     }
+    ]
+   }
+  },
+  "K6_r60": {
+   "full": {
+    "months": 4,
+    "medianRealPnl": 0.972,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": 0.972,
+    "medianAlwaysShort": 1.863,
+    "signTest": {
+     "n": 4,
+     "k": 2,
+     "p": 0.6875
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-02",
+      "real": -9.078,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-05",
+      "real": 2.065,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-06",
+      "real": 0.972,
+      "placeboMed": 0
+     }
+    ]
+   },
+   "from2024": {
+    "months": 4,
+    "medianRealPnl": 0.972,
+    "medianPlaceboPnl": 0,
+    "medianAlwaysLong": 0.972,
+    "medianAlwaysShort": 1.863,
+    "signTest": {
+     "n": 4,
+     "k": 2,
+     "p": 0.6875
+    },
+    "success": false,
+    "perMonth": [
+     {
+      "month": "2025-01",
+      "real": -1.795,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-02",
+      "real": -9.078,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-05",
+      "real": 2.065,
+      "placeboMed": 0
+     },
+     {
+      "month": "2025-06",
+      "real": 0.972,
+      "placeboMed": 0
+     }
+    ]
+   }
+  }
+ }
+}

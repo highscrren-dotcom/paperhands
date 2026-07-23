@@ -1,0 +1,130 @@
+{
+ "rows": [
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "size": 1,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "size": 1,
+   "trades": 9,
+   "pnl": 2.065,
+   "wr": 0.444,
+   "sharpe": 0.31
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "size": 1,
+   "trades": 7,
+   "pnl": 0.972,
+   "wr": 0.571,
+   "sharpe": 0.339
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "size": 1,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "size": 1,
+   "trades": 9,
+   "pnl": 2.065,
+   "wr": 0.444,
+   "sharpe": 0.31
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "size": 1,
+   "trades": 7,
+   "pnl": 0.972,
+   "wr": 0.571,
+   "sharpe": 0.339
+  }
+ ]
+}

@@ -1,0 +1,2804 @@
+{
+ "rows": [
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 0,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 0,
+   "size": 1,
+   "trades": 6,
+   "pnl": 4.861,
+   "wr": 0.667,
+   "sharpe": 1.413
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 0,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 0,
+   "size": 1,
+   "trades": 6,
+   "pnl": -6.063,
+   "wr": 0.5,
+   "sharpe": -0.859
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 0,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 1,
+   "size": 2,
+   "trades": 4,
+   "pnl": 5.77,
+   "wr": 0.75,
+   "sharpe": 1.527
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 1,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 1,
+   "size": 1,
+   "trades": 5,
+   "pnl": -5.18,
+   "wr": 0.2,
+   "sharpe": -0.863
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 1,
+   "size": 1,
+   "trades": 9,
+   "pnl": 2.065,
+   "wr": 0.444,
+   "sharpe": 0.31
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 1,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 2,
+   "size": 1,
+   "trades": 5,
+   "pnl": 1.567,
+   "wr": 0.8,
+   "sharpe": 0.24
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 2,
+   "size": 1,
+   "trades": 5,
+   "pnl": 1.567,
+   "wr": 0.8,
+   "sharpe": 0.24
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 2,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 3,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 4,
+   "size": 2,
+   "trades": 10,
+   "pnl": -30.093,
+   "wr": 0.2,
+   "sharpe": -2.531
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 4,
+   "size": 3,
+   "trades": 15,
+   "pnl": -20.863,
+   "wr": 0.533,
+   "sharpe": -1.506
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 4,
+   "size": 1,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 4,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 4,
+   "size": 2,
+   "trades": 12,
+   "pnl": -19.968,
+   "wr": 0.5,
+   "sharpe": -1.603
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 4,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 4,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 4,
+   "size": 2,
+   "trades": 11,
+   "pnl": 1.131,
+   "wr": 0.545,
+   "sharpe": 0.141
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 4,
+   "size": 1,
+   "trades": 2,
+   "pnl": 1.957,
+   "wr": 0.5,
+   "sharpe": 0.895
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 4,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 4,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 4,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 4,
+   "size": 1,
+   "trades": 9,
+   "pnl": 2.065,
+   "wr": 0.444,
+   "sharpe": 0.31
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 4,
+   "size": 1,
+   "trades": 2,
+   "pnl": 1.957,
+   "wr": 0.5,
+   "sharpe": 0.895
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 5,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 5,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 5,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 5,
+   "size": 2,
+   "trades": 9,
+   "pnl": -9.594,
+   "wr": 0.333,
+   "sharpe": -1.048
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 5,
+   "size": 1,
+   "trades": 6,
+   "pnl": -6.063,
+   "wr": 0.5,
+   "sharpe": -0.859
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 5,
+   "size": 1,
+   "trades": 2,
+   "pnl": 1.957,
+   "wr": 0.5,
+   "sharpe": 0.895
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 5,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 5,
+   "size": 1,
+   "trades": 2,
+   "pnl": 1.957,
+   "wr": 0.5,
+   "sharpe": 0.895
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 6,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 6,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 6,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 6,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 6,
+   "size": 1,
+   "trades": 5,
+   "pnl": -5.18,
+   "wr": 0.2,
+   "sharpe": -0.863
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 6,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 7,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 7,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 7,
+   "size": 1,
+   "trades": 7,
+   "pnl": -4.791,
+   "wr": 0.429,
+   "sharpe": -0.679
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 7,
+   "size": 1,
+   "trades": 6,
+   "pnl": -8.976,
+   "wr": 0.167,
+   "sharpe": -1.582
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 7,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 8,
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 8,
+   "size": 2,
+   "trades": 9,
+   "pnl": -4.623,
+   "wr": 0.667,
+   "sharpe": -0.445
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 8,
+   "size": 1,
+   "trades": 5,
+   "pnl": 1.567,
+   "wr": 0.8,
+   "sharpe": 0.24
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 8,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 8,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 8,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 9,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 9,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.303,
+   "wr": 0.5,
+   "sharpe": -0.948
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 9,
+   "size": 1,
+   "trades": 5,
+   "pnl": -5.18,
+   "wr": 0.2,
+   "sharpe": -0.863
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 9,
+   "size": 1,
+   "trades": 5,
+   "pnl": -0.701,
+   "wr": 0.4,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 9,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 10,
+   "size": 1,
+   "trades": 6,
+   "pnl": 8.56,
+   "wr": 0.833,
+   "sharpe": 1.017
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 10,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 11,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 11,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 11,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 12,
+   "size": 1,
+   "trades": 6,
+   "pnl": 4.861,
+   "wr": 0.667,
+   "sharpe": 1.413
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 12,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 13,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 14,
+   "size": 3,
+   "trades": 10,
+   "pnl": -22.59,
+   "wr": 0.3,
+   "sharpe": -1.989
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 14,
+   "size": 2,
+   "trades": 9,
+   "pnl": -4.623,
+   "wr": 0.667,
+   "sharpe": -0.445
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 14,
+   "size": 1,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 14,
+   "size": 3,
+   "trades": 10,
+   "pnl": -22.59,
+   "wr": 0.3,
+   "sharpe": -1.989
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 14,
+   "size": 2,
+   "trades": 9,
+   "pnl": -4.623,
+   "wr": 0.667,
+   "sharpe": -0.445
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 14,
+   "size": 2,
+   "trades": 9,
+   "pnl": -10.198,
+   "wr": 0.556,
+   "sharpe": -0.882
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 14,
+   "size": 2,
+   "trades": 8,
+   "pnl": -10.603,
+   "wr": 0.5,
+   "sharpe": -1
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 14,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 14,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 14,
+   "size": 1,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 14,
+   "size": 2,
+   "trades": 9,
+   "pnl": -10.198,
+   "wr": 0.556,
+   "sharpe": -0.882
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 14,
+   "size": 2,
+   "trades": 8,
+   "pnl": -10.603,
+   "wr": 0.5,
+   "sharpe": -1
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 14,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 14,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 15,
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 15,
+   "size": 1,
+   "trades": 4,
+   "pnl": 5.764,
+   "wr": 0.75,
+   "sharpe": 1.525
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 15,
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 15,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 15,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 15,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 15,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 15,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 15,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 16,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 16,
+   "size": 1,
+   "trades": 2,
+   "pnl": 4.405,
+   "wr": 1,
+   "sharpe": 1.455
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 16,
+   "size": 2,
+   "trades": 12,
+   "pnl": -5.163,
+   "wr": 0.417,
+   "sharpe": -0.642
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 16,
+   "size": 1,
+   "trades": 6,
+   "pnl": -8.976,
+   "wr": 0.167,
+   "sharpe": -1.582
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 16,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 16,
+   "size": 2,
+   "trades": 12,
+   "pnl": -5.163,
+   "wr": 0.417,
+   "sharpe": -0.642
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 16,
+   "size": 1,
+   "trades": 6,
+   "pnl": -8.976,
+   "wr": 0.167,
+   "sharpe": -1.582
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 17,
+   "size": 1,
+   "trades": 8,
+   "pnl": -10.771,
+   "wr": 0.375,
+   "sharpe": -1.123
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 17,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 17,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 17,
+   "size": 1,
+   "trades": 6,
+   "pnl": -9.078,
+   "wr": 0.5,
+   "sharpe": -1.041
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 17,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 18,
+   "size": 1,
+   "trades": 4,
+   "pnl": 5.764,
+   "wr": 0.75,
+   "sharpe": 1.525
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 18,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2024-12",
+   "rep": 19,
+   "size": 2,
+   "trades": 10,
+   "pnl": -6.366,
+   "wr": 0.5,
+   "sharpe": -0.625
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-01",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r55",
+   "month": "2025-07",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2024-12",
+   "rep": 19,
+   "size": 2,
+   "trades": 10,
+   "pnl": -6.366,
+   "wr": 0.5,
+   "sharpe": -0.625
+  },
+  {
+   "variant": "K4_r60",
+   "month": "2025-01",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-01",
+   "rep": 19,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-02",
+   "rep": 19,
+   "size": 1,
+   "trades": 5,
+   "pnl": -5.18,
+   "wr": 0.2,
+   "sharpe": -0.863
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-05",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-06",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r55",
+   "month": "2025-07",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-01",
+   "rep": 19,
+   "size": 1,
+   "trades": 6,
+   "pnl": -1.795,
+   "wr": 0.667,
+   "sharpe": -0.207
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-02",
+   "rep": 19,
+   "size": 1,
+   "trades": 5,
+   "pnl": -5.18,
+   "wr": 0.2,
+   "sharpe": -0.863
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-05",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  },
+  {
+   "variant": "K6_r60",
+   "month": "2025-06",
+   "rep": 19,
+   "size": 0,
+   "trades": 0,
+   "pnl": 0,
+   "wr": 0,
+   "sharpe": 0
+  }
+ ]
+}
