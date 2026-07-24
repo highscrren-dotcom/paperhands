@@ -88,10 +88,10 @@ test("SIM: author metrics are graded inside each point's own hold window — two
 
   // словари банов самоидентифицируются окном (белый/чёрный список —
   // свойство правила, лежит в bans)
-  const shortBan = result.reports.close.bans.find(({ holdMinutes }) => holdMinutes === 120);
-  const longBan = result.reports.close.bans.find(({ holdMinutes }) => holdMinutes === 720);
+  const shortBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 120);
+  const longBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 720);
   if (!shortBan || !longBan) {
-    fail(`bans must carry holdMinutes 120 and 720, got ${JSON.stringify(result.reports.close.bans.map(({ holdMinutes }) => holdMinutes))}`);
+    fail(`bans must carry holdMinutes 120 and 720, got ${JSON.stringify(result.reports.close.bans.map(({ banKey }) => banKey.holdMinutes))}`);
     return;
   }
   // трек-рекорд под окно лежит на report точки этого окна

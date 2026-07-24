@@ -1132,7 +1132,14 @@ const RUN_FN = async (
   // с собственными идентифицирующими полями
   const filterByRule = new Map<
     string,
-    { rule: SimulatorAuthorRule; filter: IAuthorFilterContext }
+    {
+      rule: SimulatorAuthorRule;
+      filter: IAuthorFilterContext;
+      // все точки сетки, делящие ЭТО правило: одно правило служит
+      // многим точкам (close слеп к stop/trailing) — накапливаем
+      // их сюда для affectedPoints словаря банов
+      affectedPoints: ISimulatorGridPoint[];
+    }
   >();
   const getFilter = (point: ISimulatorGridPoint): IAuthorFilterContext => {
     const rule = AUTHOR_RULE_FN(point);
@@ -1146,7 +1153,11 @@ const RUN_FN = async (
             : `${rule.metric}:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}`;
     let entry = filterByRule.get(key);
     if (!entry) {
-      entry = { rule, filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule) };
+      entry = {
+        rule,
+        filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule),
+        affectedPoints: [],
+      };
       filterByRule.set(key, entry);
       if (self.params.callbacks?.onAuthorsTrained) {
         self.params.callbacks?.onAuthorsTrained(
@@ -1156,6 +1167,7 @@ const RUN_FN = async (
         );
       }
     }
+    entry.affectedPoints.push(point);
     return entry.filter;
   };
 
@@ -1260,21 +1272,24 @@ const RUN_FN = async (
   // -> один словарь, идентификация своими полями, корзина СВОЕЙ
   // метрики. Метрик авторов тут нет — они зависят от всей точки
   // (stop/lock/trailing), а не от правила, и живут на report точки
-  for (const { rule, filter } of filterByRule.values()) {
+  for (const { rule, filter, affectedPoints } of filterByRule.values()) {
     reportsByMetric[rule.metric].bans.push({
-      holdMinutes: rule.holdMinutes,
-      minAuthorTrack: rule.minAuthorTrack,
-      minAuthorHitRate: rule.minAuthorHitRate,
-      ...(rule.metric === "reach"
-        ? {
-            profitLockPercent: rule.profitLockPercent,
-            hardStopPercent: rule.hardStopPercent,
-          }
-        : rule.metric === "retain"
-          ? { profitLockPercent: rule.profitLockPercent }
-          : rule.metric === "trail"
-            ? { trailingTakePercent: rule.trailingTakePercent }
-            : {}),
+      banKey: {
+        holdMinutes: rule.holdMinutes,
+        minAuthorTrack: rule.minAuthorTrack,
+        minAuthorHitRate: rule.minAuthorHitRate,
+        ...(rule.metric === "reach"
+          ? {
+              profitLockPercent: rule.profitLockPercent,
+              hardStopPercent: rule.hardStopPercent,
+            }
+          : rule.metric === "retain"
+            ? { profitLockPercent: rule.profitLockPercent }
+            : rule.metric === "trail"
+              ? { trailingTakePercent: rule.trailingTakePercent }
+              : {}),
+      },
+      affectedPoints,
       allowedAuthors: filter.stats
         .filter(({ banned }) => !banned)
         .map(({ author }) => author),

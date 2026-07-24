@@ -143,16 +143,16 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
   // словари банов пометричны и не склеиваются: close-корзина банит
   // спайкера своим правилом, reach-корзина — допускает своим
   const closeBan = result.reports.close.bans.find(
-    ({ minAuthorTrack }) => minAuthorTrack === 5,
+    ({ banKey }) => banKey.minAuthorTrack === 5,
   );
   const reachBan = result.reports.reach.bans.find(
-    ({ minAuthorTrack }) => minAuthorTrack === 5,
+    ({ banKey }) => banKey.minAuthorTrack === 5,
   );
   if (!closeBan || !closeBan.bannedAuthors.includes("spiker") || closeBan.allowedAuthors.length !== 0) {
     fail(`close bans dictionary must ban the spiker, got ${JSON.stringify(closeBan)}`);
     return;
   }
-  if (!reachBan || JSON.stringify(reachBan.allowedAuthors) !== JSON.stringify(["spiker"]) || reachBan.profitLockPercent !== 2.5) {
+  if (!reachBan || JSON.stringify(reachBan.allowedAuthors) !== JSON.stringify(["spiker"]) || reachBan.banKey.profitLockPercent !== 2.5) {
     fail(`reach bans dictionary must allow the spiker and carry its lock level, got ${JSON.stringify(reachBan)}`);
     return;
   }

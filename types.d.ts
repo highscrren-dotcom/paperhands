@@ -6387,16 +6387,13 @@ interface ISimulatorBest {
     trades: ISimulatorTrade[];
 }
 /**
- * Trained ban dictionary of ONE rule: pure threshold arithmetic —
- * an author is allowed exactly when his track under this rule's
- * metric reaches minAuthorTrack ideas at minAuthorHitRate quality.
- * No ranking is involved: bans are properties of rules, not of
- * winners. The per-author isolated metrics are NOT here — they
- * depend on the whole point (stop/lock/trailing), not just the
- * rule, so they live on each point's report; a ban entry carries
- * only the rule identity and the whitelist it produces.
+ * Identity of ONE ban rule — every field that makes two rules the
+ * same or different: the grading window, the two thresholds, and the
+ * levels the rule grades against (present only for the metrics that
+ * use them). All the identifying fields live together here, not
+ * scattered among the whitelist arrays.
  */
-interface ISimulatorRuleBans {
+interface ISimulatorBanKey {
     /** Grading window of the rule, minutes — the point's own hold. */
     holdMinutes: number;
     /** Minimum known-outcome ideas the rule requires. */
@@ -6409,6 +6406,28 @@ interface ISimulatorRuleBans {
     hardStopPercent?: number;
     /** Arming pullback; present on trail rules only. */
     trailingTakePercent?: number;
+}
+/**
+ * Trained ban dictionary of ONE rule: pure threshold arithmetic —
+ * an author is allowed exactly when his track under this rule's
+ * metric reaches minAuthorTrack ideas at minAuthorHitRate quality.
+ * No ranking is involved: bans are properties of rules, not of
+ * winners. The per-author isolated metrics are NOT here — they
+ * depend on the whole point (stop/lock/trailing), not just the
+ * rule, so they live on each point's report; a ban entry carries
+ * only the rule identity (banKey), the grid points that share it,
+ * and the whitelist it produces.
+ */
+interface ISimulatorRuleBans {
+    /** The rule's identity — all fields that define this ban. */
+    banKey: ISimulatorBanKey;
+    /**
+     * Grid points that trained under this exact rule. One rule serves
+     * many points (a close rule is blind to stop/trailing), so this
+     * lists every point the same ban whitelist applies to — the full
+     * points, not just the differing axes.
+     */
+    affectedPoints: ISimulatorGridPoint[];
     /** Authors allowed by this rule. */
     allowedAuthors: string[];
     /** Authors banned by this rule (default-ban included). */

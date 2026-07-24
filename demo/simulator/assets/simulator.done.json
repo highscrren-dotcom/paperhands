@@ -106763,9 +106763,49 @@
       ],
       "bans": [
         {
-          "holdMinutes": 1440,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 1440,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "Apex_Legends",
@@ -106926,9 +106966,49 @@
           ]
         },
         {
-          "holdMinutes": 1440,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 1440,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "CryptoSkullSignal",
@@ -107089,9 +107169,49 @@
           ]
         },
         {
-          "holdMinutes": 1440,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 1440,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "Apex_Legends",
@@ -107252,9 +107372,49 @@
           ]
         },
         {
-          "holdMinutes": 1440,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 1440,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 1440,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "CryptoSkullSignal",
@@ -107415,9 +107575,49 @@
           ]
         },
         {
-          "holdMinutes": 2880,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 2880,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "CryptoSkullSignal",
@@ -107578,9 +107778,49 @@
           ]
         },
         {
-          "holdMinutes": 2880,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 2880,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "XAUxBTC_Pro",
@@ -107741,9 +107981,49 @@
           ]
         },
         {
-          "holdMinutes": 2880,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 2880,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "CryptoSkullSignal",
@@ -107904,9 +108184,49 @@
           ]
         },
         {
-          "holdMinutes": 2880,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 2880,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 2880,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "XAUxBTC_Pro",
@@ -108067,9 +108387,49 @@
           ]
         },
         {
-          "holdMinutes": 4320,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 4320,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "MasterAnanda",
             "TradingShot",
@@ -108230,9 +108590,49 @@
           ]
         },
         {
-          "holdMinutes": 4320,
-          "minAuthorTrack": 3,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 4320,
+            "minAuthorTrack": 3,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 3,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "MarketStrategysignals",
@@ -108393,9 +108793,49 @@
           ]
         },
         {
-          "holdMinutes": 4320,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.5,
+          "banKey": {
+            "holdMinutes": 4320,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.5
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.5,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "MasterAnanda",
             "TradingShot",
@@ -108556,9 +108996,49 @@
           ]
         },
         {
-          "holdMinutes": 4320,
-          "minAuthorTrack": 5,
-          "minAuthorHitRate": 0.6,
+          "banKey": {
+            "holdMinutes": 4320,
+            "minAuthorTrack": 5,
+            "minAuthorHitRate": 0.6
+          },
+          "affectedPoints": [
+            {
+              "hardStopPercent": 2,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 3,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 5,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            },
+            {
+              "hardStopPercent": 7,
+              "trailingTakePercent": 100,
+              "holdMinutes": 4320,
+              "minAuthorTrack": 5,
+              "minAuthorHitRate": 0.6,
+              "profitLockPercent": 0,
+              "authorMetric": "close"
+            }
+          ],
           "allowedAuthors": [
             "TradingShot",
             "MarketStrategysignals",

@@ -115,14 +115,19 @@ test("SIM: trail metric grades trailing-arm reachability — exact touch hits, a
     return;
   }
 
-  // словарь банов самоидентифицируется своим уровнем — и только им
+  // banKey самоидентифицируется своим уровнем — и только им
   const [ban] = result.reports.trail.bans;
-  if (!ban || ban.trailingTakePercent !== 2 || ban.holdMinutes !== CYCLE) {
-    fail(`trail bans entry must carry trailingTakePercent 2 and its window, got ${JSON.stringify(ban)}`);
+  if (!ban || ban.banKey.trailingTakePercent !== 2 || ban.banKey.holdMinutes !== CYCLE) {
+    fail(`trail banKey must carry trailingTakePercent 2 and its window, got ${JSON.stringify(ban)}`);
     return;
   }
-  if ("profitLockPercent" in ban || "hardStopPercent" in ban) {
-    fail(`trail bans entry must not carry lock/stop, got ${JSON.stringify(ban)}`);
+  if ("profitLockPercent" in ban.banKey || "hardStopPercent" in ban.banKey) {
+    fail(`trail banKey must not carry lock/stop, got ${JSON.stringify(ban.banKey)}`);
+    return;
+  }
+  // affectedPoints несёт полную точку, делящую это правило
+  if (ban.affectedPoints.length !== 1 || ban.affectedPoints[0].trailingTakePercent !== 2) {
+    fail(`trail bans must list its affected point, got ${JSON.stringify(ban.affectedPoints)}`);
     return;
   }
 
