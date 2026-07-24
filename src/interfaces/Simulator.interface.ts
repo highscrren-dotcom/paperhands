@@ -346,6 +346,14 @@ export type SimulatorExitReason =
 export interface ISimulatorTrade {
   /** Identifier of the idea that triggered the trade. */
   ideaId: number;
+  /**
+   * Author of the triggering idea — carried on the trade itself so
+   * per-author analysis (score, voting, top performers) reads
+   * straight off the artifact, without joining ideaId back to the
+   * ideas feed. The whole strategy is about authors; the trade
+   * names its own.
+   */
+  author: string;
   /** Position direction inherited from the idea. */
   direction: SimulatorIdeaDirection;
   /** Unix timestamp in milliseconds of the trade entry minute. */

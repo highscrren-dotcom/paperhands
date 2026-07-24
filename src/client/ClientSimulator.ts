@@ -712,6 +712,7 @@ const SIMULATE_TRADE_FN = (
 
   return {
     ideaId: profile.idea.id,
+    author: profile.idea.author,
     direction: profile.idea.direction,
     entryTimestamp: profile.entryTimestamp,
     exitTimestamp: profile.entryTimestamp + exitIndex * MINUTE_MS,
