@@ -5,11 +5,12 @@
 # cwd выставляет сам (data/btc_2025 — общий persist-кеш свечей движка).
 #
 # Запуск:  bash tools/run_months.sh train|test <месяц_год>...
+# Data-root: env SWARM_ROOT (дефолт btc_2025) — расширение п.9 на тикеры.
 # Калибровка (этап 1): SWARM_METRICS="close,pnl,trail" bash tools/run_months.sh train янв_2025 фев_2025 мар_2025
 # rc=2 у test = «трек пуст» — ожидаемый скип ранних месяцев, не ошибка.
 set -u
 STAGE="${1:?train|test}"; shift
-cd "$(dirname "$0")/../data/btc_2025" || exit 1
+cd "$(dirname "$0")/../data/${SWARM_ROOT:-btc_2025}" || exit 1
 for m in "$@"; do
   case "$STAGE" in
     train)

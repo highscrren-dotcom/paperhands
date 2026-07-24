@@ -68,9 +68,12 @@ addSimulatorSchema({
   reportOrder: "sharpe",
 });
 
-const SYMBOL = "BTCUSDT";
 const ideas = readFileSync(join(FOLDER, "assets", "tv_ideas.jsonl"), "utf-8")
   .split("\n").filter(Boolean).map((l) => JSON.parse(l));
+// символ — из самого фида (build_feed режет один тикер); разнобой = стоп
+const symbols = [...new Set(ideas.map((i) => i.symbol))];
+if (symbols.length !== 1) { console.error(`фид не одно-символьный: ${symbols.join(",")}`); process.exit(2); }
+const SYMBOL = symbols[0];
 
 // 1) общий прогон — справочно
 const common = await Simulator.run({ symbol: SYMBOL, simulatorName: "swarm_month", ideas });
