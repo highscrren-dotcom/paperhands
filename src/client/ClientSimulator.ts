@@ -307,9 +307,10 @@ const BAN_REASON_FN = (
 ): SimulatorBanReason => {
   const tooFew = stat.ideas < rule.minAuthorTrack;
   const tooLow = stat.hitRate < rule.minAuthorHitRate;
-  if (tooFew && tooLow) return "ideas<track & hitRate<rate";
-  if (tooFew) return "ideas<track";
-  if (tooLow) return "hitRate<rate";
+  if (tooFew && tooLow)
+    return "ideas<minAuthorTrack & hitRate<minAuthorHitRate";
+  if (tooFew) return "ideas<minAuthorTrack";
+  if (tooLow) return "hitRate<minAuthorHitRate";
   return "passed";
 };
 

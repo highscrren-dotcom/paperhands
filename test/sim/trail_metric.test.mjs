@@ -140,7 +140,7 @@ test("SIM: trail metric grades trailing-arm reachability — exact touch hits, a
   // authors[]; absorbedIdeaIds на уровне правила больше нет (бан не
   // исполняет сделок — состав поглощённых идей это свойство точки)
   const underAuthor = ban.authors.find(({ author }) => author === "under");
-  if (!underAuthor?.banned || !underAuthor.reason.includes("hitRate<rate")) {
+  if (!underAuthor?.banned || !underAuthor.reason.includes("hitRate<minAuthorHitRate")) {
     fail(`under must be banned by hitRate under the trail rule, got ${JSON.stringify(underAuthor)}`);
     return;
   }

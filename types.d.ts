@@ -6418,11 +6418,11 @@ type SimulatorBanReason =
 /** ideas >= minAuthorTrack AND hitRate >= minAuthorHitRate. */
 "passed"
 /** ideas < minAuthorTrack only. */
- | "ideas<track"
+ | "ideas<minAuthorTrack"
 /** hitRate < minAuthorHitRate only. */
- | "hitRate<rate"
+ | "hitRate<minAuthorHitRate"
 /** ideas < minAuthorTrack AND hitRate < minAuthorHitRate. */
- | "ideas<track & hitRate<rate";
+ | "ideas<minAuthorTrack & hitRate<minAuthorHitRate";
 /**
  * One author's verdict under ONE ban rule: the raw track (ideas,
  * hits, hitRate), the banned flag, and the arithmetic reason. No
