@@ -43,7 +43,559 @@
       "profit_lock": 0,
       "time_expired": 2,
       "data_truncated": 0
-    }
+    },
+    "authorStats": [
+      {
+        "author": "MasterAnanda",
+        "ideas": 16,
+        "hits": 9,
+        "hitRate": 0.5625,
+        "banned": false,
+        "trades": 1,
+        "pnlPercent": -3.2970000000000006,
+        "sharpe": -1.0444659357341874,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "TradingShot",
+        "ideas": 10,
+        "hits": 6,
+        "hitRate": 0.6,
+        "banned": false,
+        "trades": 4,
+        "pnlPercent": 0.7141022298012796,
+        "sharpe": 0.21615147155279188,
+        "sortino": 0.36397208232145056,
+        "recoveryFactor": 0.36397208232145056
+      },
+      {
+        "author": "Apex_Legends",
+        "ideas": 7,
+        "hits": 3,
+        "hitRate": 0.42857142857142855,
+        "banned": true,
+        "trades": 4,
+        "pnlPercent": -8.222060032872216,
+        "sharpe": -1.9632711909416443,
+        "sortino": -1.7080302137810597,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "BitCoinGuide",
+        "ideas": 7,
+        "hits": 2,
+        "hitRate": 0.2857142857142857,
+        "banned": true,
+        "trades": 4,
+        "pnlPercent": -13.188000000000011,
+        "sharpe": -2.449489742783177,
+        "sortino": -1.9999999999999993,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "Cryptollica",
+        "ideas": 6,
+        "hits": 3,
+        "hitRate": 0.5,
+        "banned": false,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "MarketStrategysignals",
+        "ideas": 6,
+        "hits": 5,
+        "hitRate": 0.8333333333333334,
+        "banned": false,
+        "trades": 2,
+        "pnlPercent": -6.594000000000013,
+        "sharpe": -1.5491933384829666,
+        "sortino": -1.414213562373095,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "ExpertTraderASK",
+        "ideas": 6,
+        "hits": 1,
+        "hitRate": 0.16666666666666666,
+        "banned": true,
+        "trades": 5,
+        "pnlPercent": -8.517974131742942,
+        "sharpe": -1.5767675912096115,
+        "sortino": -1.490416370421824,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "melikatrader94",
+        "ideas": 5,
+        "hits": 3,
+        "hitRate": 0.6,
+        "banned": false,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "CryptoSkullSignal",
+        "ideas": 5,
+        "hits": 2,
+        "hitRate": 0.4,
+        "banned": true,
+        "trades": 2,
+        "pnlPercent": -1.7852370965153186,
+        "sharpe": -0.49724297468759887,
+        "sortino": -0.5414731866895109,
+        "recoveryFactor": -0.541473186689511
+      },
+      {
+        "author": "PremiumTrader57",
+        "ideas": 5,
+        "hits": 2,
+        "hitRate": 0.4,
+        "banned": true,
+        "trades": 3,
+        "pnlPercent": -2.5704447626015634,
+        "sharpe": -0.7567418593357907,
+        "sortino": -0.7758146012820851,
+        "recoveryFactor": -0.7796314111621354
+      },
+      {
+        "author": "InvestingScope",
+        "ideas": 5,
+        "hits": 2,
+        "hitRate": 0.4,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -1.5589264523981432,
+        "sharpe": -1.044465935734187,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "XAUxBTC_Pro",
+        "ideas": 4,
+        "hits": 3,
+        "hitRate": 0.75,
+        "banned": false,
+        "trades": 2,
+        "pnlPercent": 3.1553842538411336,
+        "sharpe": 1.5444057522575585,
+        "sortino": null,
+        "recoveryFactor": null
+      },
+      {
+        "author": "CobraVanguard",
+        "ideas": 3,
+        "hits": 2,
+        "hitRate": 0.6666666666666666,
+        "banned": false,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "coinpediamarkets",
+        "ideas": 3,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -3.2970000000000037,
+        "sharpe": -1.0444659357341872,
+        "sortino": -1,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "salahuddin20041",
+        "ideas": 2,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": 1.2707673208058072,
+        "sharpe": 1.0444659357341866,
+        "sortino": null,
+        "recoveryFactor": null
+      },
+      {
+        "author": "Alpha_Trade_Scope",
+        "ideas": 2,
+        "hits": 1,
+        "hitRate": 0.5,
+        "banned": false,
+        "trades": 1,
+        "pnlPercent": 3.703884524836264,
+        "sharpe": 1.044465935734187,
+        "sortino": null,
+        "recoveryFactor": null
+      },
+      {
+        "author": "PRIMEALPHA-FX",
+        "ideas": 2,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -3.297000000000008,
+        "sharpe": -1.0444659357341863,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "tomas_jntx",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "JupahduhX",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "Rowland-Australia",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": 0.13142327790611052,
+        "sharpe": 1.0444659357341868,
+        "sortino": null,
+        "recoveryFactor": null
+      },
+      {
+        "author": "brokerchampionofficial",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -3.3029999999999977,
+        "sharpe": -1.044465935734187,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "CrowdWisdomTrading",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "EbonyFalcon",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "NastyPipz",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "isahebdadi",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "Ifiok-Trades",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "TheCryptagon",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "MohsenNirumand",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -1.020239737984193,
+        "sharpe": -1.044465935734187,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "ProfittoPath",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "Rendon1",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "byggjan",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "FXSMARTT",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "pistissophiacapital",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "DivergenceSeeker",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "davidjulien369",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 2,
+        "pnlPercent": -2.7234615316137596,
+        "sharpe": -0.8372532167026171,
+        "sortino": -0.8260423207806364,
+        "recoveryFactor": -0.8260423207806364
+      },
+      {
+        "author": "mrsignalll",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 2,
+        "pnlPercent": -0.397456956376556,
+        "sharpe": -0.1359113838160253,
+        "sortino": -0.17597441437215647,
+        "recoveryFactor": -0.1759744143721565
+      },
+      {
+        "author": "VasilyTrader",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 1,
+        "pnlPercent": -3.2970000000000046,
+        "sharpe": -1.044465935734187,
+        "sortino": -0.9999999999999999,
+        "recoveryFactor": -1
+      },
+      {
+        "author": "propfirmwise",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "TheTraderPhil",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "JRnehco",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "Expert_Travis",
+        "ideas": 1,
+        "hits": 0,
+        "hitRate": 0,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      },
+      {
+        "author": "BIGBULL-RUN",
+        "ideas": 1,
+        "hits": 1,
+        "hitRate": 1,
+        "banned": true,
+        "trades": 0,
+        "pnlPercent": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "recoveryFactor": 0
+      }
+    ],
+    "allowedAuthors": [
+      "MasterAnanda",
+      "TradingShot",
+      "Cryptollica",
+      "MarketStrategysignals",
+      "melikatrader94",
+      "XAUxBTC_Pro",
+      "CobraVanguard",
+      "Alpha_Trade_Scope"
+    ],
+    "bannedAuthors": [
+      "Apex_Legends",
+      "BitCoinGuide",
+      "ExpertTraderASK",
+      "CryptoSkullSignal",
+      "PremiumTrader57",
+      "InvestingScope",
+      "coinpediamarkets",
+      "salahuddin20041",
+      "PRIMEALPHA-FX",
+      "tomas_jntx",
+      "JupahduhX",
+      "Rowland-Australia",
+      "brokerchampionofficial",
+      "CrowdWisdomTrading",
+      "EbonyFalcon",
+      "NastyPipz",
+      "isahebdadi",
+      "Ifiok-Trades",
+      "TheCryptagon",
+      "MohsenNirumand",
+      "ProfittoPath",
+      "Rendon1",
+      "byggjan",
+      "FXSMARTT",
+      "pistissophiacapital",
+      "DivergenceSeeker",
+      "davidjulien369",
+      "mrsignalll",
+      "VasilyTrader",
+      "propfirmwise",
+      "TheTraderPhil",
+      "JRnehco",
+      "Expert_Travis",
+      "BIGBULL-RUN"
+    ]
   },
   "trades": [
     {
@@ -104,294 +656,504 @@
       "ideas": 16,
       "hits": 9,
       "hitRate": 0.5625,
-      "banned": false
+      "banned": false,
+      "trades": 1,
+      "pnlPercent": -3.2970000000000006,
+      "sharpe": -1.0444659357341874,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "TradingShot",
       "ideas": 10,
       "hits": 6,
       "hitRate": 0.6,
-      "banned": false
+      "banned": false,
+      "trades": 4,
+      "pnlPercent": 0.7141022298012796,
+      "sharpe": 0.21615147155279188,
+      "sortino": 0.36397208232145056,
+      "recoveryFactor": 0.36397208232145056
     },
     {
       "author": "Apex_Legends",
       "ideas": 7,
       "hits": 3,
       "hitRate": 0.42857142857142855,
-      "banned": true
+      "banned": true,
+      "trades": 4,
+      "pnlPercent": -8.222060032872216,
+      "sharpe": -1.9632711909416443,
+      "sortino": -1.7080302137810597,
+      "recoveryFactor": -1
     },
     {
       "author": "BitCoinGuide",
       "ideas": 7,
       "hits": 2,
       "hitRate": 0.2857142857142857,
-      "banned": true
+      "banned": true,
+      "trades": 4,
+      "pnlPercent": -13.188000000000011,
+      "sharpe": -2.449489742783177,
+      "sortino": -1.9999999999999993,
+      "recoveryFactor": -1
     },
     {
       "author": "Cryptollica",
       "ideas": 6,
       "hits": 3,
       "hitRate": 0.5,
-      "banned": false
+      "banned": false,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "MarketStrategysignals",
       "ideas": 6,
       "hits": 5,
       "hitRate": 0.8333333333333334,
-      "banned": false
+      "banned": false,
+      "trades": 2,
+      "pnlPercent": -6.594000000000013,
+      "sharpe": -1.5491933384829666,
+      "sortino": -1.414213562373095,
+      "recoveryFactor": -1
     },
     {
       "author": "ExpertTraderASK",
       "ideas": 6,
       "hits": 1,
       "hitRate": 0.16666666666666666,
-      "banned": true
+      "banned": true,
+      "trades": 5,
+      "pnlPercent": -8.517974131742942,
+      "sharpe": -1.5767675912096115,
+      "sortino": -1.490416370421824,
+      "recoveryFactor": -1
     },
     {
       "author": "melikatrader94",
       "ideas": 5,
       "hits": 3,
       "hitRate": 0.6,
-      "banned": false
+      "banned": false,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "CryptoSkullSignal",
       "ideas": 5,
       "hits": 2,
       "hitRate": 0.4,
-      "banned": true
+      "banned": true,
+      "trades": 2,
+      "pnlPercent": -1.7852370965153186,
+      "sharpe": -0.49724297468759887,
+      "sortino": -0.5414731866895109,
+      "recoveryFactor": -0.541473186689511
     },
     {
       "author": "PremiumTrader57",
       "ideas": 5,
       "hits": 2,
       "hitRate": 0.4,
-      "banned": true
+      "banned": true,
+      "trades": 3,
+      "pnlPercent": -2.5704447626015634,
+      "sharpe": -0.7567418593357907,
+      "sortino": -0.7758146012820851,
+      "recoveryFactor": -0.7796314111621354
     },
     {
       "author": "InvestingScope",
       "ideas": 5,
       "hits": 2,
       "hitRate": 0.4,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -1.5589264523981432,
+      "sharpe": -1.044465935734187,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "XAUxBTC_Pro",
       "ideas": 4,
       "hits": 3,
       "hitRate": 0.75,
-      "banned": false
+      "banned": false,
+      "trades": 2,
+      "pnlPercent": 3.1553842538411336,
+      "sharpe": 1.5444057522575585,
+      "sortino": null,
+      "recoveryFactor": null
     },
     {
       "author": "CobraVanguard",
       "ideas": 3,
       "hits": 2,
       "hitRate": 0.6666666666666666,
-      "banned": false
+      "banned": false,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "coinpediamarkets",
       "ideas": 3,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -3.2970000000000037,
+      "sharpe": -1.0444659357341872,
+      "sortino": -1,
+      "recoveryFactor": -1
     },
     {
       "author": "salahuddin20041",
       "ideas": 2,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": 1.2707673208058072,
+      "sharpe": 1.0444659357341866,
+      "sortino": null,
+      "recoveryFactor": null
     },
     {
       "author": "Alpha_Trade_Scope",
       "ideas": 2,
       "hits": 1,
       "hitRate": 0.5,
-      "banned": false
+      "banned": false,
+      "trades": 1,
+      "pnlPercent": 3.703884524836264,
+      "sharpe": 1.044465935734187,
+      "sortino": null,
+      "recoveryFactor": null
     },
     {
       "author": "PRIMEALPHA-FX",
       "ideas": 2,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -3.297000000000008,
+      "sharpe": -1.0444659357341863,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "tomas_jntx",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "JupahduhX",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "Rowland-Australia",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": 0.13142327790611052,
+      "sharpe": 1.0444659357341868,
+      "sortino": null,
+      "recoveryFactor": null
     },
     {
       "author": "brokerchampionofficial",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -3.3029999999999977,
+      "sharpe": -1.044465935734187,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "CrowdWisdomTrading",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "EbonyFalcon",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "NastyPipz",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "isahebdadi",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "Ifiok-Trades",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "TheCryptagon",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "MohsenNirumand",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -1.020239737984193,
+      "sharpe": -1.044465935734187,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "ProfittoPath",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "Rendon1",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "byggjan",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "FXSMARTT",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "pistissophiacapital",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "DivergenceSeeker",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "davidjulien369",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 2,
+      "pnlPercent": -2.7234615316137596,
+      "sharpe": -0.8372532167026171,
+      "sortino": -0.8260423207806364,
+      "recoveryFactor": -0.8260423207806364
     },
     {
       "author": "mrsignalll",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 2,
+      "pnlPercent": -0.397456956376556,
+      "sharpe": -0.1359113838160253,
+      "sortino": -0.17597441437215647,
+      "recoveryFactor": -0.1759744143721565
     },
     {
       "author": "VasilyTrader",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 1,
+      "pnlPercent": -3.2970000000000046,
+      "sharpe": -1.044465935734187,
+      "sortino": -0.9999999999999999,
+      "recoveryFactor": -1
     },
     {
       "author": "propfirmwise",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "TheTraderPhil",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "JRnehco",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "Expert_Travis",
       "ideas": 1,
       "hits": 0,
       "hitRate": 0,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     },
     {
       "author": "BIGBULL-RUN",
       "ideas": 1,
       "hits": 1,
       "hitRate": 1,
-      "banned": true
+      "banned": true,
+      "trades": 0,
+      "pnlPercent": 0,
+      "sharpe": 0,
+      "sortino": 0,
+      "recoveryFactor": 0
     }
   ],
   "allowedAuthors": [
