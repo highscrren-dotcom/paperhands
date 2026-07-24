@@ -1,0 +1,10 @@
+{
+  "name": "swarm-stand",
+  "private": true,
+  "type": "module",
+  "description": "Роевой стенд PLAN-petr: зависимости зеркалят demo/simulator@17.0.0; node_modules резолвится из месячных папок data/ вверх по дереву",
+  "dependencies": {
+    "backtest-kit": "17.0.0",
+    "ccxt": "4.5.24"
+  }
+}
