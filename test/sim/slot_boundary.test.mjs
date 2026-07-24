@@ -73,9 +73,13 @@ test("SIM: slot frees exactly one minute after exit — boundary idea trades, ea
     fail(`trades must be ideas 1 and 3, got ${trades.map((t) => t.ideaId)}`);
     return;
   }
-  // поглощённая — именно идея 2, и приписана сделке A
-  if (JSON.stringify(trades[0].absorbedIdeaIds) !== JSON.stringify([2])) {
-    fail(`trade A must absorb exactly idea 2, got ${JSON.stringify(trades[0].absorbedIdeaIds)}`);
+  // поглощённая — именно идея 2, приписана сделке A, с автором
+  if (JSON.stringify(trades[0].absorbedIdeas.map(({ ideaId }) => ideaId)) !== JSON.stringify([2])) {
+    fail(`trade A must absorb exactly idea 2, got ${JSON.stringify(trades[0].absorbedIdeas)}`);
+    return;
+  }
+  if (!trades[0].absorbedIdeas[0].author) {
+    fail(`absorbed idea must carry its author, got ${JSON.stringify(trades[0].absorbedIdeas[0])}`);
     return;
   }
   // временнáя арифметика границы: вход C ровно через минуту после выхода A

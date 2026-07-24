@@ -719,7 +719,7 @@ const SIMULATE_TRADE_FN = (
     exitReason,
     holdMinutesActual: exitIndex + 1,
     pnlPercent,
-    absorbedIdeaIds: [],
+    absorbedIdeas: [],
   };
 };
 
@@ -810,7 +810,10 @@ const EVALUATE_POINT_FN = (
     if (profile.entryTimestamp < busyUntil) {
       skippedBusy += 1;
       if (holdingTrade) {
-        holdingTrade.absorbedIdeaIds.push(profile.idea.id);
+        holdingTrade.absorbedIdeas.push({
+          ideaId: profile.idea.id,
+          author: profile.idea.author,
+        });
       }
       continue;
     }

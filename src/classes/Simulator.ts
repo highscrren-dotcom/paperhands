@@ -25,7 +25,7 @@ const METHOD_NAME_TEST = "Simulator.test";
  *   pullback to it; 0 disables; runners are picked up by the
  *   trailing take instead.
  * - holdMinutes — slot turnover cap; a busy slot absorbs qualified
- *   ideas (absorbedIdeaIds); time_expired is the worst-case exit.
+ *   ideas (absorbedIdeas); time_expired is the worst-case exit.
  *
  * Entry gate (preprocessing of every candidate entry): any idea of
  * an UNBANNED author triggers an entry. Authors are graded strictly

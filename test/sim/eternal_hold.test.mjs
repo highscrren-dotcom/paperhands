@@ -205,14 +205,14 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
     fail(`eternal hold must absorb most ideas, skippedBusy=${eternal.report.skippedBusy}`);
     return;
   }
-  const absorbed = eternal.trades.reduce((acc, t) => acc + t.absorbedIdeaIds.length, 0);
+  const absorbed = eternal.trades.reduce((acc, t) => acc + t.absorbedIdeas.length, 0);
   if (absorbed !== eternal.report.skippedBusy) {
-    fail(`absorbedIdeaIds total (${absorbed}) must equal skippedBusy (${eternal.report.skippedBusy})`);
+    fail(`absorbedIdeas total (${absorbed}) must equal skippedBusy (${eternal.report.skippedBusy})`);
     return;
   }
   const firstTrade = eternal.trades[0];
-  if (!firstTrade || firstTrade.absorbedIdeaIds.length < 10) {
-    fail(`first eternal trade must list absorbed ideas, got ${firstTrade?.absorbedIdeaIds.length}`);
+  if (!firstTrade || firstTrade.absorbedIdeas.length < 10) {
+    fail(`first eternal trade must list absorbed ideas, got ${firstTrade?.absorbedIdeas.length}`);
     return;
   }
 
@@ -224,6 +224,6 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
 
   pass(
     `eternal hold: ${eternal.report.trades} trades absorbed ${absorbed} ideas ` +
-    `(first trade ate ${firstTrade.absorbedIdeaIds.length}); short hold absorbed 0`
+    `(first trade ate ${firstTrade.absorbedIdeas.length}); short hold absorbed 0`
   );
 });

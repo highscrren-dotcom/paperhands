@@ -234,7 +234,7 @@ export interface ISimulatorGridAxes {
   /**
    * Maximum position hold durations to sweep, minutes.
    * Tunes: slot turnover — one position per symbol, and a busy slot
-   * ABSORBS qualified ideas (per-trade absorbedIdeaIds), so longer
+   * ABSORBS qualified ideas (per-trade absorbedIdeas), so longer
    * holds trade less often; the cap is the worst-case exit
    * (time_expired) when neither stop nor floor fires.
    * Ignored: never — the hold serves BOTH layers: it caps the trade
@@ -343,6 +343,21 @@ export type SimulatorExitReason =
 /**
  * Single simulated trade: an idea evaluated against a grid point.
  */
+/**
+ * An idea absorbed by a busy slot — a signal that never traded
+ * because a prior position held the single slot. Carries the author
+ * as well as the id: absorbing is score-relevant (a mediocre author's
+ * long hold that keeps eating a top performer's ideas starves that
+ * top performer's observable trades through no fault of his own), and
+ * that is invisible without the author, right here, no feed join.
+ */
+export interface ISimulatorAbsorbedIdea {
+  /** Identifier of the absorbed idea. */
+  ideaId: number;
+  /** Author of the absorbed idea. */
+  author: string;
+}
+
 export interface ISimulatorTrade {
   /** Identifier of the idea that triggered the trade. */
   ideaId: number;
@@ -368,10 +383,10 @@ export interface ISimulatorTrade {
   pnlPercent: number;
   /**
    * Ideas that qualified for entry but were ABSORBED by this trade
-   * holding the slot. A long hold that eats foreign recommendations
-   * is visible here idea by idea.
+   * holding the slot — each {ideaId, author}, so which author's
+   * signals a long hold ate is visible idea by idea, no feed join.
    */
-  absorbedIdeaIds: number[];
+  absorbedIdeas: ISimulatorAbsorbedIdea[];
 }
 
 /**
