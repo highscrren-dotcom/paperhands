@@ -6122,10 +6122,11 @@ interface ISimulatorGridAxes {
     trailingTakePercent: number[];
     /**
      * Maximum position hold durations to sweep, minutes.
-     * Tunes: slot turnover — one position per symbol, and a busy slot
-     * ABSORBS qualified ideas (per-trade absorbedIdeas), so longer
-     * holds trade less often; the cap is the worst-case exit
-     * (time_expired) when neither stop nor floor fires.
+     * Tunes: slot turnover — one open position PER AUTHOR, and an
+     * author's busy slot ABSORBS his own qualified ideas (per-trade
+     * absorbedIdeas), so longer holds trade less often; the cap is the
+     * worst-case exit (time_expired) when neither stop nor floor fires.
+     * Authors never collide — each trades his own slot.
      * Ignored: never — the hold serves BOTH layers: it caps the trade
      * AND is the grading window of the point's ban rule (every author
      * metric is computed inside the first holdMinutes of the idea's
@@ -6226,11 +6227,10 @@ type SimulatorExitReason = "hard_stop" | "trailing_take" | "profit_lock" | "time
  */
 /**
  * An idea absorbed by a busy slot — a signal that never traded
- * because a prior position held the single slot. Carries the author
- * as well as the id: absorbing is score-relevant (a mediocre author's
- * long hold that keeps eating a top performer's ideas starves that
- * top performer's observable trades through no fault of his own), and
- * that is invisible without the author, right here, no feed join.
+ * because THAT AUTHOR'S prior position still held his slot (slots
+ * are per-author, so absorbedIdea.author always equals the holding
+ * trade's author). Carries the author as well as the id so
+ * per-author analysis reads straight off the artifact, no feed join.
  */
 interface ISimulatorAbsorbedIdea {
     /** Identifier of the absorbed idea. */
@@ -6276,7 +6276,7 @@ interface ISimulatorPointReport {
     point: ISimulatorGridPoint;
     /** Number of simulated trades. */
     trades: number;
-    /** Ideas skipped because the single slot was busy (absorbed). */
+    /** Ideas skipped because their author's own slot was busy (absorbed). */
     skippedBusy: number;
     /** Sum of trade PnL percents over the range. */
     totalPnlPercent: number;
@@ -20100,8 +20100,9 @@ declare const PersistSessionAdapter: PersistSessionUtils;
  * - profitLockPercent — floor armed by touching +X%, exit on the
  *   pullback to it; 0 disables; runners are picked up by the
  *   trailing take instead.
- * - holdMinutes — slot turnover cap; a busy slot absorbs qualified
- *   ideas (absorbedIdeas); time_expired is the worst-case exit.
+ * - holdMinutes — slot turnover cap; each author's busy slot absorbs
+ *   his own qualified ideas (absorbedIdeas), authors never collide;
+ *   time_expired is the worst-case exit.
  *
  * Entry gate (preprocessing of every candidate entry): any idea of
  * an UNBANNED author triggers an entry. Authors are graded strictly

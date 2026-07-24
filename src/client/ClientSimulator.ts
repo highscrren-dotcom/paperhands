@@ -72,12 +72,6 @@ const AUTHOR_DEDUPE_MINUTES = 8 * 60;
 const SORTINO_NO_LOSSES = Number.POSITIVE_INFINITY;
 
 /**
- * Minimum trades for a grid point to become a ranking winner
- * (anti-fluke guard: a two-trade point must not lead a ranking).
- */
-const MIN_TRADES_FOR_BEST = 8;
-
-/**
  * Fixed MFE threshold of the "pnl" author metric, percent. A hit is
  * an idea whose PnL grew by MORE than this at any moment of the
  * horizon — independent of the point's lock and stop by design;
@@ -756,9 +750,12 @@ const COMPUTE_HOLD_STATS_FN = (
 };
 
 /**
- * Evaluates one grid point with production slot semantics: one
- * position per symbol, ideas arriving while the slot is busy are
- * skipped, any unbanned author's idea triggers an entry. The trained
+ * Evaluates one grid point with PER-AUTHOR slot semantics: each
+ * author has his own single slot — one open position per author,
+ * an idea arriving while THAT author's slot is busy is absorbed,
+ * any unbanned author's idea triggers an entry in his own slot.
+ * Authors never collide (the doctrine forbids interaction); within
+ * one author his own frequent posts absorb each other. The trained
  * author filter is preprocessing and is always applied.
  *
  * Sharpe/Sortino are TIME-BASED: computed over daily equity
@@ -798,17 +795,25 @@ const EVALUATE_POINT_FN = (
     data_truncated: 0,
   };
   let skippedBusy = 0;
-  let busyUntil = -Infinity;
-  // сделка, держащая слот сейчас, — ей приписываются поглощённые посты
-  let holdingTrade: ISimulatorTrade | null = null;
+  // СЛОТ НА АВТОРА: каждый автор торгует изолированно — его идею
+  // может поглотить только его же открытая позиция, не чужая. Так
+  // между авторами перекрытий нет (доктрина «букашки не
+  // взаимодействуют»), внутри автора его частые посты поглощают друг
+  // друга — это его собственное свойство. busyUntil/holdingTrade —
+  // по автору
+  const busyUntilByAuthor = new Map<string, number>();
+  const holdingTradeByAuthor = new Map<string, ISimulatorTrade>();
 
   for (let index = 0; index < profiles.length; index++) {
     const profile = profiles[index];
     if (filter.profileBanned[index]) {
       continue;
     }
+    const author = profile.idea.author;
+    const busyUntil = busyUntilByAuthor.get(author) ?? -Infinity;
     if (profile.entryTimestamp < busyUntil) {
       skippedBusy += 1;
+      const holdingTrade = holdingTradeByAuthor.get(author);
       if (holdingTrade) {
         holdingTrade.absorbedIdeas.push({
           ideaId: profile.idea.id,
@@ -820,8 +825,8 @@ const EVALUATE_POINT_FN = (
     const trade = SIMULATE_TRADE_FN(profile, point);
     trades.push(trade);
     exitReasons[trade.exitReason] += 1;
-    busyUntil = trade.exitTimestamp + MINUTE_MS;
-    holdingTrade = trade;
+    busyUntilByAuthor.set(author, trade.exitTimestamp + MINUTE_MS);
+    holdingTradeByAuthor.set(author, trade);
   }
 
   let totalPnlPercent = 0;
@@ -1293,15 +1298,9 @@ const RUN_FN = async (
     if (!bucket.reports.length) {
       continue;
     }
-    const eligible = bucket.reports.filter(
-      ({ trades }) => trades >= MIN_TRADES_FOR_BEST,
-    );
     for (const ranking of rankings) {
       const sorted = [...bucket.reports].sort(byRankingDesc(ranking.value));
-      const winner =
-        [...eligible].sort(byRankingDesc(ranking.value))[0] ??
-        sorted[0] ??
-        null;
+      const winner = sorted[0] ?? null;
       // ни сделки, ни трек-рекорд не дублируются: всё лежит на report
       // победителя (winner.tradesList / authorStats / allowed / banned)
       const bestEntry: ISimulatorBest = {
@@ -1534,7 +1533,7 @@ const TEST_FN = async (
  *    part of the result — apply it in production as-is.
  * 3. The outcome of every grid point is derived arithmetically from
  *    the profiles with production slot semantics (one position per
- *    symbol, busy-slot ideas skipped). Honesty contracts: entry at
+ *    author, busy-slot ideas skipped). Honesty contracts: entry at
  *    next-minute open, exits by candle wicks (never close-to-close),
  *    stop wins inside an ambiguous candle, trailing arms only from
  *    previous-candle peaks, fees and slippage from GLOBAL_CONFIG on

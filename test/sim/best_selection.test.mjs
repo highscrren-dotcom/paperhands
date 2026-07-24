@@ -3,17 +3,19 @@ import { test } from "worker-testbed";
 import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
 
 /**
- * Анти-флюк порог выбора победителя (MIN_TRADES_FOR_BEST = 8):
- * точка с 1 монструозной сделкой доминирует по totalPnl, но не может
- * стать победителем ни одного рейтинга — им обязана стать точка с
- * достаточным треком сделок. Заодно проверяется порядок sorted в
- * onRanking (невозрастание по своему критерию).
+ * Победитель рейтинга без анти-флюк порога: критерий решает сам.
+ * Точка с 1 монструозной сделкой доминирует по СЫРОМУ PnL и обязана
+ * выиграть рейтинг "pnl" — но риск-скорректированные критерии
+ * (sharpe/sortino/recovery) НЕ выбирают её: одна концентрированная
+ * сделка даёт высокую дисперсию дневных приращений, и по ним
+ * побеждает точка с ровным треком. Так честнее любого жёсткого порога.
+ * Заодно проверяется порядок sorted в onRanking (невозрастание).
  *
  * Мир "лестница": каждый цикл (481м) даёт всплеск +1% (минуты 2..61)
  * и поднимает базу на +3% навсегда (12 ступеней). Точка hold=60
  * снимает всплески: 12 скромных сделок ~ +0.6%. Точка hold=7200
  * въезжает в лестницу целиком: ОДНА сделка ~ +42%, остальные идеи
- * поглощены слотом — трек 1 < 8, в победители нельзя.
+ * поглощены слотом автора.
  */
 
 const START = 1704067200000;
@@ -33,7 +35,7 @@ const priceAt = (timestamp) => {
   return base;
 };
 
-test("SIM: a monster single-trade point cannot win any ranking — the trades floor holds", async ({ pass, fail }) => {
+test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings take the steady track", async ({ pass, fail }) => {
   addExchangeSchema({
     exchangeName: "sim-best-exchange",
     getCandles: async (_symbol, _interval, since, limit) => {
@@ -98,14 +100,17 @@ test("SIM: a monster single-trade point cannot win any ranking — the trades fl
     return;
   }
 
-  // порог сделок: победитель каждого рейтинга — steady, не флюк
-  for (const best of result.reports.close.best) {
-    if (!best.report || best.report.point.holdMinutes !== 60) {
-      fail(`${best.criterion} winner must be the 12-trade point, got hold=${best.report?.point.holdMinutes}`);
-      return;
-    }
-    if (best.report.trades < 8) {
-      fail(`${best.criterion} winner must satisfy the trades floor, got ${best.report.trades}`);
+  // pnl-рейтинг берёт флюк (сырой PnL выше), риск-скорректированные —
+  // steady (одна сделка = высокая дисперсия, худший sharpe/sortino/rec)
+  const winnerHold = (criterion) =>
+    result.reports.close.best.find((b) => b.criterion === criterion)?.report?.point.holdMinutes;
+  if (winnerHold("pnl") !== 7200) {
+    fail(`pnl ranking must take the monster point (hold=7200), got hold=${winnerHold("pnl")}`);
+    return;
+  }
+  for (const criterion of ["sharpe", "sortino", "recovery"]) {
+    if (winnerHold(criterion) !== 60) {
+      fail(`${criterion} ranking must take the steady 12-trade point (hold=60), got hold=${winnerHold(criterion)}`);
       return;
     }
   }
@@ -123,7 +128,7 @@ test("SIM: a monster single-trade point cannot win any ranking — the trades fl
   }
 
   pass(
-    `fluke +${fluke.totalPnlPercent.toFixed(1)}% (1 trade) dominated pnl but lost every ranking to ` +
-    `steady +${steady.totalPnlPercent.toFixed(1)}% (${steady.trades} trades); sorted order verified`
+    `fluke +${fluke.totalPnlPercent.toFixed(1)}% (1 trade) won the pnl ranking; ` +
+    `steady +${steady.totalPnlPercent.toFixed(1)}% (${steady.trades} trades) won sharpe/sortino/recovery; sorted order verified`
   );
 });

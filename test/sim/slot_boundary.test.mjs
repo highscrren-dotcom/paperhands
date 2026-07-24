@@ -3,21 +3,26 @@ import { test } from "worker-testbed";
 import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
 
 /**
- * Точная граница занятости слота: busyUntil = exitTimestamp + 1 минута.
+ * Слот НА АВТОРА: занятая позиция автора поглощает только ЕГО же
+ * следующую идею, попавшую в окно холда; идея другого автора в тот
+ * же момент торгуется в своём слоте (перекрытий между авторами нет).
  *
- * Сделка идеи A: вход на минуте 1, hold=60 -> выход на минуте 60,
- * слот занят ДО минуты 61 исключительно:
- *  - идея B (публикация м59, вход м60): entry < busyUntil -> поглощена;
- *  - идея C (публикация м60, вход м61): entry == busyUntil -> торгуется.
+ * Мир плоский (цена 1000). Холд большой — 600м (10ч), чтобы окно
+ * холда перекрыло анти-флуд дедуп (8ч на автора+направление):
+ *  - X идея A @ 0ч: вход м1, выход м601, слот X занят до м602;
+ *  - X идея B @ 9ч (540м): переживает дедуп (>8ч после A), но вход
+ *    541 < 602 -> ПОГЛОЩЕНА слотом X;
+ *  - Y идея C @ 9ч: свой слот Y свободен -> ТОРГУЕТСЯ параллельно X;
+ *  - X идея D @ 20ч (1200м): слот X давно свободен -> ТОРГУЕТСЯ.
  *
- * Один off-by-one здесь тихо меняет население сделок всей сетки —
- * граница фиксируется поимённо через absorbedIdeaIds.
+ * Итог: 3 сделки (A, C, D), 1 поглощение (B съедена A, с автором X).
  */
 
 const START = 1704067200000;
 const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
 
-test("SIM: slot frees exactly one minute after exit — boundary idea trades, earlier one is absorbed", async ({ pass, fail }) => {
+test("SIM: a slot is per-author — an author's hold absorbs only his own overlapping idea, others trade in parallel", async ({ pass, fail }) => {
   addExchangeSchema({
     exchangeName: "sim-slot-exchange",
     getCandles: async (_symbol, _interval, since, limit) => {
@@ -42,7 +47,7 @@ test("SIM: slot frees exactly one minute after exit — boundary idea trades, ea
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
-      holdMinutes: [60],
+      holdMinutes: [600],
       minAuthorTrack: [1],
       minAuthorHitRate: [0],
       profitLockPercent: [0],
@@ -58,37 +63,48 @@ test("SIM: slot frees exactly one minute after exit — boundary idea trades, ea
     simulatorName: "sim_slot",
     ideas: [
       { id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "X" },
-      { id: 2, ts: START + 59 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "Y" },
-      { id: 3, ts: START + 60 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "Z" },
+      { id: 2, ts: START + 9 * HOUR, symbol: "TESTUSDT", direction: "LONG", author: "X" },
+      { id: 3, ts: START + 9 * HOUR, symbol: "TESTUSDT", direction: "LONG", author: "Y" },
+      { id: 4, ts: START + 20 * HOUR, symbol: "TESTUSDT", direction: "LONG", author: "X" },
     ],
   });
 
   const [{ report, trades }] = captured;
 
-  if (report.trades !== 2 || report.skippedBusy !== 1) {
-    fail(`expected 2 trades + 1 absorbed, got ${report.trades}/${report.skippedBusy}`);
+  // A, C, D торгуют; B поглощена слотом X
+  if (report.trades !== 3 || report.skippedBusy !== 1) {
+    fail(`expected 3 trades + 1 absorbed, got ${report.trades}/${report.skippedBusy}`);
     return;
   }
-  if (trades[0].ideaId !== 1 || trades[1].ideaId !== 3) {
-    fail(`trades must be ideas 1 and 3, got ${trades.map((t) => t.ideaId)}`);
-    return;
-  }
-  // поглощённая — именно идея 2, приписана сделке A, с автором
-  if (JSON.stringify(trades[0].absorbedIdeas.map(({ ideaId }) => ideaId)) !== JSON.stringify([2])) {
-    fail(`trade A must absorb exactly idea 2, got ${JSON.stringify(trades[0].absorbedIdeas)}`);
-    return;
-  }
-  if (!trades[0].absorbedIdeas[0].author) {
-    fail(`absorbed idea must carry its author, got ${JSON.stringify(trades[0].absorbedIdeas[0])}`);
-    return;
-  }
-  // временнáя арифметика границы: вход C ровно через минуту после выхода A
-  const exitA = trades[0].exitTimestamp;
-  const entryC = trades[1].entryTimestamp;
-  if (entryC !== exitA + MINUTE) {
-    fail(`boundary broken: entryC=${entryC} must equal exitA+1m=${exitA + MINUTE}`);
+  const tradedIds = trades.map((t) => t.ideaId).sort((a, b) => a - b);
+  if (JSON.stringify(tradedIds) !== JSON.stringify([1, 3, 4])) {
+    fail(`traded ideas must be [1,3,4] (X-A, Y-C, X-D), got ${JSON.stringify(tradedIds)}`);
     return;
   }
 
-  pass(`boundary exact: idea@59m absorbed by A, idea@60m entered at exitA+1m`);
+  // поглощение — на сделке X-A, именно идея 2, автор X (свой слот)
+  const tradeA = trades.find((t) => t.ideaId === 1);
+  if (JSON.stringify(tradeA.absorbedIdeas) !== JSON.stringify([{ ideaId: 2, author: "X" }])) {
+    fail(`X's hold must absorb exactly his own idea 2, got ${JSON.stringify(tradeA.absorbedIdeas)}`);
+    return;
+  }
+
+  // идея Y торговалась ПАРАЛЛЕЛЬНО занятому слоту X — доказательство
+  // изоляции слотов: entry C внутри окна холда A
+  const tradeC = trades.find((t) => t.ideaId === 3);
+  const tradeD = trades.find((t) => t.ideaId === 4);
+  if (!(tradeC.entryTimestamp < tradeA.exitTimestamp)) {
+    fail(`Y's trade must overlap X's busy slot (slots are per-author)`);
+    return;
+  }
+  // никого не поглотили ни Y, ни поздняя X-идея
+  if (tradeC.absorbedIdeas.length !== 0 || tradeD.absorbedIdeas.length !== 0) {
+    fail(`Y and the late X idea must absorb nothing, got ${tradeC.absorbedIdeas.length}/${tradeD.absorbedIdeas.length}`);
+    return;
+  }
+
+  pass(
+    `per-author slot: X's hold ate only his own idea 2; Y traded in parallel with X's busy slot; ` +
+    `late X idea traded after his slot freed — 3 trades, 1 absorbed`
+  );
 });

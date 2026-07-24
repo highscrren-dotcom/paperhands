@@ -24,8 +24,9 @@ const METHOD_NAME_TEST = "Simulator.test";
  * - profitLockPercent — floor armed by touching +X%, exit on the
  *   pullback to it; 0 disables; runners are picked up by the
  *   trailing take instead.
- * - holdMinutes — slot turnover cap; a busy slot absorbs qualified
- *   ideas (absorbedIdeas); time_expired is the worst-case exit.
+ * - holdMinutes — slot turnover cap; each author's busy slot absorbs
+ *   his own qualified ideas (absorbedIdeas), authors never collide;
+ *   time_expired is the worst-case exit.
  *
  * Entry gate (preprocessing of every candidate entry): any idea of
  * an UNBANNED author triggers an entry. Authors are graded strictly
