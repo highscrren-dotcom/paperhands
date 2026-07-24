@@ -6303,6 +6303,14 @@ interface ISimulatorPointReport {
     /** Trade counts per exit reason. */
     exitReasons: Record<SimulatorExitReason, number>;
     /**
+     * The point's trades in full — the SAME list for every point,
+     * winner or not, so any point is traceable ("why this pnl") by jq
+     * over the artifact without a re-run. The `trades` field above is
+     * this list's length; `best[].report.tradesList` is the winner's
+     * copy (best carries no separate trade list — zero duplication).
+     */
+    tradesList: ISimulatorTrade[];
+    /**
      * Per-author track record UNDER THIS POINT: threshold fields
      * (ideas/hits/hitRate/banned) come from the point's ban rule, the
      * isolated-simulation metrics (trades/pnlPercent/sharpe/sortino/
@@ -6373,18 +6381,17 @@ interface ISimulatorAuthorStat {
  */
 type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
 /**
- * Winner of one ranking criterion with its trade list. The author
- * track record — thresholds AND isolated metrics — lives on the
- * winning point itself: read `report.authorStats` / `allowedAuthors`
- * / `bannedAuthors`, never duplicated here.
+ * Winner of one ranking criterion — just the criterion and the
+ * winning point's report. Everything else lives on the report and is
+ * never duplicated here: the trades in `report.tradesList`, the
+ * author track record in `report.authorStats` / `allowedAuthors` /
+ * `bannedAuthors`.
  */
 interface ISimulatorBest {
     /** The ranking criterion this winner belongs to. */
     criterion: SimulatorRankingCriterion;
     /** Winning point report; null when the bucket produced no reports. */
     report: ISimulatorPointReport | null;
-    /** Trades of the winning point (empty when report is null). */
-    trades: ISimulatorTrade[];
 }
 /**
  * Identity of ONE ban rule — every field that makes two rules the
@@ -6408,21 +6415,18 @@ interface ISimulatorBanKey {
     trailingTakePercent?: number;
 }
 /**
- * Why an author passed or failed ONE ban rule — the verdict and the
- * arithmetic reason next to it, so the debugger reads both without
- * recomputing the threshold in his head. Under a track>=N, rate>=R
- * rule a ban can come from three distinct causes, invisible in a
- * bare name.
+ * A single reason an author failed ONE ban rule — one atom per
+ * failed threshold, the field name it violated. The two are checked
+ * independently, so a ban carries an ARRAY of these (see
+ * ISimulatorBanAuthor.reasons): [] = passed, one code = one
+ * threshold failed, both codes = both failed. An array, not a
+ * "&"-joined string, so a score aggregator filters without parsing.
  */
 type SimulatorBanReason = 
-/** ideas >= minAuthorTrack AND hitRate >= minAuthorHitRate. */
-"passed"
-/** ideas < minAuthorTrack only. */
- | "ideas<minAuthorTrack"
-/** hitRate < minAuthorHitRate only. */
- | "hitRate<minAuthorHitRate"
-/** ideas < minAuthorTrack AND hitRate < minAuthorHitRate. */
- | "ideas<minAuthorTrack & hitRate<minAuthorHitRate";
+/** ideas < minAuthorTrack. */
+"ideas<minAuthorTrack"
+/** hitRate < minAuthorHitRate. */
+ | "hitRate<minAuthorHitRate";
 /**
  * One author's verdict under ONE ban rule: the raw track (ideas,
  * hits, hitRate), the banned flag, and the arithmetic reason. No
@@ -6440,8 +6444,13 @@ interface ISimulatorBanAuthor {
     hitRate: number;
     /** Banned under this rule (default-ban of unproven authors). */
     banned: boolean;
-    /** Which threshold(s) the author failed, or "passed". */
-    reason: SimulatorBanReason;
+    /**
+     * Which threshold(s) the author failed — one atom per failure,
+     * empty when he passed. `banned` equals `reasons.length > 0`;
+     * the array is for programmatic filtering (a score aggregator
+     * checks membership, never parses a joined string).
+     */
+    reasons: SimulatorBanReason[];
 }
 /**
  * Trained ban dictionary of ONE rule: pure threshold arithmetic —

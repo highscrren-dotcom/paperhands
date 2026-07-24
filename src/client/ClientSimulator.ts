@@ -292,26 +292,25 @@ const EMPTY_AUTHOR_METRICS = {
 } as const;
 
 /**
- * The arithmetic reason an author passed or failed a ban rule —
- * written out next to the verdict so a debugger reads both without
- * recomputing the threshold. The two causes are checked
- * independently: too few ideas AND/OR too low a hit rate.
+ * The arithmetic reasons an author failed a ban rule — one atom per
+ * failed threshold, checked independently: too few ideas AND/OR too
+ * low a hit rate. Empty array means passed. Written out next to the
+ * verdict so a debugger (and a score aggregator) reads the cause
+ * without recomputing the threshold or parsing a joined string.
  *
  * @param stat - Threshold stat under the rule (ideas/hits/hitRate/banned)
  * @param rule - The ban rule (its two thresholds)
- * @returns "passed" or which threshold(s) failed
+ * @returns The failed-threshold codes (empty when the author passed)
  */
-const BAN_REASON_FN = (
+const BAN_REASONS_FN = (
   stat: ISimulatorAuthorStat,
   rule: SimulatorAuthorRule,
-): SimulatorBanReason => {
-  const tooFew = stat.ideas < rule.minAuthorTrack;
-  const tooLow = stat.hitRate < rule.minAuthorHitRate;
-  if (tooFew && tooLow)
-    return "ideas<minAuthorTrack & hitRate<minAuthorHitRate";
-  if (tooFew) return "ideas<minAuthorTrack";
-  if (tooLow) return "hitRate<minAuthorHitRate";
-  return "passed";
+): SimulatorBanReason[] => {
+  const reasons: SimulatorBanReason[] = [];
+  if (stat.ideas < rule.minAuthorTrack) reasons.push("ideas<minAuthorTrack");
+  if (stat.hitRate < rule.minAuthorHitRate)
+    reasons.push("hitRate<minAuthorHitRate");
+  return reasons;
 };
 
 /**
@@ -930,6 +929,9 @@ const EVALUATE_POINT_FN = (
       sharpe,
       sortino,
       exitReasons,
+      // список сделок — только у финальных точек (enrich); у
+      // изолированных под-симуляций пуст, чтобы не раздувать их
+      tradesList: enrich ? trades : [],
       authorStats,
       allowedAuthors: authorStats
         .filter(({ banned }) => !banned)
@@ -1209,7 +1211,6 @@ const RUN_FN = async (
     );
   }
   const reports: ISimulatorPointReport[] = [];
-  const tradesByReport = new Map<ISimulatorPointReport, ISimulatorTrade[]>();
   const allHoldMinutes: number[] = [];
   for (let index = 0; index < points.length; index++) {
     const point = points[index];
@@ -1222,7 +1223,6 @@ const RUN_FN = async (
     );
     ASSERT_TRADE_INVARIANTS_FN(trades, point);
     reports.push(report);
-    tradesByReport.set(report, trades);
     for (const trade of trades) {
       allHoldMinutes.push(trade.holdMinutesActual);
     }
@@ -1298,12 +1298,11 @@ const RUN_FN = async (
         [...eligible].sort(byRankingDesc(ranking.value))[0] ??
         sorted[0] ??
         null;
-      // трек-рекорд победителя — не дублируется: он уже лежит на
-      // report точки (winner.authorStats / allowed / bannedAuthors)
+      // ни сделки, ни трек-рекорд не дублируются: всё лежит на report
+      // победителя (winner.tradesList / authorStats / allowed / banned)
       const bestEntry: ISimulatorBest = {
         criterion: ranking.criterion,
         report: winner,
-        trades: winner ? (tradesByReport.get(winner) ?? []) : [],
       };
       bucket.best.push(bestEntry);
       if (self.params.callbacks?.onRanking) {
@@ -1341,7 +1340,7 @@ const RUN_FN = async (
       hits: stat.hits,
       hitRate: stat.hitRate,
       banned: stat.banned,
-      reason: BAN_REASON_FN(stat, rule),
+      reasons: BAN_REASONS_FN(stat, rule),
     }));
     bucket.bans.push({
       banKey: {

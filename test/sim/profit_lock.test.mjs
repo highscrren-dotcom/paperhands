@@ -163,7 +163,7 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
 
   const [report] = Object.values(result.reports).flatMap((b) => b.reports);
   const winner = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
-  const [trade] = winner.trades;
+  const [trade] = winner.report.tradesList;
   if (report.trades !== 1 || !trade) {
     fail(`expected exactly one trade, got ${report.trades}`);
     return;

@@ -160,8 +160,8 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
   }
   // причина бана спайкера под close — низкий hitRate (5 идей >= track 5)
   const spikerCloseVerdict = closeBan.authors.find(({ author }) => author === "spiker");
-  if (spikerCloseVerdict.reason !== "hitRate<minAuthorHitRate") {
-    fail(`spiker's close ban reason must be hitRate<minAuthorHitRate, got ${spikerCloseVerdict.reason}`);
+  if (JSON.stringify(spikerCloseVerdict.reasons) !== JSON.stringify(["hitRate<minAuthorHitRate"])) {
+    fail(`spiker's close ban reasons must be ["hitRate<minAuthorHitRate"], got ${JSON.stringify(spikerCloseVerdict.reasons)}`);
     return;
   }
 

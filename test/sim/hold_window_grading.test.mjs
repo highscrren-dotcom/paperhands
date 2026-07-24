@@ -106,7 +106,7 @@ test("SIM: author metrics are graded inside each point's own hold window — two
     return;
   }
   // hold=720: close окна -3% — 0/5, бан по низкому hitRate
-  if (longStat.hits !== 0 || !longStat.banned || verdictOf(longBan).reason !== "hitRate<minAuthorHitRate") {
+  if (longStat.hits !== 0 || !longStat.banned || !verdictOf(longBan).reasons.includes("hitRate<minAuthorHitRate")) {
     fail(`720m window must ban the sprinter 0/5, got ${JSON.stringify(longStat)}`);
     return;
   }

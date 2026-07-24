@@ -61,7 +61,7 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     fail(`profile must be full, got truncated=${result.truncatedCount}`);
     return;
   }
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").trades;
+  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
   if (trade.exitReason !== "time_expired") {
     fail(`a stop-free drift world must exit time_expired, got ${trade.exitReason}`);
     return;

@@ -75,7 +75,7 @@ test("SIM: short profit lock fills exactly at the mirrored level on the rebound"
     ideas: [idea(1, 0, "bear")],
   });
   const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").trades;
+  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
 
   if (trade.exitReason !== "profit_lock") {
     fail(`short rebound to the lock must exit profit_lock, got ${trade.exitReason}`);
@@ -124,7 +124,7 @@ test("SIM: short runner rebound through both floors fills the LOWER trailing lev
     ideas: [idea(1, 0, "bear")],
   });
   const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").trades;
+  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
 
   if (trade.exitReason !== "trailing_take") {
     fail(`short rebound through both floors must fill the lower (trailing), got ${trade.exitReason}`);
