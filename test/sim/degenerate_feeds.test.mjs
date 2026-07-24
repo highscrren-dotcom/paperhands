@@ -77,7 +77,7 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
     fail("rankings must resolve on an empty feed");
     return;
   }
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").bannedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").authorStats.length !== 0) {
+  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.bannedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.length !== 0) {
     fail("author artifacts must be empty");
     return;
   }
@@ -119,8 +119,8 @@ test("SIM: idea entirely beyond the end of data is dropped via the null-profile 
     return;
   }
   // авторы без профилей не попадают в статистику
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").authorStats.length !== 0) {
-    fail(`no author may have stats without a profile, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").authorStats)}`);
+  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.length !== 0) {
+    fail(`no author may have stats without a profile, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats)}`);
     return;
   }
   if (Object.values(result.reports).flatMap((b) => b.reports).some((r) => r.trades !== 0)) {

@@ -58,7 +58,7 @@ writeFileSync("./dump/simulator.done.json", JSON.stringify(result, null, 2));
 const sharpeBest = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
 console.log(
   "saved; profiles:", result.profileCount,
-  "allowed:", sharpeBest?.allowedAuthors.length ?? 0,
-  "banned:", sharpeBest?.bannedAuthors.length ?? 0,
+  "allowed:", sharpeBest?.report?.allowedAuthors.length ?? 0,
+  "banned:", sharpeBest?.report?.bannedAuthors.length ?? 0,
 );
 process.exit(0);

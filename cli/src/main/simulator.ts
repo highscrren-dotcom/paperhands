@@ -58,6 +58,9 @@ const validateIdea = (idea: any, line: number): string | null => {
   return null;
 };
 
+const fmtSimRatio = (value: number): string =>
+  Number.isFinite(value) ? value.toFixed(2) : "inf";
+
 const toMarkdown = (result: ISimulatorResult): string => {
   const buckets = Object.entries(result.reports).filter(
     ([, bucket]) => bucket.reports.length > 0,
@@ -95,13 +98,17 @@ const toMarkdown = (result: ISimulatorResult): string => {
       );
     }
     const sharpeBest = bucket.best.find(({ criterion }) => criterion === "sharpe");
+    const allowed = (sharpeBest?.report?.authorStats ?? []).filter(({ banned }) => !banned);
     lines.push("");
-    lines.push(`### Allowed authors (sharpe winner rule)`);
+    lines.push(`### Allowed authors — isolated metrics on the sharpe winner (${allowed.length}, banned in --json)`);
     lines.push("");
-    lines.push(`| Author | Ideas | Hits | HitRate |`);
-    lines.push(`| --- | --- | --- | --- |`);
-    for (const stat of (sharpeBest?.authorStats ?? []).filter(({ banned }) => !banned)) {
-      lines.push(`| ${stat.author} | ${stat.ideas} | ${stat.hits} | ${(stat.hitRate * 100).toFixed(0)}% |`);
+    lines.push(`| Author | Ideas | Hits | HitRate | Trades | PNL% | Sharpe | Sortino | Recovery |`);
+    lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
+    for (const stat of allowed) {
+      lines.push(
+        `| ${stat.author} | ${stat.ideas} | ${stat.hits} | ${(stat.hitRate * 100).toFixed(0)}% | ` +
+          `${stat.trades} | ${stat.pnlPercent.toFixed(2)}% | ${fmtSimRatio(stat.sharpe)} | ${fmtSimRatio(stat.sortino)} | ${fmtSimRatio(stat.recoveryFactor)} |`,
+      );
     }
   }
   return lines.join("\n");

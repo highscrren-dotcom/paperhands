@@ -140,7 +140,7 @@ const runTune = async (simulatorName) => {
   const sharpeBest = bucket.best.find(({ criterion }) => criterion === "sharpe");
   result.push({
     config: simulatorName,
-    authorStats: (sharpeBest?.authorStats ?? []).map(({ author, ideas, hits }) => ({ author, ideas, hits })),
+    authorStats: (sharpeBest?.report?.authorStats ?? []).map(({ author, ideas, hits }) => ({ author, ideas, hits })),
   });
 };
 

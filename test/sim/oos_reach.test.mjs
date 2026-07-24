@@ -72,7 +72,7 @@ test("SIM: out-of-sample with a reach point — frozen reach stats, no recount, 
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE, "spiker")),
   });
   const winner = train.reports.reach.best.find(({ criterion }) => criterion === "sharpe");
-  const trainStat = winner.authorStats.find(({ author }) => author === "spiker");
+  const trainStat = winner.report.authorStats.find(({ author }) => author === "spiker");
   // предусловие: hits посчитаны reach-метрикой (close дал бы 0 —
   // закрытие 5-дневного горизонта у спайкера всегда ниже входа)
   if (!trainStat || trainStat.hits !== 5 || trainStat.banned || winner.report.point.authorMetric !== "reach") {
@@ -90,7 +90,7 @@ test("SIM: out-of-sample with a reach point — frozen reach stats, no recount, 
     simulatorName: "sim_oosreach",
     ideas: testIdeas,
     point: winner.report.point,
-    authorStats: winner.authorStats,
+    authorStats: winner.report.authorStats,
   });
 
   // сделки: только спайкер, все собраны замком
@@ -115,7 +115,7 @@ test("SIM: out-of-sample with a reach point — frozen reach stats, no recount, 
     simulatorName: "sim_oosreach",
     ideas: testIdeas,
     point: winner.report.point,
-    authorStats: winner.authorStats,
+    authorStats: winner.report.authorStats,
   });
   if (JSON.stringify(repeat) !== JSON.stringify(result)) {
     fail("repeated test() must be bit-identical");

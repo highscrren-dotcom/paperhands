@@ -138,23 +138,35 @@ const toMarkdown = (test: ISimulatorTestResult): string => {
   lines.push(`| Sharpe / Sortino | ${fmtRatio(test.report.sharpe)} / ${fmtRatio(test.report.sortino)} |`);
   lines.push(`| Recovery factor | ${fmtRatio(test.report.recoveryFactor)} |`);
   lines.push(`| Exits | ${Object.entries(test.report.exitReasons).map(([reason, count]) => `${reason}=${count}`).join(", ")} |`);
+
+  // сделки — короткий список: markdown не рендерит простыню, полный
+  // список сделок берётся из --json
+  const TRADE_CAP = 20;
+  const shownTrades = test.trades.slice(0, TRADE_CAP);
   lines.push("");
-  lines.push(`## Test trades`);
+  lines.push(`## Test trades (${shownTrades.length} of ${test.trades.length}${test.trades.length > TRADE_CAP ? `, rest in --json` : ""})`);
   lines.push("");
   lines.push(`| Direction | Exit | PNL% | Hold | Entry (UTC) |`);
   lines.push(`| --- | --- | --- | --- | --- |`);
-  for (const trade of test.trades) {
+  for (const trade of shownTrades) {
     lines.push(
       `| ${trade.direction} | ${trade.exitReason} | ${trade.pnlPercent.toFixed(2)} | ${trade.holdMinutesActual}m | ${new Date(trade.entryTimestamp).toISOString()} |`,
     );
   }
+
+  // трек-рекорд — только ДОПУЩЕННЫЕ авторы с изолированными метриками
+  // на тестовой точке; забаненных (обычно сотни) в json, не в markdown
+  const allowed = test.authorStats.filter(({ banned }) => !banned);
   lines.push("");
-  lines.push(`## Frozen author track record (re-derived bans under the point's rule)`);
+  lines.push(`## Allowed authors — isolated metrics on the frozen point (${allowed.length} of ${test.authorStats.length}, banned in --json)`);
   lines.push("");
-  lines.push(`| Author | Ideas | Hits | Banned |`);
-  lines.push(`| --- | --- | --- | --- |`);
-  for (const stat of test.authorStats) {
-    lines.push(`| ${stat.author} | ${stat.ideas} | ${stat.hits} | ${stat.banned ? "yes" : ""} |`);
+  lines.push(`| Author | Ideas | Hits | HitRate | Trades | PNL% | Sharpe | Sortino | Recovery |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
+  for (const stat of allowed) {
+    lines.push(
+      `| ${stat.author} | ${stat.ideas} | ${stat.hits} | ${(stat.hitRate * 100).toFixed(0)}% | ` +
+        `${stat.trades} | ${stat.pnlPercent.toFixed(2)}% | ${fmtRatio(stat.sharpe)} | ${fmtRatio(stat.sortino)} | ${fmtRatio(stat.recoveryFactor)} |`,
+    );
   }
   return lines.join("\n");
 };

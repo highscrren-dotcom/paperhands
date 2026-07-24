@@ -120,8 +120,8 @@ test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", 
   }
 
   // автор должен пройти фильтр: 90 идей, все hit
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors.length !== 1 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors[0] !== "prophet") {
-    fail(`expected prophet allowed, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors)}`);
+  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 1 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors[0] !== "prophet") {
+    fail(`expected prophet allowed, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
     return;
   }
 

@@ -134,8 +134,8 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
       fail(`${b.criterion} winner must be the reach point, got ${b.report?.point.authorMetric}`);
       return;
     }
-    if (!b.allowedAuthors.includes("spiker") || b.bannedAuthors.includes("spiker")) {
-      fail(`per-best artifact must allow spiker under reach, got ${JSON.stringify(b.allowedAuthors)}`);
+    if (!b.report.allowedAuthors.includes("spiker") || b.report.bannedAuthors.includes("spiker")) {
+      fail(`per-best artifact must allow spiker under reach, got ${JSON.stringify(b.report.allowedAuthors)}`);
       return;
     }
   }

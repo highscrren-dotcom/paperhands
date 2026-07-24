@@ -86,15 +86,19 @@ test("SIM: author metrics are graded inside each point's own hold window — two
     return;
   }
 
-  // словари банов самоидентифицируются окном
+  // словари банов самоидентифицируются окном (белый/чёрный список —
+  // свойство правила, лежит в bans)
   const shortBan = result.reports.close.bans.find(({ holdMinutes }) => holdMinutes === 120);
   const longBan = result.reports.close.bans.find(({ holdMinutes }) => holdMinutes === 720);
   if (!shortBan || !longBan) {
     fail(`bans must carry holdMinutes 120 and 720, got ${JSON.stringify(result.reports.close.bans.map(({ holdMinutes }) => holdMinutes))}`);
     return;
   }
-  const shortStat = shortBan.authorStats.find(({ author }) => author === "sprinter");
-  const longStat = longBan.authorStats.find(({ author }) => author === "sprinter");
+  // трек-рекорд под окно лежит на report точки этого окна
+  const shortPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 120);
+  const longPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 720);
+  const shortStat = shortPoint.authorStats.find(({ author }) => author === "sprinter");
+  const longStat = longPoint.authorStats.find(({ author }) => author === "sprinter");
   // hold=120: close окна +2% — 5/5, допуск
   if (shortStat.hits !== 5 || shortStat.banned || !shortBan.allowedAuthors.includes("sprinter")) {
     fail(`120m window must credit the sprinter 5/5, got ${JSON.stringify(shortStat)}`);
@@ -108,8 +112,6 @@ test("SIM: author metrics are graded inside each point's own hold window — two
 
   // сделки следуют вердиктам своих окон: короткая точка торгует все
   // 5 идей, длинная — ни одной
-  const shortPoint = pointReports.find(({ point }) => point.holdMinutes === 120);
-  const longPoint = pointReports.find(({ point }) => point.holdMinutes === 720);
   if (shortPoint.trades !== 5 || longPoint.trades !== 0) {
     fail(`expected 5/0 trades for 120m/720m points, got ${shortPoint.trades}/${longPoint.trades}`);
     return;

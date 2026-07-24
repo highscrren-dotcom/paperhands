@@ -276,6 +276,20 @@ interface IAuthorFilterContext {
 }
 
 /**
+ * Placeholder isolated-simulation metrics. The threshold builders
+ * (TRAIN/FREEZE) know the rule but not a concrete point, so they
+ * emit zeros here; ENRICH_AUTHOR_STATS_FN fills the real numbers per
+ * point at assembly time.
+ */
+const EMPTY_AUTHOR_METRICS = {
+  trades: 0,
+  pnlPercent: 0,
+  sharpe: 0,
+  sortino: 0,
+  recoveryFactor: 0,
+} as const;
+
+/**
  * Derives the ban-filter rule from a grid point as a discriminated
  * union. EVERY rule carries the point's holdMinutes — the grading
  * window: an author is judged inside exactly the window the point
@@ -487,6 +501,9 @@ const TRAIN_AUTHOR_FILTER_FN = (
     banned:
       stat.ideas < minAuthorTrack ||
       stat.hits / stat.ideas < minAuthorHitRate,
+    // изолированные метрики заполняются при сборке точки
+    // (ENRICH_AUTHOR_STATS_FN) — здесь правило без точки
+    ...EMPTY_AUTHOR_METRICS,
   }));
   const banned = new Set(
     stats.filter(({ banned }) => banned).map(({ author }) => author),
@@ -532,6 +549,8 @@ const FREEZE_AUTHOR_FILTER_FN = (
       hits,
       hitRate: n ? hits / n : 0,
       banned: n < minAuthorTrack || hits / n < minAuthorHitRate,
+      // изолированные метрики заполняются при сборке точки теста
+      ...EMPTY_AUTHOR_METRICS,
     }),
   );
   const allowed = new Set(
@@ -731,6 +750,10 @@ const COMPUTE_HOLD_STATS_FN = (
  * @param filter - Author filter context of the point's ban rule
  * @param rangeStartTs - Start of the shared daily bucket window
  * @param rangeDays - Number of daily buckets in the shared window
+ * @param enrich - When true, the report carries the point's own
+ *   authorStats (threshold + isolated per-author metrics on THIS
+ *   point) and allowed/bannedAuthors; false for the isolated
+ *   per-author sub-simulations to avoid recursion.
  * @returns Aggregated report and the trade list
  */
 const EVALUATE_POINT_FN = (
@@ -739,6 +762,7 @@ const EVALUATE_POINT_FN = (
   filter: IAuthorFilterContext,
   rangeStartTs: number,
   rangeDays: number,
+  enrich: boolean = true,
 ): { report: ISimulatorPointReport; trades: ISimulatorTrade[] } => {
   const trades: ISimulatorTrade[] = [];
   const exitReasons: Record<SimulatorExitReason, number> = {
@@ -850,6 +874,19 @@ const EVALUATE_POINT_FN = (
         ? Number.POSITIVE_INFINITY
         : 0;
 
+  // трек-рекорд авторов ЭТОЙ точки: пороговые поля из фильтра
+  // правила плюс изолированные метрики автора НА ЭТОЙ точке. Для
+  // изолированных под-симуляций enrich=false — иначе рекурсия
+  const authorStats = enrich
+    ? ENRICH_AUTHOR_STATS_FN(
+        filter.stats,
+        profiles,
+        point,
+        rangeStartTs,
+        rangeDays,
+      )
+    : [];
+
   return {
     report: {
       point,
@@ -868,9 +905,76 @@ const EVALUATE_POINT_FN = (
       sharpe,
       sortino,
       exitReasons,
+      authorStats,
+      allowedAuthors: authorStats
+        .filter(({ banned }) => !banned)
+        .map(({ author }) => author),
+      bannedAuthors: authorStats
+        .filter(({ banned }) => banned)
+        .map(({ author }) => author),
     },
     trades,
   };
+};
+
+/**
+ * Enriches per-author stats with the metrics of each author's
+ * ISOLATED simulation on the rule's grid point: for every author,
+ * EVALUATE_POINT_FN runs over ONLY his profiles with a nobody-banned
+ * filter — his own slot, nobody absorbing him, the ban ignored (a
+ * banned author still plays his whole track). The daily-bucket
+ * window (rangeStartTs/rangeDays) is the run's shared one, so the
+ * Sharpe/Sortino are comparable to the point's own. Threshold fields
+ * (ideas/hits/hitRate/banned) are carried through untouched.
+ *
+ * @param stats - Threshold stats of the rule (from the filter)
+ * @param profiles - All directional profiles of the run
+ * @param point - The grid point the metrics are simulated on
+ * @param rangeStartTs - Start of the shared daily bucket window
+ * @param rangeDays - Number of daily buckets in the shared window
+ * @returns Stats with trades/pnlPercent/sharpe/sortino/recoveryFactor filled
+ */
+const ENRICH_AUTHOR_STATS_FN = (
+  stats: ISimulatorAuthorStat[],
+  profiles: ISimulatorIdeaProfile[],
+  point: ISimulatorGridPoint,
+  rangeStartTs: number,
+  rangeDays: number,
+): ISimulatorAuthorStat[] => {
+  const byAuthor = new Map<string, ISimulatorIdeaProfile[]>();
+  for (const profile of profiles) {
+    const list = byAuthor.get(profile.idea.author) ?? [];
+    list.push(profile);
+    byAuthor.set(profile.idea.author, list);
+  }
+  return stats.map((stat) => {
+    const own = byAuthor.get(stat.author) ?? [];
+    // фиктивный фильтр: бан игнорируется — автор отыгрывает весь свой
+    // трек в собственном слоте (никто не поглощает его посты)
+    const soloFilter: IAuthorFilterContext = {
+      stats: [],
+      banned: new Set<string>(),
+      bannedIdeas: 0,
+      profileBanned: own.map(() => false),
+    };
+    // enrich=false: изолированная под-симуляция сама трек не строит
+    const { report } = EVALUATE_POINT_FN(
+      own,
+      point,
+      soloFilter,
+      rangeStartTs,
+      rangeDays,
+      false,
+    );
+    return {
+      ...stat,
+      trades: report.trades,
+      pnlPercent: report.totalPnlPercent,
+      sharpe: report.sharpe,
+      sortino: report.sortino,
+      recoveryFactor: report.recoveryFactor,
+    };
+  });
 };
 
 /**
@@ -1152,10 +1256,10 @@ const RUN_FN = async (
     reportsByMetric[report.point.authorMetric].reports.push(report);
   }
 
-  // словари банов — чистая арифметика порогов правила, никакого
-  // ранжирования: по одному словарю на уникальное правило, правило
-  // идентифицируется собственными полями и лежит в корзине СВОЕЙ
-  // метрики
+  // словари банов — ЧИСТАЯ пороговая арифметика правила: одно правило
+  // -> один словарь, идентификация своими полями, корзина СВОЕЙ
+  // метрики. Метрик авторов тут нет — они зависят от всей точки
+  // (stop/lock/trailing), а не от правила, и живут на report точки
   for (const { rule, filter } of filterByRule.values()) {
     reportsByMetric[rule.metric].bans.push({
       holdMinutes: rule.holdMinutes,
@@ -1171,7 +1275,6 @@ const RUN_FN = async (
           : rule.metric === "trail"
             ? { trailingTakePercent: rule.trailingTakePercent }
             : {}),
-      authorStats: filter.stats,
       allowedAuthors: filter.stats
         .filter(({ banned }) => !banned)
         .map(({ author }) => author),
@@ -1197,21 +1300,12 @@ const RUN_FN = async (
         [...eligible].sort(byRankingDesc(ranking.value))[0] ??
         sorted[0] ??
         null;
-      // артефакт авторов — под правило бана ИМЕННО ЭТОГО победителя:
-      // критерии могут выбрать точки с разными правилами, и белый
-      // список — свойство точки, а не корзины
-      const winnerStats = winner ? getFilter(winner.point).stats : [];
+      // трек-рекорд победителя — не дублируется: он уже лежит на
+      // report точки (winner.authorStats / allowed / bannedAuthors)
       const bestEntry: ISimulatorBest = {
         criterion: ranking.criterion,
         report: winner,
         trades: winner ? (tradesByReport.get(winner) ?? []) : [],
-        authorStats: winnerStats,
-        allowedAuthors: winnerStats
-          .filter(({ banned }) => !banned)
-          .map(({ author }) => author),
-        bannedAuthors: winnerStats
-          .filter(({ banned }) => banned)
-          .map(({ author }) => author),
       };
       bucket.best.push(bestEntry);
       if (self.params.callbacks?.onRanking) {
@@ -1343,6 +1437,8 @@ const TEST_FN = async (
     trades.map(({ holdMinutesActual }) => holdMinutesActual),
   );
 
+  // изолированные метрики авторов уже посчитаны на report точки
+  // (EVALUATE_POINT_FN, enrich=true) — берём их, не считаем заново
   const result: ISimulatorTestResult = {
     symbol,
     ideasTotal: ideas.length,
@@ -1352,10 +1448,8 @@ const TEST_FN = async (
     point,
     report,
     trades,
-    authorStats: filter.stats,
-    allowedAuthors: filter.stats
-      .filter(({ banned }) => !banned)
-      .map(({ author }) => author),
+    authorStats: report.authorStats,
+    allowedAuthors: report.allowedAuthors,
     bannedAuthors: [...filter.banned],
     avgHoldMinutes: holdStats.avgHoldMinutes,
     p95HoldMinutes: holdStats.p95HoldMinutes,

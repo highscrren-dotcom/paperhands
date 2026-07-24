@@ -6254,7 +6254,7 @@ interface ISimulatorPointReport {
     point: ISimulatorGridPoint;
     /** Number of simulated trades. */
     trades: number;
-    /** Qualified ideas skipped because the position slot was busy. */
+    /** Ideas skipped because the single slot was busy (absorbed). */
     skippedBusy: number;
     /** Sum of trade PnL percents over the range. */
     totalPnlPercent: number;
@@ -6302,6 +6302,19 @@ interface ISimulatorPointReport {
     sortino: number;
     /** Trade counts per exit reason. */
     exitReasons: Record<SimulatorExitReason, number>;
+    /**
+     * Per-author track record UNDER THIS POINT: threshold fields
+     * (ideas/hits/hitRate/banned) come from the point's ban rule, the
+     * isolated-simulation metrics (trades/pnlPercent/sharpe/sortino/
+     * recoveryFactor) are computed on THIS EXACT point — every point
+     * carries its own numbers, so a non-winning point is fully
+     * debuggable without reconstructing anything from bans.
+     */
+    authorStats: ISimulatorAuthorStat[];
+    /** Whitelist under this point's ban rule. */
+    allowedAuthors: string[];
+    /** Ban list under this point's ban rule (default-ban included). */
+    bannedAuthors: string[];
 }
 /**
  * Trained per-author track record (train = the whole simulated range).
@@ -6328,9 +6341,28 @@ interface ISimulatorAuthorStat {
      * Author is banned under the ban rule these stats were computed
      * with. True when the track is too short to judge (ideas <
      * minAuthorTrack) OR the hit rate is below minAuthorHitRate.
-     * Unproven correctness = banned.
+     * Unproven correctness = banned. The ban does NOT stop the
+     * author's isolated simulation below — a banned author still
+     * trades his whole track in his own slot, so the metrics show
+     * exactly what the ban gives up.
      */
     banned: boolean;
+    /**
+     * Trades of the author's ISOLATED simulation on the rule's grid
+     * point: only his own ideas, his own slot, nobody absorbing him.
+     * The ban is ignored here — even a banned author plays his full
+     * track, so these numbers are his standalone potential, not a
+     * shared-slot artifact.
+     */
+    trades: number;
+    /** Total net PnL of the isolated simulation, percent. */
+    pnlPercent: number;
+    /** Time-based Sharpe of the isolated simulation (daily buckets). */
+    sharpe: number;
+    /** Time-based Sortino of the isolated simulation. */
+    sortino: number;
+    /** Total PnL over max series drawdown of the isolated simulation. */
+    recoveryFactor: number;
 }
 /**
  * Ranking criterion for picking grid winners. "recovery" ranks by
@@ -6341,10 +6373,10 @@ interface ISimulatorAuthorStat {
  */
 type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
 /**
- * Winner of one ranking criterion with its trade list and the author
- * artifact under ITS OWN ban rule. Different criteria may elect
- * points with different ban rules — the whitelist is a property of
- * the winning point, never a global of the run or the bucket.
+ * Winner of one ranking criterion with its trade list. The author
+ * track record — thresholds AND isolated metrics — lives on the
+ * winning point itself: read `report.authorStats` / `allowedAuthors`
+ * / `bannedAuthors`, never duplicated here.
  */
 interface ISimulatorBest {
     /** The ranking criterion this winner belongs to. */
@@ -6353,25 +6385,16 @@ interface ISimulatorBest {
     report: ISimulatorPointReport | null;
     /** Trades of the winning point (empty when report is null). */
     trades: ISimulatorTrade[];
-    /**
-     * Per-author track records under THIS winner's rule. Hits are
-     * counted by the rule's metric and levels, so even the raw
-     * numbers differ between winners with different rules. Empty when
-     * report is null. The same dictionary sits in the bucket's bans
-     * entry carrying the same thresholds/levels.
-     */
-    authorStats: ISimulatorAuthorStat[];
-    /** Whitelist under THIS winner's ban rule. */
-    allowedAuthors: string[];
-    /** Ban list under THIS winner's ban rule. */
-    bannedAuthors: string[];
 }
 /**
  * Trained ban dictionary of ONE rule: pure threshold arithmetic —
  * an author is allowed exactly when his track under this rule's
  * metric reaches minAuthorTrack ideas at minAuthorHitRate quality.
  * No ranking is involved: bans are properties of rules, not of
- * winners.
+ * winners. The per-author isolated metrics are NOT here — they
+ * depend on the whole point (stop/lock/trailing), not just the
+ * rule, so they live on each point's report; a ban entry carries
+ * only the rule identity and the whitelist it produces.
  */
 interface ISimulatorRuleBans {
     /** Grading window of the rule, minutes — the point's own hold. */
@@ -6386,8 +6409,6 @@ interface ISimulatorRuleBans {
     hardStopPercent?: number;
     /** Arming pullback; present on trail rules only. */
     trailingTakePercent?: number;
-    /** Per-author track records under this rule (sorted by ideas). */
-    authorStats: ISimulatorAuthorStat[];
     /** Authors allowed by this rule. */
     allowedAuthors: string[];
     /** Authors banned by this rule (default-ban included). */

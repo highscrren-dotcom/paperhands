@@ -151,7 +151,7 @@ test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictl
     ],
   });
 
-  const stats = Object.fromEntries(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").authorStats.map((s) => [s.author, s]));
+  const stats = Object.fromEntries(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.map((s) => [s.author, s]));
   if (stats.coin.hitRate !== 0.5 || stats.coin.ideas !== 4) {
     fail(`coin must have exactly 0.5 on 4 ideas, got ${JSON.stringify(stats.coin)}`);
     return;
@@ -164,8 +164,8 @@ test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictl
     fail(`quarter (0.25) must be banned, got ${JSON.stringify(stats.quarter)}`);
     return;
   }
-  if (!result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors.includes("coin") || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors.includes("quarter")) {
-    fail(`whitelist must include coin and exclude quarter, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").allowedAuthors)}`);
+  if (!result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("coin") || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("quarter")) {
+    fail(`whitelist must include coin and exclude quarter, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
     return;
   }
 
