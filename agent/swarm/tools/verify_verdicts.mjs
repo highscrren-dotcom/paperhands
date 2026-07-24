@@ -74,7 +74,13 @@ const coinCI = (n) => (n ? 0.5 + 1.96 * Math.sqrt(0.25 / n) : null);
 
 const real = acc((r) => r.verdict);
 const alwaysLong = acc(() => "LONG");
+const alwaysShort = acc(() => "SHORT"); // в медвежьем хвосте — главный конкурент
 const momentum = acc((r) => r.momentum);
+// диагностика двусторонности: точность отдельно по LONG- и SHORT-вердиктам
+const byVerdict = {
+  LONG: acc((r) => (r.verdict === "LONG" ? "LONG" : null)),
+  SHORT: acc((r) => (r.verdict === "SHORT" ? "SHORT" : null)),
+};
 const offsets = [-21, -17, -14, -10, -7, 7, 10, 14, 17, 21]; // суток, фикс
 const shifts = offsets.map((d) => {
   const shifted = new Map(rows.map((r) => [r.T, r.verdict]));
@@ -93,7 +99,8 @@ const out = {
   snapshots: rows.length,
   verdicts: { LONG: rows.filter((r) => r.verdict === "LONG").length, SHORT: rows.filter((r) => r.verdict === "SHORT").length, FLAT: rows.filter((r) => r.verdict === "FLAT").length },
   gate_petr: { ...real, coin95: coinCI(real.n), passed: real.n >= 200 && real.acc > coinCI(real.n) },
-  baselines: { alwaysLong, momentum, shiftNull: { n: shifts.length, min: shifts[0], median: shifts[Math.floor(shifts.length / 2)], max: shifts[shifts.length - 1] } },
+  byVerdict,
+  baselines: { alwaysLong, alwaysShort, momentum, shiftNull: { n: shifts.length, min: shifts[0], median: shifts[Math.floor(shifts.length / 2)], max: shifts[shifts.length - 1] } },
   caveat: "данные 2025 = ретроспективный бэкфилл датасета (survivorship/популярность); подтверждение — на живых месяцах скрейпера",
 };
 console.log(JSON.stringify(out, null, 1));
