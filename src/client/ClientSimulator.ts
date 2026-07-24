@@ -8,6 +8,7 @@ import {
   ISimulatorIdeaProfile,
   ISimulatorMetricReport,
   ISimulator,
+  ISimulatorBanAuthor,
   ISimulatorGridAxes,
   ISimulatorGridPoint,
   ISimulatorParams,
@@ -17,6 +18,7 @@ import {
   ISimulatorTrade,
   SimulatorAuthorMetric,
   SimulatorAuthorRule,
+  SimulatorBanReason,
   SimulatorExitReason,
   SimulatorRankingCriterion,
 } from "../interfaces/Simulator.interface";
@@ -288,6 +290,28 @@ const EMPTY_AUTHOR_METRICS = {
   sortino: 0,
   recoveryFactor: 0,
 } as const;
+
+/**
+ * The arithmetic reason an author passed or failed a ban rule —
+ * written out next to the verdict so a debugger reads both without
+ * recomputing the threshold. The two causes are checked
+ * independently: too few ideas AND/OR too low a hit rate.
+ *
+ * @param stat - Threshold stat under the rule (ideas/hits/hitRate/banned)
+ * @param rule - The ban rule (its two thresholds)
+ * @returns "passed" or which threshold(s) failed
+ */
+const BAN_REASON_FN = (
+  stat: ISimulatorAuthorStat,
+  rule: SimulatorAuthorRule,
+): SimulatorBanReason => {
+  const tooFew = stat.ideas < rule.minAuthorTrack;
+  const tooLow = stat.hitRate < rule.minAuthorHitRate;
+  if (tooFew && tooLow) return "ideas<track & hitRate<rate";
+  if (tooFew) return "ideas<track";
+  if (tooLow) return "hitRate<rate";
+  return "passed";
+};
 
 /**
  * Derives the ban-filter rule from a grid point as a discriminated
@@ -1132,32 +1156,22 @@ const RUN_FN = async (
   // с собственными идентифицирующими полями
   const filterByRule = new Map<
     string,
-    {
-      rule: SimulatorAuthorRule;
-      filter: IAuthorFilterContext;
-      // все точки сетки, делящие ЭТО правило: одно правило служит
-      // многим точкам (close слеп к stop/trailing) — накапливаем
-      // их сюда для affectedPoints словаря банов
-      affectedPoints: ISimulatorGridPoint[];
-    }
+    { rule: SimulatorAuthorRule; filter: IAuthorFilterContext }
   >();
+  const ruleKeyOf = (rule: SimulatorAuthorRule): string =>
+    rule.metric === "reach"
+      ? `reach:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}:${rule.hardStopPercent}`
+      : rule.metric === "retain"
+        ? `retain:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}`
+        : rule.metric === "trail"
+          ? `trail:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.trailingTakePercent}`
+          : `${rule.metric}:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}`;
   const getFilter = (point: ISimulatorGridPoint): IAuthorFilterContext => {
     const rule = AUTHOR_RULE_FN(point);
-    const key =
-      rule.metric === "reach"
-        ? `reach:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}:${rule.hardStopPercent}`
-        : rule.metric === "retain"
-          ? `retain:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}`
-          : rule.metric === "trail"
-            ? `trail:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.trailingTakePercent}`
-            : `${rule.metric}:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}`;
+    const key = ruleKeyOf(rule);
     let entry = filterByRule.get(key);
     if (!entry) {
-      entry = {
-        rule,
-        filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule),
-        affectedPoints: [],
-      };
+      entry = { rule, filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule) };
       filterByRule.set(key, entry);
       if (self.params.callbacks?.onAuthorsTrained) {
         self.params.callbacks?.onAuthorsTrained(
@@ -1167,7 +1181,6 @@ const RUN_FN = async (
         );
       }
     }
-    entry.affectedPoints.push(point);
     return entry.filter;
   };
 
@@ -1268,37 +1281,6 @@ const RUN_FN = async (
     reportsByMetric[report.point.authorMetric].reports.push(report);
   }
 
-  // словари банов — ЧИСТАЯ пороговая арифметика правила: одно правило
-  // -> один словарь, идентификация своими полями, корзина СВОЕЙ
-  // метрики. Метрик авторов тут нет — они зависят от всей точки
-  // (stop/lock/trailing), а не от правила, и живут на report точки
-  for (const { rule, filter, affectedPoints } of filterByRule.values()) {
-    reportsByMetric[rule.metric].bans.push({
-      banKey: {
-        holdMinutes: rule.holdMinutes,
-        minAuthorTrack: rule.minAuthorTrack,
-        minAuthorHitRate: rule.minAuthorHitRate,
-        ...(rule.metric === "reach"
-          ? {
-              profitLockPercent: rule.profitLockPercent,
-              hardStopPercent: rule.hardStopPercent,
-            }
-          : rule.metric === "retain"
-            ? { profitLockPercent: rule.profitLockPercent }
-            : rule.metric === "trail"
-              ? { trailingTakePercent: rule.trailingTakePercent }
-              : {}),
-      },
-      affectedPoints,
-      allowedAuthors: filter.stats
-        .filter(({ banned }) => !banned)
-        .map(({ author }) => author),
-      bannedAuthors: filter.stats
-        .filter(({ banned }) => banned)
-        .map(({ author }) => author),
-    });
-  }
-
   // рейтинги — ВНУТРИ каждой корзины: анти-флюк порог и победители
   // пометричны, кросс-метричного турнира нет
   for (const metric of Object.keys(reportsByMetric) as SimulatorAuthorMetric[]) {
@@ -1335,6 +1317,52 @@ const RUN_FN = async (
     // порядок точек корзины — контракт потребителя run(): критерий
     // задаёт схема (reportOrder), компаратор — защищённый
     bucket.reports.sort(byRankingDesc(orderValue));
+  }
+
+  // словари банов — ЧИСТАЯ пороговая арифметика правила: одно правило
+  // -> один словарь. Строится ПОСЛЕ сортировки корзин, чтобы
+  // affectedPointIndexes ссылались на финальный порядок reports[].
+  // Метрик авторов тут нет — они зависят от всей точки, живут на
+  // report; здесь только вердикт правила и его причина
+  for (const { rule, filter } of filterByRule.values()) {
+    const bucket = reportsByMetric[rule.metric];
+    // индексы точек, чьё правило совпадает с этим — джойн по ключу
+    const affectedPointIndexes = bucket.reports
+      .map((report, index) =>
+        ruleKeyOf(AUTHOR_RULE_FN(report.point)) === ruleKeyOf(rule)
+          ? index
+          : -1,
+      )
+      .filter((index) => index >= 0);
+    const authors: ISimulatorBanAuthor[] = filter.stats.map((stat) => ({
+      author: stat.author,
+      ideas: stat.ideas,
+      hits: stat.hits,
+      hitRate: stat.hitRate,
+      banned: stat.banned,
+      reason: BAN_REASON_FN(stat, rule),
+    }));
+    bucket.bans.push({
+      banKey: {
+        holdMinutes: rule.holdMinutes,
+        minAuthorTrack: rule.minAuthorTrack,
+        minAuthorHitRate: rule.minAuthorHitRate,
+        ...(rule.metric === "reach"
+          ? {
+              profitLockPercent: rule.profitLockPercent,
+              hardStopPercent: rule.hardStopPercent,
+            }
+          : rule.metric === "retain"
+            ? { profitLockPercent: rule.profitLockPercent }
+            : rule.metric === "trail"
+              ? { trailingTakePercent: rule.trailingTakePercent }
+              : {}),
+      },
+      affectedPointIndexes,
+      authors,
+      allowedCount: authors.filter(({ banned }) => !banned).length,
+      bannedCount: authors.filter(({ banned }) => banned).length,
+    });
   }
 
   const result: ISimulatorResult = {

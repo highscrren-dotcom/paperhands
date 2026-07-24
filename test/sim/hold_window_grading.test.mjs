@@ -99,13 +99,14 @@ test("SIM: author metrics are graded inside each point's own hold window — two
   const longPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 720);
   const shortStat = shortPoint.authorStats.find(({ author }) => author === "sprinter");
   const longStat = longPoint.authorStats.find(({ author }) => author === "sprinter");
+  const verdictOf = (ban) => ban.authors.find(({ author }) => author === "sprinter");
   // hold=120: close окна +2% — 5/5, допуск
-  if (shortStat.hits !== 5 || shortStat.banned || !shortBan.allowedAuthors.includes("sprinter")) {
+  if (shortStat.hits !== 5 || shortStat.banned || verdictOf(shortBan).banned !== false) {
     fail(`120m window must credit the sprinter 5/5, got ${JSON.stringify(shortStat)}`);
     return;
   }
-  // hold=720: close окна -3% — 0/5, бан
-  if (longStat.hits !== 0 || !longStat.banned || !longBan.bannedAuthors.includes("sprinter")) {
+  // hold=720: close окна -3% — 0/5, бан по низкому hitRate
+  if (longStat.hits !== 0 || !longStat.banned || verdictOf(longBan).reason !== "hitRate<rate") {
     fail(`720m window must ban the sprinter 0/5, got ${JSON.stringify(longStat)}`);
     return;
   }

@@ -148,12 +148,20 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
   const reachBan = result.reports.reach.bans.find(
     ({ banKey }) => banKey.minAuthorTrack === 5,
   );
-  if (!closeBan || !closeBan.bannedAuthors.includes("spiker") || closeBan.allowedAuthors.length !== 0) {
+  const allowedOf = (ban) => ban.authors.filter(({ banned }) => !banned).map(({ author }) => author);
+  const bannedOf = (ban) => ban.authors.filter(({ banned }) => banned).map(({ author }) => author);
+  if (!closeBan || !bannedOf(closeBan).includes("spiker") || closeBan.allowedCount !== 0) {
     fail(`close bans dictionary must ban the spiker, got ${JSON.stringify(closeBan)}`);
     return;
   }
-  if (!reachBan || JSON.stringify(reachBan.allowedAuthors) !== JSON.stringify(["spiker"]) || reachBan.banKey.profitLockPercent !== 2.5) {
+  if (!reachBan || JSON.stringify(allowedOf(reachBan)) !== JSON.stringify(["spiker"]) || reachBan.banKey.profitLockPercent !== 2.5) {
     fail(`reach bans dictionary must allow the spiker and carry its lock level, got ${JSON.stringify(reachBan)}`);
+    return;
+  }
+  // причина бана спайкера под close — низкий hitRate (5 идей >= track 5)
+  const spikerCloseVerdict = closeBan.authors.find(({ author }) => author === "spiker");
+  if (spikerCloseVerdict.reason !== "hitRate<rate") {
+    fail(`spiker's close ban reason must be hitRate<rate, got ${spikerCloseVerdict.reason}`);
     return;
   }
 

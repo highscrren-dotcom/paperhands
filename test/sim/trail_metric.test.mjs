@@ -125,9 +125,23 @@ test("SIM: trail metric grades trailing-arm reachability — exact touch hits, a
     fail(`trail banKey must not carry lock/stop, got ${JSON.stringify(ban.banKey)}`);
     return;
   }
-  // affectedPoints несёт полную точку, делящую это правило
-  if (ban.affectedPoints.length !== 1 || ban.affectedPoints[0].trailingTakePercent !== 2) {
-    fail(`trail bans must list its affected point, got ${JSON.stringify(ban.affectedPoints)}`);
+  // affectedPointIndexes индексируют reports[] правила: джойн находит
+  // точку по её различающим осям (stop/lock), они на самом report
+  if (ban.affectedPointIndexes.length !== 1) {
+    fail(`trail rule must affect exactly one point, got ${JSON.stringify(ban.affectedPointIndexes)}`);
+    return;
+  }
+  const apPoint = result.reports.trail.reports[ban.affectedPointIndexes[0]]?.point;
+  if (!apPoint || apPoint.hardStopPercent !== 50 || apPoint.profitLockPercent !== 0) {
+    fail(`affectedPointIndex must resolve to the stop=50/lock=0 point, got ${JSON.stringify(apPoint)}`);
+    return;
+  }
+  // under (id 20..24) забанен правилом — вердикт с причиной прямо в
+  // authors[]; absorbedIdeaIds на уровне правила больше нет (бан не
+  // исполняет сделок — состав поглощённых идей это свойство точки)
+  const underAuthor = ban.authors.find(({ author }) => author === "under");
+  if (!underAuthor?.banned || !underAuthor.reason.includes("hitRate<rate")) {
+    fail(`under must be banned by hitRate under the trail rule, got ${JSON.stringify(underAuthor)}`);
     return;
   }
 

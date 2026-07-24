@@ -533,30 +533,71 @@ export interface ISimulatorBanKey {
 }
 
 /**
+ * Why an author passed or failed ONE ban rule — the verdict and the
+ * arithmetic reason next to it, so the debugger reads both without
+ * recomputing the threshold in his head. Under a track>=N, rate>=R
+ * rule a ban can come from three distinct causes, invisible in a
+ * bare name.
+ */
+export type SimulatorBanReason =
+  /** ideas >= minAuthorTrack AND hitRate >= minAuthorHitRate. */
+  | "passed"
+  /** ideas < minAuthorTrack only. */
+  | "ideas<track"
+  /** hitRate < minAuthorHitRate only. */
+  | "hitRate<rate"
+  /** ideas < minAuthorTrack AND hitRate < minAuthorHitRate. */
+  | "ideas<track & hitRate<rate";
+
+/**
+ * One author's verdict under ONE ban rule: the raw track (ideas,
+ * hits, hitRate), the banned flag, and the arithmetic reason. No
+ * per-author PnL metrics here — those depend on the whole point and
+ * live on each point's report; a ban entry is pure rule arithmetic.
+ */
+export interface ISimulatorBanAuthor {
+  /** Author login on the source platform. */
+  author: string;
+  /** Directional ideas with a KNOWN outcome under this rule's window. */
+  ideas: number;
+  /** Hits under this rule's metric. */
+  hits: number;
+  /** hits / ideas, 0..1; zero when the author has no known outcomes. */
+  hitRate: number;
+  /** Banned under this rule (default-ban of unproven authors). */
+  banned: boolean;
+  /** Which threshold(s) the author failed, or "passed". */
+  reason: SimulatorBanReason;
+}
+
+/**
  * Trained ban dictionary of ONE rule: pure threshold arithmetic —
  * an author is allowed exactly when his track under this rule's
  * metric reaches minAuthorTrack ideas at minAuthorHitRate quality.
  * No ranking is involved: bans are properties of rules, not of
- * winners. The per-author isolated metrics are NOT here — they
- * depend on the whole point (stop/lock/trailing), not just the
- * rule, so they live on each point's report; a ban entry carries
- * only the rule identity (banKey), the grid points that share it,
- * and the whitelist it produces.
+ * winners. The per-author PnL metrics are NOT here — they depend on
+ * the whole point (stop/lock/trailing), not just the rule, so they
+ * live on each point's report; a ban entry carries only the rule
+ * identity (banKey), the indexes of the points that share it, and
+ * the author verdicts it produces.
  */
 export interface ISimulatorRuleBans {
   /** The rule's identity — all fields that define this ban. */
   banKey: ISimulatorBanKey;
   /**
-   * Grid points that trained under this exact rule. One rule serves
-   * many points (a close rule is blind to stop/trailing), so this
-   * lists every point the same ban whitelist applies to — the full
-   * points, not just the differing axes.
+   * Indexes into this bucket's reports[] of the points that trained
+   * under this exact rule. One rule serves many points (a close rule
+   * is blind to stop/trailing) — a cheap join back to the full
+   * points with zero duplication; indexes cannot drift from
+   * reports[] the way copied values could.
    */
-  affectedPoints: ISimulatorGridPoint[];
-  /** Authors allowed by this rule. */
-  allowedAuthors: string[];
-  /** Authors banned by this rule (default-ban included). */
-  bannedAuthors: string[];
+  affectedPointIndexes: number[];
+  /** Every author's verdict under this rule (allowed and banned). */
+  authors: ISimulatorBanAuthor[];
+  /** Count of allowed authors — the summary without scanning authors[]. */
+  allowedCount: number;
+  /** Count of banned authors — the summary without scanning authors[]. */
+  bannedCount: number;
 }
 
 /**
