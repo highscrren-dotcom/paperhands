@@ -1,0 +1,107 @@
+{
+ "admit": {
+  "minMonths": 3,
+  "minWinRate": 0.5
+ },
+ "months": [
+  0,
+  8
+ ],
+ "admitted": [
+  {
+   "author": "TheTraderPhil",
+   "months": 8,
+   "wins": 5
+  },
+  {
+   "author": "EtherNasyonaL",
+   "months": 7,
+   "wins": 5
+  },
+  {
+   "author": "melikatrader94",
+   "months": 5,
+   "wins": 5
+  },
+  {
+   "author": "mrsignalll",
+   "months": 5,
+   "wins": 5
+  },
+  {
+   "author": "CobraVanguard",
+   "months": 6,
+   "wins": 3
+  },
+  {
+   "author": "XTrendSpeed",
+   "months": 6,
+   "wins": 3
+  },
+  {
+   "author": "BitCoinGuide",
+   "months": 5,
+   "wins": 3
+  },
+  {
+   "author": "CryptoSkullSignal",
+   "months": 5,
+   "wins": 3
+  },
+  {
+   "author": "JacksonJoel",
+   "months": 5,
+   "wins": 3
+  },
+  {
+   "author": "InvestingScope",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "ProfittoPath",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "Apex_Legends",
+   "months": 3,
+   "wins": 3
+  },
+  {
+   "author": "ProjectSyndicate",
+   "months": 3,
+   "wins": 3
+  },
+  {
+   "author": "bryandowningqln",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "davidjulien369",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "TheCryptagon",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "ThinkFastTrades",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "DEXWireNews",
+   "months": 3,
+   "wins": 2
+  },
+  {
+   "author": "FxPro",
+   "months": 3,
+   "wins": 2
+  }
+ ]
+}
