@@ -1,0 +1,127 @@
+{
+ "admit": {
+  "minMonths": 3,
+  "minWinRate": 0.5
+ },
+ "months": [
+  0,
+  11
+ ],
+ "admitted": [
+  {
+   "author": "TheTraderPhil",
+   "months": 10,
+   "wins": 7
+  },
+  {
+   "author": "melikatrader94",
+   "months": 7,
+   "wins": 7
+  },
+  {
+   "author": "mrsignalll",
+   "months": 7,
+   "wins": 7
+  },
+  {
+   "author": "EtherNasyonaL",
+   "months": 8,
+   "wins": 5
+  },
+  {
+   "author": "Apex_Legends",
+   "months": 5,
+   "wins": 5
+  },
+  {
+   "author": "CryptoSkullSignal",
+   "months": 8,
+   "wins": 4
+  },
+  {
+   "author": "BitCoinGuide",
+   "months": 7,
+   "wins": 4
+  },
+  {
+   "author": "JacksonJoel",
+   "months": 6,
+   "wins": 4
+  },
+  {
+   "author": "TradingShot",
+   "months": 4,
+   "wins": 4
+  },
+  {
+   "author": "Tradu",
+   "months": 5,
+   "wins": 3
+  },
+  {
+   "author": "DEXWireNews",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "FxPro",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "InvestingScope",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "ProfittoPath",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "ProjectSyndicate",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "The-Thief",
+   "months": 4,
+   "wins": 3
+  },
+  {
+   "author": "bryandowningqln",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "davidjulien369",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "Rowland-Australia",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "TheCryptagon",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "VasilyTrader",
+   "months": 4,
+   "wins": 2
+  },
+  {
+   "author": "EliteTradingSignals",
+   "months": 3,
+   "wins": 2
+  },
+  {
+   "author": "Mrbigman",
+   "months": 3,
+   "wins": 2
+  }
+ ]
+}
