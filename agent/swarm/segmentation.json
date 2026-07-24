@@ -1,0 +1,106 @@
+{
+ "what": "firstSeen-сегментация BTC-2025 фида (backfill = firstSeen > ts+24h); кавета к этапам 2-6, контракт assets не затронут",
+ "months": {
+  "2025-01": {
+   "n": 146,
+   "backfill": 146,
+   "long": 89,
+   "short": 29,
+   "neutral": 28,
+   "backfillShare": 1.0
+  },
+  "2025-02": {
+   "n": 131,
+   "backfill": 131,
+   "long": 95,
+   "short": 17,
+   "neutral": 19,
+   "backfillShare": 1.0
+  },
+  "2025-03": {
+   "n": 138,
+   "backfill": 138,
+   "long": 92,
+   "short": 31,
+   "neutral": 15,
+   "backfillShare": 1.0
+  },
+  "2025-04": {
+   "n": 136,
+   "backfill": 136,
+   "long": 98,
+   "short": 22,
+   "neutral": 16,
+   "backfillShare": 1.0
+  },
+  "2025-05": {
+   "n": 128,
+   "backfill": 128,
+   "long": 87,
+   "short": 33,
+   "neutral": 8,
+   "backfillShare": 1.0
+  },
+  "2025-06": {
+   "n": 129,
+   "backfill": 129,
+   "long": 83,
+   "short": 26,
+   "neutral": 20,
+   "backfillShare": 1.0
+  },
+  "2025-07": {
+   "n": 121,
+   "backfill": 121,
+   "long": 86,
+   "short": 21,
+   "neutral": 14,
+   "backfillShare": 1.0
+  },
+  "2025-08": {
+   "n": 145,
+   "backfill": 145,
+   "long": 89,
+   "short": 44,
+   "neutral": 12,
+   "backfillShare": 1.0
+  },
+  "2025-09": {
+   "n": 132,
+   "backfill": 132,
+   "long": 70,
+   "short": 44,
+   "neutral": 18,
+   "backfillShare": 1.0
+  },
+  "2025-10": {
+   "n": 171,
+   "backfill": 171,
+   "long": 99,
+   "short": 52,
+   "neutral": 20,
+   "backfillShare": 1.0
+  },
+  "2025-11": {
+   "n": 163,
+   "backfill": 163,
+   "long": 67,
+   "short": 72,
+   "neutral": 24,
+   "backfillShare": 1.0
+  },
+  "2025-12": {
+   "n": 143,
+   "backfill": 143,
+   "long": 58,
+   "short": 64,
+   "neutral": 21,
+   "backfillShare": 1.0
+  }
+ },
+ "total": {
+  "n": 1683,
+  "backfill": 1683,
+  "backfillShare": 1.0
+ }
+}

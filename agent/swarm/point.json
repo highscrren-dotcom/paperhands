@@ -1,0 +1,10 @@
+{
+  "_comment": "Этап 1 PLAN-petr: точка канонизируется ОДИН раз до прогонов. authorMetric=null до калибровочного эксперимента (янв-мар 2025, все пять метрик параллельно); после фиксации смена любого поля = перегон всех 12 месяцев.",
+  "hardStopPercent": 3,
+  "trailingTakePercent": 4,
+  "holdMinutes": 4320,
+  "minAuthorTrack": 2,
+  "minAuthorHitRate": 0.5,
+  "profitLockPercent": 0,
+  "authorMetric": null
+}
