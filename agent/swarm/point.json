@@ -1,10 +1,10 @@
 {
-  "_comment": "Этап 1 PLAN-petr: точка канонизируется ОДИН раз до прогонов. authorMetric=null до калибровочного эксперимента (янв-мар 2025, все пять метрик параллельно); после фиксации смена любого поля = перегон всех 12 месяцев.",
+  "_comment": "Этап 1 PLAN-petr: точка канонизирована 24.07.2026 (session 20). authorMetric=close по калибровке янв-мар 2025 (правило объявлено ДО прогона: (а) стабильность winners — trail выбыл, разброс 6 > среднего 5.3; (б) OOS-март по треку янв-фев: close −7.49% > pnl −18.95%). reach/retain при lock=0 исключены движком (BREAKING §6). Калибровочные месяцы сгорели для walk-forward теста. Смена ЛЮБОГО поля = перегон всех 12 месяцев.",
   "hardStopPercent": 3,
   "trailingTakePercent": 4,
   "holdMinutes": 4320,
   "minAuthorTrack": 2,
   "minAuthorHitRate": 0.5,
   "profitLockPercent": 0,
-  "authorMetric": null
+  "authorMetric": "close"
 }
