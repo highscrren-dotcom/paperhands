@@ -1,4 +1,4 @@
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../../build/index.mjs";
+import { addExchangeSchema, addSimulatorSchema, Simulator } from "backtest-kit";
 import { singleshot } from "functools-kit";
 import { readFileSync } from "fs";
 import ccxt from "ccxt";
