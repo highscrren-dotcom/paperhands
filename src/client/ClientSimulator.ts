@@ -9,6 +9,7 @@ import {
   ISimulatorMetricReport,
   ISimulator,
   ISimulatorBanAuthor,
+  ISimulatorBanKey,
   ISimulatorGridAxes,
   ISimulatorGridPoint,
   ISimulatorParams,
@@ -512,6 +513,7 @@ const TRAIN_AUTHOR_FILTER_FN = (
     byAuthor.set(profile.idea.author, stat);
   }
   const stats: ISimulatorAuthorStat[] = [...byAuthor].map(([author, stat]) => ({
+    holdMinutes: rule.holdMinutes,
     author,
     ideas: stat.ideas,
     hits: stat.hits,
@@ -557,11 +559,13 @@ const FREEZE_AUTHOR_FILTER_FN = (
   profiles: ISimulatorIdeaProfile[],
   ideas: ISimulatorIdea[],
   authorStats: ISimulatorAuthorStat[],
+  holdMinutes: number,
   minAuthorTrack: number,
   minAuthorHitRate: number,
 ): IAuthorFilterContext => {
   const stats: ISimulatorAuthorStat[] = authorStats.map(
     ({ author, ideas: n, hits }) => ({
+      holdMinutes,
       author,
       ideas: n,
       hits,
@@ -706,6 +710,7 @@ const SIMULATE_TRADE_FN = (
 
   return {
     ideaId: profile.idea.id,
+    symbol: profile.idea.symbol,
     author: profile.idea.author,
     direction: profile.idea.direction,
     entryTimestamp: profile.entryTimestamp,
@@ -1337,7 +1342,25 @@ const RUN_FN = async (
           : -1,
       )
       .filter((index) => index >= 0);
+    const banKey: ISimulatorBanKey = {
+      holdMinutes: rule.holdMinutes,
+      minAuthorTrack: rule.minAuthorTrack,
+      minAuthorHitRate: rule.minAuthorHitRate,
+      ...(rule.metric === "reach"
+        ? {
+            profitLockPercent: rule.profitLockPercent,
+            hardStopPercent: rule.hardStopPercent,
+          }
+        : rule.metric === "retain"
+          ? { profitLockPercent: rule.profitLockPercent }
+          : rule.metric === "trail"
+            ? { trailingTakePercent: rule.trailingTakePercent }
+            : {}),
+    };
+    // banKey дублируется в каждую запись автора: grep по автору сразу
+    // видит правило, без джойна к родителю
     const authors: ISimulatorBanAuthor[] = filter.stats.map((stat) => ({
+      banKey,
       author: stat.author,
       ideas: stat.ideas,
       hits: stat.hits,
@@ -1346,21 +1369,7 @@ const RUN_FN = async (
       reasons: BAN_REASONS_FN(stat, rule),
     }));
     bucket.bans.push({
-      banKey: {
-        holdMinutes: rule.holdMinutes,
-        minAuthorTrack: rule.minAuthorTrack,
-        minAuthorHitRate: rule.minAuthorHitRate,
-        ...(rule.metric === "reach"
-          ? {
-              profitLockPercent: rule.profitLockPercent,
-              hardStopPercent: rule.hardStopPercent,
-            }
-          : rule.metric === "retain"
-            ? { profitLockPercent: rule.profitLockPercent }
-            : rule.metric === "trail"
-              ? { trailingTakePercent: rule.trailingTakePercent }
-              : {}),
-      },
+      banKey,
       affectedPointIndexes,
       authors,
       allowedCount: authors.filter(({ banned }) => !banned).length,
@@ -1450,6 +1459,7 @@ const TEST_FN = async (
     profiles,
     directional,
     authorStats,
+    point.holdMinutes,
     point.minAuthorTrack,
     point.minAuthorHitRate,
   );

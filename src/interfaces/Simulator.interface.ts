@@ -362,6 +362,13 @@ export interface ISimulatorTrade {
   /** Identifier of the idea that triggered the trade. */
   ideaId: number;
   /**
+   * Trading pair of the trade — carried on the trade itself so a
+   * multi-symbol dump (score over many tickers concatenates
+   * per-symbol runs) stays grep-distinguishable: trades of different
+   * symbols never blur into one another.
+   */
+  symbol: string;
+  /**
    * Author of the triggering idea — carried on the trade itself so
    * per-author analysis (score, voting, top performers) reads
    * straight off the artifact, without joining ideaId back to the
@@ -476,6 +483,14 @@ export interface ISimulatorPointReport {
  * banned flag is relative to the rule of a concrete grid point.
  */
 export interface ISimulatorAuthorStat {
+  /**
+   * Grading window of the point this stat was computed on — the
+   * point's holdMinutes, duplicated onto the author line so a grep by
+   * author over per-point authorStats shows which window (and thus
+   * which point family) these hits belong to, without resolving the
+   * parent point.
+   */
+  holdMinutes: number;
   /** Author login on the source platform. */
   author: string;
   /** Directional ideas with a KNOWN outcome (truncated ones excluded). */
@@ -583,6 +598,13 @@ export type SimulatorBanReason =
  * live on each point's report; a ban entry is pure rule arithmetic.
  */
 export interface ISimulatorBanAuthor {
+  /**
+   * The rule this verdict belongs to — duplicated from the parent
+   * bans entry onto every author so a grep/jq over authors by name
+   * across many monthly files sees the rule (holdMinutes, thresholds,
+   * levels) right on the line, no join to the parent banKey.
+   */
+  banKey: ISimulatorBanKey;
   /** Author login on the source platform. */
   author: string;
   /** Directional ideas with a KNOWN outcome under this rule's window. */
