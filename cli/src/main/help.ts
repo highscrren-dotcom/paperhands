@@ -21,8 +21,7 @@ Modes:
   --dump                Fetch and save raw OHLCV candles
   --pnldebug            Simulate PnL per minute for a given entry price and direction
   --brokerdebug         Fire a single broker commit against the live broker adapter
-  --simulator <ideas.jsonl> [config.json]  Feasibility probe over crowd ideas: is there a profitable corridor at all
-  --tune      <ideas.jsonl> <config.json>   ONE out-of-sample shot of a frozen training artifact (point + author track)
+  --simulator <ideas.jsonl> [config.json]  Grid sweep over crowd ideas: per-point metrics + raw author tracks
   --flush  <entry...>   Delete report/log/markdown/agent folders from strategy dump dir
   --init                Scaffold a new project in the current directory
   --docker              Scaffold a Docker workspace for running strategies in a container
@@ -160,47 +159,19 @@ Simulator flags (--simulator):
   No config -> an empty object is used and the engine defaults apply (the full
   default grid axes and reportOrder "sharpe" of the connection service).
 
-  A FEASIBILITY PROBE, not an out-of-sample shot (that is --tune): the grid from
-  the config (or the engine default) answers one question — does the feed contain
-  a profitable corridor at all. One candle pass per idea to the grid's longest
-  hold, flood dedupe (one idea per author per direction per 8h), default-ban
-  author filter graded inside each point's own hold window, time-based
-  Sharpe/Sortino, per-metric buckets with their own ranking winners and ban
-  dictionaries. Ideas of other symbols are filtered out — one shared feed serves
-  any --symbol.
+  A GRID SWEEP: the grid from the config (or the engine default) is evaluated
+  per point. One candle pass per idea to the grid's longest hold, flood dedupe
+  (one idea per author per direction per 8h), EVERY author traded (no ban — the
+  engine reports the raw per-author track graded inside each point's own hold
+  window; who to trust is userspace), time-based Sharpe/Sortino, per-metric
+  buckets with their own ranking winners and author tracks. Ideas of other
+  symbols are filtered out — one shared feed serves any --symbol.
 
   No output flag → print the Markdown summary to stdout. With --verbose every
   simulator lifecycle callback (onProgress, onIdeas, onProfiles, onAuthorsTrained,
   onGridPoint, onRanking, onDone) is logged to the console as it fires.
 
   Module file ./modules/simulator.module is loaded automatically if it exists
-  (register your exchange there); without it CCXT Binance is used by default.
-
-Tune flags (--tune):
-
-  --symbol      <string>   Trading pair to test (default: BTCUSDT)
-  --exchange    <string>   Exchange name (default: first registered)
-  --output      <string>   Output file base name (default: tune_{SYMBOL}_{TIMESTAMP})
-  --json                   Save the full ISimulatorTestResult to ./dump/<output>.json
-  --markdown               Save the out-of-sample report to ./dump/<output>.md
-  --verbose                Log simulator lifecycle callbacks to the console
-
-  Positionals: path to an ideas .jsonl file (same shape and validation as
-  --simulator) and a config .json carrying the FROZEN training artifact:
-  { "point": ISimulatorGridPoint, "authorStats": [{ "author", "ideas", "hits" }],
-  "gridAxes"?, "reportOrder"? }. The point and authorStats are REQUIRED — without
-  them there is nothing to test and the run aborts with an error. gridAxes are
-  optional: by default they mirror the frozen point one value per axis (the grid
-  is inert for a test).
-
-  ONE OUT-OF-SAMPLE SHOT, no training: the CLI never runs the sweep — pick your
-  candidate elsewhere (a Simulator.run of your own), freeze its point and raw
-  author track record into the config, and fire it once here via Simulator.test.
-  Bans are re-derived from the frozen numbers under the point's rule; authors
-  unseen in the config are banned by default. The report carries the result with
-  the trade list and the frozen track record with re-derived ban flags.
-
-  Module file ./modules/tune.module is loaded automatically if it exists
   (register your exchange there); without it CCXT Binance is used by default.
 
 Flush flags (--flush):
@@ -237,7 +208,6 @@ Module hooks (loaded automatically by each mode):
   modules/pnldebug.module   --pnldebug      Exchange schema for PnL debug runs
   modules/brokerdebug.module  --brokerdebug   Broker adapter used for broker commit testing
   modules/simulator.module  --simulator     Exchange schema for the crowd-ideas feasibility probe
-  modules/tune.module       --tune          Exchange schema for the walk-forward parameter search
 
   --flush has no associated module. It only removes dump subdirectories.
 
@@ -268,8 +238,6 @@ Examples:
   node ${ENTRY_PATH} --brokerdebug --commit partial-profit --symbol ETHUSDT
   node ${ENTRY_PATH} --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
   node ${ENTRY_PATH} --simulator --symbol BTCUSDT --json --output jun_2026_probe ./assets/tv-ideas.normalized.jsonl ./assets/probe.config.json
-  node ${ENTRY_PATH} --tune --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
-  node ${ENTRY_PATH} --tune --symbol BTCUSDT --markdown --output jun_2026_tune ./assets/tv-ideas.normalized.jsonl ./assets/tune.config.json
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts ./content/feb_2026.strategy/feb_2026.test.ts
   node ${ENTRY_PATH} --init --output my-trading-bot

@@ -161,10 +161,6 @@ export const getArgs = singleshot(() => {
         type: "boolean",
         default: false,
       },
-      tune: {
-        type: "boolean",
-        default: false,
-      },
       commit: {
         type: "string",
         default: "",

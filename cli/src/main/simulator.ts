@@ -79,12 +79,12 @@ const toMarkdown = (result: ISimulatorResult): string => {
   lines.push(`| Profitable corridor | ${profitable} / ${allReports.length} grid points |`);
   lines.push(`| Hold minutes avg / p95 / p99 | ${result.avgHoldMinutes.toFixed(0)} / ${result.p95HoldMinutes} / ${result.p99HoldMinutes} |`);
   // каждая метрика — самодостаточная корзина: свои победители и
-  // свои словари банов, между собой не склеиваются
+  // свои author tracks, между собой не склеиваются
   for (const [metric, bucket] of buckets) {
     lines.push("");
     lines.push(`## Metric: ${metric}`);
     lines.push("");
-    lines.push(`| Criterion | Stop% | Hold | Track | HitRate | Trades | PNL% | WinRate | Sharpe | Sortino |`);
+    lines.push(`| Criterion | Stop% | Trail% | Hold | Lock% | Trades | PNL% | WinRate | Sharpe | Sortino |`);
     lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
     for (const best of bucket.best) {
       if (!best.report) {
@@ -93,21 +93,24 @@ const toMarkdown = (result: ISimulatorResult): string => {
       }
       const { point } = best.report;
       lines.push(
-        `| ${best.criterion} | ${point.hardStopPercent} | ${point.holdMinutes / 60}h | ${point.minAuthorTrack} | ${point.minAuthorHitRate} | ` +
-          `${best.report.trades} | ${best.report.totalPnlPercent.toFixed(2)}% | ${(best.report.winRate * 100).toFixed(0)}% | ${best.report.sharpe.toFixed(2)} | ${best.report.sortino.toFixed(2)} |`,
+        `| ${best.criterion} | ${point.hardStopPercent} | ${point.trailingTakePercent} | ${point.holdMinutes / 60}h | ${point.profitLockPercent} | ` +
+          `${best.report.tradesList.length} | ${best.report.totalPnlPercent.toFixed(2)}% | ${(best.report.winRate * 100).toFixed(0)}% | ${fmtSimRatio(best.report.sharpe)} | ${fmtSimRatio(best.report.sortino)} |`,
       );
     }
-    const sharpeBest = bucket.best.find(({ criterion }) => criterion === "sharpe");
-    const allowed = (sharpeBest?.report?.authorStats ?? []).filter(({ banned }) => !banned);
+    // сырой author track правил этой корзины: userspace решает,
+    // кому верить (порога/бана нет). Топ по hitRate
+    const tracks = [...bucket.tracks]
+      .filter(({ ideas }) => ideas > 0)
+      .sort((a, b) => b.hitRate - a.hitRate || b.ideas - a.ideas)
+      .slice(0, 20);
     lines.push("");
-    lines.push(`### Allowed authors — isolated metrics on the sharpe winner (${allowed.length}, banned in --json)`);
+    lines.push(`### Author tracks — raw ideas/hits/hitRate per rule (top ${tracks.length} by hitRate; full set in --json)`);
     lines.push("");
-    lines.push(`| Author | Ideas | Hits | HitRate | Trades | PNL% | Sharpe | Sortino | Recovery |`);
-    lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
-    for (const stat of allowed) {
+    lines.push(`| Author | Hold | Lock% | Ideas | Hits | HitRate |`);
+    lines.push(`| --- | --- | --- | --- | --- | --- |`);
+    for (const t of tracks) {
       lines.push(
-        `| ${stat.author} | ${stat.ideas} | ${stat.hits} | ${(stat.hitRate * 100).toFixed(0)}% | ` +
-          `${stat.trades} | ${stat.pnlPercent.toFixed(2)}% | ${fmtSimRatio(stat.sharpe)} | ${fmtSimRatio(stat.sortino)} | ${fmtSimRatio(stat.recoveryFactor)} |`,
+        `| ${t.author} | ${t.holdMinutes / 60}h | ${t.profitLockPercent} | ${t.ideas} | ${t.hits} | ${(t.hitRate * 100).toFixed(0)}% |`,
       );
     }
   }
@@ -265,22 +268,20 @@ export const main = async () => {
           console.log("onProfiles", { symbol, profiles: profiles.length, truncatedCount });
         }
       },
-      onAuthorsTrained: (symbol, stats, bannedIdeas) => {
+      onAuthorsTrained: (symbol, tracks) => {
         if (values.verbose) {
           console.log("onAuthorsTrained", {
             symbol,
-            authors: stats.length,
-            banned: stats.filter(({ banned }) => banned).length,
-            bannedIdeas,
+            authors: tracks.length,
           });
         }
       },
-      onGridPoint: (symbol, report) => {
+      onGridPoint: (symbol, report, trades) => {
         if (values.verbose) {
           console.log("onGridPoint", {
             symbol,
             point: report.point,
-            trades: report.trades,
+            trades: trades.length,
             pnl: +report.totalPnlPercent.toFixed(2),
             sharpe: +report.sharpe.toFixed(2),
           });
@@ -301,7 +302,7 @@ export const main = async () => {
           console.log("onDone", {
             symbol,
             reports: Object.values(result.reports).flatMap((bucket) => bucket.reports).length,
-            bans: Object.values(result.reports).flatMap((bucket) => bucket.bans).length,
+            tracks: Object.values(result.reports).flatMap((bucket) => bucket.tracks).length,
           });
         }
       },
