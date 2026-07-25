@@ -60,7 +60,6 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
       // ПЕРЕПРЫГНУТЬ, если берёт лучшую, а не первую
       holdMinutes: [120, 60],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
   });
 
@@ -72,7 +71,7 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
 
   // предусловие: обе точки ниже порога 8 сделок, и первая по сетке
   // (hold=120) объективно хуже
-  const byHold = new Map(Object.values(result.reports).flatMap((b) => b.reports).map((r) => [r.point.holdMinutes, r]));
+  const byHold = new Map(result.reports.reports.map((r) => [r.point.holdMinutes, r]));
   const long = byHold.get(120);
   const short = byHold.get(60);
   if (long.tradesList.length !== 5 || short.tradesList.length !== 5) {
@@ -84,7 +83,7 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
     return;
   }
 
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (best.report.point.holdMinutes !== 60) {
       fail(`${best.criterion} fallback must pick the best point (hold=60), got hold=${best.report.point.holdMinutes}`);
       return;

@@ -36,26 +36,23 @@ const METHOD_NAME_RUN = "Simulator.run";
  * Author grading (trained on the whole run range, reported as raw
  * tracks — ideas/hits/hitRate per rule; who to trust is userspace,
  * no threshold): truncated profiles prove nothing.
- * - authorMetric — hit definition, ALWAYS graded inside the point's
- *   own hold window: "close" = window close (lock/stop do NOT
- *   affect grading), "reach" = lock-reachability against the
- *   point's lock/stop, "retain" = fixation above the point's lock
- *   (median move strictly above profitLockPercent), "pnl" = fixed
- *   +1% MFE threshold, "trail" = arming reachability of the point's
- *   trailing take; reach and retain require lock > 0, trail
- *   requires trailing in (0, 100) — the inert combinations are
- *   excluded from the grid.
+ * - ONE binary outcome — PROFIT-BEFORE-STOP, ALWAYS graded inside the
+ *   point's own hold window by the real-trade chronology: a HIT is
+ *   the profit lock (if lock > 0) OR the trailing arm level firing
+ *   BEFORE the hard stop; a MISS is the hard stop firing first, or
+ *   nothing fixing by the window end (a timeout is a bad result). The
+ *   rule identity is the point's four levels (hold x lock x stop x
+ *   trailing); lock = 0 is valid (fixation is then the trailing arm
+ *   alone).
  *
- * Run-level config (not swept, ignored by test()):
- * - reportOrder — ranking criterion ordering each metric bucket's
- *   reports (descending, tie-guarded comparator); default "sharpe".
- *   Purely presentational: never affects winners or ban lists.
+ * Run-level config (not swept):
+ * - reportOrder — ranking criterion ordering the reports (descending,
+ *   tie-guarded comparator); default "sharpe". Purely presentational:
+ *   never affects winners or tracks.
  *
- * The result is a per-metric dictionary: every swept authorMetric
- * gets its own bucket with its own reports, its own four ranking
- * winners and its own trained ban dictionaries (bans — one entry
- * per unique rule, threshold arithmetic only). Nothing is ever
- * aggregated across metrics.
+ * The result is a single report bucket: the grid's reports, its four
+ * ranking winners and its raw per-author tracks (one line per unique
+ * rule x author). There is no per-metric split.
  *
  * The simulator picks candidates — honest confirmation is a
  * walk-forward test() shot, and the final arbiter for the chosen

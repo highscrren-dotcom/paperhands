@@ -3,21 +3,22 @@ import { test } from "worker-testbed";
 import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
 
 /**
- * Границы математики reach-метрики (AUTHOR_HIT_FN), формульно:
+ * Границы математики единственной метрики profit-before-stop
+ * (AUTHOR_HIT_FN), формульно:
  *
  *  1) Пороги строгие ровно там, где заявлено:
- *     - hit требует maxMfePercent >= lock: касание РОВНО +2.5% — hit,
- *       +2.49% — miss;
- *     - hit требует shakeoutMaePercent > -stop (СТРОГО): просадка до
- *       пика ровно -5% при стопе 5 — miss, -4.9% — hit.
+ *     - hit требует, чтобы благоприятная экскурсия дотянулась до
+ *       замка: касание РОВНО +2.5% — hit (>= lock), +2.49% — miss;
+ *     - hit требует, чтобы просадка ДО фиксации не задела хардстоп:
+ *       откат ровно -5% при стопе 5 — miss (стоп выбивает первым),
+ *       -4.9% — hit.
  *     Каждый паттерн — СВОЙ мир и свой прогон: смешение паттернов в
- *     одной ленте отравило бы shakeout всем (проверено — отравляет).
+ *     одной ленте отравило бы просадку всем (проверено — отравляет).
  *     Горизонт профиля = max(holdMinutes) = 120м — один паттерн
  *     внутри одного цикла. Миры без дрейфа (база 1000) — проценты
  *     точны в плавучке.
- *  2) reach без замка не существует: комбинации reach x lock=0
- *     исключаются из сетки, и грид из одной такой точки обязан
- *     громко упасть пустым, а не молча грейдить чем-то другим.
+ *  2) lock=0 теперь ВАЛИДЕН: замок выключен, фиксация — только взвод
+ *     трейлинга; грид с lock=0 не пуст и не падает.
  */
 
 const START = 1704067200000;
@@ -73,7 +74,7 @@ const registerWorld = (exchangeName, priceAt) => {
   });
 };
 
-test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on the shakeout stop", async ({ pass, fail }) => {
+test("SIM: profit-before-stop thresholds are exact — >= on the lock touch, strictly > on the shakeout stop", async ({ pass, fail }) => {
   // ожидание по каждому миру: hit-счёт автора (трек, без бана)
   const EXPECT = {
     touch: { hits: 5 },   // +2.5 ровно: >= lock -> hit
@@ -99,7 +100,6 @@ test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on th
         // встряски (фаза 30), и восстановление к пику (фаза 100)
         holdMinutes: [120],
         profitLockPercent: [2.5],
-        authorMetric: ["reach"],
       },
       callbacks: {
         onAuthorsTrained: (_symbol, stats) => trainedStats.push(stats),
@@ -120,12 +120,14 @@ test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on th
     }
   }
 
-  pass("reach edges exact: +2.5 hit / +2.49 miss (>= lock), shakeout -4.9 hit / -5.0 miss (strictly > -stop)");
+  pass("profit-before-stop edges exact: +2.5 hit / +2.49 miss (>= lock), shakeout -4.9 hit / -5.0 miss (stop wins the tie)");
 });
 
-test("SIM: reach without a lock does not exist — reach-only grid with lock=[0] throws loudly", async ({ pass, fail }) => {
-  // спайкер: +4% за полчаса, к горизонту -3% (все циклы одинаковы)
-  registerWorld("sim-reach-lockless-exchange", (timestamp) => {
+test("SIM: lock=0 is valid — fixation is the trailing arm alone, the grid is non-empty", async ({ pass, fail }) => {
+  // спайкер: +4% за полчаса, к горизонту -3% (все циклы одинаковы).
+  // Пик +4% взводит трейлинг 3% (arm = entry/(1-0.03) ~ +3.09%)
+  // раньше стопа -> hit по одному лишь трейлингу, замок выключен.
+  registerWorld("sim-lock0-exchange", (timestamp) => {
     const m = Math.floor((timestamp - START) / MINUTE);
     if (m < 0) return 1000;
     const p = m % CYCLE;
@@ -137,39 +139,40 @@ test("SIM: reach without a lock does not exist — reach-only grid with lock=[0]
     return 1000 * f;
   });
 
+  const trainedStats = [];
   addSimulatorSchema({
-    simulatorName: "sim_reach_lockless",
-    exchangeName: "sim-reach-lockless-exchange",
+    simulatorName: "sim_lock0",
+    exchangeName: "sim-lock0-exchange",
     gridAxes: {
       hardStopPercent: [5],
-      trailingTakePercent: [100],
+      // живой трейлинг: его взвод — единственная фиксация при lock=0
+      trailingTakePercent: [3],
       holdMinutes: [240],
-      // reach без замка — не правило: такие комбинации исключаются из
-      // сетки, и грид из одной reach-точки при lock=0 обязан быть пустым
+      // lock=0 валиден: замок выключен, фиксация — только взвод трейлинга
       profitLockPercent: [0],
-      authorMetric: ["reach"],
+    },
+    callbacks: {
+      onAuthorsTrained: (_symbol, stats) => trainedStats.push(stats),
     },
   });
 
-  let error = null;
-  try {
-    await Simulator.run({
-      symbol: "TESTUSDT",
-      simulatorName: "sim_reach_lockless",
-      ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE, "spiker")),
-    });
-  } catch (e) {
-    error = e;
-  }
+  const result = await Simulator.run({
+    symbol: "TESTUSDT",
+    simulatorName: "sim_lock0",
+    ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE, "spiker")),
+  });
 
-  if (!error) {
-    fail("reach-only grid with lock=[0] must throw (empty grid), but run succeeded");
+  // грид НЕ пуст: ровно одна точка
+  if (result.reports.reports.length !== 1) {
+    fail(`lock=0 grid must produce exactly one point, got ${result.reports.reports.length}`);
     return;
   }
-  if (!String(error.message ?? error).includes("the grid is empty")) {
-    fail(`expected the empty-grid error, got: ${error.message ?? error}`);
+  // фиксация только по трейлингу (замок выключен): спайкер 5/5
+  const track = trainedStats[0]?.find(({ author }) => author === "spiker");
+  if (!track || track.hits !== 5 || track.profitLockPercent !== 0) {
+    fail(`lock=0: spiker must be 5/5 by trailing arm alone, got ${JSON.stringify(track)}`);
     return;
   }
 
-  pass("reach x lock=0 is excluded from the grid and an all-excluded grid throws loudly");
+  pass("lock=0 is valid: grid non-empty, fixation is the trailing arm alone (spiker 5/5)");
 });

@@ -42,7 +42,6 @@ test("SIM: onProgress streams both stages; foreign symbols and NEUTRAL are filte
       trailingTakePercent: [100],
       holdMinutes: [60, 120],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onProgress: (symbol, stage, processed, total) => {

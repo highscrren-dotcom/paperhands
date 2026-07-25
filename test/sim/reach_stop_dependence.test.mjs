@@ -3,15 +3,15 @@ import { test } from "worker-testbed";
 import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
 
 /**
- * Reach-hits зависят от СТОПА точки: ось hardStopPercent [3, 5] при
- * metric "reach" обязана дать ДВЕ тренировки фильтра (ключ кеша
- * включает stop), и автор с ямой -4% до пика:
- *  - при стопе 3 — miss (яма глубже стопа, идею вынесло бы), бан,
- *    ноль сделок у точки H=3;
- *  - при стопе 5 — hit (яма пережита, замок собран), допуск,
- *    5 сделок profit_lock у точки H=5.
- * Регрессия, склеившая тренировки по метрике без стопа, молча
- * приравняет эти правила — тест это ловит.
+ * Hits единственной метрики profit-before-stop зависят от СТОПА
+ * точки: ось hardStopPercent [3, 5] обязана дать ДВЕ тренировки
+ * фильтра (ключ кеша включает stop), и автор с ямой -4% до пика:
+ *  - при стопе 3 — miss (яма глубже стопа: хардстоп выбивает раньше
+ *    фиксации), ноль hits у правила H=3;
+ *  - при стопе 5 — hit (яма пережита, замок +2.5% собран раньше
+ *    стопа), 5/5 hits у правила H=5.
+ * Регрессия, выкинувшая стоп из ключа/грейдинга, молча приравняет
+ * эти правила — тест это ловит.
  *
  * Мир per cycle: яма до -4% (фазы 2..30), пик +4% (31..60), откат к
  * базе (61..100) — яма НЕ задевает стоп 5 в торговле (960 > 950.95).
@@ -40,7 +40,7 @@ const idea = (id, minute) => ({
   author: "dipper",
 });
 
-test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5]", async ({ pass, fail }) => {
+test("SIM: hit counts follow the point's stop — two trainings for H=[3,5]", async ({ pass, fail }) => {
   addExchangeSchema({
     exchangeName: "sim-reachstop-exchange",
     getCandles: async (_symbol, _interval, since, limit) => {
@@ -66,7 +66,6 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
       trailingTakePercent: [100],
       holdMinutes: [240],
       profitLockPercent: [2.5],
-      authorMetric: ["reach"],
     },
     callbacks: {
       onAuthorsTrained: (_symbol, stats) => trainings.push(stats),
@@ -82,7 +81,7 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
 
   // две тренировки — по одной на каждый reach-контекст стопа
   if (trainings.length !== 2) {
-    fail(`H=[3,5] under reach must train the filter twice, got ${trainings.length}`);
+    fail(`H=[3,5] must train the filter twice (stop is in the rule key), got ${trainings.length}`);
     return;
   }
   const hitCounts = trainings
@@ -108,5 +107,5 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
     return;
   }
 
-  pass("reach follows the stop in the TRACK: 0/5 hits vs stop 3, 5/5 vs stop 5, two distinct trainings; no ban -> both trade 5 (stop 3 -> hard_stop, stop 5 -> profit_lock)");
+  pass("hits follow the stop in the TRACK: 0/5 vs stop 3, 5/5 vs stop 5, two distinct trainings; no ban -> both trade 5 (stop 3 -> hard_stop, stop 5 -> profit_lock)");
 });

@@ -62,127 +62,44 @@ export interface ISimulatorIdeaProfile {
    * horizon, percent in the idea's direction: median > X means
    * price sat ABOVE entry + X% for at least half the observed
    * trajectory (the 50% share is the median's definition, not a
-   * tunable constant). Full-horizon diagnostic twin of the "retain"
-   * grading — the rule itself recomputes the median inside its own
-   * hold window.
+   * tunable constant). A full-horizon diagnostic for the consumer —
+   * grading does not read it.
    */
   medianMovePercent: number;
 }
 
 /**
- * Metric that defines an author's "hit" for the ban filter. EVERY
- * metric is graded inside the POINT'S OWN hold window — the first
- * holdMinutes of the idea's trajectory: the author is judged by
- * exactly the window the point can trade, never on a farther event
- * nobody harvests (the profile itself is built to the grid's
- * longest hold — that is the candle fetch depth, not the grading
- * window):
- * - "close" — the window's last close moved in the idea's direction
- *   (rewards authors whose calls survive the hold);
- * - "reach" — HARVESTABLE by the exit machinery: walking the window
- *   candle by candle (real-trade chronology), the lock OR the
- *   trailing-take arm level fires BEFORE the hard stop. A hit means
- *   the position reached a profitable fixation; a miss means the hard
- *   stop knocked it out first (an ambiguous candle that touches both
- *   goes to the stop, like the trade machinery). Requires a target:
- *   reach points with profitLockPercent = 0 are excluded from the
- *   grid;
- * - "retain" — FIXATION above the point's profit-lock level: the
- *   MEDIAN move of the window is strictly above profitLockPercent,
- *   i.e. price sat above entry + lock for at least half the window
- *   (the median is the 50% quantile by definition — not a tunable
- *   constant). Requires a target like reach: retain points with
- *   profitLockPercent = 0 are excluded from the grid. A transient
- *   spike (reach's hit) and a lucky last-candle finish (close's
- *   hit) are both misses here. Independent of the point's stop;
- * - "pnl" — the window's MFE grew by MORE than the fixed +1%
- *   threshold, INDEPENDENT of the point's lock and stop.
- *   Complements "retain": pnl asks "did it ever pay", retain asks
- *   "did it hold above the level";
- * - "trail" — the idea's favorable excursion inside the window
- *   reached the ARMING level of the point's trailing take (peak at
- *   entry/(1 - r) — the same formula the trade machinery uses):
- *   rewards the authors a trailing point actually earns on, the
- *   exact symmetry of "reach" for the lock. Requires a live
- *   trailing: trail points with trailingTakePercent outside
- *   (0, 100) are excluded from the grid (an inert trailing has no
- *   arming level to grade).
- * The right metric depends on the exit style being ranked: close-hit
- * authors feed long-hold points, reach-hit authors feed lock points,
- * retain-hit authors feed points that need the move to HOLD,
- * trail-hit authors feed trailing points.
+ * The single GRADING rule of a grid point — there is exactly ONE
+ * author metric now: PROFIT-BEFORE-STOP. Walking the point's hold
+ * window candle by candle (real-trade chronology), an idea is a hit
+ * when a profitable fixation — the profit lock (if > 0) OR the
+ * trailing-take arm level — fires BEFORE the hard stop; a miss when
+ * the hard stop knocks the position out first, OR when neither fires
+ * by the window end (a timeout is a bad result). An ambiguous candle
+ * that touches both the stop and a fixation goes to the stop, exactly
+ * as the trade machinery resolves it.
+ *
+ * The rule carries every field the outcome depends on — the window
+ * plus the three exit levels — and NO ban threshold (the engine
+ * reports the raw track ideas/hits/hitRate; who to trust is
+ * userspace). lock = 0 is valid: fixation then means the trailing
+ * arm alone.
  */
-export type SimulatorAuthorMetric = "close" | "reach" | "retain" | "pnl" | "trail";
-
-/**
- * Discriminated union of the GRADING rule derived from a grid point.
- * It carries only what the AUTHOR TRACK depends on — the grading
- * window (holdMinutes) and the level the metric grades against — and
- * NOTHING that would turn a continuous track into a 0/1 flag: there
- * are no minAuthorTrack / minAuthorHitRate thresholds here by design.
- * The engine reports the raw track (ideas/hits/hitRate) per rule;
- * WHO to trust is userspace. EVERY rule carries holdMinutes — the
- * window the point can trade; the discriminator makes the level
- * dependency EXPLICIT: "reach" carries lock AND stop, "retain" only
- * the lock, "close"/"pnl" no levels. There is NO fallback: reach and
- * retain points with profitLockPercent = 0 are excluded from the
- * grid (a rule without a target does not exist).
- */
-export type SimulatorAuthorRule =
-  | {
-      /** Discriminator: grade authors by the window close. */
-      metric: "close";
-      /** Grading window, minutes — the point's own hold. */
-      holdMinutes: number;
-    }
-  | {
-      /** Discriminator: grade authors by lock-reachability. */
-      metric: "reach";
-      /** Grading window, minutes — the point's own hold. */
-      holdMinutes: number;
-      /** Lock level the reach hit is graded against (always > 0). */
-      profitLockPercent: number;
-      /** Hard stop that must NOT hit before the lock/trailing fires. */
-      hardStopPercent: number;
-      /** Trailing take: a hit also counts if its arm level fires first. */
-      trailingTakePercent: number;
-    }
-  | {
-      /**
-       * Discriminator: grade authors by FIXATION above the point's
-       * lock level.
-       */
-      metric: "retain";
-      /** Grading window, minutes — the point's own hold. */
-      holdMinutes: number;
-      /** Level the median move is graded against (always > 0). */
-      profitLockPercent: number;
-    }
-  | {
-      /**
-       * Discriminator: grade authors by the fixed +1% MFE threshold
-       * — lock/stop independent by construction (no such fields).
-       */
-      metric: "pnl";
-      /** Grading window, minutes — the point's own hold. */
-      holdMinutes: number;
-    }
-  | {
-      /**
-       * Discriminator: grade authors by trailing-take arming
-       * reachability inside the window.
-       */
-      metric: "trail";
-      /** Grading window, minutes — the point's own hold. */
-      holdMinutes: number;
-      /** Trailing pullback the arming level derives from (0..100). */
-      trailingTakePercent: number;
-    };
+export interface ISimulatorGradingRule {
+  /** Grading window, minutes — the point's own hold. */
+  holdMinutes: number;
+  /** Profit lock level, percent (0 = fixation is the trailing arm only). */
+  profitLockPercent: number;
+  /** Hard stop that must NOT hit before a fixation fires. */
+  hardStopPercent: number;
+  /** Trailing pullback the arm level derives from (percent). */
+  trailingTakePercent: number;
+}
 
 /**
  * Value lists per grid axis. The grid is the cartesian product of
- * all axes; author-ban thresholds are swept the same way as stop
- * and trailing — rules are searched, not hardcoded.
+ * all axes; the trading rule (stop, trailing, hold, lock) is searched,
+ * not hardcoded.
  *
  * Every field below states what it TUNES and under which conditions
  * it is IGNORED — no axis is allowed to be a silent no-op without
@@ -194,24 +111,25 @@ export interface ISimulatorGridAxes {
    * Tunes: the catastrophe exit — how deep a position may sink
    * before a forced loss; the stop WINS when the stop and any profit
    * floor are reachable inside one candle (pessimism contract). Also
-   * the shakeout bound of the "reach" author metric.
-   * Ignored: never for trading — every trade checks it. For BAN
-   * TRAINING only the "reach" rule grades authors against it (see
-   * SimulatorAuthorRule).
+   * the loss side of the profit-before-stop grading: an author's idea
+   * is a MISS when this stop fires before any fixation (see
+   * ISimulatorGradingRule).
+   * Ignored: never — every trade checks it and it is part of the
+   * grading rule for every point.
    */
   hardStopPercent: number[];
   /**
    * Trailing take pullback levels to sweep, percent from the peak.
    * Tunes: how much of a runner's peak is given back. Arms only from
    * PREVIOUS-candle peaks and only when the locked level is not
-   * worse than entry (peak >= entry/(1 - r)). Also the grading
-   * level of the "trail" author metric (arming reachability inside
-   * the point's window).
+   * worse than entry (peak >= entry/(1 - r)). Its arm level is also
+   * one of the two fixations the profit-before-stop grading races
+   * against the hard stop.
    * Ignored: inert for any trade whose peak never reaches the arm
-   * level — such trades exit by stop, lock, or the hold cap. Under
-   * "close"/"reach"/"retain"/"pnl" it never affects ban training;
-   * trail points with a value outside (0, 100) DO NOT EXIST — an
-   * inert trailing has no arming level to grade.
+   * level — such trades exit by stop, lock, or the hold cap. A value
+   * of 0 or >= 100 makes the arm unreachable, so the trailing arm
+   * never counts as a fixation for that point (grading then relies on
+   * the lock alone, if lock > 0).
    */
   trailingTakePercent: number[];
   /**
@@ -222,9 +140,10 @@ export interface ISimulatorGridAxes {
    * worst-case exit (time_expired) when neither stop nor floor fires.
    * Authors never collide — each trades his own slot.
    * Ignored: never — the hold serves BOTH layers: it caps the trade
-   * AND is the grading window of the point's rule (every author
-   * metric is computed inside the first holdMinutes of the idea's
-   * trajectory — the window the point actually trades). This axis's
+   * AND is the grading window of the point's rule (the
+   * profit-before-stop outcome is computed inside the first
+   * holdMinutes of the idea's trajectory — the window the point
+   * actually trades). This axis's
    * MAXIMUM additionally defines the candle fetch depth of every
    * idea profile (the schema owns the horizon, the engine has no
    * hidden constant).
@@ -239,38 +158,13 @@ export interface ISimulatorGridAxes {
    * Covers the zone where the trailing take is not armed yet (peak
    * below entry/(1 - r)) and profit would otherwise bleed back.
    * Tunes: harvesting the crowd-liquidity step without cutting
-   * runners. Also the grading level of the "reach" and "retain"
-   * author metrics — so it is part of the grading rule identity and
-   * appears in tracks[]. Ignored: 0 DISABLES the mechanism for
-   * trading, and reach/retain points with lock = 0 DO NOT EXIST —
-   * the combination is excluded from the cartesian product (a rule
-   * without a target is not a rule). Under "close"/"pnl" the level
-   * never affects grading — trading only.
+   * runners. Also part of the grading rule (the fixation the hit is
+   * checked against), so it appears in tracks[]. lock = 0 is VALID:
+   * the mechanism is off for trading and fixation then means the
+   * trailing arm alone — a hit is the trailing arming before the
+   * hard stop.
    */
   profitLockPercent: number[];
-  /**
-   * Author-hit metrics to sweep — the grading rule's metric. Each
-   * metric is graded SEPARATELY: the sweep never glues incomparable
-   * hit counts together, it reports every grading as its own points
-   * and its own tracks.
-   * Tunes: which author grading feeds which exit style — "close"
-   * (window close) rewards authors whose calls survive the hold,
-   * "reach" (lock-reachability against THE POINT'S lock/stop)
-   * rewards the authors a lock point actually earns on, "retain"
-   * (median move above THE POINT'S lock) rewards authors whose
-   * moves HOLD the level, "pnl" (fixed +1% MFE threshold) asks "did
-   * the call ever pay", "trail" (arming reachability of THE POINT'S
-   * trailing take) rewards the authors a trailing point actually
-   * earns on; every grading runs inside THE POINT'S hold window,
-   * and the same author has different hit counts under different
-   * metrics and different windows.
-   * Ignored: with "close"/"pnl" the point's lock/stop never affect
-   * grading; "retain" ignores only the stop; "reach"/"retain"
-   * require lock > 0 and "trail" requires trailing in (0, 100) —
-   * the inert combinations are excluded from the grid, never
-   * silently regraded.
-   */
-  authorMetric: SimulatorAuthorMetric[];
 }
 
 /**
@@ -288,8 +182,6 @@ export interface ISimulatorGridPoint {
    * entry, exit on pullback to the floor; 0 = disabled.
    */
   profitLockPercent: number;
-  /** Author-hit metric of the grading rule for this point. */
-  authorMetric: SimulatorAuthorMetric;
 }
 
 /**
@@ -417,16 +309,17 @@ export interface ISimulatorPointReport {
    * over the artifact without a re-run. The trade count is
    * tradesList.length; best[].report.tradesList is the winner's copy.
    * The per-author track is NOT here — it depends only on the
-   * grading rule (hold/lock/metric), not the whole point, so it
-   * lives deduplicated in tracks[] (73x smaller than repeating it on
-   * every point).
+   * grading rule (hold/lock/stop/trailing), not the whole point, so
+   * it lives deduplicated in tracks[] (far smaller than repeating it
+   * on every point).
    */
   tradesList: ISimulatorTrade[];
 }
 
 /**
- * One author's TRACK under ONE grading rule (rule = hold x lock x
- * metric, the metric being the bucket key). The raw continuous
+ * One author's TRACK under ONE grading rule (rule = the point's
+ * hold x lock x stop x trailing, the four levels the single
+ * profit-before-stop outcome depends on). The raw continuous
  * evidence — ideas, hits, hitRate — over the whole simulated range.
  * There is NO ban verdict and NO threshold: the engine grades, and
  * userspace decides who to trust (that is the whole point of cutting
@@ -442,31 +335,35 @@ export interface ISimulatorTrack {
    */
   holdMinutes: number;
   /**
-   * Grading lock level of the rule, percent (0 = no level). The
-   * track depends on it (reach/retain grade against it), so it is on
-   * the line. NO thresholds: a track is continuous trust, not a 0/1
-   * flag.
+   * Grading lock level of the rule, percent (0 = lock off, fixation is
+   * the trailing arm alone). Part of the rule identity — the hit
+   * depends on it — so it is on the line. NO thresholds: a track is
+   * continuous trust, not a 0/1 flag.
    */
   profitLockPercent: number;
   /**
-   * Grading STOP of the rule, percent (0 = not used by the metric).
-   * "reach" is the only metric whose hit depends on the stop — a hit
-   * requires MFE reach the lock BEFORE the pre-peak MAE reaches this
-   * stop — so the same (hold, lock, author) has DIFFERENT hits at
-   * different stops. It is a full part of the reach rule identity and
-   * MUST be on the line, else those rows are indistinguishable. For
-   * close/pnl/retain/trail the stop plays no grading role: it is 0.
+   * Grading STOP of the rule, percent. The hit depends on it — a MISS
+   * is the hard stop firing before any fixation, so the same
+   * (hold, lock, trailing, author) has DIFFERENT hits at different
+   * stops. A full part of the rule identity and MUST be on the line,
+   * else those rows are indistinguishable.
    */
   hardStopPercent: number;
   /** Author login on the source platform. */
   author: string;
-  /** Directional ideas with a KNOWN outcome (truncated ones excluded). */
+  /**
+   * All the author's directional ideas — every idea counts. An idea
+   * cut short by the candle data edge is NOT excluded: running out of
+   * candles is a loss (a miss), exactly like the hold window timing
+   * out.
+   */
   ideas: number;
   /**
-   * Number of the author's hits UNDER THE RULE'S METRIC: horizon
-   * close in the idea direction for "close", lock-reachability for
-   * "reach" — the same author has different hit counts under
-   * different rules.
+   * Number of the author's hits — ideas whose lock or trailing arm
+   * fixation fired BEFORE the hard stop inside the rule's window. A
+   * miss is the hard stop firing first, the window expiring, or the
+   * candles running out before any fixation. The same author has
+   * different hit counts under different rules.
    */
   hits: number;
   /**
@@ -502,38 +399,37 @@ export interface ISimulatorBest {
 }
 
 /**
- * Self-contained result of ONE author metric: its grid points, its
- * ranking winners and its author TRACKS. Metrics are never glued
- * together — each bucket answers its own question with its own
- * numbers.
+ * The single report bucket of a run: every grid point graded by the
+ * one profit-before-stop metric, its ranking winners, and its author
+ * TRACKS. One bucket — there is no per-metric split.
  */
 export interface ISimulatorMetricReport {
   /**
-   * Grid point reports of this metric, sorted descending by the
-   * schema's reportOrder criterion (default sharpe).
+   * Grid point reports, sorted descending by the schema's reportOrder
+   * criterion (default sharpe).
    */
   reports: ISimulatorPointReport[];
   /**
-   * Winners of the four ranking criteria WITHIN this metric bucket.
-   * Empty when the metric is not swept.
+   * Winners of the four ranking criteria. Empty only when the grid
+   * produced no reports.
    */
   best: ISimulatorBest[];
   /**
-   * Author tracks of this bucket — one line per (rule x author),
-   * deduplicated by grading rule (hold x lock; the metric is the
-   * bucket key). This is the RAW continuous track (ideas/hits/
-   * hitRate), not a 0/1 ban verdict: the engine grades, userspace
-   * decides who to trust. It is 73x more compact than repeating the
-   * track on every point's report, and every line is self-contained
-   * (carries hold/lock/author) for grep/jq without a join.
+   * Author tracks — one line per (rule x author), deduplicated by
+   * grading rule (hold x lock x stop x trailing). This is the RAW
+   * continuous track (ideas/hits/hitRate), not a 0/1 ban verdict: the
+   * engine grades, userspace decides who to trust. Far more compact
+   * than repeating the track on every point's report, and every line
+   * is self-contained (carries hold/lock/stop/author) for grep/jq
+   * without a join.
    */
   tracks: ISimulatorTrack[];
 }
 
 /**
- * Final result of a simulation run: per-metric buckets, each with
- * its own reports, ranking winners and author tracks — hits are
- * metric-dependent, any cross-metric aggregate would lie.
+ * Final result of a simulation run: one report bucket (the single
+ * profit-before-stop grading) with its reports, ranking winners and
+ * author tracks, plus the run-level idea/profile/hold counters.
  */
 export interface ISimulatorResult {
   /** Trading pair symbol the simulation ran for. */
@@ -553,11 +449,12 @@ export interface ISimulatorResult {
   /** 99th percentile of holding time across the whole grid, minutes — eternal holds are visible right in the run result. */
   p99HoldMinutes: number;
   /**
-   * Per-metric buckets keyed by the point's authorMetric. Every
-   * metric key is always present — a metric absent from the swept
-   * axis maps to an empty bucket.
+   * The single report bucket: every grid point graded by the one
+   * profit-before-stop metric. Carries the point reports (sorted by
+   * reportOrder), the ranking winners in best[], and the per-author
+   * tracks[].
    */
-  reports: Record<SimulatorAuthorMetric, ISimulatorMetricReport>;
+  reports: ISimulatorMetricReport;
 }
 
 /**
@@ -574,13 +471,13 @@ export interface ISimulatorResult {
  *   IGNORED as track evidence (their outcome is not fully observed).
  * - gridAxes — PER-AXIS override merged over the engine defaults:
  *   an omitted axis takes the default LIST and is therefore swept;
- *   a single-value list freezes an axis. Pinning examples:
- *   authorMetric: ["close"] grades authors by the horizon close
- *   only, profitLockPercent: [0] disables the lock. Each axis
- *   documents its own tune/ignore conditions in ISimulatorGridAxes.
+ *   a single-value list freezes an axis. Pinning example:
+ *   profitLockPercent: [0] disables the lock (fixation is then the
+ *   trailing arm alone). Each axis documents its own tune/ignore
+ *   conditions in ISimulatorGridAxes.
  * - callbacks — all optional; an omitted callback is simply never
  *   fired (silent run). onAuthorsTrained fires once per unique
- *   grading RULE (hold x lock x metric), not per grid point.
+ *   grading RULE (hold x lock x stop x trailing), not per grid point.
  */
 export interface ISimulatorSchema {
     /** Unique simulator identifier for the schema registry. */
@@ -593,8 +490,8 @@ export interface ISimulatorSchema {
      */
     gridAxes?: Partial<ISimulatorGridAxes>;
     /**
-     * Ranking criterion ordering each metric bucket's reports list
-     * (descending). The return value of run() is the consumer
+     * Ranking criterion ordering the reports list (descending). The
+     * return value of run() is the consumer
      * contract — callbacks are a side channel — so the order is
      * declared here, not derived. Sorting uses the tie-guarded
      * comparator (naive subtraction breaks on Infinity
@@ -642,9 +539,9 @@ export interface ISimulatorCallbacks {
   ): void;
   /**
    * Author track trained for one grading rule of the grid (fires
-   * once per unique grading rule = hold x lock x metric): the raw
-   * per-author track (ideas/hits/hitRate) under that rule. No ban
-   * verdict — the engine grades, userspace decides who to trust.
+   * once per unique grading rule = hold x lock x stop x trailing):
+   * the raw per-author track (ideas/hits/hitRate) under that rule. No
+   * ban verdict — the engine grades, userspace decides who to trust.
    */
   onAuthorsTrained(symbol: string, tracks: ISimulatorTrack[]): void;
   /** One grid point evaluated. */
@@ -654,9 +551,9 @@ export interface ISimulatorCallbacks {
     trades: ISimulatorTrade[],
   ): void;
   /**
-   * Ranking computed WITHIN one metric bucket: the bucket's reports
+   * Ranking computed over the single report bucket: the reports
    * sorted by the criterion (descending) and the winner. Fires once
-   * per (swept metric x criterion).
+   * per criterion.
    */
   onRanking(
     symbol: string,

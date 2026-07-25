@@ -34,7 +34,6 @@ const approx = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 
 const PERMISSIVE_FILTER = {
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 const singleIdea = () => [

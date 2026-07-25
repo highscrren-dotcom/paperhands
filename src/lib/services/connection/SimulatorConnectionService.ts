@@ -7,8 +7,8 @@ import SimulatorSchemaService from "../schema/SimulatorSchemaService";
 import { ClientSimulator } from "../../../client/ClientSimulator";
 
 /**
- * Report order applied when the schema omits reportOrder: the flat
- * result.reports buckets are sorted by Sharpe descending — the
+ * Report order applied when the schema omits reportOrder: the
+ * result.reports.reports list is sorted by Sharpe descending — the
  * canonical order.
  */
 const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
@@ -36,28 +36,22 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  *   by design too — swarm ranking over long histories is userspace;
  * - profit lock: covers the bleed zone below the trailing arm level
  *   (trailing arms only from peak >= entry/(1-r), so a +1.5..2.5%
- *   run that dumps gives everything back without a lock); 0 keeps
- *   the lock-free baseline, runners are untouched — above the lock
- *   the trailing floor is higher and fills first;
- * - author metric: all five gradings compete in the sweep, each
- *   computed inside THE POINT'S OWN hold window — "close" (window
- *   close, feeds long-hold points), "reach" (lock-reachability,
- *   feeds lock points; requires lock > 0 — lock-free reach points
- *   are excluded from the grid), "retain" (FIXATION above the
- *   point's lock: median move strictly above profitLockPercent;
- *   requires lock > 0 like reach), "pnl" (fixed +1% MFE threshold —
- *   did the call ever pay) and "trail" (arming reachability of the
- *   point's trailing take — feeds trailing points; requires
- *   trailing in (0, 100));
- * - every metric bucket carries its own winners and its own author
- *   tracks — nothing is aggregated across metrics.
+ *   run that dumps gives everything back without a lock); above the
+ *   lock the trailing floor is higher and fills first. lock = 0 is
+ *   valid (fixation is then the trailing arm alone) but the default
+ *   list sweeps real locks;
+ * - grading is ONE binary outcome — profit-before-stop: an author's
+ *   idea is a HIT when the lock (if lock > 0) or the trailing arm
+ *   level fires BEFORE the hard stop inside THE POINT'S OWN hold
+ *   window, a MISS when the hard stop fires first or nothing fixes by
+ *   the window end (timeout is a bad outcome). One report bucket, one
+ *   set of winners, one tracks[] — nothing is split by metric.
  */
 const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
   hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7],
   trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3],
   holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60],
   profitLockPercent: [1.5, 2.5, 3.5, 5],
-  authorMetric: ["close", "pnl", "reach", "retain", "trail"],
 };
 
 /**

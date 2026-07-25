@@ -44,7 +44,6 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
       trailingTakePercent: [100],
       holdMinutes: [HOLD],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
   });
 
@@ -59,7 +58,7 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     fail(`profile must be full, got truncated=${result.truncatedCount}`);
     return;
   }
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
+  const [trade] = result.reports.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
   if (trade.exitReason !== "time_expired") {
     fail(`a stop-free drift world must exit time_expired, got ${trade.exitReason}`);
     return;

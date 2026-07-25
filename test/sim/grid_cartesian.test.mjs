@@ -35,7 +35,6 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
     trailingTakePercent: [2, 100],
     holdMinutes: [60, 7200],
     profitLockPercent: [0, 2],
-    authorMetric: ["close"],
   };
 
   const seen = [];
@@ -54,8 +53,8 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
     ideas: [],
   });
 
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 16 || seen.length !== 16) {
-    fail(`expected 16 grid points, got reports=${Object.values(result.reports).flatMap((b) => b.reports).length}, onGridPoint=${seen.length}`);
+  if (result.reports.reports.length !== 16 || seen.length !== 16) {
+    fail(`expected 16 grid points, got reports=${result.reports.reports.length}, onGridPoint=${seen.length}`);
     return;
   }
 

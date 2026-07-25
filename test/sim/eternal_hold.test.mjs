@@ -87,7 +87,6 @@ const GRID_AXES = {
   trailingTakePercent: [100],
   holdMinutes: [60, 7200],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", async ({ pass, fail }) => {
@@ -105,22 +104,25 @@ test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", 
     ideas: makeIdeas(),
   });
 
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`expected 2 grid points, got ${Object.values(result.reports).flatMap((b) => b.reports).length}`);
+  if (result.reports.reports.length !== 2) {
+    fail(`expected 2 grid points, got ${result.reports.reports.length}`);
     return;
   }
 
-  const short = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const eternal = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const short = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const eternal = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!short || !eternal) {
     fail("short/eternal hold reports not found");
     return;
   }
 
-  // трек автора: prophet — единственный, с полным hit-рекордом
-  const prophetTrack = result.reports.close.tracks.find(({ author }) => author === "prophet");
-  if (!prophetTrack || prophetTrack.hitRate !== 1) {
-    fail(`prophet track must be present with hitRate 1, got ${JSON.stringify(prophetTrack)}`);
+  // трек автора: prophet присутствует. Замок выключен, трейлинг
+  // (100%) не взводится, поэтому фиксации нет ни у кого — единственная
+  // метрика profit-before-stop даёт hitRate 0 (таймаут = miss); тест
+  // про Sharpe/вечный холд, не про сам трек
+  const prophetTrack = result.reports.tracks.find(({ author }) => author === "prophet");
+  if (!prophetTrack || prophetTrack.hitRate !== 0) {
+    fail(`prophet track must be present with hitRate 0 (no fixation possible), got ${JSON.stringify(prophetTrack)}`);
     return;
   }
 
@@ -146,7 +148,7 @@ test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", 
 
   // победители всех рейтингов — короткий холд (вечный ещё и не проходит
   // анти-флюк порог по числу сделок)
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (!best.report || best.report.point.holdMinutes !== 60) {
       fail(`ranking ${best.criterion} must pick hold=60, got ${best.report?.point.holdMinutes}`);
       return;

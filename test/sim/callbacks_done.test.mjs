@@ -45,7 +45,6 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
       trailingTakePercent: [100],
       holdMinutes: [60],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onDone: (symbol, result) => doneCalls.push({ symbol, result }),
@@ -71,8 +70,8 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
     fail("onDone payload must be the exact object run() returns");
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 1 || result.reports.close.best.length !== 4) {
-    fail(`sanity: expected 1 report / 4 winners, got ${Object.values(result.reports).flatMap((b) => b.reports).length}/${result.reports.close.best.length}`);
+  if (result.reports.reports.length !== 1 || result.reports.best.length !== 4) {
+    fail(`sanity: expected 1 report / 4 winners, got ${result.reports.reports.length}/${result.reports.best.length}`);
     return;
   }
 

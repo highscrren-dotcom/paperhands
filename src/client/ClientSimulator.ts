@@ -14,8 +14,7 @@ import {
   ISimulatorPointReport,
   ISimulatorResult,
   ISimulatorTrade,
-  SimulatorAuthorMetric,
-  SimulatorAuthorRule,
+  ISimulatorGradingRule,
   SimulatorExitReason,
   SimulatorRankingCriterion,
 } from "../interfaces/Simulator.interface";
@@ -67,15 +66,6 @@ const AUTHOR_DEDUPE_MINUTES = 8 * 60;
  * NB: JSON.stringify turns Infinity into null in saved artifacts.
  */
 const SORTINO_NO_LOSSES = Number.POSITIVE_INFINITY;
-
-/**
- * Fixed MFE threshold of the "pnl" author metric, percent. A hit is
- * an idea whose PnL grew by MORE than this at any moment of the
- * horizon — independent of the point's lock and stop by design;
- * complements "retain" (median above the point's lock) on lock-free
- * grids.
- */
-const PNL_HIT_THRESHOLD_PERCENT = 1;
 
 async function* ITERATE_CANDLES_FN(
   self: ClientSimulator,
@@ -277,146 +267,58 @@ interface IAuthorFilterContext {
 }
 
 /**
- * Derives the GRADING rule from a grid point as a discriminated
- * union. EVERY rule carries the point's holdMinutes — the grading
- * window. On top of that "close"/"pnl" carry no levels, "retain"
- * carries the lock, "reach" lock + stop, "trail" the trailing. NO
- * thresholds live here (they were a 0/1 step that the track does not
- * depend on). There is NO fallback: reach/retain points with lock =
- * 0 are excluded from the grid by BUILD_GRID_FN, so this builder may
- * assume every reach/retain point carries a target.
+ * Derives the single GRADING rule from a grid point. The rule is the
+ * point's own four trading levels — hold window, lock, hard stop,
+ * trailing — because an author is graded on exactly the trade the
+ * point would take. No metric discrimination and no thresholds live
+ * here (grading is one binary outcome; who to trust is userspace).
  *
  * @param point - Grid point carrying the rule fields
- * @returns Discriminated grading rule
+ * @returns Grading rule
  */
-const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
-  if (point.authorMetric === "reach") {
-    return {
-      metric: "reach",
-      holdMinutes: point.holdMinutes,
-      profitLockPercent: point.profitLockPercent,
-      hardStopPercent: point.hardStopPercent,
-      trailingTakePercent: point.trailingTakePercent,
-    };
-  }
-  if (point.authorMetric === "retain") {
-    return {
-      metric: "retain",
-      holdMinutes: point.holdMinutes,
-      profitLockPercent: point.profitLockPercent,
-    };
-  }
-  if (point.authorMetric === "trail") {
-    return {
-      metric: "trail",
-      holdMinutes: point.holdMinutes,
-      trailingTakePercent: point.trailingTakePercent,
-    };
-  }
-  return {
-    metric: point.authorMetric,
-    holdMinutes: point.holdMinutes,
-  };
-};
+const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): ISimulatorGradingRule => ({
+  holdMinutes: point.holdMinutes,
+  profitLockPercent: point.profitLockPercent,
+  hardStopPercent: point.hardStopPercent,
+  trailingTakePercent: point.trailingTakePercent,
+});
 
 /**
- * Author "hit" under a discriminated ban-filter rule. ALL arithmetic
- * runs inside the rule's grading window — the first holdMinutes
- * candles of the idea's trajectory: the author is judged by exactly
- * the window the point can trade. The profile's precomputed
- * full-horizon aggregates (hit, maxMfePercent, medianMovePercent,
- * shakeoutMaePercent) are diagnostics for the consumer — grading
- * never reads them.
+ * Author "hit" under the single PROFIT-BEFORE-STOP rule, graded by
+ * the REAL-TRADE chronology inside the rule's hold window (the first
+ * holdMinutes candles of the idea's trajectory). Walk the window
+ * candle by candle:
+ *   - a HIT is a fixation (the lock, when lock > 0, OR the trailing
+ *     arm level) firing BEFORE the hard stop;
+ *   - a MISS is the hard stop knocking the position out first, OR
+ *     nothing fixing by the window end (a timeout is a bad outcome),
+ *     OR the candle data running out before any fixation (window is
+ *     capped at candles.length, so a short profile that never fixes
+ *     falls through to the miss return — running out of candles is a
+ *     loss, same as a timeout).
+ * A candle touching both the stop and a fixation goes to the stop
+ * (the falling price crosses the lower level first for a long),
+ * exactly as SIMULATE_TRADE_FN resolves it — the grade matches what
+ * the trade would actually do.
  *
- * "close" — the window's last close moved in the idea's direction;
- * the rule has no lock/stop fields by construction.
- *
- * "reach" — HARVESTABLE, graded by the REAL-TRADE chronology: walk
- * the window candle by candle; a hit is the lock OR the trailing arm
- * level firing BEFORE the hard stop, a miss is the hard stop knocking
- * the position out first (or nothing fixing by the window end). A
- * candle that touches both the stop and a fixation goes to the stop
- * (the falling price crosses the lower level first), exactly as
- * SIMULATE_TRADE_FN resolves it — the grade matches what the trade
- * would actually do.
- *
- * "retain" — level FIXATION: the MEDIAN move of the window is
- * strictly above the rule's lock level (price held above entry + X%
- * for at least half the window — the 50% share is the median's
- * definition, not a tunable constant). The point's stop plays no
- * role.
- *
- * "pnl" — the window's MFE grew by MORE than the fixed +1% threshold
- * (strictly greater), independent of the rule's levels.
- *
- * "trail" — the idea's favorable excursion inside the window reached
- * the ARMING level of the rule's trailing take (long: peak >=
- * entry/(1 - r), short: peak <= entry/(1 + r)): the authors a
- * trailing point actually earns on.
+ * lock = 0 is valid: the lock level then equals entry and is never
+ * counted as a fixation on its own — the hit is the trailing arm
+ * alone racing the hard stop.
  *
  * @param profile - Idea profile
- * @param rule - Discriminated ban-filter rule (see AUTHOR_RULE_FN)
+ * @param rule - Grading rule (see AUTHOR_RULE_FN)
  * @returns Whether the idea counts as the author's hit
  */
 const AUTHOR_HIT_FN = (
   profile: ISimulatorIdeaProfile,
-  rule: SimulatorAuthorRule,
+  rule: ISimulatorGradingRule,
 ): boolean => {
   const { candles, entryPrice } = profile;
   const direction = profile.idea.direction === "LONG" ? 1 : -1;
   const window = Math.min(rule.holdMinutes, candles.length);
-  if (rule.metric === "close") {
-    const lastClose = candles[window - 1].close;
-    return direction * (lastClose - entryPrice) > 0;
-  }
-  // "trail": лучшая экскурсия окна дотянулась до уровня ВЗВОДА
-  // трейлинга точки — та же формула, что в машинерии сделок:
-  // long peak >= entry/(1-r), short peak <= entry/(1+r)
-  if (rule.metric === "trail") {
-    const armLevel =
-      entryPrice / (1 - (direction * rule.trailingTakePercent) / 100);
-    for (let i = 0; i < window; i++) {
-      const favorable = direction > 0 ? candles[i].high : candles[i].low;
-      if (direction > 0 ? favorable >= armLevel : favorable <= armLevel) {
-        return true;
-      }
-    }
-    return false;
-  }
-  // "retain": фиксация ВЫШЕ замка правила — медиана close-ходов
-  // ОКНА строго больше profitLockPercent; от стопа точки не зависит
-  if (rule.metric === "retain") {
-    const moves: number[] = [];
-    for (let i = 0; i < window; i++) {
-      moves.push(
-        (direction * (candles[i].close - entryPrice) * 100) / entryPrice,
-      );
-    }
-    moves.sort((a, b) => a - b);
-    const half = Math.floor(moves.length / 2);
-    const median =
-      moves.length % 2 === 1
-        ? moves[half]
-        : (moves[half - 1] + moves[half]) / 2;
-    return median > rule.profitLockPercent;
-  }
-  // "pnl": MFE хоть раз превысил фиксированный порог — независимо
-  // от стопа (это метрика «когда-либо заплатила», не выживания)
-  if (rule.metric === "pnl") {
-    for (let i = 0; i < window; i++) {
-      const favorable = direction > 0 ? candles[i].high : candles[i].low;
-      const mfe = (direction * (favorable - entryPrice) * 100) / entryPrice;
-      if (mfe > PNL_HIT_THRESHOLD_PERCENT) {
-        return true;
-      }
-    }
-    return false;
-  }
-  // "reach": ПОСВЕЧНАЯ хронология реальной сделки. Идём по минутам
-  // окна; hit — если ФИКСАЦИЯ (замок ИЛИ уровень взвода трейлинга)
-  // коснулась РАНЬШЕ хардстопа. Свеча, задевшая и стоп, и фиксацию,
-  // отдаётся стопу (падающая цена LONG проходит нижний уровень
-  // первой) — как в SIMULATE_TRADE_FN. Хардстоп раньше = miss.
+  // lock = 0 => замок отключён (уровень равен entry, не считаем его
+  // фиксацией); фиксация тогда — только взвод трейлинга vs стоп
+  const lockEnabled = rule.profitLockPercent > 0;
   const lockLevel =
     entryPrice * (1 + (direction * rule.profitLockPercent) / 100);
   const stopLevel =
@@ -430,13 +332,15 @@ const AUTHOR_HIT_FN = (
     if (stopHit) {
       return false; // хардстоп выбил раньше фиксации
     }
-    const lockHit = direction > 0 ? favorable >= lockLevel : favorable <= lockLevel;
+    const lockHit =
+      lockEnabled &&
+      (direction > 0 ? favorable >= lockLevel : favorable <= lockLevel);
     const trailHit = direction > 0 ? favorable >= armLevel : favorable <= armLevel;
     if (lockHit || trailHit) {
       return true; // фиксация раньше стопа
     }
   }
-  return false; // до конца окна ни фиксации, ни стопа
+  return false; // до конца окна ни фиксации, ни стопа (таймаут = miss)
 };
 
 /**
@@ -444,42 +348,36 @@ const AUTHOR_HIT_FN = (
  * ONE grading rule (lookahead inside train is deliberate — honesty
  * is a userspace walk-forward concern, not the engine's). No ban:
  * every author gets a track, the engine grades and reports, userspace
- * decides who to trust. Only ideas whose GRADING WINDOW is fully
- * observed count as evidence — an idea cut by the data edge before
- * the rule's holdMinutes proves nothing for that rule (a
- * shorter-window rule may still count it).
+ * decides who to trust. EVERY idea counts: a HIT is a fixation firing
+ * before the hard stop inside the observed window; a MISS is the hard
+ * stop firing first, the hold window expiring, OR the candle data
+ * running out before any fixation — running out of candles and the
+ * hold timing out are both losses, not exclusions (a fixation already
+ * seen in the observed portion still counts as a hit).
  *
  * @param profiles - Profiles of all directional ideas
- * @param rule - Discriminated grading rule (window + metric + level)
+ * @param rule - Grading rule (hold window + lock + stop + trailing)
  * @returns Filter context with the rule's tracks (sorted by ideas)
  */
 const TRAIN_AUTHOR_FILTER_FN = (
   profiles: ISimulatorIdeaProfile[],
-  rule: SimulatorAuthorRule,
+  rule: ISimulatorGradingRule,
 ): IAuthorFilterContext => {
-  // уровни грейдинга — часть идентичности правила в треке: лок у
-  // reach/retain, стоп ТОЛЬКО у reach (его hit зависит от стопа —
-  // без стопа в треке строки reach неотличимы). У остальных -> 0
-  const level =
-    rule.metric === "reach" || rule.metric === "retain"
-      ? rule.profitLockPercent
-      : 0;
-  const stop = rule.metric === "reach" ? rule.hardStopPercent : 0;
   const byAuthor = new Map<string, { ideas: number; hits: number }>();
   for (const profile of profiles) {
     const stat = byAuthor.get(profile.idea.author) ?? { ideas: 0, hits: 0 };
-    if (profile.candles.length >= rule.holdMinutes) {
-      stat.ideas += 1;
-      if (AUTHOR_HIT_FN(profile, rule)) {
-        stat.hits += 1;
-      }
+    stat.ideas += 1;
+    if (AUTHOR_HIT_FN(profile, rule)) {
+      stat.hits += 1;
     }
     byAuthor.set(profile.idea.author, stat);
   }
+  // lock и stop теперь всегда часть идентичности правила (единственная
+  // метрика profit-before-stop зависит от обоих) — кладём как есть
   const tracks: ISimulatorTrack[] = [...byAuthor].map(([author, stat]) => ({
     holdMinutes: rule.holdMinutes,
-    profitLockPercent: level,
-    hardStopPercent: stop,
+    profitLockPercent: rule.profitLockPercent,
+    hardStopPercent: rule.hardStopPercent,
     author,
     ideas: stat.ideas,
     hits: stat.hits,
@@ -820,38 +718,26 @@ const EVALUATE_POINT_FN = (
 };
 
 /**
- * Builds the cartesian product of grid axes. Meaningless
- * combinations DO NOT EXIST: a reach or retain point with lock = 0
- * has no grading target, a trail point with trailing outside
- * (0, 100) has no arming level — such points are excluded here,
- * they never silently train under another metric's rule. A grid
- * left empty by the exclusion is a configuration error and throws
- * loudly in RUN_FN.
+ * Builds the cartesian product of grid axes. The single
+ * profit-before-stop metric grades every point, so no combination is
+ * inert: lock = 0 is valid (fixation is then the trailing arm alone),
+ * every point carries a hard stop and a trailing take. An empty grid
+ * (an empty axis list) is a configuration error and throws loudly in
+ * RUN_FN.
  *
  * @param axes - Value lists per axis
- * @returns All valid grid points
+ * @returns All grid points
  */
 const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
   axes.hardStopPercent.flatMap((hardStopPercent) =>
     axes.trailingTakePercent.flatMap((trailingTakePercent) =>
       axes.holdMinutes.flatMap((holdMinutes) =>
-        axes.profitLockPercent.flatMap((profitLockPercent) =>
-          axes.authorMetric
-            .filter(
-              (authorMetric) =>
-                (profitLockPercent > 0 ||
-                  (authorMetric !== "reach" && authorMetric !== "retain")) &&
-                (authorMetric !== "trail" ||
-                  (trailingTakePercent > 0 && trailingTakePercent < 100)),
-            )
-            .map((authorMetric) => ({
-              hardStopPercent,
-              trailingTakePercent,
-              holdMinutes,
-              profitLockPercent,
-              authorMetric,
-            })),
-        ),
+        axes.profitLockPercent.map((profitLockPercent) => ({
+          hardStopPercent,
+          trailingTakePercent,
+          holdMinutes,
+          profitLockPercent,
+        })),
       ),
     ),
   );
@@ -955,22 +841,16 @@ const RUN_FN = async (
   }
 
   // трек авторов считается по разу на каждое уникальное ГРАДИРУЮЩЕЕ
-  // правило: окно (hold) входит в ключ всегда; у reach сверх того
-  // lock+stop, у retain — lock, у trail — trailing, close/pnl зависят
-  // лишь от окна. Порогов НЕТ (их вырезали — ступенька 0/1). Ключ —
-  // деталь мемоизации; наружу выходит плоский tracks[]
+  // правило: единственная метрика profit-before-stop зависит от всех
+  // четырёх уровней точки, поэтому ключ — hold:lock:stop:trailing.
+  // Порогов НЕТ (их вырезали — ступенька 0/1). Ключ — деталь
+  // мемоизации; наружу выходит плоский tracks[]
   const filterByRule = new Map<
     string,
-    { rule: SimulatorAuthorRule; filter: IAuthorFilterContext }
+    { rule: ISimulatorGradingRule; filter: IAuthorFilterContext }
   >();
-  const ruleKeyOf = (rule: SimulatorAuthorRule): string =>
-    rule.metric === "reach"
-      ? `reach:${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}:${rule.trailingTakePercent}`
-      : rule.metric === "retain"
-        ? `retain:${rule.holdMinutes}:${rule.profitLockPercent}`
-        : rule.metric === "trail"
-          ? `trail:${rule.holdMinutes}:${rule.trailingTakePercent}`
-          : `${rule.metric}:${rule.holdMinutes}`;
+  const ruleKeyOf = (rule: ISimulatorGradingRule): string =>
+    `${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}:${rule.trailingTakePercent}`;
   const trainRule = (point: ISimulatorGridPoint): void => {
     const rule = AUTHOR_RULE_FN(point);
     const key = ruleKeyOf(rule);
@@ -996,15 +876,12 @@ const RUN_FN = async (
   const rangeDays = Math.max(1, Math.ceil((rangeEndTs - rangeStartTs) / DAY_MS));
 
   const points = BUILD_GRID_FN(self.params.gridAxes);
-  // сетка обязана быть непустой: пустота после исключения
-  // бессмысленных комбинаций (reach/retain без замка) — ошибка
-  // конфигурации, о которой нужно кричать, а не молча вернуть нули
+  // сетка обязана быть непустой: пустая сетка — ошибка конфигурации
+  // (пустой axis), о которой нужно кричать, а не молча вернуть нули
   if (!points.length) {
     throw new Error(
       `ClientSimulator ${self.params.simulatorName}: the grid is empty — ` +
-        `reach and retain require profitLockPercent > 0, trail requires ` +
-        `trailingTakePercent in (0, 100) (a rule without a target does ` +
-        `not exist); pin "close"/"pnl" for level-free grids`,
+        `every gridAxes list must carry at least one value`,
     );
   }
   const reports: ISimulatorPointReport[] = [];
@@ -1064,59 +941,45 @@ const RUN_FN = async (
     rankings.find(({ criterion }) => criterion === self.params.reportOrder)
       ?.value ?? rankings[0].value;
 
-  // корзины по метрике: каждая метрика — самодостаточный результат
-  // со своими точками, СВОИМИ победителями и СВОИМИ словарями банов;
-  // метрики никогда не склеиваются. Невыметаемая метрика = пустая
-  // корзина (ключ существует всегда)
-  const reportsByMetric: Record<SimulatorAuthorMetric, ISimulatorMetricReport> =
-    {
-      close: { reports: [], best: [], tracks: [] },
-      reach: { reports: [], best: [], tracks: [] },
-      retain: { reports: [], best: [], tracks: [] },
-      pnl: { reports: [], best: [], tracks: [] },
-      trail: { reports: [], best: [], tracks: [] },
-    };
-  for (const report of reports) {
-    reportsByMetric[report.point.authorMetric].reports.push(report);
-  }
+  // единственная корзина: все точки сетки градируются одной метрикой
+  // profit-before-stop, поэтому reports/best/tracks — плоские, без
+  // словаря по метрике
+  const bucket: ISimulatorMetricReport = {
+    reports: [...reports],
+    best: [],
+    tracks: [],
+  };
 
-  // рейтинги — ВНУТРИ каждой корзины: анти-флюк порог и победители
-  // пометричны, кросс-метричного турнира нет
-  for (const metric of Object.keys(reportsByMetric) as SimulatorAuthorMetric[]) {
-    const bucket = reportsByMetric[metric];
-    if (!bucket.reports.length) {
-      continue;
+  // рейтинги внутри корзины: победитель по каждому критерию
+  for (const ranking of rankings) {
+    const sorted = [...bucket.reports].sort(byRankingDesc(ranking.value));
+    const winner = sorted[0] ?? null;
+    // сделки победителя не дублируются — лежат на winner.tradesList;
+    // трек — в bucket.tracks
+    const bestEntry: ISimulatorBest = {
+      criterion: ranking.criterion,
+      report: winner,
+    };
+    bucket.best.push(bestEntry);
+    if (self.params.callbacks?.onRanking) {
+      self.params.callbacks?.onRanking(
+        symbol,
+        ranking.criterion,
+        sorted,
+        bestEntry,
+      );
     }
-    for (const ranking of rankings) {
-      const sorted = [...bucket.reports].sort(byRankingDesc(ranking.value));
-      const winner = sorted[0] ?? null;
-      // сделки победителя не дублируются — лежат на winner.tradesList;
-      // трек — в bucket.tracks
-      const bestEntry: ISimulatorBest = {
-        criterion: ranking.criterion,
-        report: winner,
-      };
-      bucket.best.push(bestEntry);
-      if (self.params.callbacks?.onRanking) {
-        self.params.callbacks?.onRanking(
-          symbol,
-          ranking.criterion,
-          sorted,
-          bestEntry,
-        );
-      }
-    }
-    // порядок точек корзины — контракт потребителя run(): критерий
-    // задаёт схема (reportOrder), компаратор — защищённый
-    bucket.reports.sort(byRankingDesc(orderValue));
   }
+  // порядок точек — контракт потребителя run(): критерий задаёт схема
+  // (reportOrder), компаратор — защищённый
+  bucket.reports.sort(byRankingDesc(orderValue));
 
   // author tracks — сырьё, ОДНА строка на (правило x автор): раскладка
-  // per grading rule (hold x lock; metric — ключ корзины),
-  // дедуплицированная в 73 раза против reports[]. Каждый трек уже
-  // самодостаточен (несёт hold/lock/author) — grep/jq без джойна
-  for (const { rule, filter } of filterByRule.values()) {
-    reportsByMetric[rule.metric].tracks.push(...filter.tracks);
+  // per grading rule (hold x lock x stop x trailing), дедуплицированная
+  // против reports[]. Каждый трек уже самодостаточен (несёт
+  // hold/lock/stop/author) — grep/jq без джойна
+  for (const { filter } of filterByRule.values()) {
+    bucket.tracks.push(...filter.tracks);
   }
 
   const result: ISimulatorResult = {
@@ -1128,7 +991,7 @@ const RUN_FN = async (
     avgHoldMinutes: holdStats.avgHoldMinutes,
     p95HoldMinutes: holdStats.p95HoldMinutes,
     p99HoldMinutes: holdStats.p99HoldMinutes,
-    reports: reportsByMetric,
+    reports: bucket,
   };
   if (self.params.callbacks?.onDone) {
     self.params.callbacks?.onDone(symbol, result);

@@ -82,7 +82,6 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
       trailingTakePercent: [100],
       holdMinutes: [60, 7200],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {},
   });
@@ -102,8 +101,8 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     return;
   }
 
-  const short = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const eternal = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const short = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const eternal = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!short || !eternal) {
     fail("short/eternal hold reports not found");
     return;
@@ -116,7 +115,7 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     );
     return;
   }
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (!best.report || best.report.point.holdMinutes !== 60) {
       fail(`ranking ${best.criterion} must pick hold=60`);
       return;

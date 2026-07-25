@@ -43,7 +43,6 @@ const GRID_AXES = {
   trailingTakePercent: [100],
   holdMinutes: [60],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 const idea = (id, minute, direction, author) => ({

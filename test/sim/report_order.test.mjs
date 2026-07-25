@@ -44,7 +44,6 @@ const AXES = {
   // три холда = три точки с разным PnL в дрейф-мире
   holdMinutes: [60, 600, 3000],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 const IDEAS = [{ id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "solo" }];
@@ -68,11 +67,11 @@ test("SIM: reportOrder orders result.reports by the declared criterion, default 
   });
 
   const byPnl = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_order_pnl", ideas: IDEAS });
-  if (Object.values(byPnl.reports).flatMap((b) => b.reports).length !== 3) {
-    fail(`expected 3 reports, got ${Object.values(byPnl.reports).flatMap((b) => b.reports).length}`);
+  if (byPnl.reports.reports.length !== 3) {
+    fail(`expected 3 reports, got ${byPnl.reports.reports.length}`);
     return;
   }
-  const pnls = Object.values(byPnl.reports).flatMap((b) => b.reports).map(({ totalPnlPercent }) => totalPnlPercent);
+  const pnls = byPnl.reports.reports.map(({ totalPnlPercent }) => totalPnlPercent);
   if (!isSortedDesc(pnls)) {
     fail(`reportOrder "pnl" must sort by totalPnlPercent desc, got ${JSON.stringify(pnls)}`);
     return;
@@ -80,19 +79,19 @@ test("SIM: reportOrder orders result.reports by the declared criterion, default 
   // в дрейф-мире PnL растёт с холдом, а sharpe у самой прибыльной
   // точки НЕ максимален (одна жирная сделка = высокая дисперсия
   // суточных приращений) — порядки различимы
-  if (Object.values(byPnl.reports).flatMap((b) => b.reports)[0].point.holdMinutes !== 3000) {
-    fail(`pnl leader must be the longest hold, got ${Object.values(byPnl.reports).flatMap((b) => b.reports)[0].point.holdMinutes}`);
+  if (byPnl.reports.reports[0].point.holdMinutes !== 3000) {
+    fail(`pnl leader must be the longest hold, got ${byPnl.reports.reports[0].point.holdMinutes}`);
     return;
   }
   // Infinity-устойчивость: в мире без убыточных дней sortino = inf,
   // защищённый компаратор не рвёт сортировку (длина и состав целы)
-  if (!Object.values(byPnl.reports).flatMap((b) => b.reports).every(({ sortino }) => sortino === Infinity)) {
+  if (!byPnl.reports.reports.every(({ sortino }) => sortino === Infinity)) {
     fail(`ramp world must yield infinite sortino everywhere`);
     return;
   }
 
   const byDefault = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_order_default", ideas: IDEAS });
-  const sharpes = Object.values(byDefault.reports).flatMap((b) => b.reports).map(({ sharpe }) => sharpe);
+  const sharpes = byDefault.reports.reports.map(({ sharpe }) => sharpe);
   if (!isSortedDesc(sharpes)) {
     fail(`default must keep sharpe desc, got ${JSON.stringify(sharpes)}`);
     return;

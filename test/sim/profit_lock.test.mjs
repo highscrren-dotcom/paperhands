@@ -65,7 +65,6 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
       trailingTakePercent: [3],
       holdMinutes: [240],
       profitLockPercent: [0, 2],
-      authorMetric: ["close"],
     },
     callbacks: {
       onGridPoint: (_symbol, report, trades) => {
@@ -117,8 +116,8 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
     fail(`lock must beat the bleed: ${lockTrade.pnlPercent} vs ${bareTrade.pnlPercent}`);
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`grid must have exactly 2 points, got ${Object.values(result.reports).flatMap((b) => b.reports).length}`);
+  if (result.reports.reports.length !== 2) {
+    fail(`grid must have exactly 2 points, got ${result.reports.reports.length}`);
     return;
   }
 
@@ -146,7 +145,6 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
       trailingTakePercent: [3],
       holdMinutes: [240],
       profitLockPercent: [2],
-      authorMetric: ["close"],
     },
     callbacks: {},
   });
@@ -157,8 +155,8 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
     ideas: [idea(1, 0, "LONG", "runner")],
   });
 
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const winner = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
+  const [report] = result.reports.reports;
+  const winner = result.reports.best.find(({ criterion }) => criterion === "sharpe");
   const [trade] = winner.report.tradesList;
   if (report.tradesList.length !== 1 || !trade) {
     fail(`expected exactly one trade, got ${report.trades}`);

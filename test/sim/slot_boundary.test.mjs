@@ -49,7 +49,6 @@ test("SIM: a slot is per-author — an author's hold absorbs only his own overla
       trailingTakePercent: [100],
       holdMinutes: [600],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onGridPoint: (_symbol, report, trades) => captured.push({ report, trades }),

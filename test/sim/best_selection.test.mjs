@@ -60,7 +60,6 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
       trailingTakePercent: [100],
       holdMinutes: [60, 7200],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onRanking: (_symbol, criterion, sorted, best) => {
@@ -81,8 +80,8 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
     })),
   });
 
-  const steady = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const fluke = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const steady = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const fluke = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!steady || !fluke) {
     fail("both points must be evaluated");
     return;
@@ -101,7 +100,7 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
   // pnl-рейтинг берёт флюк (сырой PnL выше), риск-скорректированные —
   // steady (одна сделка = высокая дисперсия, худший sharpe/sortino/rec)
   const winnerHold = (criterion) =>
-    result.reports.close.best.find((b) => b.criterion === criterion)?.report?.point.holdMinutes;
+    result.reports.best.find((b) => b.criterion === criterion)?.report?.point.holdMinutes;
   if (winnerHold("pnl") !== 7200) {
     fail(`pnl ranking must take the monster point (hold=7200), got hold=${winnerHold("pnl")}`);
     return;

@@ -7,14 +7,15 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  *  1) профиль, чей 5-дневный горизонт упирается в конец свечей,
  *     помечается truncated, а его сделка при холде больше остатка
  *     данных закрывается с exitReason = "data_truncated";
- *  2) truncated-профили НЕ считаются доказательством в треке автора:
- *     автор, у которого все идеи обрезаны, имеет 0 подтверждённых
- *     идей и банится как недоказанный — даже если постов много.
+ *  2) кончились свечи = ПОТЕРЯ: обрезанная идея считается в треке как
+ *     miss (не исключается). Автор cut: 4 идеи (3 полных + 1 обрезана)
+ *     -> трек 4, hits 0 (дрейф не даёт фиксации). Автор shadow: 3
+ *     идеи, все обрезаны -> трек 3, hits 0 — не пустой, а полный
+ *     промахов.
  *
  * Мир: дрейф вверх, свечи существуют только до END (дальше пустые
- * чанки). Автор cut: 3 полных идеи + 1 обрезанная -> трек 3, допущен,
- * его обрезанная идея торгуется и режется концом данных. Автор
- * shadow: 3 идеи в самом конце — все обрезаны -> трек 0, бан.
+ * чанки). Замок выключен, трейлинг инертен -> фиксации нет ни у кого,
+ * все идеи — промахи; сам факт учёта обрезанных идей и есть проверка.
  */
 
 const START = 1704067200000;
@@ -70,7 +71,6 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
       trailingTakePercent: [100],
       holdMinutes: [7200],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onGridPoint: (_symbol, report, trades) => captured.push({ report, trades }),
@@ -97,15 +97,16 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
     return;
   }
 
-  const stats = Object.fromEntries(result.reports.close.tracks.map((s) => [s.author, s]));
-  // cut: только 3 полных идеи в треке (обрезанная — не доказательство)
-  if (stats.cut.ideas !== 3) {
-    fail(`cut must have track=3 (truncated idea excluded), got ${JSON.stringify(stats.cut)}`);
+  const stats = Object.fromEntries(result.reports.tracks.map((s) => [s.author, s]));
+  // cut: все 4 идеи в треке (обрезанная = miss, а не исключение);
+  // дрейф без фиксации -> 0 hits
+  if (stats.cut.ideas !== 4 || stats.cut.hits !== 0) {
+    fail(`cut must have track=4 hits=0 (truncated idea counts as a miss), got ${JSON.stringify(stats.cut)}`);
     return;
   }
-  // shadow: постов 3, доказательств 0 — пустой трек (нет полных идей)
-  if (stats.shadow.ideas !== 0) {
-    fail(`shadow must have zero proven ideas in the track, got ${JSON.stringify(stats.shadow)}`);
+  // shadow: 3 обрезанные идеи учтены как промахи — трек не пустой
+  if (stats.shadow.ideas !== 3 || stats.shadow.hits !== 0) {
+    fail(`shadow must have track=3 hits=0 (all truncated => all misses), got ${JSON.stringify(stats.shadow)}`);
     return;
   }
 
@@ -135,7 +136,7 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
   }
 
   pass(
-    `truncation: 4/7 profiles truncated, cut track=3 allowed (truncated idea uncredited), ` +
-    `shadow 0-proof banned, last trade data_truncated at ${last.holdMinutesActual}m`
+    `truncation is a loss: 4/7 profiles truncated, cut track=4 hits=0 (truncated idea counted as miss), ` +
+    `shadow track=3 hits=0, last trade data_truncated at ${last.holdMinutesActual}m`
   );
 });
