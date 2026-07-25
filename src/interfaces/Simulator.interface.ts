@@ -349,6 +349,15 @@ export interface ISimulatorTrack {
    * else those rows are indistinguishable.
    */
   hardStopPercent: number;
+  /**
+   * Grading TRAILING take of the rule, percent. The hit depends on it
+   * — the trailing arm level (entry/(1 - dir*r)) is one of the two
+   * fixations raced against the hard stop, so the same
+   * (hold, lock, stop, author) has DIFFERENT hits at different
+   * trailing values. A full part of the rule identity and MUST be on
+   * the line, else those rows are indistinguishable.
+   */
+  trailingTakePercent: number;
   /** Author login on the source platform. */
   author: string;
   /**
@@ -420,7 +429,7 @@ export interface ISimulatorMetricReport {
    * continuous track (ideas/hits/hitRate), not a 0/1 ban verdict: the
    * engine grades, userspace decides who to trust. Far more compact
    * than repeating the track on every point's report, and every line
-   * is self-contained (carries hold/lock/stop/author) for grep/jq
+   * is self-contained (carries hold/lock/stop/trailing/author) for grep/jq
    * without a join.
    */
   tracks: ISimulatorTrack[];

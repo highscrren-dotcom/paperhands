@@ -11,9 +11,11 @@ A **grid sweep** over a signal feed, driven by the `Simulator` entity. The datas
 
 The crucial contract: **the engine bans nobody.** Every author's idea is traded; the engine reports the raw track (ideas / hits / hitRate per grading rule) and leaves the decision of *who to trust* to userspace. There is no `minAuthorTrack` / `minAuthorHitRate` threshold — that step collapsed continuous trust into a 0/1 flag and threw information away. So the corridor you see is the crowd's UNFILTERED result; the tracks next to it are the material a userspace scorer would filter on.
 
-This is a run of the model over its own full history — train-on-train, stated openly, no out-of-sample split here. The profit-harvesting machinery is switched off (`profitLockPercent: [0]`, inert trailing): a position enters on any idea and exits by time or catastrophe stop, nothing else. What it measures is whether the bare direction of the ideas carries an edge before any exit engineering.
+Grading is **one binary outcome — profit-before-stop**: walking each point's own hold window candle by candle, an author's idea is a HIT when a fixation — the profit lock (if lock > 0) OR the trailing arm level — fires BEFORE the hard stop; a MISS when the hard stop fires first, the window times out with nothing fixed, or the candle data runs out (running out of candles is a loss, same as a timeout). No `close` / `pnl` / `reach` / `retain` / `trail` metric zoo — one question, one report bucket, one set of tracks.
 
-Not every feed carries one, and June 2026 is the honest example: with everyone trading a falling market full of longs, the corridor is **negative** — which is exactly the finding. The value is not a promise of money; it is the raw tracks, which tell you a handful of authors called this month well even as the crowd average bled.
+This is a run of the model over its own full history — train-on-train, stated openly, no out-of-sample split here. The full harvesting machinery IS swept: hard stop, trailing take, hold duration and profit lock all vary across the grid, so the sweep looks for the exit engineering that turns the raw direction into a corridor.
+
+June 2026 is the honest example: the crowd average bleeds at short holds, but the corridor **turns positive at the longest hold** — the best point (**stop 5.5% · trail 1.5% · hold 120h · lock 1.5%**) makes **+26.26%** at a **79% win rate** over 253 trades. The value is the corridor AND the raw tracks, which tell you which authors called this month well.
 
 ## Purpose
 
@@ -21,7 +23,7 @@ This project exists for the concrete checks below.
 
 ### 1. Is there a profitable corridor at all?
 
-One `Simulator.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is small — **12 points of hard stop × hold** — because the profit-harvesting machinery is off. If no point of even this primitive corridor is profitable, the bare direction of the crowd carries no extractable edge on this feed.
+One `Simulator.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is the full cartesian product — **1,560 points** (stop 13 × trailing 6 × hold 5 × lock 4) — because the whole harvesting machinery is swept. If no point of the corridor is profitable, the crowd's direction carries no extractable edge on this feed even with the exit engineering searched.
 
 ### 2. How much does the window cut?
 
@@ -29,15 +31,15 @@ Before any trading logic runs, the feed passes the honesty filters: NEUTRAL idea
 
 ### 3. What is each author's raw track?
 
-The engine grades every author by the `close` metric INSIDE EACH POINT'S OWN HOLD WINDOW: a 24-hour point scores the 24-hour close, a 72-hour point the 72-hour close — the author is graded on exactly the event the point trades. The result is `tracks[]`: one line per (grading rule × author) carrying `{holdMinutes, profitLockPercent, author, ideas, hits, hitRate}`. No ban, no verdict — the raw ratio. Because the window is part of the rule, the same author appears once per window: **462 track lines = 154 authors × 3 hold windows**. Userspace picks a window and a threshold and reads the survivors off directly (`hitRate >= 0.5`, `ideas >= 3`).
+The engine grades every author by the single **profit-before-stop** outcome INSIDE EACH POINT'S OWN HOLD WINDOW: a 24-hour point scores the 24-hour window, a 120-hour point the 120-hour window — the author is graded on exactly the trade the point takes. The result is `tracks[]`: one line per (grading rule × author) carrying `{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`. No ban, no verdict — the raw ratio. Because the full rule (all four levels) is part of the identity, the same author appears once per rule: **240,240 track lines = 154 authors × 1,560 rules**. Userspace picks a rule and a threshold and reads the survivors off directly (`hitRate >= 0.5`, `ideas >= 3`).
 
-### 4. The mechanics are deliberately primitive
+### 4. The mechanics are the full sweep
 
-The probe does not try to EARN: `profitLockPercent: [0]`, the trailing take is inert and never arms; every idea triggers an entry (one open position PER AUTHOR — slots are per-author, so authors never collide, and each absorbs only his own overlapping posts). Authors are graded strictly in isolation — no interaction metrics (consensus, vote weighting, Wilson bounds) exist by design. What remains swept is only the catastrophe stop 2–7% and the hold 24–72h.
+Every idea triggers an entry (one open position PER AUTHOR — slots are per-author, so authors never collide, and each absorbs only his own overlapping posts). Authors are graded strictly in isolation — no interaction metrics (consensus, vote weighting, Wilson bounds) exist by design. What is swept is the whole exit machinery: catastrophe stop 1–7%, trailing take 0.5–3%, hold 24–120h, profit lock 1.5–5%.
 
 ### 5. Reading the result
 
-The result carries, per metric bucket: ranking winners (time-based Sharpe/Sortino over daily equity increments — frozen capital is not free — plus total PnL and recovery factor) with full trade lists and per-trade `absorbedIdeas` (which author's signals a busy slot ate), and the `tracks[]`. The parameter search — the lock, the trailing — is your own `Simulator.run` sweep, and the final arbiter for any point picked from the tracks is always a real engine backtest via `Backtest.run`.
+The result carries a single report bucket: ranking winners (time-based Sharpe/Sortino over daily equity increments — frozen capital is not free — plus total PnL and recovery factor) with full trade lists and per-trade `absorbedIdeas` (which author's signals a busy slot ate), and the `tracks[]`. The final arbiter for any point picked from the tracks is always a real engine backtest via `Backtest.run`.
 
 ## Actual Results — June 2026, BTCUSDT, full feed
 
@@ -47,32 +49,32 @@ The committed artifact is [`assets/simulator.done.json`](https://github.com/trip
 |---|---|
 | Ideas in feed, BTCUSDT | 421 total → 300 after NEUTRAL + flood dedupe |
 | Profiles built | 300, none truncated |
-| Grid | 12 points — stop 4 × hold 3, harvesting machinery off, no ban |
-| Author tracks | 462 — one per (hold window × author) = 154 authors × 3 windows |
-| Profitable corridor | **0 of 12 points** — the crowd average bleeds in a −20% month |
+| Grid | 1,560 points — stop 13 × trailing 6 × hold 5 × lock 4, full sweep, no ban |
+| Author tracks | 240,240 — one per (rule × author) = 154 authors × 1,560 rules |
+| Profitable corridor | **36 of 1,560 points** — the edge lives at the longest hold |
 
-The four ranking winners of the `close` bucket — all resolve to the same least-bad point, because every point is negative:
+All four ranking winners resolve to the same point — the corridor's peak:
 
 | Criterion | Point | Trades | PnL | Win rate | Sharpe | Sortino |
 |---|---|---|---|---|---|---|
-| Sharpe / Sortino / PnL / Recovery | H=5 72h | 237 | **−29.30%** | 46% | −0.25 | −0.40 |
+| Sharpe / Sortino / PnL / Recovery | stop 5.5 · trail 1.5 · hold 120h · lock 1.5 | 253 | **+26.26%** | 79% | 0.40 | 0.56 |
 
-The corridor verdict is honest and negative: **every author trading a falling market full of longs loses.** By hold, the damage shrinks as the window lengthens — best point −113.7% @ 24h, −70.4% @ 48h, −29.3% @ 72h — the longer hold rides out more noise, but never into the black. This is the point of dropping the ban: the *unfiltered* crowd has no edge here, and the demo shows it plainly instead of hiding it behind a whitelist.
+The corridor is honest about WHERE the edge is. By hold, the best point per window: **−80.2% @ 24h, −62.8% @ 48h, −66.4% @ 72h, −23.8% @ 96h, +26.3% @ 120h** — short holds bleed the falling market, only the 5-day hold rides the crowd's longs into the black. The profit-harvesting sweep matters: with the lock and trailing switched off there is no positive point at all; it is the exit engineering, found by the grid, that surfaces the corridor.
 
-The signal lives in the **tracks**, not the corridor. Filter the 72-hour window to authors with a real track (ideas ≥ 3) and rank by hitRate:
+The signal also lives in the **tracks**. Filter the WINNING rule (stop 5.5 · trail 1.5 · hold 120h · lock 1.5) to authors with a real track (ideas ≥ 3) and rank by hitRate:
 
 | Author | Hits / Ideas | HitRate |
 |---|---|---|
+| PremiumTrader57 | 8/8 | 100% |
+| melikatrader94 | 5/5 | 100% |
+| CandleKing09 | 5/5 | 100% |
+| KennyYenKen | 3/3 | 100% |
+| Prime_X_Trader | 3/3 | 100% |
 | XAUxBTC_Pro | 5/6 | 83% |
-| CandleKing09 | 4/5 | 80% |
-| CobraVanguard | 2/3 | 67% |
-| Alpha_Trade_Scope | 2/3 | 67% |
-| KennyYenKen | 2/3 | 67% |
-| Prime_X_Trader | 2/3 | 67% |
-| MarketStrategysignals | 5/8 | 63% |
-| TradingShot | 9/15 | 60% |
+| Apex_Legends | 9/11 | 82% |
+| TradingShot | 12/15 | 80% |
 
-**12 of the 23 authors with a 3-idea track clear hitRate ≥ 0.5 on the 72-hour window.** That population — not the negative corridor — is what a userspace swarm scorer carries forward: the crowd average lost, but a dozen authors called the month right, and the raw track is the evidence, no ban baked in.
+**21 of the 23 authors with a 3-idea track clear hitRate ≥ 0.5 under the winning rule.** That population is what a userspace swarm scorer carries forward: the raw track is the evidence, no ban baked in.
 
 ## Project Structure
 
@@ -80,7 +82,7 @@ The signal lives in the **tracks**, not the corridor. Filter the 72-hour window 
 demo/simulator/
 ├── assets/
 │   ├── tv-ideas.normalized.jsonl   # crypto-venue ideas only, symbols normalized to *USDT
-│   └── simulator.done.json         # sweep artifact: full-feed run, 12-point primitive grid
+│   └── simulator.done.json         # sweep artifact: full-feed run, 1,560-point full grid
 ├── src/
 │   └── index.mjs                   # Exchange + simulator schema + Simulator.run
 ├── dump/                           # raw run outputs and the candle persist cache
@@ -111,18 +113,11 @@ The script registers a CCXT Binance spot exchange, a simulator schema with expli
 
 ```javascript
 addSimulatorSchema({
-  simulatorName: "tv_simulator",
-  exchangeName: "ccxt_exchange",
-  gridAxes: {
-    // грубая шкала катастрофы: коридор должен быть широким, не точкой
-    hardStopPercent: [2, 3, 5, 7],
-    // инертен: проба не собирает прибыль, выход — по времени или стопу
-    trailingTakePercent: [100],
-    holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60],
-    profitLockPercent: [0],
-    // close: закрытие окна холда в сторону идеи; замок выключен
-    authorMetric: ["close"],
-  },
+  simulatorName: "tv_probe",
+  exchangeName: "ccxt_cached",
+  // gridAxes опущены — движок метёт полную сетку по умолчанию:
+  // stop 1–7% × trailing 0.5–3% × hold 24–120h × lock 1.5–5%.
+  // Метрика одна — profit-before-stop, задавать нечего.
   reportOrder: "sharpe",
 });
 ```
@@ -133,8 +128,8 @@ Candles are fetched lazily in chunks through the exchange schema — persist cac
 
 The result is read in two independent layers — the corridor and the tracks:
 
-1. **The corridor** (`reports` — a dictionary keyed by the point's author metric; every bucket carries its reports sorted by the schema's `reportOrder` and its ranking winners in `best`). Count the positive-PnL share and how it distributes over the hold axis; `p95HoldMinutes` / `p99HoldMinutes` make eternal holds visible instantly. A negative corridor means the *unfiltered* crowd has no edge — it does not mean the feed is worthless (see the tracks).
-2. **The tracks** (`reports.<metric>.tracks` — one line per grading rule × author, `{holdMinutes, profitLockPercent, author, ideas, hits, hitRate}`). This is the raw material for a userspace scorer: pick a window (holdMinutes), require a minimum track (`ideas >= N`), rank by `hitRate`. There is no ban and no threshold in the engine — that judgement is yours, on continuous evidence.
+1. **The corridor** (`reports.reports` — the single report bucket, sorted by the schema's `reportOrder`, with its ranking winners in `reports.best`). Count the positive-PnL share and how it distributes over the hold axis; `p95HoldMinutes` / `p99HoldMinutes` make eternal holds visible instantly. A negative corridor means the *unfiltered* crowd has no edge — it does not mean the feed is worthless (see the tracks).
+2. **The tracks** (`reports.tracks` — one line per grading rule × author, `{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`). This is the raw material for a userspace scorer: pick a rule (the four levels), require a minimum track (`ideas >= N`), rank by `hitRate`. There is no ban and no threshold in the engine — that judgement is yours, on continuous evidence.
 
 The final arbiter for any point or author picked from the tracks is always a real engine backtest via `Backtest.run` — the simulator makes the search cheap, it does not replace the engine.
 

@@ -378,6 +378,7 @@ const TRAIN_AUTHOR_FILTER_FN = (
     holdMinutes: rule.holdMinutes,
     profitLockPercent: rule.profitLockPercent,
     hardStopPercent: rule.hardStopPercent,
+    trailingTakePercent: rule.trailingTakePercent,
     author,
     ideas: stat.ideas,
     hits: stat.hits,

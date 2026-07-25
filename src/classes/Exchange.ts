@@ -7,6 +7,7 @@ import { Candle } from "./Candle";
 import { errorEmitter } from "../config/emitters";
 import { alignToInterval } from "../utils/alignToInterval";
 import { validateCandles } from "../validation/validateCandles";
+import LoggerService from "../lib/services/base/LoggerService";
 
 const EXCHANGE_METHOD_NAME_GET_CANDLES = "ExchangeUtils.getCandles";
 const EXCHANGE_METHOD_NAME_GET_AVERAGE_PRICE = "ExchangeUtils.getAveragePrice";
@@ -18,6 +19,9 @@ const EXCHANGE_METHOD_NAME_GET_RAW_CANDLES = "ExchangeUtils.getRawCandles";
 const EXCHANGE_METHOD_NAME_GET_AGGREGATED_TRADES = "ExchangeUtils.getAggregatedTrades";
 
 const MS_PER_MINUTE = 60_000;
+
+/** Logger service injected as DI singleton */
+const LOGGER_SERVICE = new LoggerService();
 
 /**
  * Normalizes raw adapter output to the {@link IAggregatedTradeData} contract.
@@ -233,13 +237,13 @@ const READ_CANDLES_CACHE_FN = trycatch(
 
     // Return cached data only if we have exactly the requested limit
     if (cachedCandles?.length === dto.limit) {
-      backtest.loggerService.debug(
+      LOGGER_SERVICE.debug(
         `ExchangeInstance READ_CANDLES_CACHE_FN: cache hit for exchangeName=${exchangeName}, symbol=${dto.symbol}, interval=${dto.interval}, limit=${dto.limit}`,
       );
       return cachedCandles;
     }
 
-    backtest.loggerService.warn(
+    LOGGER_SERVICE.warn(
       `ExchangeInstance READ_CANDLES_CACHE_FN: cache inconsistent (count or range mismatch) for exchangeName=${exchangeName}, symbol=${dto.symbol}, interval=${dto.interval}, limit=${dto.limit}`,
     );
 
@@ -252,7 +256,7 @@ const READ_CANDLES_CACHE_FN = trycatch(
         error: errorData(error),
         message: getErrorMessage(error),
       };
-      backtest.loggerService.warn(message, payload);
+      LOGGER_SERVICE.warn(message, payload);
       console.warn(message, payload);
       errorEmitter.next(error);
     },
@@ -289,7 +293,7 @@ const WRITE_CANDLES_CACHE_FN = trycatch(
         dto.interval,
         exchangeName,
       );
-      backtest.loggerService.debug(
+      LOGGER_SERVICE.debug(
         `ExchangeInstance WRITE_CANDLES_CACHE_FN: cache updated for exchangeName=${exchangeName}, symbol=${dto.symbol}, interval=${dto.interval}, count=${candles.length}`,
       );
     },
@@ -301,7 +305,7 @@ const WRITE_CANDLES_CACHE_FN = trycatch(
         error: errorData(error),
         message: getErrorMessage(error),
       };
-      backtest.loggerService.warn(message, payload);
+      LOGGER_SERVICE.warn(message, payload);
       console.warn(message, payload);
       errorEmitter.next(error);
     },
@@ -362,7 +366,7 @@ export class ExchangeInstance {
     interval: CandleInterval,
     limit: number
   ) => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_GET_CANDLES, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_GET_CANDLES, {
       exchangeName: this.exchangeName,
       symbol,
       interval,
@@ -445,7 +449,7 @@ export class ExchangeInstance {
       );
 
       if (allData.length !== uniqueData.length) {
-        backtest.loggerService.warn(
+        LOGGER_SERVICE.warn(
           `ExchangeInstance getCandles: Removed ${allData.length - uniqueData.length} duplicate candles by timestamp`
         );
       }
@@ -513,7 +517,7 @@ export class ExchangeInstance {
    * ```
    */
   public getAveragePrice = async (symbol: string): Promise<number> => {
-    backtest.loggerService.debug(`ExchangeInstance getAveragePrice`, {
+    LOGGER_SERVICE.debug(`ExchangeInstance getAveragePrice`, {
       exchangeName: this.exchangeName,
       symbol,
     });
@@ -568,7 +572,7 @@ export class ExchangeInstance {
    * ```
    */
   public getClosePrice = async (symbol: string, interval: CandleInterval): Promise<number> => {
-    backtest.loggerService.debug(`ExchangeInstance getClosePrice`, {
+    LOGGER_SERVICE.debug(`ExchangeInstance getClosePrice`, {
       exchangeName: this.exchangeName,
       symbol,
       interval,
@@ -600,7 +604,7 @@ export class ExchangeInstance {
    * ```
    */
   public formatQuantity = async (symbol: string, quantity: number): Promise<string> => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_FORMAT_QUANTITY, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_FORMAT_QUANTITY, {
       exchangeName: this.exchangeName,
       symbol,
       quantity,
@@ -624,7 +628,7 @@ export class ExchangeInstance {
    * ```
    */
   public formatPrice = async (symbol: string, price: number): Promise<string> => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_FORMAT_PRICE, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_FORMAT_PRICE, {
       exchangeName: this.exchangeName,
       symbol,
       price,
@@ -654,7 +658,7 @@ export class ExchangeInstance {
    * ```
    */
   public getOrderBook = async (symbol: string, depth: number = GLOBAL_CONFIG.CC_ORDER_BOOK_MAX_DEPTH_LEVELS): Promise<IOrderBookData> => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_GET_ORDER_BOOK, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_GET_ORDER_BOOK, {
       exchangeName: this.exchangeName,
       symbol,
       depth,
@@ -691,7 +695,7 @@ export class ExchangeInstance {
    * ```
    */
   public getAggregatedTrades = async (symbol: string, limit?: number): Promise<IAggregatedTradeData[]> => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_GET_AGGREGATED_TRADES, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_GET_AGGREGATED_TRADES, {
       exchangeName: this.exchangeName,
       symbol,
       limit,
@@ -747,7 +751,7 @@ export class ExchangeInstance {
       if (chunk.length === 0) {
         emptyWindows += 1;
         if (emptyWindows >= MAX_CONSECUTIVE_EMPTY_WINDOWS) {
-          backtest.loggerService.warn(
+          LOGGER_SERVICE.warn(
             `ExchangeInstance getAggregatedTrades: stopped after ${MAX_CONSECUTIVE_EMPTY_WINDOWS} consecutive empty windows, returning ${result.length}/${limit} trades`,
             { exchangeName: this.exchangeName, symbol, limit, windowEnd },
           );
@@ -815,7 +819,7 @@ export class ExchangeInstance {
     sDate?: number,
     eDate?: number
   ): Promise<ICandleData[]> => {
-    backtest.loggerService.info(EXCHANGE_METHOD_NAME_GET_RAW_CANDLES, {
+    LOGGER_SERVICE.info(EXCHANGE_METHOD_NAME_GET_RAW_CANDLES, {
       exchangeName: this.exchangeName,
       symbol,
       interval,
@@ -970,7 +974,7 @@ export class ExchangeInstance {
       );
 
       if (allData.length !== uniqueData.length) {
-        backtest.loggerService.warn(
+        LOGGER_SERVICE.warn(
           `ExchangeInstance getRawCandles: Removed ${allData.length - uniqueData.length} duplicate candles by timestamp`
         );
       }

@@ -32,7 +32,7 @@ const getExchange = singleshot(async () => {
 });
 
 addExchangeSchema({
-  exchangeName: "ccxt_exchange",
+  exchangeName: "ccxt_cached",
   getCandles: async (symbol, interval, since, limit) => {
     const exchange = await getExchange();
     const candles = await exchange.fetchOHLCV(symbol, interval, since.getTime(), limit);

@@ -103,11 +103,11 @@ const toMarkdown = (result: ISimulatorResult): string => {
   lines.push("");
   lines.push(`### Author tracks — raw ideas/hits/hitRate per rule (top ${tracks.length} by hitRate; full set in --json)`);
   lines.push("");
-  lines.push(`| Author | Hold | Lock% | Stop% | Ideas | Hits | HitRate |`);
-  lines.push(`| --- | --- | --- | --- | --- | --- | --- |`);
+  lines.push(`| Author | Hold | Lock% | Stop% | Trail% | Ideas | Hits | HitRate |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- |`);
   for (const t of tracks) {
     lines.push(
-      `| ${t.author} | ${t.holdMinutes / 60}h | ${t.profitLockPercent} | ${t.hardStopPercent} | ${t.ideas} | ${t.hits} | ${(t.hitRate * 100).toFixed(0)}% |`,
+      `| ${t.author} | ${t.holdMinutes / 60}h | ${t.profitLockPercent} | ${t.hardStopPercent} | ${t.trailingTakePercent} | ${t.ideas} | ${t.hits} | ${(t.hitRate * 100).toFixed(0)}% |`,
     );
   }
   return lines.join("\n");
