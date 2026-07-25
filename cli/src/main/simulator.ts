@@ -62,10 +62,8 @@ const fmtSimRatio = (value: number): string =>
   Number.isFinite(value) ? value.toFixed(2) : "inf";
 
 const toMarkdown = (result: ISimulatorResult): string => {
-  const buckets = Object.entries(result.reports).filter(
-    ([, bucket]) => bucket.reports.length > 0,
-  );
-  const allReports = buckets.flatMap(([, bucket]) => bucket.reports);
+  const bucket = result.reports;
+  const allReports = bucket.reports;
   const profitable = allReports.filter(
     ({ totalPnlPercent }) => totalPnlPercent > 0,
   ).length;
@@ -78,41 +76,39 @@ const toMarkdown = (result: ISimulatorResult): string => {
   lines.push(`| Profiles (truncated) | ${result.profileCount} (${result.truncatedCount}) |`);
   lines.push(`| Profitable corridor | ${profitable} / ${allReports.length} grid points |`);
   lines.push(`| Hold minutes avg / p95 / p99 | ${result.avgHoldMinutes.toFixed(0)} / ${result.p95HoldMinutes} / ${result.p99HoldMinutes} |`);
-  // каждая метрика — самодостаточная корзина: свои победители и
-  // свои author tracks, между собой не склеиваются
-  for (const [metric, bucket] of buckets) {
-    lines.push("");
-    lines.push(`## Metric: ${metric}`);
-    lines.push("");
-    lines.push(`| Criterion | Stop% | Trail% | Hold | Lock% | Trades | PNL% | WinRate | Sharpe | Sortino |`);
-    lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
-    for (const best of bucket.best) {
-      if (!best.report) {
-        lines.push(`| ${best.criterion} | — | — | — | — | — | — | — | — | — |`);
-        continue;
-      }
-      const { point } = best.report;
-      lines.push(
-        `| ${best.criterion} | ${point.hardStopPercent} | ${point.trailingTakePercent} | ${point.holdMinutes / 60}h | ${point.profitLockPercent} | ` +
-          `${best.report.tradesList.length} | ${best.report.totalPnlPercent.toFixed(2)}% | ${(best.report.winRate * 100).toFixed(0)}% | ${fmtSimRatio(best.report.sharpe)} | ${fmtSimRatio(best.report.sortino)} |`,
-      );
+  // единственная метрика — profit-before-stop: одна корзина с
+  // победителями и author tracks
+  lines.push("");
+  lines.push(`## Grid winners`);
+  lines.push("");
+  lines.push(`| Criterion | Stop% | Trail% | Hold | Lock% | Trades | PNL% | WinRate | Sharpe | Sortino |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
+  for (const best of bucket.best) {
+    if (!best.report) {
+      lines.push(`| ${best.criterion} | — | — | — | — | — | — | — | — | — |`);
+      continue;
     }
-    // сырой author track правил этой корзины: userspace решает,
-    // кому верить (порога/бана нет). Топ по hitRate
-    const tracks = [...bucket.tracks]
-      .filter(({ ideas }) => ideas > 0)
-      .sort((a, b) => b.hitRate - a.hitRate || b.ideas - a.ideas)
-      .slice(0, 20);
-    lines.push("");
-    lines.push(`### Author tracks — raw ideas/hits/hitRate per rule (top ${tracks.length} by hitRate; full set in --json)`);
-    lines.push("");
-    lines.push(`| Author | Hold | Lock% | Ideas | Hits | HitRate |`);
-    lines.push(`| --- | --- | --- | --- | --- | --- |`);
-    for (const t of tracks) {
-      lines.push(
-        `| ${t.author} | ${t.holdMinutes / 60}h | ${t.profitLockPercent} | ${t.ideas} | ${t.hits} | ${(t.hitRate * 100).toFixed(0)}% |`,
-      );
-    }
+    const { point } = best.report;
+    lines.push(
+      `| ${best.criterion} | ${point.hardStopPercent} | ${point.trailingTakePercent} | ${point.holdMinutes / 60}h | ${point.profitLockPercent} | ` +
+        `${best.report.tradesList.length} | ${best.report.totalPnlPercent.toFixed(2)}% | ${(best.report.winRate * 100).toFixed(0)}% | ${fmtSimRatio(best.report.sharpe)} | ${fmtSimRatio(best.report.sortino)} |`,
+    );
+  }
+  // сырой author track: userspace решает, кому верить (порога/бана
+  // нет). Топ по hitRate
+  const tracks = [...bucket.tracks]
+    .filter(({ ideas }) => ideas > 0)
+    .sort((a, b) => b.hitRate - a.hitRate || b.ideas - a.ideas)
+    .slice(0, 20);
+  lines.push("");
+  lines.push(`### Author tracks — raw ideas/hits/hitRate per rule (top ${tracks.length} by hitRate; full set in --json)`);
+  lines.push("");
+  lines.push(`| Author | Hold | Lock% | Stop% | Ideas | Hits | HitRate |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- |`);
+  for (const t of tracks) {
+    lines.push(
+      `| ${t.author} | ${t.holdMinutes / 60}h | ${t.profitLockPercent} | ${t.hardStopPercent} | ${t.ideas} | ${t.hits} | ${(t.hitRate * 100).toFixed(0)}% |`,
+    );
   }
   return lines.join("\n");
 };
@@ -301,8 +297,8 @@ export const main = async () => {
         if (values.verbose) {
           console.log("onDone", {
             symbol,
-            reports: Object.values(result.reports).flatMap((bucket) => bucket.reports).length,
-            tracks: Object.values(result.reports).flatMap((bucket) => bucket.tracks).length,
+            reports: result.reports.reports.length,
+            tracks: result.reports.tracks.length,
           });
         }
       },

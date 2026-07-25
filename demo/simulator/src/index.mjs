@@ -66,36 +66,11 @@ const result = await Simulator.run({
 
 const { reports, ...other } = result;
 
+// единственная метрика profit-before-stop: одна корзина, три ленты
 await writeFileSync("./result.json", JSON.stringify(other, null, 2))
 
-{
-  await writeLines("./result_close_tracks.jsonl", result.reports.close.tracks);
-  await writeLines("./result_close_best.jsonl", result.reports.close.best);
-  await writeLines("./result_close_reports.jsonl", result.reports.close.reports);
-}
-
-{
-  await writeLines("./result_pnl_tracks.jsonl", result.reports.pnl.tracks);
-  await writeLines("./result_pnl_best.jsonl", result.reports.pnl.best);
-  await writeLines("./result_pnl_reports.jsonl", result.reports.pnl.reports);
-}
-
-{
-  await writeLines("./result_reach_tracks.jsonl", result.reports.reach.tracks);
-  await writeLines("./result_reach_best.jsonl", result.reports.reach.best);
-  await writeLines("./result_reach_reports.jsonl", result.reports.reach.reports);
-}
-
-{
-  await writeLines("./result_retain_tracks.jsonl", result.reports.retain.tracks);
-  await writeLines("./result_retain_best.jsonl", result.reports.retain.best);
-  await writeLines("./result_retain_reports.jsonl", result.reports.retain.reports);
-}
-
-{
-  await writeLines("./result_trail_tracks.jsonl", result.reports.trail.tracks);
-  await writeLines("./result_trail_best.jsonl", result.reports.trail.best);
-  await writeLines("./result_trail_reports.jsonl", result.reports.trail.reports);
-}
+await writeLines("./result_tracks.jsonl", reports.tracks);
+await writeLines("./result_best.jsonl", reports.best);
+await writeLines("./result_reports.jsonl", reports.reports);
 
 process.exit(0);
