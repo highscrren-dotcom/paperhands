@@ -56,7 +56,7 @@ const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
   hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7],
   trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3],
   holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60],
-  profitLockPercent: [0, 1.5, 2.5, 3.5, 5],
+  profitLockPercent: [1.5, 2.5, 3.5, 5],
   authorMetric: ["close", "pnl", "reach", "retain", "trail"],
 };
 
