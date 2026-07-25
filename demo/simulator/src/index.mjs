@@ -22,10 +22,10 @@ addExchangeSchema({
 });
 
 // Проба осуществимости, НЕ поиск заработка: вся собирающая прибыль
-// механика выключена (замок, трейлинг, reach-метрика — территория
-// demo/tune). Остаётся минимальный вопрос: даёт ли удержание идей
-// проверенных авторов прибыльный КОРИДОР по стопу x холду x правилу
-// бана — 48 точек вместо тысяч
+// механика выключена (замок, трейлинг). Вопрос — даёт ли удержание
+// идей толпы прибыльный КОРИДОР по стопу x холду, и как выглядит
+// СЫРОЙ трек авторов (ideas/hits/hitRate). Бана нет: движок грейдит,
+// кому верить — юзерспейс
 addSimulatorSchema({
   simulatorName: "tv_simulator",
   exchangeName: "ccxt_exchange",
@@ -36,13 +36,9 @@ addSimulatorSchema({
     // проба не собирает прибыль, выход — по времени или стопу
     trailingTakePercent: [100],
     holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60],
-    // правило бана — единственная перебираемая "умность" пробы:
-    // вопрос N3 — выживает ли кто-то в белом списке
-    minAuthorTrack: [3, 5],
-    minAuthorHitRate: [0.5, 0.6],
     profitLockPercent: [0],
-    // close: закрытие 5-дневного горизонта в сторону идеи — у пробы
-    // замок выключен (lock=0), уровневым метрикам грейдить нечем
+    // close: закрытие окна холда в сторону идеи — у пробы замок
+    // выключен (lock=0), уровневым метрикам грейдить нечем
     authorMetric: ["close"],
   },
   reportOrder: "sharpe",
@@ -53,12 +49,14 @@ const ideas = readFileSync("./assets/tv-ideas.normalized.jsonl", "utf-8")
 
 const result = await Simulator.run({ symbol: "BTCUSDT", simulatorName: "tv_simulator", ideas });
 writeFileSync("./dump/simulator.done.json", JSON.stringify(result, null, 2));
-// проба пинует authorMetric: ["close"] — её точки в этой корзине;
-// белый список — у sharpe-победителя корзины, под правило его точки
-const sharpeBest = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
+// проба пинует authorMetric: ["close"] — её точки и треки в этой корзине
+const bucket = result.reports.close;
+const profitable = bucket.reports.filter(({ totalPnlPercent }) => totalPnlPercent > 0).length;
+const proven = bucket.tracks.filter(({ ideas, hitRate }) => ideas >= 3 && hitRate >= 0.5).length;
 console.log(
   "saved; profiles:", result.profileCount,
-  "allowed:", sharpeBest?.report?.allowedAuthors.length ?? 0,
-  "banned:", sharpeBest?.report?.bannedAuthors.length ?? 0,
+  "| profitable:", `${profitable}/${bucket.reports.length}`,
+  "| tracks:", bucket.tracks.length,
+  "| proven (ideas>=3, hitRate>=0.5):", proven,
 );
 process.exit(0);
