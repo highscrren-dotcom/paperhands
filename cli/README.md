@@ -104,7 +104,7 @@ Every invocation is **one mode** (a primary flag) + a positional strategy/entry 
 | **Candle Dump** | `--dump` | Fetch & save raw OHLCV candles to a file |
 | **PnL Debug** | `--pnldebug` | Simulate per-minute PnL for a given entry price & direction |
 | **Broker Debug** | `--brokerdebug` | Fire a single broker commit against the live adapter |
-| **Simulator** | `--simulator` | Grid sweep over a crowd-ideas feed: per-point metrics + raw author tracks, axes from a positional JSON config |
+| **Simulator** | `--simulator` | Grid sweep over a crowd-ideas feed: profit-before-stop corridor + raw author tracks, axes from a positional JSON config |
 | **Flush** | `--flush` | Delete report/log/markdown/agent folders from a strategy dump dir |
 | **Init** | `--init` | Scaffold a new project |
 | **Docker** | `--docker` | Scaffold a self-contained Docker workspace |
@@ -452,7 +452,7 @@ The CLI loads `./modules/brokerdebug.module`, fetches the last candle for `--sym
 
 ### 🎛️ Simulator (`--simulator`)
 
-A **grid sweep** over a feed of crowd trading ideas: the grid axes come from a positional JSON config of the consumer — from a lock-free feasibility probe to a full parameter search. Without a config the engine defaults apply (the full default axes of the connection service with all five author metrics, ordered by sharpe). Prints a Markdown report with the corridor share, per metric bucket the ranking winners, and the **raw author tracks** (ideas/hits/hitRate per grading rule) — the engine grades every author but bans none; who to trust is userspace.
+A **grid sweep** over a feed of crowd trading ideas: the grid axes come from a positional JSON config of the consumer — from a small feasibility probe to a full parameter search. Without a config the engine defaults apply. Authors are graded by ONE binary outcome — **profit-before-stop**: walking each point's own hold window candle by candle, an idea is a HIT when a fixation (the profit lock if lock > 0, OR the trailing arm level) fires BEFORE the hard stop, a MISS when the hard stop fires first, the window times out, or the candles run out. Prints a Markdown report with the corridor share, the ranking winners, and the **raw author tracks** (ideas/hits/hitRate per grading rule) — the engine grades every author but bans none; who to trust is userspace.
 
 ```bash
 npx @backtest-kit/cli --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
@@ -475,7 +475,7 @@ npx @backtest-kit/cli --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.
 
 **Positionals:** path to an ideas `.jsonl` file (required) — one idea per line, exact shape `{ "id": number, "ts": number, "symbol": string, "direction": "LONG"|"SHORT"|"NEUTRAL", "author": string }` — and an **optional config `.json`** with the shape `{ "gridAxes"?: ISimulatorGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }`. Both files are validated **before any work starts** — a structure mismatch (including an unknown config key) aborts the run with an error naming the field. No config → an empty object → the engine defaults. Ideas of other symbols are filtered out by the engine, so one shared feed serves any `--symbol`.
 
-Under the hood: one candle pass per idea to the grid's longest hold (lazy chunked fetch through the exchange, persist cache first), flood dedupe (one idea per author per direction per 8h), EVERY author traded (no ban — the engine reports the raw per-author track graded **inside each point's own hold window**; there is no `minAuthorTrack`/`minAuthorHitRate` threshold — that 0/1 step was removed so userspace filters on the continuous `hitRate`), production slot semantics (one open position per author), time-based Sharpe/Sortino over daily equity buckets, per-metric buckets with their own winners and author tracks — nothing is aggregated across metrics. With `--verbose` every lifecycle callback (`onIdeas`, `onProfiles`, `onAuthorsTrained`, `onGridPoint`, `onRanking`, `onDone`) is logged to the console as it fires, so long runs show progress. Exchange via `simulator.module` (see convention above).
+Under the hood: one candle pass per idea to the grid's longest hold (lazy chunked fetch through the exchange, persist cache first), flood dedupe (one idea per author per direction per 8h), EVERY author traded (the engine grades every author on the raw per-author track **inside each point's own hold window** and bans none — userspace filters on the continuous `hitRate`), production slot semantics (one open position per author), time-based Sharpe/Sortino over daily equity buckets. The result is a single report bucket — `result.reports.reports` (grid point reports, sorted by `reportOrder`), `result.reports.best` (the four ranking winners), and `result.reports.tracks` (author tracks). Each track line is self-contained (`{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`) for grep/jq without a join. With `--verbose` every lifecycle callback (`onIdeas`, `onProfiles`, `onAuthorsTrained`, `onGridPoint`, `onRanking`, `onDone`) is logged to the console as it fires, so long runs show progress. Exchange via `simulator.module` (see convention above).
 
 </details>
 
