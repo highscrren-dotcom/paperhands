@@ -1,7 +1,13 @@
 import { inject } from "../../core/di";
 import { TLoggerService } from "../base/LoggerService";
 import TYPES from "../../core/types";
-import { SimulatorName, ISimulator, ISimulatorIdea, ISimulatorGridAxes, SimulatorRankingCriterion } from "../../../interfaces/Simulator.interface";
+import {
+  SimulatorName,
+  ISimulator,
+  ISimulatorIdea,
+  ISimulatorGridAxes,
+  SimulatorRankingCriterion,
+} from "../../../interfaces/Simulator.interface";
 import { memoize } from "functools-kit";
 import SimulatorSchemaService from "../schema/SimulatorSchemaService";
 import { ClientSimulator } from "../../../client/ClientSimulator";
@@ -48,9 +54,26 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  *   set of winners, one tracks[] — nothing is split by metric.
  */
 const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
-  hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10],
+  hardStopPercent: [
+    1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10,
+  ],
   trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
-  holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60, 6 * 24 * 60, 7 * 24 * 60, 8 * 24 * 60, 9 * 24 * 60, 10 * 24 * 60],
+  holdMinutes: [
+    1 * 24 * 60,
+    2 * 24 * 60,
+    3 * 24 * 60,
+    4 * 24 * 60,
+    5 * 24 * 60,
+    6 * 24 * 60,
+    7 * 24 * 60,
+    8 * 24 * 60,
+    9 * 24 * 60,
+    10 * 24 * 60,
+    11 * 24 * 60,
+    12 * 24 * 60,
+    13 * 24 * 60,
+    14 * 24 * 60,
+  ],
   profitLockPercent: [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0],
 };
 
@@ -59,8 +82,8 @@ const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
  * same public surface as the client it manages, with DI-level DTOs.
  */
 type TSimulator = {
-    [key in keyof ISimulator]: any;
-}
+  [key in keyof ISimulator]: any;
+};
 
 /**
  * Connection layer of the Simulator entity.
@@ -73,7 +96,7 @@ type TSimulator = {
 export class SimulatorConnectionService implements TSimulator {
   private readonly loggerService = inject<TLoggerService>(TYPES.loggerService);
   private readonly simulatorSchemaService = inject<SimulatorSchemaService>(
-    TYPES.simulatorSchemaService
+    TYPES.simulatorSchemaService,
   );
 
   /**
@@ -98,7 +121,7 @@ export class SimulatorConnectionService implements TSimulator {
         reportOrder: reportOrder ?? DEFAULT_REPORT_ORDER,
         callbacks,
       });
-    }
+    },
   );
 
   /**
@@ -116,13 +139,13 @@ export class SimulatorConnectionService implements TSimulator {
     ideas: ISimulatorIdea[];
   }) => {
     this.loggerService.log("simulatorConnectionService run", {
-        symbol: dto.symbol,
-        simulatorName: dto.simulatorName,
-        ideasLen: dto.ideas.length,
+      symbol: dto.symbol,
+      simulatorName: dto.simulatorName,
+      ideasLen: dto.ideas.length,
     });
     const instance = await this.getSimulator(dto.simulatorName);
     return await instance.run(dto.symbol, dto.ideas);
-  }
+  };
 
   /**
    * Drops memoized client instances: a specific one by name or all
