@@ -19929,19 +19929,18 @@ declare const PersistSessionAdapter: PersistSessionUtils;
  *   his own qualified ideas (absorbedIdeas), authors never collide;
  *   time_expired is the worst-case exit.
  *
- * Entry gate (preprocessing of every candidate entry): any idea of
- * an UNBANNED author triggers an entry. Authors are graded strictly
- * in isolation — interaction metrics (consensus counting, vote
- * weighting, Wilson bounds) do not exist here by design: swarm
- * ranking over long histories is userspace.
+ * Entry gate: EVERY author's idea triggers an entry — there is no
+ * ban. Authors are graded strictly in isolation — interaction
+ * metrics (consensus counting, vote weighting, Wilson bounds) do not
+ * exist here by design: swarm ranking over long histories is
+ * userspace.
  *
- * Ban rule (author filter, trained on the whole run range):
- * - minAuthorTrack / minAuthorHitRate — default-ban thresholds;
- *   truncated profiles prove nothing; the ban is strictly below the
- *   rate threshold.
+ * Author grading (trained on the whole run range, reported as raw
+ * tracks — ideas/hits/hitRate per rule; who to trust is userspace,
+ * no threshold): truncated profiles prove nothing.
  * - authorMetric — hit definition, ALWAYS graded inside the point's
  *   own hold window: "close" = window close (lock/stop do NOT
- *   affect ban training), "reach" = lock-reachability against the
+ *   affect grading), "reach" = lock-reachability against the
  *   point's lock/stop, "retain" = fixation above the point's lock
  *   (median move strictly above profitLockPercent), "pnl" = fixed
  *   +1% MFE threshold, "trail" = arming reachability of the point's
