@@ -48,10 +48,10 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  *   set of winners, one tracks[] — nothing is split by metric.
  */
 const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
-  hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7],
-  trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3],
-  holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60],
-  profitLockPercent: [1.5, 2.5, 3.5, 5],
+  hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10],
+  trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+  holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60, 6 * 24 * 60, 7 * 24 * 60, 8 * 24 * 60, 9 * 24 * 60, 10 * 24 * 60],
+  profitLockPercent: [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0],
 };
 
 /**
