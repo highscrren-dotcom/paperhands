@@ -296,6 +296,7 @@ const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
       holdMinutes: point.holdMinutes,
       profitLockPercent: point.profitLockPercent,
       hardStopPercent: point.hardStopPercent,
+      trailingTakePercent: point.trailingTakePercent,
     };
   }
   if (point.authorMetric === "retain") {
@@ -328,34 +329,30 @@ const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
  * never reads them.
  *
  * "close" — the window's last close moved in the idea's direction;
- * the rule has no lock/stop fields by construction. "reach" — the
- * idea was HARVESTABLE by the rule's lock machinery inside the
- * window: MFE reached the profit-lock level and the worst pre-peak
- * pullback (shakeout) stayed above the hard stop. An author whose
- * calls spike to the lock within hours and then die by the window
- * close is a miss for "close" and a hit for "reach" — exactly the
- * author a lock point earns on.
+ * the rule has no lock/stop fields by construction.
+ *
+ * "reach" — HARVESTABLE, graded by the REAL-TRADE chronology: walk
+ * the window candle by candle; a hit is the lock OR the trailing arm
+ * level firing BEFORE the hard stop, a miss is the hard stop knocking
+ * the position out first (or nothing fixing by the window end). A
+ * candle that touches both the stop and a fixation goes to the stop
+ * (the falling price crosses the lower level first), exactly as
+ * SIMULATE_TRADE_FN resolves it — the grade matches what the trade
+ * would actually do.
  *
  * "retain" — level FIXATION: the MEDIAN move of the window is
  * strictly above the rule's lock level (price held above entry + X%
  * for at least half the window — the 50% share is the median's
- * definition, not a tunable constant). The strictest grading:
- * reach's transient spike and close's lucky last-candle finish are
- * both misses here. The point's stop plays no role.
+ * definition, not a tunable constant). The point's stop plays no
+ * role.
  *
- * "pnl" — the window's MFE grew by MORE than the fixed +1%
- * threshold (strictly greater), independent of the rule's levels.
+ * "pnl" — the window's MFE grew by MORE than the fixed +1% threshold
+ * (strictly greater), independent of the rule's levels.
  *
- * "trail" — the idea's favorable excursion inside the window
- * reached the ARMING level of the rule's trailing take — the same
- * formula the trade machinery uses (long: peak >= entry/(1 - r),
- * short: peak <= entry/(1 + r)): the authors a trailing point
- * actually earns on, the exact symmetry of "reach" for the lock.
- *
- * Same-candle ambiguity (lock and stop both reachable in the candle
- * of the MFE peak) reads as a hit here while SIMULATE_TRADE_FN gives
- * that candle to the stop — the filter metric is slightly more
- * optimistic than execution; it grades authors, not PnL.
+ * "trail" — the idea's favorable excursion inside the window reached
+ * the ARMING level of the rule's trailing take (long: peak >=
+ * entry/(1 - r), short: peak <= entry/(1 + r)): the authors a
+ * trailing point actually earns on.
  *
  * @param profile - Idea profile
  * @param rule - Discriminated ban-filter rule (see AUTHOR_RULE_FN)
@@ -403,33 +400,43 @@ const AUTHOR_HIT_FN = (
         : (moves[half - 1] + moves[half]) / 2;
     return median > rule.profitLockPercent;
   }
-  // "reach"/"pnl": MFE и встряска по фитилям внутри окна — та же
-  // формула, что у полногоризонтных полей профиля, но на префиксе
-  let maxMfePercent = 0;
-  let maxMaePercent = 0;
-  let shakeoutMaePercent = 0;
+  // "pnl": MFE хоть раз превысил фиксированный порог — независимо
+  // от стопа (это метрика «когда-либо заплатила», не выживания)
+  if (rule.metric === "pnl") {
+    for (let i = 0; i < window; i++) {
+      const favorable = direction > 0 ? candles[i].high : candles[i].low;
+      const mfe = (direction * (favorable - entryPrice) * 100) / entryPrice;
+      if (mfe > PNL_HIT_THRESHOLD_PERCENT) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // "reach": ПОСВЕЧНАЯ хронология реальной сделки. Идём по минутам
+  // окна; hit — если ФИКСАЦИЯ (замок ИЛИ уровень взвода трейлинга)
+  // коснулась РАНЬШЕ хардстопа. Свеча, задевшая и стоп, и фиксацию,
+  // отдаётся стопу (падающая цена LONG проходит нижний уровень
+  // первой) — как в SIMULATE_TRADE_FN. Хардстоп раньше = miss.
+  const lockLevel =
+    entryPrice * (1 + (direction * rule.profitLockPercent) / 100);
+  const stopLevel =
+    entryPrice * (1 - (direction * rule.hardStopPercent) / 100);
+  const trailRatio = rule.trailingTakePercent / 100;
+  const armLevel = entryPrice / (1 - direction * trailRatio);
   for (let i = 0; i < window; i++) {
     const favorable = direction > 0 ? candles[i].high : candles[i].low;
     const adverse = direction > 0 ? candles[i].low : candles[i].high;
-    const mfe = (direction * (favorable - entryPrice) * 100) / entryPrice;
-    const mae = (direction * (adverse - entryPrice) * 100) / entryPrice;
-    if (mfe > maxMfePercent) {
-      maxMfePercent = mfe;
-      shakeoutMaePercent = maxMaePercent;
+    const stopHit = direction > 0 ? adverse <= stopLevel : adverse >= stopLevel;
+    if (stopHit) {
+      return false; // хардстоп выбил раньше фиксации
     }
-    if (mae < maxMaePercent) {
-      maxMaePercent = mae;
+    const lockHit = direction > 0 ? favorable >= lockLevel : favorable <= lockLevel;
+    const trailHit = direction > 0 ? favorable >= armLevel : favorable <= armLevel;
+    if (lockHit || trailHit) {
+      return true; // фиксация раньше стопа
     }
   }
-  // "pnl": PnL идеи вырос БОЛЬШЕ фиксированного порога — строго
-  // больше, независимо от замка и стопа точки
-  if (rule.metric === "pnl") {
-    return maxMfePercent > PNL_HIT_THRESHOLD_PERCENT;
-  }
-  return (
-    maxMfePercent >= rule.profitLockPercent &&
-    shakeoutMaePercent > -rule.hardStopPercent
-  );
+  return false; // до конца окна ни фиксации, ни стопа
 };
 
 /**
@@ -450,12 +457,14 @@ const TRAIN_AUTHOR_FILTER_FN = (
   profiles: ISimulatorIdeaProfile[],
   rule: SimulatorAuthorRule,
 ): IAuthorFilterContext => {
-  // уровень грейдинга — часть идентичности правила в треке (у
-  // reach/retain он есть, у close/pnl/trail нет -> 0)
+  // уровни грейдинга — часть идентичности правила в треке: лок у
+  // reach/retain, стоп ТОЛЬКО у reach (его hit зависит от стопа —
+  // без стопа в треке строки reach неотличимы). У остальных -> 0
   const level =
     rule.metric === "reach" || rule.metric === "retain"
       ? rule.profitLockPercent
       : 0;
+  const stop = rule.metric === "reach" ? rule.hardStopPercent : 0;
   const byAuthor = new Map<string, { ideas: number; hits: number }>();
   for (const profile of profiles) {
     const stat = byAuthor.get(profile.idea.author) ?? { ideas: 0, hits: 0 };
@@ -470,6 +479,7 @@ const TRAIN_AUTHOR_FILTER_FN = (
   const tracks: ISimulatorTrack[] = [...byAuthor].map(([author, stat]) => ({
     holdMinutes: rule.holdMinutes,
     profitLockPercent: level,
+    hardStopPercent: stop,
     author,
     ideas: stat.ideas,
     hits: stat.hits,
@@ -955,7 +965,7 @@ const RUN_FN = async (
   >();
   const ruleKeyOf = (rule: SimulatorAuthorRule): string =>
     rule.metric === "reach"
-      ? `reach:${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}`
+      ? `reach:${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}:${rule.trailingTakePercent}`
       : rule.metric === "retain"
         ? `retain:${rule.holdMinutes}:${rule.profitLockPercent}`
         : rule.metric === "trail"

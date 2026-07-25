@@ -6053,12 +6053,14 @@ interface ISimulatorIdeaProfile {
  * window):
  * - "close" — the window's last close moved in the idea's direction
  *   (rewards authors whose calls survive the hold);
- * - "reach" — the idea's MFE inside the window reached the point's
- *   profit-lock level before its pre-peak MAE reached the hard stop
- *   (rewards authors whose calls are HARVESTABLE by the lock
- *   machinery, even when the window close goes against them).
- *   Requires a target: reach points with profitLockPercent = 0 are
- *   excluded from the grid;
+ * - "reach" — HARVESTABLE by the exit machinery: walking the window
+ *   candle by candle (real-trade chronology), the lock OR the
+ *   trailing-take arm level fires BEFORE the hard stop. A hit means
+ *   the position reached a profitable fixation; a miss means the hard
+ *   stop knocked it out first (an ambiguous candle that touches both
+ *   goes to the stop, like the trade machinery). Requires a target:
+ *   reach points with profitLockPercent = 0 are excluded from the
+ *   grid;
  * - "retain" — FIXATION above the point's profit-lock level: the
  *   MEDIAN move of the window is strictly above profitLockPercent,
  *   i.e. price sat above entry + lock for at least half the window
@@ -6337,13 +6339,22 @@ interface ISimulatorTrack {
      */
     holdMinutes: number;
     /**
-     * Grading level of the rule, percent (0 = no level). The track
-     * depends on it too (reach/retain grade against it), so it is on
-     * the line — together with holdMinutes it is the rule identity
-     * (the metric is the bucket key). NO thresholds: a track is
-     * continuous trust, not a 0/1 flag.
+     * Grading lock level of the rule, percent (0 = no level). The
+     * track depends on it (reach/retain grade against it), so it is on
+     * the line. NO thresholds: a track is continuous trust, not a 0/1
+     * flag.
      */
     profitLockPercent: number;
+    /**
+     * Grading STOP of the rule, percent (0 = not used by the metric).
+     * "reach" is the only metric whose hit depends on the stop — a hit
+     * requires MFE reach the lock BEFORE the pre-peak MAE reaches this
+     * stop — so the same (hold, lock, author) has DIFFERENT hits at
+     * different stops. It is a full part of the reach rule identity and
+     * MUST be on the line, else those rows are indistinguishable. For
+     * close/pnl/retain/trail the stop plays no grading role: it is 0.
+     */
+    hardStopPercent: number;
     /** Author login on the source platform. */
     author: string;
     /** Directional ideas with a KNOWN outcome (truncated ones excluded). */
