@@ -253,9 +253,13 @@ export {
 export {
   ISimulatorIdea,
   ISimulatorGridAxes,
+  ISimulatorGridPoint,
+  ISimulatorPointReport,
+  ISimulatorTrade,
+  ISimulatorTrack,
   ISimulatorBest,
+  ISimulatorMetricReport,
   ISimulatorResult,
-  ISimulatorTestResult,
   ISimulatorSchema,
 } from "./interfaces/Simulator.interface";
 

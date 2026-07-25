@@ -1,7 +1,7 @@
 import { inject } from "../../core/di";
 import { TLoggerService } from "../base/LoggerService";
 import TYPES from "../../core/types";
-import { SimulatorName, ISimulator, ISimulatorIdea, ISimulatorGridPoint, ISimulatorAuthorStat, ISimulatorGridAxes, SimulatorRankingCriterion } from "../../../interfaces/Simulator.interface";
+import { SimulatorName, ISimulator, ISimulatorIdea, ISimulatorGridAxes, SimulatorRankingCriterion } from "../../../interfaces/Simulator.interface";
 import { memoize } from "functools-kit";
 import SimulatorSchemaService from "../schema/SimulatorSchemaService";
 import { ClientSimulator } from "../../../client/ClientSimulator";
@@ -27,11 +27,13 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  * - 0.5% trailing is 1m-noise level and never won a ranking;
  * - 72h/120h holds won nearly every ranking on real data, 24h was
  *   systematically too short for peaks that ripen for days;
- * - author QUALITY threshold (hit rate) mattered more than track
- *   length on every criterion — both are swept;
- * - authors are graded strictly in ISOLATION: interaction metrics
+ * - authors are graded strictly in ISOLATION and WITHOUT a ban
+ *   threshold: the engine reports the raw per-author track
+ *   (ideas/hits/hitRate) and userspace decides who to trust — the
+ *   minAuthorTrack/minAuthorHitRate step was removed because it
+ *   collapsed continuous trust into a 0/1 flag. Interaction metrics
  *   (consensus counting, vote weighting, Wilson bounds) were removed
- *   by design — swarm ranking over long histories is userspace;
+ *   by design too — swarm ranking over long histories is userspace;
  * - profit lock: covers the bleed zone below the trailing arm level
  *   (trailing arms only from peak >= entry/(1-r), so a +1.5..2.5%
  *   run that dumps gives everything back without a lock); 0 keeps
@@ -47,15 +49,13 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  *   did the call ever pay) and "trail" (arming reachability of the
  *   point's trailing take — feeds trailing points; requires
  *   trailing in (0, 100));
- * - every metric bucket carries its own winners and its own ban
- *   dictionaries — nothing is aggregated across metrics.
+ * - every metric bucket carries its own winners and its own author
+ *   tracks — nothing is aggregated across metrics.
  */
 const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
   hardStopPercent: [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7],
   trailingTakePercent: [0.5, 1, 1.5, 2, 2.5, 3],
   holdMinutes: [24 * 60, 2 * 24 * 60, 3 * 24 * 60, 4 * 24 * 60, 5 * 24 * 60],
-  minAuthorTrack: [3, 5, 7, 9, 11],
-  minAuthorHitRate: [0.55, 0.6, 0.7, 0.8],
   profitLockPercent: [0, 1.5, 2.5, 3.5, 5],
   authorMetric: ["retain", "trail"],
 };
@@ -128,35 +128,6 @@ export class SimulatorConnectionService implements TSimulator {
     });
     const instance = await this.getSimulator(dto.simulatorName);
     return await instance.run(dto.symbol, dto.ideas);
-  }
-
-  /**
-   * Out-of-sample test through the memoized client: evaluates one
-   * frozen grid point over fresh ideas with a frozen author track
-   * record from a train run — nothing is trained on the test data.
-   *
-   * @param dto.symbol - Trading pair symbol to test
-   * @param dto.simulatorName - Registered simulator name
-   * @param dto.ideas - Out-of-sample ideas feed (other symbols are filtered out by the client)
-   * @param dto.point - Frozen grid point from the train run
-   * @param dto.authorStats - Frozen author track record from the train run
-   * @returns Out-of-sample result (point report, trades, frozen author artifact)
-   */
-  public test = async (dto: {
-    symbol: string;
-    simulatorName: SimulatorName;
-    ideas: ISimulatorIdea[];
-    point: ISimulatorGridPoint;
-    authorStats: ISimulatorAuthorStat[];
-  }) => {
-    this.loggerService.log("simulatorConnectionService test", {
-        symbol: dto.symbol,
-        simulatorName: dto.simulatorName,
-        ideasLen: dto.ideas.length,
-        point: dto.point,
-    });
-    const instance = await this.getSimulator(dto.simulatorName);
-    return await instance.test(dto.symbol, dto.ideas, dto.point, dto.authorStats);
   }
 
   /**

@@ -2,24 +2,20 @@ import { getErrorMessage } from "functools-kit";
 import { Exchange } from "../classes/Exchange";
 import { ICandleData } from "../interfaces/Exchange.interface";
 import {
-  ISimulatorAuthorStat,
+  ISimulatorTrack,
   ISimulatorBest,
   ISimulatorIdea,
   ISimulatorIdeaProfile,
   ISimulatorMetricReport,
   ISimulator,
-  ISimulatorBanAuthor,
-  ISimulatorBanKey,
   ISimulatorGridAxes,
   ISimulatorGridPoint,
   ISimulatorParams,
   ISimulatorPointReport,
   ISimulatorResult,
-  ISimulatorTestResult,
   ISimulatorTrade,
   SimulatorAuthorMetric,
   SimulatorAuthorRule,
-  SimulatorBanReason,
   SimulatorExitReason,
   SimulatorRankingCriterion,
 } from "../interfaces/Simulator.interface";
@@ -270,81 +266,34 @@ const BUILD_PROFILE_FN = async (
 };
 
 /**
- * Ban-rule dependent filter context of one (minAuthorTrack,
- * minAuthorHitRate) pair: the trained stats, the banned set and the
- * per-profile banned flags. Built once per unique ban-rule
- * combination of the grid.
+ * Grading-rule dependent context: the trained per-author TRACKS of
+ * one grading rule (hold x lock x metric). Built once per unique
+ * rule of the grid. No ban set / no per-profile flags — the engine
+ * trades EVERY author and only reports the raw track; who to trust
+ * is userspace.
  */
 interface IAuthorFilterContext {
-  stats: ISimulatorAuthorStat[];
-  banned: Set<string>;
-  /** Ideas of banned authors among profiles. */
-  bannedIdeas: number;
-  /** authorBanned per profile index. */
-  profileBanned: boolean[];
+  tracks: ISimulatorTrack[];
 }
 
 /**
- * Placeholder isolated-simulation metrics. The threshold builders
- * (TRAIN/FREEZE) know the rule but not a concrete point, so they
- * emit zeros here; ENRICH_AUTHOR_STATS_FN fills the real numbers per
- * point at assembly time.
- */
-const EMPTY_AUTHOR_METRICS = {
-  trades: 0,
-  pnlPercent: 0,
-  sharpe: 0,
-  sortino: 0,
-  recoveryFactor: 0,
-} as const;
-
-/**
- * The arithmetic reasons an author failed a ban rule — one atom per
- * failed threshold, checked independently: too few ideas AND/OR too
- * low a hit rate. Empty array means passed. Written out next to the
- * verdict so a debugger (and a score aggregator) reads the cause
- * without recomputing the threshold or parsing a joined string.
- *
- * @param stat - Threshold stat under the rule (ideas/hits/hitRate/banned)
- * @param rule - The ban rule (its two thresholds)
- * @returns The failed-threshold codes (empty when the author passed)
- */
-const BAN_REASONS_FN = (
-  stat: ISimulatorAuthorStat,
-  rule: SimulatorAuthorRule,
-): SimulatorBanReason[] => {
-  const reasons: SimulatorBanReason[] = [];
-  if (stat.ideas < rule.minAuthorTrack) reasons.push("ideas<minAuthorTrack");
-  if (stat.hitRate < rule.minAuthorHitRate)
-    reasons.push("hitRate<minAuthorHitRate");
-  return reasons;
-};
-
-/**
- * Derives the ban-filter rule from a grid point as a discriminated
+ * Derives the GRADING rule from a grid point as a discriminated
  * union. EVERY rule carries the point's holdMinutes — the grading
- * window: an author is judged inside exactly the window the point
- * can trade, never on a farther event nobody harvests. On top of
- * that the "close"/"pnl" rules structurally carry no lock/stop
- * fields — the point's levels do not affect their ban training (see
- * the filter cache key — they are not part of it either). "retain"
- * carries the point's lock (its fixation level) but no stop;
- * "reach" carries both. There is NO fallback of any kind: reach and
- * retain points with lock = 0 are excluded from the grid by
- * BUILD_GRID_FN (a rule without a target does not exist — it never
- * silently becomes another rule), so this builder may assume every
- * reach/retain point carries a target.
+ * window. On top of that "close"/"pnl" carry no levels, "retain"
+ * carries the lock, "reach" lock + stop, "trail" the trailing. NO
+ * thresholds live here (they were a 0/1 step that the track does not
+ * depend on). There is NO fallback: reach/retain points with lock =
+ * 0 are excluded from the grid by BUILD_GRID_FN, so this builder may
+ * assume every reach/retain point carries a target.
  *
  * @param point - Grid point carrying the rule fields
- * @returns Discriminated ban-filter rule
+ * @returns Discriminated grading rule
  */
 const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
   if (point.authorMetric === "reach") {
     return {
       metric: "reach",
       holdMinutes: point.holdMinutes,
-      minAuthorTrack: point.minAuthorTrack,
-      minAuthorHitRate: point.minAuthorHitRate,
       profitLockPercent: point.profitLockPercent,
       hardStopPercent: point.hardStopPercent,
     };
@@ -353,8 +302,6 @@ const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
     return {
       metric: "retain",
       holdMinutes: point.holdMinutes,
-      minAuthorTrack: point.minAuthorTrack,
-      minAuthorHitRate: point.minAuthorHitRate,
       profitLockPercent: point.profitLockPercent,
     };
   }
@@ -362,16 +309,12 @@ const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): SimulatorAuthorRule => {
     return {
       metric: "trail",
       holdMinutes: point.holdMinutes,
-      minAuthorTrack: point.minAuthorTrack,
-      minAuthorHitRate: point.minAuthorHitRate,
       trailingTakePercent: point.trailingTakePercent,
     };
   }
   return {
     metric: point.authorMetric,
     holdMinutes: point.holdMinutes,
-    minAuthorTrack: point.minAuthorTrack,
-    minAuthorHitRate: point.minAuthorHitRate,
   };
 };
 
@@ -490,29 +433,29 @@ const AUTHOR_HIT_FN = (
 };
 
 /**
- * Trains the author ban list on the whole simulated range for ONE
- * rule combination — thresholds AND hit metric (lookahead inside
- * train is deliberate — honesty is provided by out-of-sample
- * validation, not by causality inside the train range).
- *
- * Ban is the default: when the author's correctness cannot be proven
- * unambiguously under the given rule, he is banned. Only ideas whose
- * GRADING WINDOW is fully observed count as evidence — an idea cut
- * by the data edge before the rule's holdMinutes proves nothing for
- * that rule (a shorter-window rule may still count it).
+ * Trains the raw per-author TRACK on the whole simulated range for
+ * ONE grading rule (lookahead inside train is deliberate — honesty
+ * is a userspace walk-forward concern, not the engine's). No ban:
+ * every author gets a track, the engine grades and reports, userspace
+ * decides who to trust. Only ideas whose GRADING WINDOW is fully
+ * observed count as evidence — an idea cut by the data edge before
+ * the rule's holdMinutes proves nothing for that rule (a
+ * shorter-window rule may still count it).
  *
  * @param profiles - Profiles of all directional ideas
- * @param ideas - All ideas of the symbol
- * @param rule - Discriminated ban-filter rule: window + thresholds +
- * metric; lock/stop levels exist ONLY on the "reach"/"retain"
- * variants — a "close" rule cannot depend on them by construction
- * @returns Filter context for the rule (stats sorted by idea count)
+ * @param rule - Discriminated grading rule (window + metric + level)
+ * @returns Filter context with the rule's tracks (sorted by ideas)
  */
 const TRAIN_AUTHOR_FILTER_FN = (
   profiles: ISimulatorIdeaProfile[],
   rule: SimulatorAuthorRule,
 ): IAuthorFilterContext => {
-  const { minAuthorTrack, minAuthorHitRate } = rule;
+  // уровень грейдинга — часть идентичности правила в треке (у
+  // reach/retain он есть, у close/pnl/trail нет -> 0)
+  const level =
+    rule.metric === "reach" || rule.metric === "retain"
+      ? rule.profitLockPercent
+      : 0;
   const byAuthor = new Map<string, { ideas: number; hits: number }>();
   for (const profile of profiles) {
     const stat = byAuthor.get(profile.idea.author) ?? { ideas: 0, hits: 0 };
@@ -524,87 +467,15 @@ const TRAIN_AUTHOR_FILTER_FN = (
     }
     byAuthor.set(profile.idea.author, stat);
   }
-  const stats: ISimulatorAuthorStat[] = [...byAuthor].map(([author, stat]) => ({
+  const tracks: ISimulatorTrack[] = [...byAuthor].map(([author, stat]) => ({
     holdMinutes: rule.holdMinutes,
+    profitLockPercent: level,
     author,
     ideas: stat.ideas,
     hits: stat.hits,
     hitRate: stat.ideas ? stat.hits / stat.ideas : 0,
-    banned:
-      stat.ideas < minAuthorTrack ||
-      stat.hits / stat.ideas < minAuthorHitRate,
-    // изолированные метрики заполняются при сборке точки
-    // (ENRICH_AUTHOR_STATS_FN) — здесь правило без точки
-    ...EMPTY_AUTHOR_METRICS,
   }));
-  const banned = new Set(
-    stats.filter(({ banned }) => banned).map(({ author }) => author),
-  );
-  const profileBanned = profiles.map(({ idea }) => banned.has(idea.author));
-  return {
-    stats: stats.sort((a, b) => b.ideas - a.ideas),
-    banned,
-    bannedIdeas: profileBanned.filter(Boolean).length,
-    profileBanned,
-  };
-};
-
-/**
- * Builds the author filter context for an out-of-sample test from a
- * FROZEN track record — the exact opposite of TRAIN_AUTHOR_FILTER_FN:
- * nothing is learned from the given profiles, the raw ideas/hits come
- * from the train run verbatim and only the banned flag is re-derived
- * under the tested point's ban rule (same formulas as in train).
- *
- * Default-ban semantics survive freezing: an author present in the
- * test feed but absent from the frozen stats has proven nothing on
- * the train range — banned.
- *
- * @param profiles - Profiles of the TEST ideas
- * @param ideas - All test ideas of the symbol (for the banned union)
- * @param authorStats - Frozen per-author track record from a train run
- * @param minAuthorTrack - Minimum known-outcome ideas to be allowed
- * @param minAuthorHitRate - Minimum hit rate (0..1) to be allowed
- * @returns Filter context with frozen stats (sorted by idea count)
- */
-const FREEZE_AUTHOR_FILTER_FN = (
-  profiles: ISimulatorIdeaProfile[],
-  ideas: ISimulatorIdea[],
-  authorStats: ISimulatorAuthorStat[],
-  holdMinutes: number,
-  minAuthorTrack: number,
-  minAuthorHitRate: number,
-): IAuthorFilterContext => {
-  const stats: ISimulatorAuthorStat[] = authorStats.map(
-    ({ author, ideas: n, hits }) => ({
-      holdMinutes,
-      author,
-      ideas: n,
-      hits,
-      hitRate: n ? hits / n : 0,
-      banned: n < minAuthorTrack || hits / n < minAuthorHitRate,
-      // изолированные метрики заполняются при сборке точки теста
-      ...EMPTY_AUTHOR_METRICS,
-    }),
-  );
-  const allowed = new Set(
-    stats.filter(({ banned }) => !banned).map(({ author }) => author),
-  );
-  // в бане: провалившие правило по замороженному треку ПЛЮС авторы,
-  // которых в трейне не было вовсе (недоказанный = забанен)
-  const banned = new Set(
-    [
-      ...stats.map(({ author }) => author),
-      ...ideas.map(({ author }) => author),
-    ].filter((author) => !allowed.has(author)),
-  );
-  const profileBanned = profiles.map(({ idea }) => !allowed.has(idea.author));
-  return {
-    stats: stats.sort((a, b) => b.ideas - a.ideas),
-    banned,
-    bannedIdeas: profileBanned.filter(Boolean).length,
-    profileBanned,
-  };
+  return { tracks: tracks.sort((a, b) => b.ideas - a.ideas) };
 };
 
 /**
@@ -786,22 +657,15 @@ const COMPUTE_HOLD_STATS_FN = (
  *
  * @param profiles - Profiles sorted by entry timestamp
  * @param point - Grid point to evaluate
- * @param filter - Author filter context of the point's ban rule
  * @param rangeStartTs - Start of the shared daily bucket window
  * @param rangeDays - Number of daily buckets in the shared window
- * @param enrich - When true, the report carries the point's own
- *   authorStats (threshold + isolated per-author metrics on THIS
- *   point) and allowed/bannedAuthors; false for the isolated
- *   per-author sub-simulations to avoid recursion.
  * @returns Aggregated report and the trade list
  */
 const EVALUATE_POINT_FN = (
   profiles: ISimulatorIdeaProfile[],
   point: ISimulatorGridPoint,
-  filter: IAuthorFilterContext,
   rangeStartTs: number,
   rangeDays: number,
-  enrich: boolean = true,
 ): { report: ISimulatorPointReport; trades: ISimulatorTrade[] } => {
   const trades: ISimulatorTrade[] = [];
   const exitReasons: Record<SimulatorExitReason, number> = {
@@ -821,11 +685,9 @@ const EVALUATE_POINT_FN = (
   const busyUntilByAuthor = new Map<string, number>();
   const holdingTradeByAuthor = new Map<string, ISimulatorTrade>();
 
-  for (let index = 0; index < profiles.length; index++) {
-    const profile = profiles[index];
-    if (filter.profileBanned[index]) {
-      continue;
-    }
+  for (const profile of profiles) {
+    // все авторы торгуются — банов нет; кого отсеять решает userspace
+    // по сырому треку (tracks[])
     const author = profile.idea.author;
     const busyUntil = busyUntilByAuthor.get(author) ?? -Infinity;
     if (profile.entryTimestamp < busyUntil) {
@@ -924,23 +786,9 @@ const EVALUATE_POINT_FN = (
         ? Number.POSITIVE_INFINITY
         : 0;
 
-  // трек-рекорд авторов ЭТОЙ точки: пороговые поля из фильтра
-  // правила плюс изолированные метрики автора НА ЭТОЙ точке. Для
-  // изолированных под-симуляций enrich=false — иначе рекурсия
-  const authorStats = enrich
-    ? ENRICH_AUTHOR_STATS_FN(
-        filter.stats,
-        profiles,
-        point,
-        rangeStartTs,
-        rangeDays,
-      )
-    : [];
-
   return {
     report: {
       point,
-      trades: trades.length,
       skippedBusy,
       totalPnlPercent,
       avgPnlPercent: trades.length ? totalPnlPercent / trades.length : 0,
@@ -955,79 +803,10 @@ const EVALUATE_POINT_FN = (
       sharpe,
       sortino,
       exitReasons,
-      // список сделок — только у финальных точек (enrich); у
-      // изолированных под-симуляций пуст, чтобы не раздувать их
-      tradesList: enrich ? trades : [],
-      authorStats,
-      allowedAuthors: authorStats
-        .filter(({ banned }) => !banned)
-        .map(({ author }) => author),
-      bannedAuthors: authorStats
-        .filter(({ banned }) => banned)
-        .map(({ author }) => author),
+      tradesList: trades,
     },
     trades,
   };
-};
-
-/**
- * Enriches per-author stats with the metrics of each author's
- * ISOLATED simulation on the rule's grid point: for every author,
- * EVALUATE_POINT_FN runs over ONLY his profiles with a nobody-banned
- * filter — his own slot, nobody absorbing him, the ban ignored (a
- * banned author still plays his whole track). The daily-bucket
- * window (rangeStartTs/rangeDays) is the run's shared one, so the
- * Sharpe/Sortino are comparable to the point's own. Threshold fields
- * (ideas/hits/hitRate/banned) are carried through untouched.
- *
- * @param stats - Threshold stats of the rule (from the filter)
- * @param profiles - All directional profiles of the run
- * @param point - The grid point the metrics are simulated on
- * @param rangeStartTs - Start of the shared daily bucket window
- * @param rangeDays - Number of daily buckets in the shared window
- * @returns Stats with trades/pnlPercent/sharpe/sortino/recoveryFactor filled
- */
-const ENRICH_AUTHOR_STATS_FN = (
-  stats: ISimulatorAuthorStat[],
-  profiles: ISimulatorIdeaProfile[],
-  point: ISimulatorGridPoint,
-  rangeStartTs: number,
-  rangeDays: number,
-): ISimulatorAuthorStat[] => {
-  const byAuthor = new Map<string, ISimulatorIdeaProfile[]>();
-  for (const profile of profiles) {
-    const list = byAuthor.get(profile.idea.author) ?? [];
-    list.push(profile);
-    byAuthor.set(profile.idea.author, list);
-  }
-  return stats.map((stat) => {
-    const own = byAuthor.get(stat.author) ?? [];
-    // фиктивный фильтр: бан игнорируется — автор отыгрывает весь свой
-    // трек в собственном слоте (никто не поглощает его посты)
-    const soloFilter: IAuthorFilterContext = {
-      stats: [],
-      banned: new Set<string>(),
-      bannedIdeas: 0,
-      profileBanned: own.map(() => false),
-    };
-    // enrich=false: изолированная под-симуляция сама трек не строит
-    const { report } = EVALUATE_POINT_FN(
-      own,
-      point,
-      soloFilter,
-      rangeStartTs,
-      rangeDays,
-      false,
-    );
-    return {
-      ...stat,
-      trades: report.trades,
-      pnlPercent: report.totalPnlPercent,
-      sharpe: report.sharpe,
-      sortino: report.sortino,
-      recoveryFactor: report.recoveryFactor,
-    };
-  });
 };
 
 /**
@@ -1046,29 +825,22 @@ const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
   axes.hardStopPercent.flatMap((hardStopPercent) =>
     axes.trailingTakePercent.flatMap((trailingTakePercent) =>
       axes.holdMinutes.flatMap((holdMinutes) =>
-        axes.minAuthorTrack.flatMap((minAuthorTrack) =>
-          axes.minAuthorHitRate.flatMap((minAuthorHitRate) =>
-            axes.profitLockPercent.flatMap((profitLockPercent) =>
-              axes.authorMetric
-                .filter(
-                  (authorMetric) =>
-                    (profitLockPercent > 0 ||
-                      (authorMetric !== "reach" &&
-                        authorMetric !== "retain")) &&
-                    (authorMetric !== "trail" ||
-                      (trailingTakePercent > 0 && trailingTakePercent < 100)),
-                )
-                .map((authorMetric) => ({
-                  hardStopPercent,
-                  trailingTakePercent,
-                  holdMinutes,
-                  minAuthorTrack,
-                  minAuthorHitRate,
-                  profitLockPercent,
-                  authorMetric,
-                })),
-            ),
-          ),
+        axes.profitLockPercent.flatMap((profitLockPercent) =>
+          axes.authorMetric
+            .filter(
+              (authorMetric) =>
+                (profitLockPercent > 0 ||
+                  (authorMetric !== "reach" && authorMetric !== "retain")) &&
+                (authorMetric !== "trail" ||
+                  (trailingTakePercent > 0 && trailingTakePercent < 100)),
+            )
+            .map((authorMetric) => ({
+              hardStopPercent,
+              trailingTakePercent,
+              holdMinutes,
+              profitLockPercent,
+              authorMetric,
+            })),
         ),
       ),
     ),
@@ -1172,41 +944,34 @@ const RUN_FN = async (
     self.params.callbacks?.onProfiles(symbol, profiles, truncatedCount);
   }
 
-  // фильтр авторов обучается по разу на каждое уникальное ПРАВИЛО:
-  // окно грейдинга (холд точки) входит в ключ у ВСЕХ метрик; у reach
-  // сверх того lock+stop, у retain — только lock (его уровень
-  // фиксации), close/pnl зависят лишь от окна и порогов. Никаких
-  // деградаций: невалидные комбинации исключены сеткой. Строковый
-  // ключ — деталь мемоизации, наружу правила выходят массивом bans
-  // с собственными идентифицирующими полями
+  // трек авторов считается по разу на каждое уникальное ГРАДИРУЮЩЕЕ
+  // правило: окно (hold) входит в ключ всегда; у reach сверх того
+  // lock+stop, у retain — lock, у trail — trailing, close/pnl зависят
+  // лишь от окна. Порогов НЕТ (их вырезали — ступенька 0/1). Ключ —
+  // деталь мемоизации; наружу выходит плоский tracks[]
   const filterByRule = new Map<
     string,
     { rule: SimulatorAuthorRule; filter: IAuthorFilterContext }
   >();
   const ruleKeyOf = (rule: SimulatorAuthorRule): string =>
     rule.metric === "reach"
-      ? `reach:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}:${rule.hardStopPercent}`
+      ? `reach:${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}`
       : rule.metric === "retain"
-        ? `retain:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.profitLockPercent}`
+        ? `retain:${rule.holdMinutes}:${rule.profitLockPercent}`
         : rule.metric === "trail"
-          ? `trail:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}:${rule.trailingTakePercent}`
-          : `${rule.metric}:${rule.holdMinutes}:${rule.minAuthorTrack}:${rule.minAuthorHitRate}`;
-  const getFilter = (point: ISimulatorGridPoint): IAuthorFilterContext => {
+          ? `trail:${rule.holdMinutes}:${rule.trailingTakePercent}`
+          : `${rule.metric}:${rule.holdMinutes}`;
+  const trainRule = (point: ISimulatorGridPoint): void => {
     const rule = AUTHOR_RULE_FN(point);
     const key = ruleKeyOf(rule);
-    let entry = filterByRule.get(key);
-    if (!entry) {
-      entry = { rule, filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule) };
-      filterByRule.set(key, entry);
-      if (self.params.callbacks?.onAuthorsTrained) {
-        self.params.callbacks?.onAuthorsTrained(
-          symbol,
-          entry.filter.stats,
-          entry.filter.bannedIdeas,
-        );
-      }
+    if (filterByRule.has(key)) {
+      return;
     }
-    return entry.filter;
+    const entry = { rule, filter: TRAIN_AUTHOR_FILTER_FN(profiles, rule) };
+    filterByRule.set(key, entry);
+    if (self.params.callbacks?.onAuthorsTrained) {
+      self.params.callbacks?.onAuthorsTrained(symbol, entry.filter.tracks);
+    }
   };
 
   // общее окно суточных корзин для time-based Sharpe/Sortino:
@@ -1236,10 +1001,11 @@ const RUN_FN = async (
   const allHoldMinutes: number[] = [];
   for (let index = 0; index < points.length; index++) {
     const point = points[index];
+    // трек правила этой точки — мемоизируется, эмитит onAuthorsTrained
+    trainRule(point);
     const { report, trades } = EVALUATE_POINT_FN(
       profiles,
       point,
-      getFilter(point),
       rangeStartTs,
       rangeDays,
     );
@@ -1294,11 +1060,11 @@ const RUN_FN = async (
   // корзина (ключ существует всегда)
   const reportsByMetric: Record<SimulatorAuthorMetric, ISimulatorMetricReport> =
     {
-      close: { reports: [], best: [], bans: [] },
-      reach: { reports: [], best: [], bans: [] },
-      retain: { reports: [], best: [], bans: [] },
-      pnl: { reports: [], best: [], bans: [] },
-      trail: { reports: [], best: [], bans: [] },
+      close: { reports: [], best: [], tracks: [] },
+      reach: { reports: [], best: [], tracks: [] },
+      retain: { reports: [], best: [], tracks: [] },
+      pnl: { reports: [], best: [], tracks: [] },
+      trail: { reports: [], best: [], tracks: [] },
     };
   for (const report of reports) {
     reportsByMetric[report.point.authorMetric].reports.push(report);
@@ -1314,8 +1080,8 @@ const RUN_FN = async (
     for (const ranking of rankings) {
       const sorted = [...bucket.reports].sort(byRankingDesc(ranking.value));
       const winner = sorted[0] ?? null;
-      // ни сделки, ни трек-рекорд не дублируются: всё лежит на report
-      // победителя (winner.tradesList / authorStats / allowed / banned)
+      // сделки победителя не дублируются — лежат на winner.tradesList;
+      // трек — в bucket.tracks
       const bestEntry: ISimulatorBest = {
         criterion: ranking.criterion,
         report: winner,
@@ -1335,54 +1101,12 @@ const RUN_FN = async (
     bucket.reports.sort(byRankingDesc(orderValue));
   }
 
-  // словари банов — ЧИСТАЯ пороговая арифметика правила: одно правило
-  // -> один словарь. Строится ПОСЛЕ сортировки корзин, чтобы
-  // affectedPointIndexes ссылались на финальный порядок reports[].
-  // Метрик авторов тут нет — они зависят от всей точки, живут на
-  // report; здесь только вердикт правила и его причина
+  // author tracks — сырьё, ОДНА строка на (правило x автор): раскладка
+  // per grading rule (hold x lock; metric — ключ корзины),
+  // дедуплицированная в 73 раза против reports[]. Каждый трек уже
+  // самодостаточен (несёт hold/lock/author) — grep/jq без джойна
   for (const { rule, filter } of filterByRule.values()) {
-    const bucket = reportsByMetric[rule.metric];
-    // индексы точек, чьё правило совпадает с этим — джойн по ключу
-    const affectedPointIndexes = bucket.reports
-      .map((report, index) =>
-        ruleKeyOf(AUTHOR_RULE_FN(report.point)) === ruleKeyOf(rule)
-          ? index
-          : -1,
-      )
-      .filter((index) => index >= 0);
-    const banKey: ISimulatorBanKey = {
-      holdMinutes: rule.holdMinutes,
-      minAuthorTrack: rule.minAuthorTrack,
-      minAuthorHitRate: rule.minAuthorHitRate,
-      ...(rule.metric === "reach"
-        ? {
-            profitLockPercent: rule.profitLockPercent,
-            hardStopPercent: rule.hardStopPercent,
-          }
-        : rule.metric === "retain"
-          ? { profitLockPercent: rule.profitLockPercent }
-          : rule.metric === "trail"
-            ? { trailingTakePercent: rule.trailingTakePercent }
-            : {}),
-    };
-    // banKey дублируется в каждую запись автора: grep по автору сразу
-    // видит правило, без джойна к родителю
-    const authors: ISimulatorBanAuthor[] = filter.stats.map((stat) => ({
-      banKey,
-      author: stat.author,
-      ideas: stat.ideas,
-      hits: stat.hits,
-      hitRate: stat.hitRate,
-      banned: stat.banned,
-      reasons: BAN_REASONS_FN(stat, rule),
-    }));
-    bucket.bans.push({
-      banKey,
-      affectedPointIndexes,
-      authors,
-      allowedCount: authors.filter(({ banned }) => !banned).length,
-      bannedCount: authors.filter(({ banned }) => banned).length,
-    });
+    reportsByMetric[rule.metric].tracks.push(...filter.tracks);
   }
 
   const result: ISimulatorResult = {
@@ -1398,125 +1122,6 @@ const RUN_FN = async (
   };
   if (self.params.callbacks?.onDone) {
     self.params.callbacks?.onDone(symbol, result);
-  }
-  return result;
-};
-
-/**
- * Out-of-sample test for a symbol: fresh ideas -> profiles -> ONE
- * frozen grid point evaluated with a FROZEN author track record.
- *
- * This is the honesty counterpart of RUN_FN: run() trains the author
- * filter with deliberate lookahead inside the train range, test()
- * proves the picked parameters on data the training never saw —
- * nothing here feeds back into the stats.
- *
- * @param self - ClientSimulator instance reference
- * @param symbol - Trading pair symbol
- * @param allIdeas - Test ideas (other symbols are filtered out)
- * @param point - Frozen grid point from the train run
- * @param authorStats - Frozen per-author track record from the train run
- * @returns Out-of-sample result with the point report and trades
- */
-const TEST_FN = async (
-  self: ClientSimulator,
-  symbol: string,
-  allIdeas: ISimulatorIdea[],
-  point: ISimulatorGridPoint,
-  authorStats: ISimulatorAuthorStat[],
-): Promise<ISimulatorTestResult> => {
-  const ideas = allIdeas
-    .filter((idea) => idea.symbol === symbol)
-    .sort((a, b) => a.ts - b.ts);
-  const directional = DEDUPE_IDEAS_FN(
-    ideas.filter(({ direction }) => direction !== "NEUTRAL"),
-  );
-  if (self.params.callbacks?.onIdeas) {
-    self.params.callbacks?.onIdeas(symbol, ideas.length, directional.length);
-  }
-
-  const horizonMinutes = HORIZON_MINUTES_FN(self.params.gridAxes);
-  const profiles: ISimulatorIdeaProfile[] = [];
-  for (let index = 0; index < directional.length; index++) {
-    // нет свечей у идеи -> BUILD_PROFILE_FN бросает: прогон на
-    // отсутствующих свечах — мусор, падаем громко, а не молча нулями
-    profiles.push(
-      await BUILD_PROFILE_FN(self, symbol, directional[index], horizonMinutes),
-    );
-    if (self.params.callbacks?.onProgress) {
-      self.params.callbacks?.onProgress(
-        symbol,
-        "profiles",
-        index + 1,
-        directional.length,
-      );
-    }
-  }
-  const truncatedCount = profiles.filter(({ truncated }) => truncated).length;
-  if (self.params.callbacks?.onProfiles) {
-    self.params.callbacks?.onProfiles(symbol, profiles, truncatedCount);
-  }
-
-  // фильтр авторов ЗАМОРОЖЕН: правило точки применяется к train-треку,
-  // onAuthorsTrained намеренно не эмитится — здесь ничего не обучается
-  const filter = FREEZE_AUTHOR_FILTER_FN(
-    profiles,
-    directional,
-    authorStats,
-    point.holdMinutes,
-    point.minAuthorTrack,
-    point.minAuthorHitRate,
-  );
-
-  // окно суточных корзин — по тестовому диапазону: метрики отчёта
-  // считаются той же математикой, что в run(), но по свежим данным
-  const rangeStartTs = profiles.length
-    ? Math.min(...profiles.map(({ entryTimestamp }) => entryTimestamp))
-    : 0;
-  const rangeEndTs = profiles.length
-    ? Math.max(...profiles.map(({ outcomeKnownAt }) => outcomeKnownAt))
-    : 0;
-  const rangeDays = Math.max(1, Math.ceil((rangeEndTs - rangeStartTs) / DAY_MS));
-
-  const { report, trades } = EVALUATE_POINT_FN(
-    profiles,
-    point,
-    filter,
-    rangeStartTs,
-    rangeDays,
-  );
-  ASSERT_TRADE_INVARIANTS_FN(trades, point);
-  if (self.params.callbacks?.onGridPoint) {
-    self.params.callbacks?.onGridPoint(symbol, report, trades);
-  }
-  if (self.params.callbacks?.onProgress) {
-    self.params.callbacks?.onProgress(symbol, "grid", 1, 1);
-  }
-
-  const holdStats = COMPUTE_HOLD_STATS_FN(
-    trades.map(({ holdMinutesActual }) => holdMinutesActual),
-  );
-
-  // изолированные метрики авторов уже посчитаны на report точки
-  // (EVALUATE_POINT_FN, enrich=true) — берём их, не считаем заново
-  const result: ISimulatorTestResult = {
-    symbol,
-    ideasTotal: ideas.length,
-    ideasDirectional: directional.length,
-    profileCount: profiles.length,
-    truncatedCount,
-    point,
-    report,
-    trades,
-    authorStats: report.authorStats,
-    allowedAuthors: report.allowedAuthors,
-    bannedAuthors: [...filter.banned],
-    avgHoldMinutes: holdStats.avgHoldMinutes,
-    p95HoldMinutes: holdStats.p95HoldMinutes,
-    p99HoldMinutes: holdStats.p99HoldMinutes,
-  };
-  if (self.params.callbacks?.onTestDone) {
-    self.params.callbacks?.onTestDone(symbol, result);
   }
   return result;
 };
@@ -1608,46 +1213,5 @@ export class ClientSimulator implements ISimulator {
       ideasLen: ideas.length,
     });
     return await RUN_FN(this, symbol, ideas);
-  }
-
-  /**
-   * Out-of-sample test: evaluates ONE frozen grid point over fresh
-   * ideas with a FROZEN author track record from a train run.
-   *
-   * Steps and emitted callbacks:
-   * 1. Filters the input array by symbol, sorts by publication time,
-   *    drops NEUTRAL ideas and flood duplicates (same preprocessing
-   *    as run()) -> onIdeas(symbol, total, directional).
-   * 2. Builds one trajectory profile per test idea
-   *    -> onProfiles(symbol, profiles, truncatedCount).
-   * 3. FREEZES the author filter: the point's ban rule is applied to
-   *    the given train stats verbatim; authors unseen in the stats
-   *    are banned by default. onAuthorsTrained never fires — nothing
-   *    is trained on the test data.
-   * 4. Evaluates the single point with production slot semantics and
-   *    the same metric math as run()
-   *    -> onGridPoint(symbol, report, trades).
-   * 5. Assembles the result -> onTestDone(symbol, result).
-   *
-   * @param symbol - Trading pair symbol to test (e.g., "BTCUSDT")
-   * @param ideas - Out-of-sample ideas feed (other symbols filtered out)
-   * @param point - Frozen grid point (e.g., the train Sharpe winner)
-   * @param authorStats - Frozen author track record from the train run
-   * @returns Out-of-sample result: the point report, trades and the
-   * frozen author artifact as applied on the test range
-   * @throws Error when a trade violates the arithmetic invariants
-   */
-  public test = async (
-    symbol: string,
-    ideas: ISimulatorIdea[],
-    point: ISimulatorGridPoint,
-    authorStats: ISimulatorAuthorStat[],
-  ): Promise<ISimulatorTestResult> => {
-    this.params.logger.debug("ClientSimulator test", {
-      symbol,
-      ideasLen: ideas.length,
-      point,
-    });
-    return await TEST_FN(this, symbol, ideas, point, authorStats);
   }
 }

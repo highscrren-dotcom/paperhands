@@ -113,19 +113,18 @@ export interface ISimulatorIdeaProfile {
 export type SimulatorAuthorMetric = "close" | "reach" | "retain" | "pnl" | "trail";
 
 /**
- * Discriminated union of the ban-filter rule derived from a grid
- * point. EVERY rule carries holdMinutes — its grading window: an
- * author is judged inside exactly the window the point can trade
- * (the idea's trajectory is cut to the point's hold before any hit
- * arithmetic), never on a farther event nobody harvests. The
- * discriminator makes the level dependency EXPLICIT at the type
- * level: "reach" carries lock AND stop, "retain" carries only the
- * lock (its fixation level), while "close"/"pnl" never depend on
- * the point's levels, so those fields do not exist on their rules.
- * There is NO fallback of any kind: reach and retain points with
- * profitLockPercent = 0 are excluded from the grid (a rule without
- * a target does not exist — it never silently becomes another
- * rule).
+ * Discriminated union of the GRADING rule derived from a grid point.
+ * It carries only what the AUTHOR TRACK depends on — the grading
+ * window (holdMinutes) and the level the metric grades against — and
+ * NOTHING that would turn a continuous track into a 0/1 flag: there
+ * are no minAuthorTrack / minAuthorHitRate thresholds here by design.
+ * The engine reports the raw track (ideas/hits/hitRate) per rule;
+ * WHO to trust is userspace. EVERY rule carries holdMinutes — the
+ * window the point can trade; the discriminator makes the level
+ * dependency EXPLICIT: "reach" carries lock AND stop, "retain" only
+ * the lock, "close"/"pnl" no levels. There is NO fallback: reach and
+ * retain points with profitLockPercent = 0 are excluded from the
+ * grid (a rule without a target does not exist).
  */
 export type SimulatorAuthorRule =
   | {
@@ -133,20 +132,12 @@ export type SimulatorAuthorRule =
       metric: "close";
       /** Grading window, minutes — the point's own hold. */
       holdMinutes: number;
-      /** Minimum known-outcome ideas to be allowed. */
-      minAuthorTrack: number;
-      /** Minimum hit rate (0..1) to be allowed. */
-      minAuthorHitRate: number;
     }
   | {
       /** Discriminator: grade authors by lock-reachability. */
       metric: "reach";
       /** Grading window, minutes — the point's own hold. */
       holdMinutes: number;
-      /** Minimum known-outcome ideas to be allowed. */
-      minAuthorTrack: number;
-      /** Minimum hit rate (0..1) to be allowed. */
-      minAuthorHitRate: number;
       /** Lock level the reach hit is graded against (always > 0). */
       profitLockPercent: number;
       /** Stop level the pre-peak shakeout is graded against. */
@@ -160,10 +151,6 @@ export type SimulatorAuthorRule =
       metric: "retain";
       /** Grading window, minutes — the point's own hold. */
       holdMinutes: number;
-      /** Minimum known-outcome ideas to be allowed. */
-      minAuthorTrack: number;
-      /** Minimum hit rate (0..1) to be allowed. */
-      minAuthorHitRate: number;
       /** Level the median move is graded against (always > 0). */
       profitLockPercent: number;
     }
@@ -175,10 +162,6 @@ export type SimulatorAuthorRule =
       metric: "pnl";
       /** Grading window, minutes — the point's own hold. */
       holdMinutes: number;
-      /** Minimum known-outcome ideas to be allowed. */
-      minAuthorTrack: number;
-      /** Minimum hit rate (0..1) to be allowed. */
-      minAuthorHitRate: number;
     }
   | {
       /**
@@ -188,10 +171,6 @@ export type SimulatorAuthorRule =
       metric: "trail";
       /** Grading window, minutes — the point's own hold. */
       holdMinutes: number;
-      /** Minimum known-outcome ideas to be allowed. */
-      minAuthorTrack: number;
-      /** Minimum hit rate (0..1) to be allowed. */
-      minAuthorHitRate: number;
       /** Trailing pullback the arming level derives from (0..100). */
       trailingTakePercent: number;
     };
@@ -239,7 +218,7 @@ export interface ISimulatorGridAxes {
    * worst-case exit (time_expired) when neither stop nor floor fires.
    * Authors never collide — each trades his own slot.
    * Ignored: never — the hold serves BOTH layers: it caps the trade
-   * AND is the grading window of the point's ban rule (every author
+   * AND is the grading window of the point's rule (every author
    * metric is computed inside the first holdMinutes of the idea's
    * trajectory — the window the point actually trades). This axis's
    * MAXIMUM additionally defines the candle fetch depth of every
@@ -247,25 +226,6 @@ export interface ISimulatorGridAxes {
    * hidden constant).
    */
   holdMinutes: number[];
-  /**
-   * Author ban rule to sweep: minimum ideas with a FULLY OBSERVED
-   * outcome an author needs before he can be allowed (fewer ->
-   * banned by default; truncated profiles prove nothing).
-   * Tunes: how much evidence "proven" requires.
-   * Ignored: never — the rule trains under every author metric;
-   * WHAT counts as a hit is decided by authorMetric.
-   */
-  minAuthorTrack: number[];
-  /**
-   * Author ban rule to sweep: minimum hit rate (0..1) an author
-   * needs to be allowed. The ban is STRICTLY below the threshold —
-   * an author exactly at it stays allowed.
-   * Tunes: required author quality; on the reference data quality
-   * mattered more than track length on every ranking.
-   * Ignored: never — trains under every metric; the hit definition
-   * follows authorMetric.
-   */
-  minAuthorHitRate: number[];
   /**
    * Profit lock levels to sweep, percent from entry. When price
    * TOUCHES +X% a fixed floor arms at that level and the trade exits
@@ -276,18 +236,19 @@ export interface ISimulatorGridAxes {
    * below entry/(1 - r)) and profit would otherwise bleed back.
    * Tunes: harvesting the crowd-liquidity step without cutting
    * runners. Also the grading level of the "reach" and "retain"
-   * author metrics. Ignored: 0 DISABLES the mechanism for trading,
-   * and reach/retain points with lock = 0 DO NOT EXIST — the
-   * combination is excluded from the cartesian product (a rule
+   * author metrics — so it is part of the grading rule identity and
+   * appears in tracks[]. Ignored: 0 DISABLES the mechanism for
+   * trading, and reach/retain points with lock = 0 DO NOT EXIST —
+   * the combination is excluded from the cartesian product (a rule
    * without a target is not a rule). Under "close"/"pnl" the level
-   * never affects ban training — trading only.
+   * never affects grading — trading only.
    */
   profitLockPercent: number[];
   /**
-   * Author-hit metrics to sweep for the ban filter — a rule
-   * parameter like the thresholds. Each metric is graded SEPARATELY:
-   * the sweep never glues incomparable hit counts together, it
-   * reports every grading as its own points and its own ban lists.
+   * Author-hit metrics to sweep — the grading rule's metric. Each
+   * metric is graded SEPARATELY: the sweep never glues incomparable
+   * hit counts together, it reports every grading as its own points
+   * and its own tracks.
    * Tunes: which author grading feeds which exit style — "close"
    * (window close) rewards authors whose calls survive the hold,
    * "reach" (lock-reachability against THE POINT'S lock/stop)
@@ -300,7 +261,7 @@ export interface ISimulatorGridAxes {
    * and the same author has different hit counts under different
    * metrics and different windows.
    * Ignored: with "close"/"pnl" the point's lock/stop never affect
-   * ban training; "retain" ignores only the stop; "reach"/"retain"
+   * grading; "retain" ignores only the stop; "reach"/"retain"
    * require lock > 0 and "trail" requires trailing in (0, 100) —
    * the inert combinations are excluded from the grid, never
    * silently regraded.
@@ -318,16 +279,12 @@ export interface ISimulatorGridPoint {
   trailingTakePercent: number;
   /** Maximum position hold duration, minutes. */
   holdMinutes: number;
-  /** Author ban rule: minimum known-outcome ideas to be allowed. */
-  minAuthorTrack: number;
-  /** Author ban rule: minimum hit rate (0..1) to be allowed. */
-  minAuthorHitRate: number;
   /**
    * Profit lock: fixed floor armed when price touches +X% from
    * entry, exit on pullback to the floor; 0 = disabled.
    */
   profitLockPercent: number;
-  /** Author-hit metric of the ban filter for this point. */
+  /** Author-hit metric of the grading rule for this point. */
   authorMetric: SimulatorAuthorMetric;
 }
 
@@ -402,8 +359,6 @@ export interface ISimulatorTrade {
 export interface ISimulatorPointReport {
   /** The grid point these metrics belong to. */
   point: ISimulatorGridPoint;
-  /** Number of simulated trades. */
-  trades: number;
   /** Ideas skipped because their author's own slot was busy (absorbed). */
   skippedBusy: number;
   /** Sum of trade PnL percents over the range. */
@@ -455,42 +410,41 @@ export interface ISimulatorPointReport {
   /**
    * The point's trades in full — the SAME list for every point,
    * winner or not, so any point is traceable ("why this pnl") by jq
-   * over the artifact without a re-run. The `trades` field above is
-   * this list's length; `best[].report.tradesList` is the winner's
-   * copy (best carries no separate trade list — zero duplication).
+   * over the artifact without a re-run. The trade count is
+   * tradesList.length; best[].report.tradesList is the winner's copy.
+   * The per-author track is NOT here — it depends only on the
+   * grading rule (hold/lock/metric), not the whole point, so it
+   * lives deduplicated in tracks[] (73x smaller than repeating it on
+   * every point).
    */
   tradesList: ISimulatorTrade[];
-  /**
-   * Per-author track record UNDER THIS POINT: threshold fields
-   * (ideas/hits/hitRate/banned) come from the point's ban rule, the
-   * isolated-simulation metrics (trades/pnlPercent/sharpe/sortino/
-   * recoveryFactor) are computed on THIS EXACT point — every point
-   * carries its own numbers, so a non-winning point is fully
-   * debuggable without reconstructing anything from bans.
-   */
-  authorStats: ISimulatorAuthorStat[];
-  /** Whitelist under this point's ban rule. */
-  allowedAuthors: string[];
-  /** Ban list under this point's ban rule (default-ban included). */
-  bannedAuthors: string[];
 }
 
 /**
- * Trained per-author track record (train = the whole simulated range).
- * Ban is the default: an author is allowed only when his correctness
- * is unambiguously proven by enough fully observed ideas. The ban
- * thresholds are grid axes (minAuthorTrack, minAuthorHitRate) — the
- * banned flag is relative to the rule of a concrete grid point.
+ * One author's TRACK under ONE grading rule (rule = hold x lock x
+ * metric, the metric being the bucket key). The raw continuous
+ * evidence — ideas, hits, hitRate — over the whole simulated range.
+ * There is NO ban verdict and NO threshold: the engine grades, and
+ * userspace decides who to trust (that is the whole point of cutting
+ * the minAuthorTrack/minAuthorHitRate step — it turned a continuous
+ * track into a 0/1 flag and lost information). One line per
+ * (rule x author), self-contained for grep/jq.
  */
-export interface ISimulatorAuthorStat {
+export interface ISimulatorTrack {
   /**
-   * Grading window of the point this stat was computed on — the
-   * point's holdMinutes, duplicated onto the author line so a grep by
-   * author over per-point authorStats shows which window (and thus
-   * which point family) these hits belong to, without resolving the
-   * parent point.
+   * Grading window of the rule — the point's holdMinutes. The track
+   * depends on it: the same author has different hits in different
+   * windows. On every track line so a grep by author shows the rule.
    */
   holdMinutes: number;
+  /**
+   * Grading level of the rule, percent (0 = no level). The track
+   * depends on it too (reach/retain grade against it), so it is on
+   * the line — together with holdMinutes it is the rule identity
+   * (the metric is the bucket key). NO thresholds: a track is
+   * continuous trust, not a 0/1 flag.
+   */
+  profitLockPercent: number;
   /** Author login on the source platform. */
   author: string;
   /** Directional ideas with a KNOWN outcome (truncated ones excluded). */
@@ -502,34 +456,14 @@ export interface ISimulatorAuthorStat {
    * different rules.
    */
   hits: number;
-  /** hits / ideas, 0..1; zero when the author has no known outcomes. */
+  /**
+   * hits / ideas, 0..1; zero when the author has no known outcomes.
+   * A derived convenience kept on the final product (one number per
+   * track line, no duplication) so userspace filters by trust
+   * directly (jq 'select(.hitRate > 0.5)') instead of the engine
+   * baking a threshold into a banned flag.
+   */
   hitRate: number;
-  /**
-   * Author is banned under the ban rule these stats were computed
-   * with. True when the track is too short to judge (ideas <
-   * minAuthorTrack) OR the hit rate is below minAuthorHitRate.
-   * Unproven correctness = banned. The ban does NOT stop the
-   * author's isolated simulation below — a banned author still
-   * trades his whole track in his own slot, so the metrics show
-   * exactly what the ban gives up.
-   */
-  banned: boolean;
-  /**
-   * Trades of the author's ISOLATED simulation on the rule's grid
-   * point: only his own ideas, his own slot, nobody absorbing him.
-   * The ban is ignored here — even a banned author plays his full
-   * track, so these numbers are his standalone potential, not a
-   * shared-slot artifact.
-   */
-  trades: number;
-  /** Total net PnL of the isolated simulation, percent. */
-  pnlPercent: number;
-  /** Time-based Sharpe of the isolated simulation (daily buckets). */
-  sharpe: number;
-  /** Time-based Sortino of the isolated simulation. */
-  sortino: number;
-  /** Total PnL over max series drawdown of the isolated simulation. */
-  recoveryFactor: number;
 }
 
 /**
@@ -544,9 +478,8 @@ export type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery
 /**
  * Winner of one ranking criterion — just the criterion and the
  * winning point's report. Everything else lives on the report and is
- * never duplicated here: the trades in `report.tradesList`, the
- * author track record in `report.authorStats` / `allowedAuthors` /
- * `bannedAuthors`.
+ * never duplicated here: the trades in `report.tradesList`; the
+ * author track lives deduplicated in the bucket's tracks[].
  */
 export interface ISimulatorBest {
   /** The ranking criterion this winner belongs to. */
@@ -556,109 +489,10 @@ export interface ISimulatorBest {
 }
 
 /**
- * Identity of ONE ban rule — every field that makes two rules the
- * same or different: the grading window, the two thresholds, and the
- * levels the rule grades against (present only for the metrics that
- * use them). All the identifying fields live together here, not
- * scattered among the whitelist arrays.
- */
-export interface ISimulatorBanKey {
-  /** Grading window of the rule, minutes — the point's own hold. */
-  holdMinutes: number;
-  /** Minimum known-outcome ideas the rule requires. */
-  minAuthorTrack: number;
-  /** Minimum hit rate (0..1) the rule requires. */
-  minAuthorHitRate: number;
-  /** Grading level; present on reach and retain rules only. */
-  profitLockPercent?: number;
-  /** Shakeout stop bound; present on reach rules only. */
-  hardStopPercent?: number;
-  /** Arming pullback; present on trail rules only. */
-  trailingTakePercent?: number;
-}
-
-/**
- * A single reason an author failed ONE ban rule — one atom per
- * failed threshold, the field name it violated. The two are checked
- * independently, so a ban carries an ARRAY of these (see
- * ISimulatorBanAuthor.reasons): [] = passed, one code = one
- * threshold failed, both codes = both failed. An array, not a
- * "&"-joined string, so a score aggregator filters without parsing.
- */
-export type SimulatorBanReason =
-  /** ideas < minAuthorTrack. */
-  | "ideas<minAuthorTrack"
-  /** hitRate < minAuthorHitRate. */
-  | "hitRate<minAuthorHitRate";
-
-/**
- * One author's verdict under ONE ban rule: the raw track (ideas,
- * hits, hitRate), the banned flag, and the arithmetic reason. No
- * per-author PnL metrics here — those depend on the whole point and
- * live on each point's report; a ban entry is pure rule arithmetic.
- */
-export interface ISimulatorBanAuthor {
-  /**
-   * The rule this verdict belongs to — duplicated from the parent
-   * bans entry onto every author so a grep/jq over authors by name
-   * across many monthly files sees the rule (holdMinutes, thresholds,
-   * levels) right on the line, no join to the parent banKey.
-   */
-  banKey: ISimulatorBanKey;
-  /** Author login on the source platform. */
-  author: string;
-  /** Directional ideas with a KNOWN outcome under this rule's window. */
-  ideas: number;
-  /** Hits under this rule's metric. */
-  hits: number;
-  /** hits / ideas, 0..1; zero when the author has no known outcomes. */
-  hitRate: number;
-  /** Banned under this rule (default-ban of unproven authors). */
-  banned: boolean;
-  /**
-   * Which threshold(s) the author failed — one atom per failure,
-   * empty when he passed. `banned` equals `reasons.length > 0`;
-   * the array is for programmatic filtering (a score aggregator
-   * checks membership, never parses a joined string).
-   */
-  reasons: SimulatorBanReason[];
-}
-
-/**
- * Trained ban dictionary of ONE rule: pure threshold arithmetic —
- * an author is allowed exactly when his track under this rule's
- * metric reaches minAuthorTrack ideas at minAuthorHitRate quality.
- * No ranking is involved: bans are properties of rules, not of
- * winners. The per-author PnL metrics are NOT here — they depend on
- * the whole point (stop/lock/trailing), not just the rule, so they
- * live on each point's report; a ban entry carries only the rule
- * identity (banKey), the indexes of the points that share it, and
- * the author verdicts it produces.
- */
-export interface ISimulatorRuleBans {
-  /** The rule's identity — all fields that define this ban. */
-  banKey: ISimulatorBanKey;
-  /**
-   * Indexes into this bucket's reports[] of the points that trained
-   * under this exact rule. One rule serves many points (a close rule
-   * is blind to stop/trailing) — a cheap join back to the full
-   * points with zero duplication; indexes cannot drift from
-   * reports[] the way copied values could.
-   */
-  affectedPointIndexes: number[];
-  /** Every author's verdict under this rule (allowed and banned). */
-  authors: ISimulatorBanAuthor[];
-  /** Count of allowed authors — the summary without scanning authors[]. */
-  allowedCount: number;
-  /** Count of banned authors — the summary without scanning authors[]. */
-  bannedCount: number;
-}
-
-/**
  * Self-contained result of ONE author metric: its grid points, its
- * ranking winners and its trained ban dictionaries. Metrics are
- * never glued together — each bucket answers its own question with
- * its own numbers.
+ * ranking winners and its author TRACKS. Metrics are never glued
+ * together — each bucket answers its own question with its own
+ * numbers.
  */
 export interface ISimulatorMetricReport {
   /**
@@ -667,23 +501,25 @@ export interface ISimulatorMetricReport {
    */
   reports: ISimulatorPointReport[];
   /**
-   * Winners of the four ranking criteria WITHIN this metric bucket
-   * (anti-fluke trades floor applies per bucket). Empty when the
-   * metric is not swept.
+   * Winners of the four ranking criteria WITHIN this metric bucket.
+   * Empty when the metric is not swept.
    */
   best: ISimulatorBest[];
   /**
-   * Trained ban dictionaries of this bucket — one entry per unique
-   * rule, identified by its own threshold/level fields (no
-   * synthetic keys). Pure threshold arithmetic — which authors a
-   * rule allows does not depend on any ranking.
+   * Author tracks of this bucket — one line per (rule x author),
+   * deduplicated by grading rule (hold x lock; the metric is the
+   * bucket key). This is the RAW continuous track (ideas/hits/
+   * hitRate), not a 0/1 ban verdict: the engine grades, userspace
+   * decides who to trust. It is 73x more compact than repeating the
+   * track on every point's report, and every line is self-contained
+   * (carries hold/lock/author) for grep/jq without a join.
    */
-  bans: ISimulatorRuleBans[];
+  tracks: ISimulatorTrack[];
 }
 
 /**
  * Final result of a simulation run: per-metric buckets, each with
- * its own reports, ranking winners and ban dictionaries — hits are
+ * its own reports, ranking winners and author tracks — hits are
  * metric-dependent, any cross-metric aggregate would lie.
  */
 export interface ISimulatorResult {
@@ -712,51 +548,6 @@ export interface ISimulatorResult {
 }
 
 /**
- * Result of an out-of-sample test: ONE frozen grid point evaluated
- * over fresh ideas with a FROZEN author track record. Nothing is
- * trained on the test data — the honesty run() deliberately skips
- * (lookahead inside train) is provided here.
- */
-export interface ISimulatorTestResult {
-  /** Trading pair symbol the test ran for. */
-  symbol: string;
-  /** Total ideas of the symbol received (including NEUTRAL). */
-  ideasTotal: number;
-  /** Directional ideas tested (NEUTRAL and flood duplicates excluded). */
-  ideasDirectional: number;
-  /** Number of idea profiles built (ideas with candle data). */
-  profileCount: number;
-  /** Profiles cut short by end of candle data. */
-  truncatedCount: number;
-  /** The frozen grid point the test evaluated (from the train run). */
-  point: ISimulatorGridPoint;
-  /** Out-of-sample report of the point (same metrics as in run()). */
-  report: ISimulatorPointReport;
-  /** Trades of the point over the test range. */
-  trades: ISimulatorTrade[];
-  /**
-   * The FROZEN author stats the test was gated by: raw ideas/hits
-   * come from the train run verbatim, the banned flag is re-derived
-   * under the tested point's ban rule. Test outcomes never feed back
-   * into these numbers.
-   */
-  authorStats: ISimulatorAuthorStat[];
-  /** Logins allowed under the frozen stats and the point's ban rule. */
-  allowedAuthors: string[];
-  /**
-   * Logins banned on the test range: train authors failing the rule
-   * PLUS authors seen only in the test feed (unproven = banned).
-   */
-  bannedAuthors: string[];
-  /** Mean holding time across the test trades, minutes. */
-  avgHoldMinutes: number;
-  /** 95th percentile of holding time, minutes. */
-  p95HoldMinutes: number;
-  /** 99th percentile of holding time, minutes. */
-  p99HoldMinutes: number;
-}
-
-/**
  * Registration schema of a simulator instance.
  *
  * Field-by-field contract — what each parameter allows to tune and
@@ -767,7 +558,7 @@ export interface ISimulatorTestResult {
  *   contract is strict (exactly `limit` candles or throw): end of
  *   history surfaces as an exception and becomes a truncated
  *   profile — truncated ideas are traded to the data edge but are
- *   IGNORED as ban-training evidence.
+ *   IGNORED as track evidence (their outcome is not fully observed).
  * - gridAxes — PER-AXIS override merged over the engine defaults:
  *   an omitted axis takes the default LIST and is therefore swept;
  *   a single-value list freezes an axis. Pinning examples:
@@ -775,8 +566,8 @@ export interface ISimulatorTestResult {
  *   only, profitLockPercent: [0] disables the lock. Each axis
  *   documents its own tune/ignore conditions in ISimulatorGridAxes.
  * - callbacks — all optional; an omitted callback is simply never
- *   fired (silent run). onAuthorsTrained fires once per unique ban
- *   RULE (not per grid point) and never fires during test().
+ *   fired (silent run). onAuthorsTrained fires once per unique
+ *   grading RULE (hold x lock x metric), not per grid point.
  */
 export interface ISimulatorSchema {
     /** Unique simulator identifier for the schema registry. */
@@ -795,7 +586,7 @@ export interface ISimulatorSchema {
      * declared here, not derived. Sorting uses the tie-guarded
      * comparator (naive subtraction breaks on Infinity
      * sortino/recovery of loss-free series). Default: "sharpe".
-     * Does not affect best[] or bans in any way.
+     * Does not affect best[] or tracks in any way.
      */
     reportOrder?: SimulatorRankingCriterion;
     /** Lifecycle callbacks (all optional). */
@@ -837,16 +628,12 @@ export interface ISimulatorCallbacks {
     truncatedCount: number,
   ): void;
   /**
-   * Author ban list trained for one ban-rule combination of the grid
-   * (fires once per unique minAuthorTrack x minAuthorHitRate pair):
-   * per-author stats under that rule and how many ideas belong to
-   * banned authors.
+   * Author track trained for one grading rule of the grid (fires
+   * once per unique grading rule = hold x lock x metric): the raw
+   * per-author track (ideas/hits/hitRate) under that rule. No ban
+   * verdict — the engine grades, userspace decides who to trust.
    */
-  onAuthorsTrained(
-    symbol: string,
-    stats: ISimulatorAuthorStat[],
-    bannedIdeas: number,
-  ): void;
+  onAuthorsTrained(symbol: string, tracks: ISimulatorTrack[]): void;
   /** One grid point evaluated. */
   onGridPoint(
     symbol: string,
@@ -855,9 +642,8 @@ export interface ISimulatorCallbacks {
   ): void;
   /**
    * Ranking computed WITHIN one metric bucket: the bucket's reports
-   * sorted by the criterion (descending) and the eligible winner
-   * (minimum-trades floor applied per bucket). Fires once per
-   * (swept metric x criterion).
+   * sorted by the criterion (descending) and the winner. Fires once
+   * per (swept metric x criterion).
    */
   onRanking(
     symbol: string,
@@ -867,11 +653,6 @@ export interface ISimulatorCallbacks {
   ): void;
   /** Simulation finished. */
   onDone(symbol: string, result: ISimulatorResult): void;
-  /**
-   * Out-of-sample test finished. onAuthorsTrained deliberately never
-   * fires during a test — nothing is trained on the test data.
-   */
-  onTestDone(symbol: string, result: ISimulatorTestResult): void;
 }
 
 /**
@@ -896,19 +677,6 @@ export interface ISimulator {
    * profiles -> author filter -> grid evaluation -> rankings.
    */
   run(symbol: string, ideas: ISimulatorIdea[]): Promise<ISimulatorResult>;
-  /**
-   * Out-of-sample test: evaluates ONE frozen grid point over fresh
-   * ideas with a FROZEN author track record from a train run.
-   * Profiles are built for the test ideas, but the author filter is
-   * NOT retrained — authors unseen in the frozen stats are banned by
-   * default (unproven = banned).
-   */
-  test(
-    symbol: string,
-    ideas: ISimulatorIdea[],
-    point: ISimulatorGridPoint,
-    authorStats: ISimulatorAuthorStat[],
-  ): Promise<ISimulatorTestResult>;
 }
 
 /**
