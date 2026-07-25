@@ -5,10 +5,8 @@ import { run } from 'worker-testbed'
 import "./sim/eternal_hold.test.mjs";
 import "./sim/simulator_jsonl.test.mjs";
 import "./sim/dedupe.test.mjs";
-import "./sim/author_ban.test.mjs";
 import "./sim/mechanics.test.mjs";
 import "./sim/progress.test.mjs";
-import "./sim/no_good_authors.test.mjs";
 import "./sim/truncated.test.mjs";
 import "./sim/short_mechanics.test.mjs";
 import "./sim/edge_metrics.test.mjs";

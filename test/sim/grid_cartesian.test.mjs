@@ -3,10 +3,11 @@ import { test } from "worker-testbed";
 import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
 
 /**
- * Полнота декартова произведения сетки: 6 осей по 2 значения дают
- * ровно 64 точки — каждая комбинация присутствует единожды, ничего
- * не потеряно и не задублировано. Фид пуст: оценка мгновенна, тест
- * фиксирует контракт построения сетки навсегда.
+ * Полнота декартова произведения сетки: 4 оси по 2 значения дают
+ * ровно 16 точек — каждая комбинация присутствует единожды, ничего
+ * не потеряно и не задублировано. Пороги minAuthorTrack/HitRate
+ * вырезаны (ступенька), поэтому осей четыре, не шесть. Фид пуст:
+ * оценка мгновенна, тест фиксирует контракт построения сетки.
  */
 
 const MINUTE = 60_000;
@@ -33,8 +34,6 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
     hardStopPercent: [5, 50],
     trailingTakePercent: [2, 100],
     holdMinutes: [60, 7200],
-    minAuthorTrack: [1, 3],
-    minAuthorHitRate: [0, 0.5],
     profitLockPercent: [0, 2],
     authorMetric: ["close"],
   };
@@ -55,16 +54,16 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
     ideas: [],
   });
 
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 64 || seen.length !== 64) {
-    fail(`expected 64 grid points, got reports=${Object.values(result.reports).flatMap((b) => b.reports).length}, onGridPoint=${seen.length}`);
+  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 16 || seen.length !== 16) {
+    fail(`expected 16 grid points, got reports=${Object.values(result.reports).flatMap((b) => b.reports).length}, onGridPoint=${seen.length}`);
     return;
   }
 
   const key = (p) =>
-    [p.hardStopPercent, p.trailingTakePercent, p.holdMinutes, p.minAuthorTrack, p.minAuthorHitRate, p.profitLockPercent].join("|");
+    [p.hardStopPercent, p.trailingTakePercent, p.holdMinutes, p.profitLockPercent].join("|");
   const uniq = new Set(seen.map(key));
-  if (uniq.size !== 64) {
-    fail(`grid points must be unique, got ${uniq.size} of 64`);
+  if (uniq.size !== 16) {
+    fail(`grid points must be unique, got ${uniq.size} of 16`);
     return;
   }
 
@@ -72,15 +71,13 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
   for (const h of axes.hardStopPercent)
     for (const t of axes.trailingTakePercent)
       for (const hold of axes.holdMinutes)
-        for (const track of axes.minAuthorTrack)
-          for (const rate of axes.minAuthorHitRate)
-            for (const lock of axes.profitLockPercent) {
-              const k = [h, t, hold, track, rate, lock].join("|");
-              if (!uniq.has(k)) {
-                fail(`missing grid combination: ${k}`);
-                return;
-              }
-            }
+        for (const lock of axes.profitLockPercent) {
+          const k = [h, t, hold, lock].join("|");
+          if (!uniq.has(k)) {
+            fail(`missing grid combination: ${k}`);
+            return;
+          }
+        }
 
-  pass("64/64 unique grid combinations present — cartesian product complete");
+  pass("16/16 unique grid combinations present — cartesian product complete");
 });

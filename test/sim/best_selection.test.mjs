@@ -59,8 +59,6 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60, 7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -91,11 +89,11 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
   }
 
   // флюк: одна сделка, но тотальное доминирование по PnL
-  if (fluke.trades !== 1 || fluke.totalPnlPercent < 30) {
+  if (fluke.tradesList.length !== 1 || fluke.totalPnlPercent < 30) {
     fail(`fluke point must have 1 monster trade (>+30%), got ${fluke.trades}/${fluke.totalPnlPercent.toFixed(2)}`);
     return;
   }
-  if (steady.trades !== CYCLES || !(fluke.totalPnlPercent > steady.totalPnlPercent)) {
+  if (steady.tradesList.length !== CYCLES || !(fluke.totalPnlPercent > steady.totalPnlPercent)) {
     fail(`steady must have ${CYCLES} modest trades below fluke pnl, got ${steady.trades}/${steady.totalPnlPercent.toFixed(2)}`);
     return;
   }

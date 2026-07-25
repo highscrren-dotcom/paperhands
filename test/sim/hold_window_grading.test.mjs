@@ -57,8 +57,6 @@ test("SIM: author metrics are graded inside each point's own hold window — two
       trailingTakePercent: [100],
       // два окна грейдинга в одной сетке — сердце теста
       holdMinutes: [120, 720],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -86,40 +84,31 @@ test("SIM: author metrics are graded inside each point's own hold window — two
     return;
   }
 
-  // словари банов самоидентифицируются окном (белый/чёрный список —
-  // свойство правила, лежит в bans)
-  const shortBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 120);
-  const longBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 720);
-  if (!shortBan || !longBan) {
-    fail(`bans must carry holdMinutes 120 and 720, got ${JSON.stringify(result.reports.close.bans.map(({ banKey }) => banKey.holdMinutes))}`);
+  // трек самоидентифицируется окном: одна строка на (окно x автор),
+  // holdMinutes прямо в треке
+  const shortTrack = result.reports.close.tracks.find(({ author, holdMinutes }) => author === "sprinter" && holdMinutes === 120);
+  const longTrack = result.reports.close.tracks.find(({ author, holdMinutes }) => author === "sprinter" && holdMinutes === 720);
+  // hold=120: close окна +2% — 5/5
+  if (!shortTrack || shortTrack.hits !== 5 || shortTrack.hitRate !== 1) {
+    fail(`120m window must credit the sprinter 5/5, got ${JSON.stringify(shortTrack)}`);
     return;
   }
-  // трек-рекорд под окно лежит на report точки этого окна
-  const shortPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 120);
-  const longPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 720);
-  const shortStat = shortPoint.authorStats.find(({ author }) => author === "sprinter");
-  const longStat = longPoint.authorStats.find(({ author }) => author === "sprinter");
-  const verdictOf = (ban) => ban.authors.find(({ author }) => author === "sprinter");
-  // hold=120: close окна +2% — 5/5, допуск
-  if (shortStat.hits !== 5 || shortStat.banned || verdictOf(shortBan).banned !== false) {
-    fail(`120m window must credit the sprinter 5/5, got ${JSON.stringify(shortStat)}`);
-    return;
-  }
-  // hold=720: close окна -3% — 0/5, бан по низкому hitRate
-  if (longStat.hits !== 0 || !longStat.banned || !verdictOf(longBan).reasons.includes("hitRate<minAuthorHitRate")) {
-    fail(`720m window must ban the sprinter 0/5, got ${JSON.stringify(longStat)}`);
+  // hold=720: close окна -3% — 0/5 (то же самое окно судит иначе)
+  if (!longTrack || longTrack.hits !== 0 || longTrack.hitRate !== 0) {
+    fail(`720m window must score the sprinter 0/5, got ${JSON.stringify(longTrack)}`);
     return;
   }
 
-  // сделки следуют вердиктам своих окон: короткая точка торгует все
-  // 5 идей, длинная — ни одной
-  if (shortPoint.trades !== 5 || longPoint.trades !== 0) {
-    fail(`expected 5/0 trades for 120m/720m points, got ${shortPoint.trades}/${longPoint.trades}`);
+  // банов нет — ОБЕ точки торгуют все 5 идей; окно меняет только трек
+  const shortPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 120);
+  const longPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 720);
+  if (shortPoint.tradesList.length !== 5 || longPoint.tradesList.length !== 5) {
+    fail(`both windows trade all 5 (no ban), got ${shortPoint.tradesList.length}/${longPoint.tradesList.length}`);
     return;
   }
 
   pass(
-    `hold-window grading: sprinter 5/5 allowed at 120m (+2% window close) and 0/5 banned at 720m ` +
-    `(-3% window close); 2 trainings, bans self-identified by holdMinutes, trades 5 vs 0`
+    `hold-window grading: sprinter 5/5 at 120m (+2% window close), 0/5 at 720m ` +
+    `(-3% window close); 2 tracks self-identified by holdMinutes; no ban -> both trade 5`
   );
 });

@@ -69,8 +69,6 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -99,20 +97,22 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
     return;
   }
 
-  const stats = Object.fromEntries(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.map((s) => [s.author, s]));
+  const stats = Object.fromEntries(result.reports.close.tracks.map((s) => [s.author, s]));
   // cut: только 3 полных идеи в треке (обрезанная — не доказательство)
-  if (stats.cut.ideas !== 3 || stats.cut.banned) {
-    fail(`cut must have track=3 (truncated idea excluded) and be allowed, got ${JSON.stringify(stats.cut)}`);
+  if (stats.cut.ideas !== 3) {
+    fail(`cut must have track=3 (truncated idea excluded), got ${JSON.stringify(stats.cut)}`);
     return;
   }
-  // shadow: постов 3, доказательств 0 — бан за недоказанность
-  if (stats.shadow.ideas !== 0 || !stats.shadow.banned) {
-    fail(`shadow must have zero proven ideas and be banned, got ${JSON.stringify(stats.shadow)}`);
+  // shadow: постов 3, доказательств 0 — пустой трек (нет полных идей)
+  if (stats.shadow.ideas !== 0) {
+    fail(`shadow must have zero proven ideas in the track, got ${JSON.stringify(stats.shadow)}`);
     return;
   }
 
-  // сделки: 4 идеи cut торгуются, последняя режется концом данных
-  const [{ trades }] = captured;
+  // сделки cut: 4 идеи торгуются, последняя режется концом данных
+  // (shadow тоже торгует теперь — банов нет; берём только cut)
+  const [{ trades: allTrades }] = captured;
+  const trades = allTrades.filter((t) => t.author === "cut");
   if (trades.length !== 4) {
     fail(`expected 4 trades from cut, got ${trades.length}`);
     return;

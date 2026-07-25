@@ -72,8 +72,6 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
       hardStopPercent: [5],
       trailingTakePercent: [100],
       holdMinutes: [240],
-      minAuthorTrack: [5],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [2.5],
       authorMetric: ["close", "reach"],
     },
@@ -96,78 +94,49 @@ test("SIM: reach metric allows the spiker the close metric bans — and the lock
     return;
   }
 
-  // фильтр обучен дважды — по разу на метрику, с разными hits
+  // трек обучен дважды — по разу на метрику, с разными hits;
+  // onAuthorsTrained теперь отдаёт tracks[]
   if (trainedStats.length !== 2) {
-    fail(`expected 2 filter trainings (one per metric), got ${trainedStats.length}`);
+    fail(`expected 2 rule trainings (one per metric), got ${trainedStats.length}`);
     return;
   }
   const hitCounts = trainedStats
-    .map((stats) => stats.find(({ author }) => author === "spiker")?.hits)
+    .map((tracks) => tracks.find(({ author }) => author === "spiker")?.hits)
     .sort((a, b) => a - b);
   if (hitCounts[0] !== 0 || hitCounts[1] !== 5) {
     fail(`spiker must be 0/5 hits by close and 5/5 by reach, got ${JSON.stringify(hitCounts)}`);
     return;
   }
 
-  // close-точка: автор забанен (hitRate 0 < 0.5), сделок нет
+  // банов больше нет — обе точки торгуют все 5 идей спайкера; метрика
+  // задаёт только ТРЕК (hits), а не допуск к торговле
   const closePoint = reportsByMetric.get("close");
-  if (closePoint.report.trades !== 0) {
-    fail(`close metric must ban the spiker: expected 0 trades, got ${closePoint.report.trades}`);
+  if (closePoint.report.tradesList.length !== 5) {
+    fail(`close point must trade all 5 (no ban), got ${closePoint.report.tradesList.length}`);
     return;
   }
-
-  // reach-точка: автор допущен, все 5 идей сняты замком в плюс
   const reachPoint = reportsByMetric.get("reach");
-  if (reachPoint.report.trades !== 5 || reachPoint.report.exitReasons.profit_lock !== 5) {
-    fail(`reach metric must harvest all 5 ideas by profit_lock, got ${JSON.stringify(reachPoint.report.exitReasons)}`);
-    return;
-  }
-  if (reachPoint.trades.some(({ pnlPercent }) => pnlPercent <= 0)) {
-    fail(`every lock exit must be profitable, got ${JSON.stringify(reachPoint.trades.map(({ pnlPercent }) => +pnlPercent.toFixed(2)))}`);
+  if (reachPoint.report.tradesList.length !== 5 || reachPoint.report.exitReasons.profit_lock !== 5) {
+    fail(`reach point must harvest all 5 by profit_lock, got ${JSON.stringify(reachPoint.report.exitReasons)}`);
     return;
   }
 
-  // корзины независимы: у reach-корзины свои победители, их артефакт
-  // несёт spiker в белом списке ПОД ЕЁ метрику
-  for (const b of result.reports.reach.best) {
-    if (b.report?.point.authorMetric !== "reach") {
-      fail(`${b.criterion} winner must be the reach point, got ${b.report?.point.authorMetric}`);
-      return;
-    }
-    if (!b.report.allowedAuthors.includes("spiker") || b.report.bannedAuthors.includes("spiker")) {
-      fail(`per-best artifact must allow spiker under reach, got ${JSON.stringify(b.report.allowedAuthors)}`);
-      return;
-    }
-  }
-
-  // словари банов пометричны и не склеиваются: close-корзина банит
-  // спайкера своим правилом, reach-корзина — допускает своим
-  const closeBan = result.reports.close.bans.find(
-    ({ banKey }) => banKey.minAuthorTrack === 5,
-  );
-  const reachBan = result.reports.reach.bans.find(
-    ({ banKey }) => banKey.minAuthorTrack === 5,
-  );
-  const allowedOf = (ban) => ban.authors.filter(({ banned }) => !banned).map(({ author }) => author);
-  const bannedOf = (ban) => ban.authors.filter(({ banned }) => banned).map(({ author }) => author);
-  if (!closeBan || !bannedOf(closeBan).includes("spiker") || closeBan.allowedCount !== 0) {
-    fail(`close bans dictionary must ban the spiker, got ${JSON.stringify(closeBan)}`);
+  // корзины несут раздельный ТРЕК: у close спайкер 0/5, у reach 5/5 —
+  // ключевое различие метрик, теперь в tracks[]
+  const closeTrack = result.reports.close.tracks.find(({ author }) => author === "spiker");
+  const reachTrack = result.reports.reach.tracks.find(({ author }) => author === "spiker");
+  if (!closeTrack || closeTrack.hits !== 0 || closeTrack.hitRate !== 0) {
+    fail(`close track must have spiker 0/5, got ${JSON.stringify(closeTrack)}`);
     return;
   }
-  if (!reachBan || JSON.stringify(allowedOf(reachBan)) !== JSON.stringify(["spiker"]) || reachBan.banKey.profitLockPercent !== 2.5) {
-    fail(`reach bans dictionary must allow the spiker and carry its lock level, got ${JSON.stringify(reachBan)}`);
-    return;
-  }
-  // причина бана спайкера под close — низкий hitRate (5 идей >= track 5)
-  const spikerCloseVerdict = closeBan.authors.find(({ author }) => author === "spiker");
-  if (JSON.stringify(spikerCloseVerdict.reasons) !== JSON.stringify(["hitRate<minAuthorHitRate"])) {
-    fail(`spiker's close ban reasons must be ["hitRate<minAuthorHitRate"], got ${JSON.stringify(spikerCloseVerdict.reasons)}`);
+  if (!reachTrack || reachTrack.hits !== 5 || reachTrack.hitRate !== 1 || reachTrack.profitLockPercent !== 2.5) {
+    fail(`reach track must have spiker 5/5 at lock 2.5, got ${JSON.stringify(reachTrack)}`);
     return;
   }
 
   pass(
-    `author metric splits the world: close bans spiker (0/5 hits, 0 trades), ` +
-    `reach allows him (5/5 hits) and the lock point takes 5/5 profit_lock exits, ` +
+    `author metric splits the track: spiker 0/5 by close, 5/5 by reach; ` +
+    `both points trade all 5 (no ban), reach takes 5/5 profit_lock exits, ` +
     `pnl=${reachPoint.report.totalPnlPercent.toFixed(2)}%`
   );
 });

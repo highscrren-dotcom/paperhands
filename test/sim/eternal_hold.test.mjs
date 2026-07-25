@@ -86,8 +86,6 @@ const GRID_AXES = {
   hardStopPercent: [50],
   trailingTakePercent: [100],
   holdMinutes: [60, 7200],
-  minAuthorTrack: [3],
-  minAuthorHitRate: [0.5],
   profitLockPercent: [0],
   authorMetric: ["close"],
 };
@@ -119,18 +117,19 @@ test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", 
     return;
   }
 
-  // автор должен пройти фильтр: 90 идей, все hit
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 1 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors[0] !== "prophet") {
-    fail(`expected prophet allowed, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
+  // трек автора: prophet — единственный, с полным hit-рекордом
+  const prophetTrack = result.reports.close.tracks.find(({ author }) => author === "prophet");
+  if (!prophetTrack || prophetTrack.hitRate !== 1) {
+    fail(`prophet track must be present with hitRate 1, got ${JSON.stringify(prophetTrack)}`);
     return;
   }
 
   // короткий холд торгует каждую идею, вечный — поглощает пачки
-  if (short.trades < 80) {
+  if (short.tradesList.length < 80) {
     fail(`short hold expected ~90 trades, got ${short.trades}`);
     return;
   }
-  if (eternal.trades > 10) {
+  if (eternal.tradesList.length > 10) {
     fail(`eternal hold expected ~6 trades, got ${eternal.trades}`);
     return;
   }
@@ -223,7 +222,7 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
   }
 
   pass(
-    `eternal hold: ${eternal.report.trades} trades absorbed ${absorbed} ideas ` +
+    `eternal hold: ${eternal.report.tradesList.length} trades absorbed ${absorbed} ideas ` +
     `(first trade ate ${firstTrade.absorbedIdeas.length}); short hold absorbed 0`
   );
 });

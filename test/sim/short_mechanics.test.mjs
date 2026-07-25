@@ -28,8 +28,6 @@ const shortPnl = (entryOpen, exitLevel) => {
 const approx = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 
 const PERMISSIVE = {
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
   authorMetric: ["close"],
 };

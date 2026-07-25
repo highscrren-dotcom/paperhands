@@ -42,8 +42,6 @@ const GRID_AXES = {
   hardStopPercent: [5, 50],
   trailingTakePercent: [100],
   holdMinutes: [60],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
   authorMetric: ["close"],
 };
@@ -67,16 +65,16 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
     fail(`counters must be zero, got ${result.ideasTotal}/${result.ideasDirectional}/${result.profileCount}`);
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2 || Object.values(result.reports).flatMap((b) => b.reports).some((r) => r.trades !== 0 || r.totalPnlPercent !== 0)) {
-    fail(`grid must be full of zero points, got ${JSON.stringify(Object.values(result.reports).flatMap((b) => b.reports).map((r) => r.trades))}`);
+  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2 || Object.values(result.reports).flatMap((b) => b.reports).some((r) => r.tradesList.length !== 0 || r.totalPnlPercent !== 0)) {
+    fail(`grid must be full of zero points, got ${JSON.stringify(Object.values(result.reports).flatMap((b) => b.reports).map((r) => r.tradesList.length))}`);
     return;
   }
   if (result.reports.close.best.length !== 4 || result.reports.close.best.some((b) => !b.report)) {
     fail("rankings must resolve on an empty feed");
     return;
   }
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.bannedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.length !== 0) {
-    fail("author artifacts must be empty");
+  if (result.reports.close.tracks.length !== 0) {
+    fail(`author tracks must be empty on an empty feed, got ${result.reports.close.tracks.length}`);
     return;
   }
   if (result.avgHoldMinutes !== 0 || result.p99HoldMinutes !== 0) {

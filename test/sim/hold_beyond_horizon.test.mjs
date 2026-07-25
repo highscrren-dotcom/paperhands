@@ -43,8 +43,6 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [HOLD],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },

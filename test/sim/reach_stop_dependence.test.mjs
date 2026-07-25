@@ -65,8 +65,6 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
       hardStopPercent: [3, 5],
       trailingTakePercent: [100],
       holdMinutes: [240],
-      minAuthorTrack: [5],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [2.5],
       authorMetric: ["reach"],
     },
@@ -95,18 +93,20 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
     return;
   }
 
-  // H=3: бан по reach (яма -4 глубже стопа 3) -> ноль сделок
+  // банов нет — обе точки торгуют все 5; различие стопа видно в
+  // ТРЕКЕ (0/5 vs 5/5 hits) и в исходах сделок:
+  // H=3: узкий стоп режет сделки в hard_stop
   const strict = byStop.get(3);
-  if (strict.trades !== 0) {
-    fail(`stop 3 point must ban the dipper (shakeout -4), got ${strict.trades} trades`);
+  if (strict.tradesList.length !== 5 || strict.exitReasons.hard_stop !== 5) {
+    fail(`stop 3 point trades all 5 but the dip (-4) stops them out, got ${JSON.stringify(strict.exitReasons)}`);
     return;
   }
-  // H=5: допуск, все 5 идей сняты замком
+  // H=5: широкий стоп переживает яму, все 5 сняты замком
   const soft = byStop.get(5);
-  if (soft.trades !== 5 || soft.exitReasons.profit_lock !== 5) {
+  if (soft.tradesList.length !== 5 || soft.exitReasons.profit_lock !== 5) {
     fail(`stop 5 point must harvest 5/5 by profit_lock, got ${JSON.stringify(soft.exitReasons)}`);
     return;
   }
 
-  pass("reach follows the stop: 0/5 hits vs stop 3 (banned, 0 trades), 5/5 vs stop 5 (5 profit_lock exits), two distinct trainings");
+  pass("reach follows the stop in the TRACK: 0/5 hits vs stop 3, 5/5 vs stop 5, two distinct trainings; no ban -> both trade 5 (stop 3 -> hard_stop, stop 5 -> profit_lock)");
 });

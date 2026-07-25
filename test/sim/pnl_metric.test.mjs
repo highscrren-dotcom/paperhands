@@ -66,8 +66,6 @@ test("SIM: pnl metric grades the fixed +1% threshold independent of lock — str
       hardStopPercent: [5],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       // lock=0: pnl-метрика от замка не зависит и грейдит как есть
       profitLockPercent: [0],
       authorMetric: ["pnl"],
@@ -100,26 +98,26 @@ test("SIM: pnl metric grades the fixed +1% threshold independent of lock — str
     return;
   }
   const stats = Object.fromEntries(trained[0].map((s) => [s.author, s]));
-  // paying: MFE +1.5% > 1 -> 5/5, допуск
-  if (stats.paying.hits !== 5 || stats.paying.banned) {
-    fail(`paying (+1.5% spikes) must be 5/5 allowed, got ${JSON.stringify(stats.paying)}`);
+  // paying: MFE +1.5% > 1 -> 5/5 в треке
+  if (stats.paying.hits !== 5) {
+    fail(`paying (+1.5% spikes) must be 5/5 in the track, got ${JSON.stringify(stats.paying)}`);
     return;
   }
-  // edge: MFE ровно +1.0% — НЕ больше порога, 0/5, бан
-  if (stats.edge.hits !== 0 || !stats.edge.banned) {
-    fail(`edge (exactly +1.0% spikes) must be 0/5 banned — the threshold is strictly greater, got ${JSON.stringify(stats.edge)}`);
+  // edge: MFE ровно +1.0% — НЕ больше порога -> 0/5 (порог строгий >)
+  if (stats.edge.hits !== 0) {
+    fail(`edge (exactly +1.0% spikes) must be 0/5 — the threshold is strictly greater, got ${JSON.stringify(stats.edge)}`);
     return;
   }
 
-  // торгует только paying
+  // банов нет — торгуют ОБА автора (10 идей)
   const [report] = result.reports.pnl.reports;
-  if (report.trades !== 5) {
-    fail(`only paying's 5 ideas must trade, got ${report.trades}`);
+  if (report.tradesList.length !== 10) {
+    fail(`both authors' 10 ideas must trade (no ban), got ${report.tradesList.length}`);
     return;
   }
 
   pass(
-    `pnl metric @ lock=0: paying (+1.5%) 5/5 allowed, edge (exactly +1.0%) 0/5 banned (strict >), ` +
-    `report in reports.pnl bucket, other buckets present and empty`
+    `pnl metric @ lock=0: paying (+1.5%) 5/5, edge (exactly +1.0%) 0/5 in the track (strict >); ` +
+    `no ban -> both trade (10), report in reports.pnl bucket`
   );
 });

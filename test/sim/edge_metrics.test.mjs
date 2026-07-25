@@ -61,8 +61,6 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -76,7 +74,7 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
   });
 
   const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  if (report.trades !== CYCLES || report.totalPnlPercent <= 0) {
+  if (report.tradesList.length !== CYCLES || report.totalPnlPercent <= 0) {
     fail(`expected ${CYCLES} profitable trades, got ${report.trades} / ${report.totalPnlPercent}`);
     return;
   }
@@ -98,7 +96,7 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
   pass(`sortino=Infinity, calmar=Infinity, recovery=Infinity with finite sharpe=${report.sharpe.toFixed(2)} on ${report.trades} clean trades`);
 });
 
-test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictly below", async ({ pass, fail }) => {
+test("SIM: track hitRate is the exact raw ratio — 2/4 = 0.5, 1/4 = 0.25 (no ban, userspace decides)", async ({ pass, fail }) => {
   // дрейф вверх: LONG = hit, SHORT = miss
   const priceAt = (timestamp) => {
     const m = Math.floor((timestamp - START) / MINUTE);
@@ -126,8 +124,6 @@ test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictl
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [4],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -151,23 +147,22 @@ test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictl
     ],
   });
 
-  const stats = Object.fromEntries(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.map((s) => [s.author, s]));
-  if (stats.coin.hitRate !== 0.5 || stats.coin.ideas !== 4) {
-    fail(`coin must have exactly 0.5 on 4 ideas, got ${JSON.stringify(stats.coin)}`);
+  // трек — сырой ratio, без порога/бана; userspace сам режет
+  const tracks = Object.fromEntries(result.reports.close.tracks.map((t) => [t.author, t]));
+  if (tracks.coin.hitRate !== 0.5 || tracks.coin.ideas !== 4) {
+    fail(`coin must have exactly 0.5 on 4 ideas, got ${JSON.stringify(tracks.coin)}`);
     return;
   }
-  if (stats.coin.banned) {
-    fail(`hitRate == threshold must stay allowed (ban is strictly below), got banned`);
+  if (tracks.quarter.hitRate !== 0.25 || tracks.quarter.ideas !== 4) {
+    fail(`quarter must be 0.25 on 4 ideas, got ${JSON.stringify(tracks.quarter)}`);
     return;
   }
-  if (stats.quarter.hitRate !== 0.25 || !stats.quarter.banned) {
-    fail(`quarter (0.25) must be banned, got ${JSON.stringify(stats.quarter)}`);
-    return;
-  }
-  if (!result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("coin") || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("quarter")) {
-    fail(`whitelist must include coin and exclude quarter, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
+  // банов нет — обе идеи всех авторов торгуются
+  const traded = result.reports.close.reports[0].tradesList.length;
+  if (traded !== 8) {
+    fail(`all 8 ideas must trade (no ban), got ${traded}`);
     return;
   }
 
-  pass(`boundary: coin 2/4 = 0.50 allowed at threshold 0.5; quarter 1/4 = 0.25 banned`);
+  pass(`raw track ratio exact: coin 2/4 = 0.50, quarter 1/4 = 0.25; no ban, all 8 trade`);
 });

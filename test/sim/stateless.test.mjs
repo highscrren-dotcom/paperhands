@@ -51,8 +51,6 @@ test("SIM: repeated run on the memoized client is bit-for-bit identical", async 
       hardStopPercent: [5, 50],
       trailingTakePercent: [2, 100],
       holdMinutes: [60, 7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -75,7 +73,7 @@ test("SIM: repeated run on the memoized client is bit-for-bit identical", async 
     fail(`run must be non-degenerate: reports=${Object.values(first.reports).flatMap((b) => b.reports).length}`);
     return;
   }
-  const hasTrades = Object.values(first.reports).flatMap((b) => b.reports).some(({ trades }) => trades > 0);
+  const hasTrades = Object.values(first.reports).flatMap((b) => b.reports).some(({ tradesList }) => tradesList.length > 0);
   if (!hasTrades) {
     fail("run must produce trades to make the comparison meaningful");
     return;

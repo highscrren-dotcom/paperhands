@@ -21,8 +21,6 @@ const SINGLE_POINT = {
   hardStopPercent: [50],
   trailingTakePercent: [100],
   holdMinutes: [60],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
   authorMetric: ["close"],
 };

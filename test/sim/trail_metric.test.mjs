@@ -79,8 +79,6 @@ test("SIM: trail metric grades trailing-arm reachability — exact touch hits, a
       hardStopPercent: [50],
       trailingTakePercent: [2],
       holdMinutes: [CYCLE],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["trail"],
     },
@@ -105,56 +103,43 @@ test("SIM: trail metric grades trailing-arm reachability — exact touch hits, a
   }
   const stats = Object.fromEntries(trained[0].map((s) => [s.author, s]));
   // armer: плато РОВНО на entry/(1-r) — взвод включительный, 5/5
-  if (stats.armer.hits !== 5 || stats.armer.banned) {
+  if (stats.armer.hits !== 5) {
     fail(`armer (exact arm-level touch) must be 5/5 allowed, got ${JSON.stringify(stats.armer)}`);
     return;
   }
   // under: на 0.01 ниже уровня — взвода нет, 0/5, бан
-  if (stats.under.hits !== 0 || !stats.under.banned) {
+  if (stats.under.hits !== 0) {
     fail(`under (a hair below the arm level) must be 0/5 banned, got ${JSON.stringify(stats.under)}`);
     return;
   }
 
-  // banKey самоидентифицируется своим уровнем — и только им
-  const [ban] = result.reports.trail.bans;
-  if (!ban || ban.banKey.trailingTakePercent !== 2 || ban.banKey.holdMinutes !== CYCLE) {
-    fail(`trail banKey must carry trailingTakePercent 2 and its window, got ${JSON.stringify(ban)}`);
+  // трек trail-корзины: armer 5/5, under 0/5; уровень правила —
+  // trailing (у trail нет lock, profitLockPercent = 0)
+  const armerTrack = result.reports.trail.tracks.find(({ author }) => author === "armer");
+  const underTrack = result.reports.trail.tracks.find(({ author }) => author === "under");
+  if (!armerTrack || armerTrack.hits !== 5 || armerTrack.hitRate !== 1) {
+    fail(`armer track must be 5/5, got ${JSON.stringify(armerTrack)}`);
     return;
   }
-  if ("profitLockPercent" in ban.banKey || "hardStopPercent" in ban.banKey) {
-    fail(`trail banKey must not carry lock/stop, got ${JSON.stringify(ban.banKey)}`);
+  if (!underTrack || underTrack.hits !== 0 || underTrack.hitRate !== 0) {
+    fail(`under track must be 0/5, got ${JSON.stringify(underTrack)}`);
     return;
   }
-  // affectedPointIndexes индексируют reports[] правила: джойн находит
-  // точку по её различающим осям (stop/lock), они на самом report
-  if (ban.affectedPointIndexes.length !== 1) {
-    fail(`trail rule must affect exactly one point, got ${JSON.stringify(ban.affectedPointIndexes)}`);
-    return;
-  }
-  const apPoint = result.reports.trail.reports[ban.affectedPointIndexes[0]]?.point;
-  if (!apPoint || apPoint.hardStopPercent !== 50 || apPoint.profitLockPercent !== 0) {
-    fail(`affectedPointIndex must resolve to the stop=50/lock=0 point, got ${JSON.stringify(apPoint)}`);
-    return;
-  }
-  // under (id 20..24) забанен правилом — вердикт с причиной прямо в
-  // authors[]; absorbedIdeaIds на уровне правила больше нет (бан не
-  // исполняет сделок — состав поглощённых идей это свойство точки)
-  const underAuthor = ban.authors.find(({ author }) => author === "under");
-  if (!underAuthor?.banned || !underAuthor.reasons.includes("hitRate<minAuthorHitRate")) {
-    fail(`under must be banned by hitRate under the trail rule, got ${JSON.stringify(underAuthor)}`);
+  if (underTrack.holdMinutes !== CYCLE || underTrack.profitLockPercent !== 0) {
+    fail(`trail track rule identity must be {hold=CYCLE, lock=0}, got ${JSON.stringify(underTrack)}`);
     return;
   }
 
-  // торгует только armer
+  // банов нет — торгуют ОБА автора (10 идей), метрика задаёт трек
   const [report] = result.reports.trail.reports;
-  if (report.trades !== 5) {
-    fail(`only armer's 5 ideas must trade, got ${report.trades}`);
+  if (report.tradesList.length !== 10) {
+    fail(`both authors' 10 ideas must trade (no ban), got ${report.tradesList.length}`);
     return;
   }
 
   pass(
-    `trail metric exact: armer 5/5 allowed at the inclusive arm touch, under 0/5 banned, ` +
-    `bans carry trailingTakePercent only, trades 5`
+    `trail metric exact: armer 5/5 at the inclusive arm touch, under 0/5; ` +
+    `no ban -> both trade (10), track carries the trailing rule identity`
   );
 });
 
@@ -170,8 +155,6 @@ test("SIM: trail without a live trailing does not exist — trail-only grid with
       // исключается из сетки, чисто trail-грид обязан упасть пустым
       trailingTakePercent: [100],
       holdMinutes: [CYCLE],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["trail"],
     },

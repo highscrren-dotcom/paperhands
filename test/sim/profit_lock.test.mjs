@@ -64,8 +64,6 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
       hardStopPercent: [5],
       trailingTakePercent: [3],
       holdMinutes: [240],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0, 2],
       authorMetric: ["close"],
     },
@@ -84,7 +82,7 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
 
   const locked = tradesByLock.get(2);
   const bare = tradesByLock.get(0);
-  if (!locked || !bare || locked.report.trades !== 1 || bare.report.trades !== 1) {
+  if (!locked || !bare || locked.report.tradesList.length !== 1 || bare.report.tradesList.length !== 1) {
     fail(`both grid points must trade once, got ${JSON.stringify([...tradesByLock.keys()])}`);
     return;
   }
@@ -147,8 +145,6 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
       hardStopPercent: [5],
       trailingTakePercent: [3],
       holdMinutes: [240],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [2],
       authorMetric: ["close"],
     },
@@ -164,7 +160,7 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
   const [report] = Object.values(result.reports).flatMap((b) => b.reports);
   const winner = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
   const [trade] = winner.report.tradesList;
-  if (report.trades !== 1 || !trade) {
+  if (report.tradesList.length !== 1 || !trade) {
     fail(`expected exactly one trade, got ${report.trades}`);
     return;
   }

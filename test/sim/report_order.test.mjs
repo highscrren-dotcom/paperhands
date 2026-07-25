@@ -43,8 +43,6 @@ const AXES = {
   trailingTakePercent: [100],
   // три холда = три точки с разным PnL в дрейф-мире
   holdMinutes: [60, 600, 3000],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
   authorMetric: ["close"],
 };

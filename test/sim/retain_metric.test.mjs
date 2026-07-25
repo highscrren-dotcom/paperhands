@@ -89,8 +89,6 @@ test("SIM: retain metric bans the transient spiker where reach allows him — th
       // горизонт профиля = max(holdMinutes) = ровно один цикл мира:
       // медиана фиксера считается по всей ступеньке, спайкера — по базе
       holdMinutes: [7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [2.5],
       authorMetric: ["reach", "retain"],
     },
@@ -132,11 +130,11 @@ test("SIM: retain metric bans the transient spiker where reach allows him — th
 
   // reach: оба 5/5 — укол дотянулся до 2.5, фиксация тем более
   const reachStats = byAuthor(trained[0]);
-  if (reachStats.spiker.hits !== 5 || reachStats.spiker.banned) {
+  if (reachStats.spiker.hits !== 5) {
     fail(`reach must credit the spiker 5/5, got ${JSON.stringify(reachStats.spiker)}`);
     return;
   }
-  if (reachStats.fixer.hits !== 5 || reachStats.fixer.banned) {
+  if (reachStats.fixer.hits !== 5) {
     fail(`reach must credit the fixer 5/5, got ${JSON.stringify(reachStats.fixer)}`);
     return;
   }
@@ -144,29 +142,29 @@ test("SIM: retain metric bans the transient spiker where reach allows him — th
   // retain: спайкер 0/5 (медиана ~0 не выше замка 2.5) — бан;
   // фиксер 5/5 (медиана ~3 > 2.5) — допуск
   const retainStats = byAuthor(trained[1]);
-  if (retainStats.spiker.hits !== 0 || !retainStats.spiker.banned) {
+  if (retainStats.spiker.hits !== 0) {
     fail(`retain must ban the spiker 0/5, got ${JSON.stringify(retainStats.spiker)}`);
     return;
   }
-  if (retainStats.fixer.hits !== 5 || retainStats.fixer.banned) {
+  if (retainStats.fixer.hits !== 5) {
     fail(`retain must allow the fixer 5/5, got ${JSON.stringify(retainStats.fixer)}`);
     return;
   }
 
-  // сделки: reach-точка торгует обоих (10), retain-точка — только фиксера (5)
+  // банов нет — ОБЕ точки торгуют всех (10 идей); различие метрик —
+  // в ТРЕКЕ (спайкер 0/5 по retain, 5/5 по reach), не в допуске
   if (byMetric.get("reach").trades.length !== 10) {
     fail(`reach point must trade both authors (10), got ${byMetric.get("reach").trades.length}`);
     return;
   }
-  const retainTrades = byMetric.get("retain").trades;
-  if (retainTrades.length !== 5 || !retainTrades.every(({ ideaId }) => ideaId >= 20)) {
-    fail(`retain point must trade only the fixer's 5 ideas, got ${retainTrades.length}`);
+  if (byMetric.get("retain").trades.length !== 10) {
+    fail(`retain point must ALSO trade both (no ban), got ${byMetric.get("retain").trades.length}`);
     return;
   }
 
   pass(
-    `retain vs reach: spiker (median ~0) banned by retain but 5/5 by reach; ` +
-    `fixer (median ~3%) allowed by both; trades 10 vs 5`
+    `retain vs reach: spiker (median ~0) 0/5 by retain but 5/5 by reach in the track; ` +
+    `fixer (median ~3%) 5/5 by both; no ban -> both points trade all 10`
   );
 });
 
@@ -181,8 +179,6 @@ test("SIM: retain without a lock does not exist — excluded from a mixed grid, 
       hardStopPercent: [5],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       // замка нет: retain-точке нечем грейдить фиксацию — комбинация
       // исключается из декартова произведения, остаётся только close
       profitLockPercent: [0],
@@ -209,11 +205,11 @@ test("SIM: retain without a lock does not exist — excluded from a mixed grid, 
     );
     return;
   }
-  // retain-точки нет — нет и её тренировки со словарём банов
-  if (trained.length !== 1 || result.reports.retain.bans.length !== 0) {
+  // retain-точки нет — нет и её тренировки, retain-корзина пустая
+  if (trained.length !== 1 || result.reports.retain.tracks.length !== 0) {
     fail(
-      `expected 1 training and an empty retain bans list, got ` +
-      `${trained.length}/${result.reports.retain.bans.length}`,
+      `expected 1 training and empty retain tracks, got ` +
+      `${trained.length}/${result.reports.retain.tracks.length}`,
     );
     return;
   }
@@ -226,8 +222,6 @@ test("SIM: retain without a lock does not exist — excluded from a mixed grid, 
       hardStopPercent: [5],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
       authorMetric: ["retain"],
     },

@@ -74,12 +74,12 @@ const registerWorld = (exchangeName, priceAt) => {
 };
 
 test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on the shakeout stop", async ({ pass, fail }) => {
-  // ожидание по каждому миру: hit-счёт автора и статус бана
+  // ожидание по каждому миру: hit-счёт автора (трек, без бана)
   const EXPECT = {
-    touch: { hits: 5, banned: false },   // +2.5 ровно: >= lock -> hit
-    under: { hits: 0, banned: true },    // +2.49: < lock -> miss
-    shake: { hits: 0, banned: true },    // shakeout -5.0 ровно: НЕ > -stop -> miss
-    shakeok: { hits: 5, banned: false }, // shakeout -4.9: > -stop -> hit
+    touch: { hits: 5 },   // +2.5 ровно: >= lock -> hit
+    under: { hits: 0 },   // +2.49: < lock -> miss
+    shake: { hits: 0 },   // shakeout -5.0 ровно: НЕ > -stop -> miss
+    shakeok: { hits: 5 }, // shakeout -4.9: > -stop -> hit
   };
 
   for (const [name, factor] of Object.entries(WORLDS)) {
@@ -98,8 +98,6 @@ test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on th
         // горизонт профиля = max(holdMinutes): 120м накрывает и яму
         // встряски (фаза 30), и восстановление к пику (фаза 100)
         holdMinutes: [120],
-        minAuthorTrack: [5],
-        minAuthorHitRate: [0.5],
         profitLockPercent: [2.5],
         authorMetric: ["reach"],
       },
@@ -116,8 +114,8 @@ test("SIM: reach thresholds are exact — >= on the lock touch, strictly > on th
 
     const stat = trainedStats[0]?.find(({ author }) => author === name);
     const expected = EXPECT[name];
-    if (!stat || stat.hits !== expected.hits || stat.banned !== expected.banned) {
-      fail(`${name}: expected ${expected.hits}/5 hits banned=${expected.banned}, got ${JSON.stringify(stat)}`);
+    if (!stat || stat.hits !== expected.hits) {
+      fail(`${name}: expected ${expected.hits}/5 hits, got ${JSON.stringify(stat)}`);
       return;
     }
   }
@@ -146,8 +144,6 @@ test("SIM: reach without a lock does not exist — reach-only grid with lock=[0]
       hardStopPercent: [5],
       trailingTakePercent: [100],
       holdMinutes: [240],
-      minAuthorTrack: [5],
-      minAuthorHitRate: [0.5],
       // reach без замка — не правило: такие комбинации исключаются из
       // сетки, и грид из одной reach-точки при lock=0 обязан быть пустым
       profitLockPercent: [0],

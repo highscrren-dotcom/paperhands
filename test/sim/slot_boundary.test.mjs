@@ -48,8 +48,6 @@ test("SIM: a slot is per-author — an author's hold absorbs only his own overla
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [600],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
       authorMetric: ["close"],
     },
@@ -72,7 +70,7 @@ test("SIM: a slot is per-author — an author's hold absorbs only his own overla
   const [{ report, trades }] = captured;
 
   // A, C, D торгуют; B поглощена слотом X
-  if (report.trades !== 3 || report.skippedBusy !== 1) {
+  if (report.tradesList.length !== 3 || report.skippedBusy !== 1) {
     fail(`expected 3 trades + 1 absorbed, got ${report.trades}/${report.skippedBusy}`);
     return;
   }
