@@ -7,12 +7,10 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  *  1) пустой массив идей — прогон завершается структурированно:
  *     нулевые счётчики, полная сетка нулевых точек, рейтинги
  *     разрешены, ничего не падает;
- *  2) идеи у самого края данных и за краем — обе отбрасываются через
- *     null-путь BUILD_PROFILE_FN: из-за строгого контракта Exchange
- *     (ровно limit свечей, иначе исключение) идея, чей ПЕРВЫЙ чанк
- *     задевает край истории, не получает ни одной свечи — у края
- *     существует "теневая зона" глубиной в один чанк (1000 минут).
- *     profileCount < ideasDirectional, прогон жив.
+ *  2) идея без единой свечи (за краем данных / битый getCandles) —
+ *     это НЕ тихий дроп, а ФАТАЛ: прогон на отсутствующих свечах
+ *     мусор, поэтому Simulator.run обязан упасть с внятной ошибкой,
+ *     а не выдать нулевой профиль и наёбалово из нулей.
  */
 
 const START = 1704067200000;
@@ -89,7 +87,7 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
   pass("empty feed: zero counters, 2 zero points, 4 rankings resolved, no crash");
 });
 
-test("SIM: idea entirely beyond the end of data is dropped via the null-profile path", async ({ pass, fail }) => {
+test("SIM: an idea with no candles is FATAL — the run throws loudly, not silently zeros", async ({ pass, fail }) => {
   registerBoundedExchange("sim-beyond-exchange");
   addSimulatorSchema({
     simulatorName: "sim_beyond",
@@ -98,35 +96,29 @@ test("SIM: idea entirely beyond the end of data is dropped via the null-profile 
     callbacks: {},
   });
 
-  const result = await Simulator.run({
-    symbol: "TESTUSDT",
-    simulatorName: "sim_beyond",
-    ideas: [
-      // внутри мира (500м < чанка): первый же чанк задевает край ->
-      // ноль свечей -> null-профиль (теневая зона края)
-      { id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "edge" },
-      // целиком за краем данных: ни одной свечи -> профиль null
-      { id: 2, ts: END_TS + 1000 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "ghost" },
-    ],
-  });
+  let error = null;
+  try {
+    await Simulator.run({
+      symbol: "TESTUSDT",
+      simulatorName: "sim_beyond",
+      ideas: [
+        // целиком за краем данных: ни одной свечи -> прогон обязан упасть
+        { id: 7, ts: END_TS + 1000 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "ghost" },
+      ],
+    });
+  } catch (e) {
+    error = e;
+  }
 
-  if (result.ideasDirectional !== 2) {
-    fail(`expected 2 directional ideas, got ${result.ideasDirectional}`);
+  if (!error) {
+    fail("an idea with no candles must abort the run, but it resolved");
     return;
   }
-  if (result.profileCount !== 0 || result.truncatedCount !== 0) {
-    fail(`both ideas must be dropped via null profile, got profiles=${result.profileCount} truncated=${result.truncatedCount}`);
-    return;
-  }
-  // авторы без профилей не попадают в статистику
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.length !== 0) {
-    fail(`no author may have stats without a profile, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats)}`);
-    return;
-  }
-  if (Object.values(result.reports).flatMap((b) => b.reports).some((r) => r.trades !== 0)) {
-    fail("no trades may appear without profiles");
+  const msg = String(error.message ?? error);
+  if (!msg.includes("no candles for") || !msg.includes("idea 7")) {
+    fail(`error must name the missing-candles idea, got: ${msg}`);
     return;
   }
 
-  pass("edge-zone and beyond-the-edge ideas both dropped via null profile; run intact");
+  pass("idea with zero candles aborts the run loudly (idea 7 named), no silent zero profile");
 });

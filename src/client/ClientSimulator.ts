@@ -180,18 +180,25 @@ const DEDUPE_IDEAS_FN = (ideas: ISimulatorIdea[]): ISimulatorIdea[] => {
  * The ban-list dependent flag (authorBanned) is filled by
  * TRAIN_AUTHOR_FILTER_FN afterwards.
  *
+ * NO candles for an idea is a FATAL error, not a skip: it means the
+ * exchange feed is broken (getCandles failing or empty), and a run
+ * built on missing candles is garbage — it must throw loudly, never
+ * silently produce a zero profile. A PARTIAL profile at the very edge
+ * of history (fewer candles than the horizon, but > 0) stays legal —
+ * it is marked truncated, not dropped.
+ *
  * @param self - ClientSimulator instance reference
  * @param symbol - Trading pair symbol
  * @param idea - Idea to profile
  * @param horizonMinutes - Forward horizon (the grid's longest hold)
- * @returns Profile or null when no candles exist for the horizon
+ * @returns Idea profile (never null — throws when candles are absent)
  */
 const BUILD_PROFILE_FN = async (
   self: ClientSimulator,
   symbol: string,
   idea: ISimulatorIdea,
   horizonMinutes: number,
-): Promise<ISimulatorIdeaProfile | null> => {
+): Promise<ISimulatorIdeaProfile> => {
   const entryTimestamp = intervalStart(idea.ts, "1m") + MINUTE_MS;
   const candles: ICandleData[] = [];
   for await (const candle of ITERATE_CANDLES_FN(
@@ -203,7 +210,12 @@ const BUILD_PROFILE_FN = async (
     candles.push(candle);
   }
   if (!candles.length) {
-    return null;
+    throw new Error(
+      `ClientSimulator ${self.params.simulatorName}: no candles for ` +
+        `${symbol} idea ${idea.id} @ ${new Date(entryTimestamp).toISOString()} ` +
+        `— the exchange feed returned nothing (broken getCandles or empty ` +
+        `history); a run built on missing candles is garbage, aborting`,
+    );
   }
   const direction = idea.direction === "LONG" ? 1 : -1;
   const entryPrice = candles[0].open;
@@ -1141,15 +1153,11 @@ const RUN_FN = async (
   const horizonMinutes = HORIZON_MINUTES_FN(self.params.gridAxes);
   const profiles: ISimulatorIdeaProfile[] = [];
   for (let index = 0; index < directional.length; index++) {
-    const profile = await BUILD_PROFILE_FN(
-      self,
-      symbol,
-      directional[index],
-      horizonMinutes,
+    // нет свечей у идеи -> BUILD_PROFILE_FN бросает: прогон на
+    // отсутствующих свечах — мусор, падаем громко, а не молча нулями
+    profiles.push(
+      await BUILD_PROFILE_FN(self, symbol, directional[index], horizonMinutes),
     );
-    if (profile) {
-      profiles.push(profile);
-    }
     if (self.params.callbacks?.onProgress) {
       self.params.callbacks?.onProgress(
         symbol,
@@ -1430,15 +1438,11 @@ const TEST_FN = async (
   const horizonMinutes = HORIZON_MINUTES_FN(self.params.gridAxes);
   const profiles: ISimulatorIdeaProfile[] = [];
   for (let index = 0; index < directional.length; index++) {
-    const profile = await BUILD_PROFILE_FN(
-      self,
-      symbol,
-      directional[index],
-      horizonMinutes,
+    // нет свечей у идеи -> BUILD_PROFILE_FN бросает: прогон на
+    // отсутствующих свечах — мусор, падаем громко, а не молча нулями
+    profiles.push(
+      await BUILD_PROFILE_FN(self, symbol, directional[index], horizonMinutes),
     );
-    if (profile) {
-      profiles.push(profile);
-    }
     if (self.params.callbacks?.onProgress) {
       self.params.callbacks?.onProgress(
         symbol,
