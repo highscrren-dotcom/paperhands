@@ -1,130 +1,113 @@
-# CLAUDE.md — инструкция агенту (paperhands = форк backtest-kit)
+# CLAUDE.md — paperhands (форк backtest-kit)
 
-Файл-память для Claude Code. Читается в начале каждой сессии. Меняешь инвариант —
-правишь этот файл.
+Форк [tripolskypetr/backtest-kit](https://github.com/tripolskypetr/backtest-kit) (MIT),
+TypeScript: управляемая ИИ-агентом разработка торговых стратегий через
+backtest → paper → live. `origin = highscrren-dotcom/paperhands`,
+`upstream = tripolskypetr/backtest-kit`.
 
-## Что это и родословная
+Основная ветка `master`; автономная ночная работа — на `agent-night-YYYYMMDD`
+(master не трогать, не пушить).
 
-Репозиторий — **форк [tripolskypetr/backtest-kit](https://github.com/tripolskypetr/backtest-kit)** (MIT),
-`origin = highscrren-dotcom/paperhands`, ветка `master`. Это НЕ минимальный движок
-«paperhands» из первой сессии (он в бэкапе scratchpad) — владелец принял
-`backtest-kit` как базу. Цель: управляемая ИИ-агентом разработка торговых стратегий
-с прицелом на прибыль — **честно**, через backtest → paper → live.
+## Команды
 
-- Первоисточник и разбор пяти опор/критики — [agent/ANALYSIS.md](agent/ANALYSIS.md).
-- Фазированный план (до live) — [agent/PLAN.md](agent/PLAN.md).
-- Машинная спека API самого фреймворка — [LLMs.md](LLMs.md); архитектура — [ARCHITECTURE.md](ARCHITECTURE.md).
+Работа идёт в [`example/`](example/) — там установлены зависимости и живут стратегии.
 
-## Навигация по коду
+```bash
+cd example
+npm start -- --help                                    # @backtest-kit/cli 17.0.0
+npm start -- --backtest --symbol TRXUSDT ./content/jan_2026.strategy/jan_2026.strategy.ts
+npm start -- --backtest --symbol BTCUSDT <entry> --ui   # дашборд http://localhost:60050
+npm start -- --pine ./math/<f>.pine --timeframe 15m --limit 500 --when "<ISO>" --jsonl
+npm start -- --dump --timeframe 15m --limit 500 --when "<ISO>" --jsonl   # выгрузка свечей
+npm start -- --brokerdebug --commit signal-open --symbol <SYM>          # сухой прогон брокера
+```
 
-Для структурных вопросов (архитектура, «кто вызывает X», зависимости, влияние
-правок, поиск символов) сначала MCP **codebase-memory**
-(`get_architecture` / `search_graph` / `trace_path` / `query_graph`), а не массовое
-чтение файлов. Read/Grep — когда графа мало (точная строка/функция) или для не-кода.
-Проект в графе: `home-s1dd1-dev-quant-paperhands` (репо живёт в умбрелле `/dev/quant/`).
-Переиндексация:
-`codebase-memory-mcp cli index_repository '{"repo_path":"/home/s1dd1/dev/quant/paperhands"}'`.
+Ядро — только если правишь `src/`, что мы обычно **не** делаем:
 
-## Где ведём работу
+```bash
+npm ci          # ОБЯЗАТЕЛЬНО первым: в корне нет node_modules,
+                # иначе npm run build падает с `rollup: not found` (exit 127)
+npm run build   # rollup, ~19с, пишет build/ и types.d.ts
+npm test        # = npm run build && node ./test/index.mjs — идёт МИНУТАМИ, не секундами:
+                # live-loop тесты ждут свечи реальным временем. Не считать зависанием.
+                # ⚠ ВСЕГДА выходит с кодом 255: test/index.mjs:219 делает process.exit(-1)
+                # после «All tests are finished». Гейт — grep -c '^not ok', не $?.
+                # Эталон зелёного прогона: 1059 ok, 0 not ok.
+```
 
-- **Ядро фреймворка — в `src/` (НЕ редактируем).** Стратегии и прогоны — в ПРОЕКТЕ.
-- **Активный проект: [`./example`](example/)** (решение владельца) — `content/*`,
-  `config/`, `modules/`, `logic/`.
-- ⚠️ `example/` тянет **published npm-пакеты** `backtest-kit@14.1.0` (не локальный
-  `src/`) — правки ядра здесь не отражаются без `npm link`. Наши стратегии и
-  OOS-гейт — это проектный слой, ядро не трогаем (форк держим ребейзабельным).
-- **Дословный старт (из доки, [README.md «Start here»](README.md#L22), [example/docs/02](example/docs/02-getting-started-configuration.md)):**
-  ```bash
-  cd example && npm install && cp .env.example .env    # токены нужны только AI/news-стратегии
-  npm start -- --backtest --symbol TRXUSDT ./content/jan_2026.strategy/jan_2026.strategy.ts
-  ```
+Готчи окружения:
 
-## Инварианты (не нарушать)
+- `example/` тянет **published npm-пакеты `17.0.0`**, а не локальный `src/` — правки
+  ядра здесь не видны без `npm link`.
+- Порт `60050` делят `--ui` и `--editor` (uzse-app) — одновременно не запускать.
+- Ключи в `example/.env` нужны только AI/news-стратегиям; backtest и paper идут без ключей.
+- Данные — ccxt-адаптер (публичный OHLCV Binance, без ключей), кэш на диске.
+  Ручной JSONL не нужен.
+- Структурные вопросы по коду — MCP `codebase-memory`, граф
+  `home-s1dd1-dev-quant-paperhands`, а не массовое чтение файлов.
+- Синк с автором: `git fetch upstream && git rebase upstream/master`. Rebase наши
+  файлы не трогает — проверено на изолированном клоне.
 
-1. **Look-ahead абсолютен и вшит в ЯДРО.** `ClientExchange.getCandles`
-   ([src/client/ClientExchange.ts](src/client/ClientExchange.ts)):
-   `alignedWhen = floor(when/step)`, `since = alignedWhen − limit·step`,
-   полу-открытый `[since, alignedWhen)`, pending-свеча не отдаётся; `getNextCandles`
-   бросает в live. Часы — `ExecutionContextService` (`AsyncLocalStorage`). У стратегии
-   нет параметра-времени и wall-clock. Не детачить контекст от `await`-цепочки
-   `getSignal`/`listen*` (таймеры/форки/дашборд читают движок по id, не по времени).
-2. **Один код backtest/paper/live.** Различается только источник данных/времени и
-   брокер. `getSignal`, что бэктестишь, — тем и торгуешь. Не плодить «live-версию».
-3. **Фрикшн виден.** Дефолт 0.1% комиссия + 0.1% слиппедж ([README «Tested»](README.md#L793));
-   min TP 1%, R/R ≥ 2, никакого скальпинга < 1%. **Funding и спред НЕ моделируются** —
-   помни про них при оценке EV.
-4. **Логи/дампы структурные** (JSONL, `dump/`) — грепай или пиши точечный скрипт.
-5. **Порядок backtest → paper → live.** Live — последним, с отдельным аппрувом
-   владельца и мелким сайзом.
-6. **Evidence-first + наш слой OOS.** Смотри не только на % (в `example/`
-   Apr 2026 +67.85% при Sharpe 0.12 — это дисперсия, не эдж), а на Sharpe/деградацию/
-   просадку и benchmark. Главный риск — переобучение уровня clarkkent5 (бэктест
-   $100→$3200, paper в минус): любую месячную цифру считаем подозрительной, пока не
-   прошла OOS/walk-forward и paper. Прибыльность не обещаем; нет денег — пишем честно.
+## Архитектура — что не видно из одного файла
 
-## Доктрина стратегии (из [cli/template/project/CLAUDE.md](cli/template/project/CLAUDE.md))
+- **Look-ahead вшит в ЯДРО, не в стратегию.** [src/client/ClientExchange.ts:401](src/client/ClientExchange.ts#L401)
+  выравнивает `alignedWhen`, [:404](src/client/ClientExchange.ts#L404) берёт
+  `since = alignedWhen − limit·step` — интервал полуоткрытый, pending-свеча не отдаётся;
+  [:520](src/client/ClientExchange.ts#L520) `getNextCandles` бросает в live.
+  Часы — `ExecutionContextService` (`AsyncLocalStorage`): у стратегии нет ни параметра
+  времени, ни wall-clock. Контекст нельзя детачить от `await`-цепочки `getSignal`/`listen*` —
+  таймеры, форки и дашборд читают движок по id, а не по времени.
+- **Один код backtest/paper/live.** Различаются только источник данных/времени и брокер.
+  Что бэктестишь — тем и торгуешь; «live-версию» стратегии не плодить.
+- **Фрикшн в дефолтах ядра:** 0.1% комиссия + 0.1% слиппедж на транзакцию
+  ([src/config/params.ts:16,22](src/config/params.ts#L16)), min TP/SL 0.5%
+  ([:37,43](src/config/params.ts#L37)). **Funding и спред не моделируются** — помнить при оценке EV.
+- **Три слоя:** `src/**` — ядро автора; `example/` — наш проектный слой
+  (`content/`, `config/`, `modules/`, `logic/`); `agent/` — наше (заметки, инструменты, логи решений).
+- **Доктрина стратегии** (из [cli/template/project/CLAUDE.md](cli/template/project/CLAUDE.md)):
+  одна стратегия = один календарный месяц (мультимесячный бэктест бессмыслен — комиссии
+  съедают на whipsaw); ≥1 сигнал/день; min TP 1%; запрет HOLD и вечно-ползущего trailing;
+  концепт-инжиниринг вместо brute-force параметров; новый месяц = новая стратегия с нуля.
+- Логи и дампы структурные (JSONL, `dump/`) — грепать или писать точечный скрипт.
 
-- Одна стратегия = **один календарный месяц**; мультимесячный бэктест «mathematically
-  meaningless» (комиссии съедают на whipsaw).
-- **≥1 сигнал/день**; **min TP 1%**; запрет HOLD и вечно-ползущего trailing;
-  **концепт-инжиниринг, не brute-force** параметров; новый месяц = новая стратегия
-  с нуля (не копипаст).
-- `report/<month>.md` с фундаментальным анализом; **code-review отдельным агентом**
-  (perpetual hold / дрейфующий SL); честные `sharpeRatio`/`avgPnl`/`stdDev` в шапке
-  `.pine`.
-- Как пишется: `.pine` (`math/`) считает Position/EntryPrice/TP/SL → тонкая обёртка
-  `content/<month>.strategy.ts` отдаёт сигнал
-  `{id, position, priceOpen, priceTakeProfit, priceStopLoss, minuteEstimatedTime}`.
+## Запреты
 
-## Критический код — НЕ трогаем (форк ребейзабельный)
+1. **Никогда не редактировать `src/**`** — форк держим ребейзабельным. Особенно
+   `ClientExchange.ts` (look-ahead), `ExecutionContextService` (часы),
+   `src/lib/services/logic/**` (оркестрация режимов), `toProfitLossDto.ts` (PnL/fees).
+   Наше живёт в `agent/` и в проектном слое `example/`.
+2. **Никогда не верить месячной цифре без OOS.** Прецедент clarkkent5: бэктест
+   $100→$3200, paper в минус. И `apr_2026` здесь же: +67.85% при Sharpe 0.12 — это
+   дисперсия, не эдж. Гейт: OVERFIT, если out-of-sample Sharpe<0 ИЛИ return<0 ИЛИ
+   проигрыш buy&hold ([agent/tools/oos-gate.mjs](agent/tools/oos-gate.mjs)).
+   Прибыльность не обещаем; нет денег — пишем честно.
+3. **Никогда не давать коду стратегии прямой доступ к данным или часам** — любая такая
+   правка ломает главный инвариант: стоп и флаг владельцу, а не «обойдём аккуратно».
+4. **Никогда не коммитить и не пушить без `git diff` и явного «ок»** владельца.
+   Порядок релиза — backtest → paper → live, live последним, мелким сайзом,
+   с отдельным аппрувом. Binance trade-ключи заводим не раньше live.
+5. **Никогда не писать сюда статус проекта** — он протухает. Статус и решения — в
+   [agent/DECISIONS.md](agent/DECISIONS.md), история сессий — в
+   [agent/SESSIONS.md](agent/SESSIONS.md) (генерируется, руками не править).
 
-`src/**` — ядро. Особенно `src/client/ClientExchange.ts` (look-ahead),
-`ExecutionContextService` (часы), `src/lib/services/logic/**` (оркестрация режимов),
-`src/helpers/toProfitLossDto.ts` (PnL/fees/slippage). Также `config/symbol.config.*`
-и сгенерированные `dump/`. Наши добавления держим в `agent/` и в проектных скриптах.
+## Куда смотреть
 
-## Данные
+| нужно | файл |
+|---|---|
+| почему так решили, проверенные факты | [agent/DECISIONS.md](agent/DECISIONS.md) |
+| где и когда что делалось | [agent/SESSIONS.md](agent/SESSIONS.md) |
+| машинная спека API и архитектуры | [LLMs.md](LLMs.md), [ARCHITECTURE.md](ARCHITECTURE.md) |
+| справка по API/CLI фреймворка | скилл [.claude/skills/backtest-kit](.claude/skills/backtest-kit/) |
+| разбор пяти опор и критика | [agent/ANALYSIS.md](agent/ANALYSIS.md), [agent/PLAN.md](agent/PLAN.md) |
 
-Источник — **ccxt-адаптер** (публичный OHLCV Binance, без ключей), кэшируется на
-диск. Ручной JSONL не нужен. Выгрузка свечей: `npm start -- --dump --timeframe 15m
---limit 500 --when "<ISO>" --jsonl`.
+## Как работаем
 
-## Режимы CLI (`@backtest-kit/cli`)
+По-русски. Маленькие шаги, один смысл на коммит. Минимум зависимостей — новую
+обосновывать. Evidence-first, без хайпа: benchmark, fees/slippage и просадка всегда
+на виду.
 
-`--backtest / --paper / --live / --walker / --pine / --dump / --brokerdebug /
---init / --docker`. Бэктест: `npm start -- --backtest --symbol <SYM> <path.strategy.ts>`.
-Pine: `npm start -- --pine ./math/<f>.pine --timeframe 15m --limit 500 --when "<ISO>" --jsonl`.
-Сухой прогон брокер-хука: `npm start -- --brokerdebug --commit signal-open --symbol <SYM>`.
-**`--ui`** (подсказка автора, 2026-07-06, проверено на cli@14.1.0): веб-дашборд
-результатов на `http://localhost:60050` (порт — `CC_WWWROOT_PORT`), обновляется по
-ходу прогона; комбинируется с `--backtest`/`--paper`/`--live`. Тот же порт использует
-`--editor` (uzse-app) — не запускать одновременно. Полная справка по CLI — скилл
-[.claude/skills/backtest-kit](.claude/skills/backtest-kit/references/cli-and-broker.md).
+## Поддержание
 
-## Как работаем (владелец)
-
-По-русски. Маленькие шаги, один смысл на коммит; **показывать git diff перед
-коммитом, без OK не коммитить**. Минимум зависимостей — любую новую обосновывать.
-Evidence-first, без хайпа: benchmark + fees/slippage + drawdown всегда на виду; к
-цифрам бэктеста скептически до форварда. **Инвариант look-ahead абсолютен** — любая
-правка, дающая коду стратегии прямой доступ к данным/часам, — стоп и флаг владельцу.
-
-## Состояние и решения (обновлять в конце сессии)
-
-Полный лог решений и точка входа для новой сессии — [agent/DECISIONS.md](agent/DECISIONS.md);
-итоги первого прогона — [MORNING-SUMMARY.md](MORNING-SUMMARY.md). Ключевое:
-
-- **Синхронизация с upstream:** `git fetch upstream && git rebase upstream/master` (наши
-  правки только в `agent/`+доки, с ядром не конфликтуют). `upstream` = оригинал автора.
-  Push в origin — только по запросу владельца.
-- **OOS-вердикт (наш гейт):** OVERFIT, если out-of-sample Sharpe<0 ИЛИ return<0 ИЛИ
-  проигрыш buy&hold. Инструменты — [agent/tools/](agent/tools/) (`parse-report.mjs`, `oos-gate.mjs`).
-- **AI:** Ollama Cloud (`minimax-m2.7:cloud`) + Tavily Free; ключи в `example/.env` (проверены).
-  Claude не используем (дорого). Healthcheck: `example/scripts/ai-healthcheck.mjs`.
-- **Binance trade-ключи — только перед live** (Phase 5); backtest/paper ключей не требуют.
-- **LIVE запущен (2026-07-08):** jan_2026, spot-only, $100, из форка
-  `../backtest-ollama-crontab` (@reboot, дословный авторский Spot-брокер).
-  Принцип владельца: «всё как у автора, ничего не придумываем».
-- **Следующий шаг:** интеграция volume-anomaly/garch/pump по образцу
-  [demo/ccxt/src/index.mjs](demo/ccxt/src/index.mjs) (ответ автора) + записка
-  автору с Tavily-запросами — см. DECISIONS «Следующие шаги (session 9)».
+Потолок 200 строк. Новое правило сначала пробует стать хуком или слэш-командой,
+и только если не выходит — строкой здесь. Правило мешает дважды — «правило X мешает,
+разберись». Противоречие устраняется в том же коммите.
