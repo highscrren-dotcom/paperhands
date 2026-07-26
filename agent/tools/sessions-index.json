@@ -1,0 +1,474 @@
+{
+ "1409077d-2bf3-4982-ad53-a8560c47c954": {
+  "alive": true,
+  "branches": [
+   "integration"
+  ],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant/backtest-ollama-crontab",
+  "end": "2026-07-18T05:37:25.287000+00:00",
+  "start": "2026-07-18T05:37:15.568000+00:00",
+  "title": "Выполни через Bash ровно одну составную команду и покажи вывод: free -h && systemctl --user status live-bot.service",
+  "turns": 1,
+  "uid": "1409077d-2bf3-4982-ad53-a8560c47c954"
+ },
+ "29ea4015-0f84-4bff-9a54-9237f2964b7e": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:33:59.112000+00:00",
+  "start": "2026-07-18T05:32:26.710000+00:00",
+  "title": "Выполни через Bash ровно эту команду и покажи её вывод дословно: tail -n 1 /home/s1dd1/probe-outside.txt",
+  "turns": 1,
+  "uid": "29ea4015-0f84-4bff-9a54-9237f2964b7e"
+ },
+ "33ea6eb4-6a72-4f77-81b8-c551921b4c07": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-kit-redis-postgres-pgpool-docker": 1,
+   "paperhands": 9,
+   "trading-agents-docker": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-12T16:42:12.115000+00:00",
+  "start": "2026-07-10T12:45:15.394000+00:00",
+  "title": "Прочитай agent/notes/tavily-sources-prompt.md и выполни задание из него полностью.",
+  "turns": 15,
+  "uid": "33ea6eb4-6a72-4f77-81b8-c551921b4c07"
+ },
+ "367c44b9-9243-4f77-96ae-b0f9274c17cf": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-kit-redis-mongo-docker": 1,
+   "backtest-ollama-crontab": 2,
+   "paperhands": 6
+  },
+  "cwd": "/home/s1dd1/dev/quant/paperhands",
+  "end": "2026-07-07T21:44:34.056000+00:00",
+  "start": "2026-07-07T19:35:15.643000+00:00",
+  "title": "прочти документацию, и давай найдем работу на ночь",
+  "turns": 3,
+  "uid": "367c44b9-9243-4f77-96ae-b0f9274c17cf"
+ },
+ "36995ab8-0dea-4fbf-876a-9e1f4f6884e4": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-kit-redis-mongo-docker": 1,
+   "backtest-monorepo-parallel": 2,
+   "backtest-ollama-crontab": 2,
+   "paperhands": 32
+  },
+  "cwd": "/home/s1dd1/dev/quant/backtest-ollama-crontab",
+  "end": "2026-07-07T20:31:40.126000+00:00",
+  "start": "2026-07-05T18:32:27.222000+00:00",
+  "title": "Прочитай заметки /home/s1dd1/dev/quant/paperhands/agent в репо paperhands давай начнем строить систему которую я наел в репо по ссылке https://github.com/tripolskypetr",
+  "turns": 32,
+  "uid": "36995ab8-0dea-4fbf-876a-9e1f4f6884e4"
+ },
+ "38344183-48ce-446b-98ac-bc452df939e8": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 3
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-16T13:13:18.368000+00:00",
+  "start": "2026-07-16T11:52:22.370000+00:00",
+  "title": "s1dd1@s1dd1-Latitude-5480:~/dev/quant$ 40 9 * * * cd /home/s1dd1/dev/quant/paperhands/example && ( /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_collect.mjs day && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_classify.mjs && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_dataset.mjs && /home/s1dd1/.nvm/versions/node/v24.17.0/bin/node scripts/news_dataset/news_mongo_sync.mjs ) >> /home/s1dd1/dev/quant/paperhands/agent/notes/news-dataset/news-cron.log 2>&1",
+  "turns": 5,
+  "uid": "38344183-48ce-446b-98ac-bc452df939e8"
+ },
+ "3e871b37-27f5-4c55-9c29-f4aa5c01edf1": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 2
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-17T13:54:43.810000+00:00",
+  "start": "2026-07-17T13:26:43.635000+00:00",
+  "title": "комить и дай отчет о проделанной работе",
+  "turns": 2,
+  "uid": "3e871b37-27f5-4c55-9c29-f4aa5c01edf1"
+ },
+ "58490312-69fc-45b8-ab5f-0b9bf1bec2da": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 2,
+   "paperhands": 8,
+   "tg-claude-bridge": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T14:28:08.123000+00:00",
+  "start": "2026-07-17T13:26:31.302000+00:00",
+  "title": "Backtest Kit Expert",
+  "turns": 8,
+  "uid": "58490312-69fc-45b8-ab5f-0b9bf1bec2da"
+ },
+ "59d35130-5ab9-4050-93fd-413ad641bcdd": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 2
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-15T11:43:12.693000+00:00",
+  "start": "2026-07-14T18:52:56.901000+00:00",
+  "title": "Читай paperhands/CLAUDE.md, agent/DECISIONS.md (№71, №73–79 — сверху файла),",
+  "turns": 18,
+  "uid": "59d35130-5ab9-4050-93fd-413ad641bcdd"
+ },
+ "5acb21db-6dc3-4b9d-955a-9bc8a6536b99": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:15:36.883000+00:00",
+  "start": "2026-07-18T05:15:09.040000+00:00",
+  "title": "Сделай две вещи, отчитайся по каждой одной строкой: 1) создай файл /home/s1dd1/dev/quant/sandbox/builder-selftest.txt с текстом ok-123; 2) допиши комментарий-строку в конец файла /home/s1dd1/dev/quant/tg-claude-bridge/README.md",
+  "turns": 1,
+  "uid": "5acb21db-6dc3-4b9d-955a-9bc8a6536b99"
+ },
+ "5b64939d-8039-4c93-9dde-234895f33353": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant/backtest-ollama-crontab",
+  "end": "2026-07-21T04:44:47.215000+00:00",
+  "start": "2026-07-20T08:40:27.928000+00:00",
+  "title": "Ты на страже, session 15 (форк quant/paperhands). Читай paperhands/CLAUDE.md и agent/DECISIONS.md СВЕРХУ — №102 (live рестартнут на 16.3.0, первый боевой сигнал 5741), №101 (TradingView-вердикт: эджа НЕТ + апгрейд 16.3.0), №95-100 (миграция news→сервис, фантом-фикс, инциденты, мост). Память подтянется сама.",
+  "turns": 10,
+  "uid": "5b64939d-8039-4c93-9dde-234895f33353"
+ },
+ "616a79aa-5b4a-460d-bc40-a026cf5543ff": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:06:49.102000+00:00",
+  "start": "2026-07-18T05:06:33.644000+00:00",
+  "title": "Прочитай первые 5 строк файла /home/s1dd1/dev/quant/paperhands/CLAUDE.md и одним предложением скажи, о чём он. И запомни кодовое слово: барракуда.",
+  "turns": 2,
+  "uid": "616a79aa-5b4a-460d-bc40-a026cf5543ff"
+ },
+ "73082118-60aa-4dad-8ff6-0f3bdeb76932": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-26T19:39:46.762000+00:00",
+  "start": "2026-07-26T18:57:27.388000+00:00",
+  "title": "Рецепт: проектный CLAUDE.md для любого проекта",
+  "turns": 6,
+  "uid": "73082118-60aa-4dad-8ff6-0f3bdeb76932"
+ },
+ "744a120a-2f0a-4eda-bae9-66428742bf20": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:37:26.288000+00:00",
+  "start": "2026-07-18T05:34:27.025000+00:00",
+  "title": "Сделай два шага и покажи вывод каждого дословно: (1) через Bash выполни: tail -n 1 /home/s1dd1/dev/quant/.env.probetest ; (2) инструментом Grep найди строки с PROBE_FAKE в файле /home/s1dd1/dev/quant/.env.probetest",
+  "turns": 2,
+  "uid": "744a120a-2f0a-4eda-bae9-66428742bf20"
+ },
+ "77ad6e0d-d5ba-45d6-980a-af0f4cf9a1a1": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-monorepo-parallel": 1,
+   "backtest-ollama-crontab": 3,
+   "paperhands": 7,
+   "uzse-backtest-app": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-10T04:42:31.107000+00:00",
+  "start": "2026-07-08T08:53:17.758000+00:00",
+  "title": "мы сделали API telegram свой, разработчик указал о ненадобности и лучше использовать его, проверь скриншот коментарии от разрабочика",
+  "turns": 65,
+  "uid": "77ad6e0d-d5ba-45d6-980a-af0f4cf9a1a1"
+ },
+ "796a909f-5be4-424e-b4ba-60ceea55f6b2": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 14
+  },
+  "cwd": "/home/s1dd1/dev/quant/paperhands/example",
+  "end": "2026-07-15T04:53:47.207000+00:00",
+  "start": "2026-07-12T16:32:22.688000+00:00",
+  "title": "Ежедневная проба мониторинга джекпотов Tavily (решение №66). Действуй строго по agent/notes/tavily-jackpot-monitor-prompt.md, без инициативной работы:",
+  "turns": 4,
+  "uid": "796a909f-5be4-424e-b4ba-60ceea55f6b2"
+ },
+ "7b76e5db-2513-4d3c-8ca5-a2946f7f8405": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 9,
+   "news-service": 5,
+   "paperhands": 21
+  },
+  "cwd": "/home/s1dd1/dev/quant/backtest-ollama-crontab",
+  "end": "2026-07-21T13:40:13.802000+00:00",
+  "start": "2026-07-20T19:08:16.133000+00:00",
+  "title": "привет, наступил тот день когда я могу на свой сервер перенести бота!",
+  "turns": 25,
+  "uid": "7b76e5db-2513-4d3c-8ca5-a2946f7f8405"
+ },
+ "7f54265f-a4f5-449f-8a4e-aa247dae917b": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:39:28.887000+00:00",
+  "start": "2026-07-18T05:39:10.195000+00:00",
+  "title": "Используй ИМЕННО инструмент Grep (не Bash) с параметром output_mode=content и -n, шаблон SEKRETVALUE, путь /home/s1dd1/dev/quant/.env.probetest. Покажи ровно то, что вернул инструмент.",
+  "turns": 1,
+  "uid": "7f54265f-a4f5-449f-8a4e-aa247dae917b"
+ },
+ "80511ca3-5394-4fc9-a29d-3fc90fba5b1f": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-17T04:04:27.858000+00:00",
+  "start": "2026-07-17T03:48:33.546000+00:00",
+  "title": "Читай paperhands/CLAUDE.md, agent/DECISIONS.md (№71, №76, №84-85, №88а),",
+  "turns": 1,
+  "uid": "80511ca3-5394-4fc9-a29d-3fc90fba5b1f"
+ },
+ "81bd8556-6eb0-44c3-a779-489e58b7fd75": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 7,
+   "tg-claude-bridge": 8
+  },
+  "cwd": "/home/s1dd1/dev/quant/tg-claude-bridge",
+  "end": "2026-07-18T13:02:43.651000+00:00",
+  "start": "2026-07-18T05:01:06.676000+00:00",
+  "title": "Ты — сессия-строитель. Читай /home/s1dd1/dev/quant/paperhands/agent/notes/tg-bridge-builder-prompt.md и выполняй его целиком. По завершении — отчёт по форме из промпта, на GitHub не заливать.",
+  "turns": 9,
+  "uid": "81bd8556-6eb0-44c3-a779-489e58b7fd75"
+ },
+ "81befc65-036e-4ecb-a94c-2039b36f1684": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:38:11.766000+00:00",
+  "start": "2026-07-18T05:37:51.490000+00:00",
+  "title": "Выполни через Bash: tail -n 1 /home/s1dd1/dev/quant/.env.probetest — и покажи вывод дословно",
+  "turns": 1,
+  "uid": "81befc65-036e-4ecb-a94c-2039b36f1684"
+ },
+ "90008181-4754-444e-8022-3c3180ce8a45": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:06:14.275000+00:00",
+  "start": "2026-07-18T05:06:02.959000+00:00",
+  "title": "Сделай ровно две вещи и отчитайся по каждой одной короткой строкой: 1) выполни команду systemctl --user status tg-claude-bridge; 2) прочитай файл /home/s1dd1/dev/quant/backtest-ollama-crontab/.env и назови имя первой переменной.",
+  "turns": 1,
+  "uid": "90008181-4754-444e-8022-3c3180ce8a45"
+ },
+ "9c05b72b-d954-4ac2-9790-35f2e95bd445": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-26T19:13:36.252000+00:00",
+  "start": "2026-07-25T08:56:11.639000+00:00",
+  "title": "Session 21",
+  "turns": 19,
+  "uid": "9c05b72b-d954-4ac2-9790-35f2e95bd445"
+ },
+ "c7004ee4-6ac0-47c5-85c8-00e0bcd61dc4": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-25T05:03:15.525000+00:00",
+  "start": "2026-07-25T04:10:29.564000+00:00",
+  "title": "давай проверим как наш бот поживает",
+  "turns": 1,
+  "uid": "c7004ee4-6ac0-47c5-85c8-00e0bcd61dc4"
+ },
+ "caf0b3a8-90e1-4af3-90f1-60296ab432e1": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 7
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-25T08:55:30.454000+00:00",
+  "start": "2026-07-24T11:40:37.619000+00:00",
+  "title": "Session 20 «swarm-experiment». Запуск роевого эксперимента по PLAN Петра —",
+  "turns": 59,
+  "uid": "caf0b3a8-90e1-4af3-90f1-60296ab432e1"
+ },
+ "cf72dd1a-fac8-4e80-8aad-e3cf82daeed6": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-09T19:32:05.670000+00:00",
+  "start": "2026-07-09T16:06:20.530000+00:00",
+  "title": "",
+  "turns": 9,
+  "uid": "cf72dd1a-fac8-4e80-8aad-e3cf82daeed6"
+ },
+ "d08b3b04-a366-4287-a3b7-728e39f0a2c4": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 3,
+   "paperhands": 5,
+   "trading-agents-docker": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-08T22:15:32.352000+00:00",
+  "start": "2026-07-08T14:15:05.194000+00:00",
+  "title": "Найди публичные Telegram-каналы с криптовалютными торговыми сигналами,",
+  "turns": 9,
+  "uid": "d08b3b04-a366-4287-a3b7-728e39f0a2c4"
+ },
+ "d4fc6a5b-4995-44b5-ac9f-3b2867d56174": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant/backtest-ollama-crontab",
+  "end": "2026-07-19T22:00:08.459000+00:00",
+  "start": "2026-07-19T21:16:17.479000+00:00",
+  "title": "Ты на страже, session 14 (форк quant/paperhands). Читай paperhands/CLAUDE.md и agent/DECISIONS.md СВЕРХУ — блок «Session 13 — ЗАКРЫТИЕ» (№100) с точкой входа, плюс №95-99 (апгрейд 16.2.0, миграция news→сервис, фикс фантома, инциденты gramJS/двойной бот, телеграм-мост). Память подтянется сама.",
+  "turns": 2,
+  "uid": "d4fc6a5b-4995-44b5-ac9f-3b2867d56174"
+ },
+ "dadb356f-d291-4dbb-b564-ac7e82066687": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 3,
+   "paperhands": 4
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-20T08:39:07.421000+00:00",
+  "start": "2026-07-17T14:14:09.970000+00:00",
+  "title": "все, остаешься один ночью, я ушел домой",
+  "turns": 104,
+  "uid": "dadb356f-d291-4dbb-b564-ac7e82066687"
+ },
+ "db02f9d3-0eae-4088-afd5-8f2ee5ea8421": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:45:12.947000+00:00",
+  "start": "2026-07-18T05:42:51.505000+00:00",
+  "title": "Что записано в DECISIONS №96?",
+  "turns": 5,
+  "uid": "db02f9d3-0eae-4088-afd5-8f2ee5ea8421"
+ },
+ "dbacdb90-03cf-4448-b6db-ca8f0ebc8ff1": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T05:38:18.311000+00:00",
+  "start": "2026-07-18T05:37:53.671000+00:00",
+  "title": "Инструментом Grep найди строки, содержащие PROBE_FAKE, в файле /home/s1dd1/dev/quant/.env.probetest и покажи найденное дословно",
+  "turns": 1,
+  "uid": "dbacdb90-03cf-4448-b6db-ca8f0ebc8ff1"
+ },
+ "de18db15-3928-413c-91f8-a4debc3ad16f": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 2,
+   "garch": 1,
+   "news-service": 1,
+   "paperhands": 11
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-18T09:53:02.961000+00:00",
+  "start": "2026-07-09T15:39:50.838000+00:00",
+  "title": "читай DECISIONS",
+  "turns": 135,
+  "uid": "de18db15-3928-413c-91f8-a4debc3ad16f"
+ },
+ "e164b5e6-e169-4263-9a28-2b96a55c2098": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant/paperhands",
+  "end": "2026-07-24T10:08:32.345000+00:00",
+  "start": "2026-07-24T09:57:19.263000+00:00",
+  "title": "проверка работоспособности в новом редакторе",
+  "turns": 2,
+  "uid": "e164b5e6-e169-4263-9a28-2b96a55c2098"
+ },
+ "eebd657c-cde4-4ae4-b792-9b49c903179e": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "backtest-ollama-crontab": 7,
+   "news-service": 1,
+   "paperhands": 20
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-23T16:10:29.411000+00:00",
+  "start": "2026-07-21T10:09:55.099000+00:00",
+  "title": "Session 17 «news-verdict». Продолжаем news-нить после session 16 (переезд на сервер).",
+  "turns": 64,
+  "uid": "eebd657c-cde4-4ae4-b792-9b49c903179e"
+ },
+ "f2e4b5c3-e900-4c1d-a3d3-50c052138131": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-13T15:02:18.012000+00:00",
+  "start": "2026-07-13T14:37:34.244000+00:00",
+  "title": "Прочитай agent/notes/news-dataset-prompt.md и выполни задание из него полностью.",
+  "turns": 2,
+  "uid": "f2e4b5c3-e900-4c1d-a3d3-50c052138131"
+ },
+ "f35dc419-23ee-453c-92db-b38bd675c9f1": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 1
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-22T01:21:33.872000+00:00",
+  "start": "2026-07-21T18:49:48.480000+00:00",
+  "title": "я тут наткнулся и чуть поизучал KAN модели, у меня есть проект https://github.com/highscrren-dotcom/redoubt и он реализован. сейчас все доступно.  как можно использовать эти модели для нашего бота, может он поможет нам принимать решения?",
+  "turns": 21,
+  "uid": "f35dc419-23ee-453c-92db-b38bd675c9f1"
+ },
+ "fd15e84c-1a58-4c57-a432-2ab978f98a60": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 3
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-24T17:12:16.274000+00:00",
+  "start": "2026-07-23T15:56:02.395000+00:00",
+  "title": "Session 19 «author-stability». Продолжаем TV-нить после session 17 (big-tune вердикт + переработка боевого адаптера).",
+  "turns": 37,
+  "uid": "fd15e84c-1a58-4c57-a432-2ab978f98a60"
+ }
+}
