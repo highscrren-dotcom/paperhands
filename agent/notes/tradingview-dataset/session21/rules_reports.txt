@@ -1,0 +1,12 @@
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":15840,"profitLockPercent":2}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":3,"holdMinutes":15840,"profitLockPercent":2}
+{"point":{"hardStopPercent":5.5,"trailingTakePercent":1.5,"holdMinutes":15840,"profitLockPercent":2}
+{"point":{"hardStopPercent":10,"trailingTakePercent":1.5,"holdMinutes":15840,"profitLockPercent":2}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":15840,"profitLockPercent":1}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":15840,"profitLockPercent":3}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":11520,"profitLockPercent":2}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":20160,"profitLockPercent":2}
+{"point":{"hardStopPercent":7.5,"trailingTakePercent":1.5,"holdMinutes":8640,"profitLockPercent":2}
+{"point":{"hardStopPercent":4,"trailingTakePercent":1.5,"holdMinutes":4320,"profitLockPercent":2}
+{"point":{"hardStopPercent":4,"trailingTakePercent":1,"holdMinutes":2880,"profitLockPercent":1.5}
+{"point":{"hardStopPercent":2,"trailingTakePercent":0.5,"holdMinutes":1440,"profitLockPercent":1}
