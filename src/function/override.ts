@@ -6,6 +6,7 @@ import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
 import { IActionSchema } from "../interfaces/Action.interface";
 import { ISweepSchema } from "../interfaces/Sweep.interface";
+import { IMCPSchema } from "../interfaces/MCP.interface";
 import backtest from "../lib/index";
 
 const METHOD_NAME_OVERRIDE_STRATEGY = "function.override.overrideStrategySchema";
@@ -16,6 +17,7 @@ const METHOD_NAME_OVERRIDE_SIZING = "function.override.overrideSizingSchema";
 const METHOD_NAME_OVERRIDE_RISK = "function.override.overrideRiskSchema";
 const METHOD_NAME_OVERRIDE_ACTION = "function.override.overrideActionSchema";
 const METHOD_NAME_OVERRIDE_SIMULATOR = "function.override.overrideSweepSchema";
+const METHOD_NAME_OVERRIDE_MCP = "function.override.overrideMCPSchema";
 
 /**
  * Partial strategy schema for override operations.
@@ -216,6 +218,30 @@ type TActionSchema = {
 type TSweepSchema = {
   sweepName: ISweepSchema["sweepName"];
 } & Partial<ISweepSchema>;
+
+/**
+ * Partial MCP schema for override operations.
+ *
+ * Requires only the MCP name identifier, all other fields are optional.
+ * Used by overrideMCPSchema() to perform partial updates without replacing entire configuration.
+ *
+ * @property mcpName - Required: Unique MCP identifier (must exist in registry)
+ * @property strategyName - Optional: New strategy whose live instances the MCP observes and trades
+ * @property positionCost - Optional: Updated entry cost in USD for opened positions
+ * @property getMessages - Optional: New portfolio renderer for the agent
+ * @property callbacks - Optional: Updated lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * const partialUpdate: TMCPSchema = {
+ *   mcpName: "my-mcp",
+ *   positionCost: 250 // Only raise the entry cost, keep the renderer
+ * };
+ * ```
+ */
+type TMCPSchema = {
+  mcpName: IMCPSchema["mcpName"];
+} & Partial<IMCPSchema>;
 
 /**
  * Overrides an existing trading strategy in the framework.
@@ -559,5 +585,42 @@ export async function overrideSweepSchema(sweepSchema: TSweepSchema) {
   return backtest.sweepSchemaService.override(
     sweepSchema.sweepName,
     sweepSchema
+  );
+}
+
+/**
+ * Overrides an existing MCP configuration in the framework.
+ *
+ * This function partially updates a previously registered MCP with new configuration.
+ * Only the provided fields will be updated, other fields remain unchanged.
+ *
+ * @param mcpSchema - Partial MCP configuration object
+ * @param mcpSchema.mcpName - Unique MCP identifier (must exist)
+ * @param mcpSchema.strategyName - Optional: Strategy whose live instances the MCP observes and trades
+ * @param mcpSchema.positionCost - Optional: Entry cost in USD for opened positions
+ * @param mcpSchema.getMessages - Optional: Portfolio renderer for the agent
+ * @param mcpSchema.callbacks - Optional: Lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * overrideMCPSchema({
+ *   mcpName: "my-mcp",
+ *   positionCost: 250, // Only raise the entry cost
+ * });
+ * ```
+ */
+export async function overrideMCPSchema(mcpSchema: TMCPSchema) {
+  backtest.loggerService.log(METHOD_NAME_OVERRIDE_MCP, {
+    mcpSchema,
+  });
+
+  await backtest.mcpValidationService.validate(
+    mcpSchema.mcpName,
+    METHOD_NAME_OVERRIDE_MCP
+  );
+
+  return backtest.mcpSchemaService.override(
+    mcpSchema.mcpName,
+    mcpSchema
   );
 }

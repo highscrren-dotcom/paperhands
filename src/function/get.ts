@@ -6,6 +6,7 @@ import { SizingName } from "../interfaces/Sizing.interface";
 import { RiskName } from "../interfaces/Risk.interface";
 import { ActionName } from "../interfaces/Action.interface";
 import { SweepName } from "../interfaces/Sweep.interface";
+import { MCPName } from "../interfaces/MCP.interface";
 import backtest from "../lib";
 
 const GET_STRATEGY_METHOD_NAME = "get.getStrategySchema";
@@ -16,6 +17,7 @@ const GET_SIZING_METHOD_NAME = "get.getSizingSchema";
 const GET_RISK_METHOD_NAME = "get.getRiskSchema";
 const GET_ACTION_METHOD_NAME = "get.getActionSchema";
 const GET_SIMULATOR_METHOD_NAME = "get.getSweepSchema";
+const GET_MCP_METHOD_NAME = "get.getMCPSchema";
 
 /**
  * Retrieves a registered strategy schema by name.
@@ -235,4 +237,31 @@ export function getSweepSchema(sweepName: SweepName) {
   );
 
   return backtest.sweepSchemaService.get(sweepName);
+}
+
+/**
+ * Retrieves a registered MCP schema by name.
+ *
+ * @param mcpName - Unique MCP identifier
+ * @returns The MCP schema configuration object
+ * @throws Error if MCP is not registered
+ *
+ * @example
+ * ```typescript
+ * const mcp = getMCPSchema("my-mcp");
+ * console.log(mcp.strategyName); // "my-strategy"
+ * console.log(mcp.positionCost); // entry cost override or undefined
+ * ```
+ */
+export function getMCPSchema(mcpName: MCPName) {
+  backtest.loggerService.log(GET_MCP_METHOD_NAME, {
+    mcpName,
+  });
+
+  backtest.mcpValidationService.validate(
+    mcpName,
+    GET_MCP_METHOD_NAME
+  );
+
+  return backtest.mcpSchemaService.get(mcpName);
 }

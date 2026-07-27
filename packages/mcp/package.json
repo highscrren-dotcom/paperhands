@@ -1,0 +1,109 @@
+{
+  "name": "@backtest-kit/mcp",
+  "type": "module",
+  "version": "17.0.0",
+  "description": "Model Context Protocol server for backtest-kit: lets an LLM agent observe the live trading portfolio and open or close positions through guarded tools",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "live-trading",
+    "paper-trading",
+    "ai",
+    "mcp-server",
+    "llm",
+    "ai-agent",
+    "agent",
+    "backtest-kit",
+    "backtesting",
+    "trading",
+    "trading-signals",
+    "finance",
+    "claude",
+    "stdio"
+  ],
+  "author": {
+    "name": "Petr Tripolsky",
+    "email": "tripolskypetr@gmail.com",
+    "url": "https://github.com/tripolskypetr"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "http://paypal.me/tripolskypetr"
+  },
+  "license": "MIT",
+  "homepage": "https://backtest-kit.github.io/documents/article_07_ai_news_trading_signals.html",
+  "files": [
+    "build",
+    "types.d.ts",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tripolskypetr/backtest-kit",
+    "documentation": "https://github.com/tripolskypetr/backtest-kit/tree/master/docs"
+  },
+  "bugs": {
+    "url": "https://github.com/tripolskypetr/backtest-kit/issues"
+  },
+  "scripts": {
+    "start": "npm run build && cross-env NODE_ENV=development CC_ENABLE_MOCK=1 npm run serve",
+    "serve": "node ./scripts/mock.mjs",
+    "build:modules": "npm run build:modules:win",
+    "build:modules:win": "dotenv -e .env -- .\\scripts\\win\\build.bat && npm run build:copy && npm run build:postbuild",
+    "build:modules:x": "dotenv -e .env -- sh ./scripts/linux/build.sh && npm run build:copy && npm run build:postbuild",
+    "build:copy": "node ./scripts/copy.mjs",
+    "build:postbuild": "node ./scripts/postbuild.mjs",
+    "build": "rollup -c"
+  },
+  "main": "build/index.mjs",
+  "bin": {
+    "backtest-kit-mcp": "./build/index.mjs"
+  },
+  "module": "build/index.mjs",
+  "source": "src/index.ts",
+  "types": "./types.d.ts",
+  "exports": {
+    "require": "./build/index.cjs",
+    "types": "./types.d.ts",
+    "import": "./build/index.mjs",
+    "default": "./build/index.cjs"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "11.1.6",
+    "@rollup/plugin-terser": "0.4.4",
+    "@types/finalhandler": "1.2.3",
+    "cross-env": "7.0.3",
+    "@types/node": "22.9.0",
+    "glob": "11.0.1",
+    "rimraf": "6.0.1",
+    "rollup": "3.29.5",
+    "rollup-plugin-dts": "6.1.1",
+    "rollup-plugin-peer-deps-external": "2.2.4",
+    "ts-morph": "27.0.2",
+    "tslib": "2.7.0",
+    "typedoc": "0.27.9",
+    "touch": "3.1.1",
+    "@modelcontextprotocol/sdk": "1.8.0",
+    "worker-testbed": "4.0.0",
+    "backtest-kit": "17.0.0",
+    "zod": "3.25.76"
+  },
+  "peerDependencies": {
+    "backtest-kit": "^17.0.0",
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.25.76",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "di-kit": "^1.1.1",
+    "di-scoped": "^1.0.21",
+    "functools-kit": "^5.0.0",
+    "get-moment-stamp": "^3.0.0",
+    "finalhandler": "^1.3.1",
+    "router": "^1.3.8",
+    "micro": "^10.0.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

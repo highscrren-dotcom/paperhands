@@ -6511,6 +6511,137 @@ interface ISweep {
 type SweepName = string;
 
 /**
+ * Base64-encoded binary payload of an MCP image message.
+ */
+type MCPBase64 = string;
+/**
+ * Image message for the MCP agent (e.g. a rendered chart).
+ * Payload is base64-encoded binary data with its mime type.
+ */
+interface IMCPImageMessage {
+    /** Discriminator for type-safe union */
+    type: "image";
+    /** Mime type of the encoded payload (e.g., "image/png") */
+    mimeType: string;
+    /** Base64-encoded binary data of the image */
+    data: MCPBase64;
+}
+/**
+ * Plain text message for the MCP agent.
+ */
+interface IMCPTextMessage {
+    /** Discriminator for type-safe union */
+    type: "text";
+    /** Human-readable message text */
+    text: string;
+}
+/**
+ * Message emitted to the MCP agent by getMessages.
+ * Discriminated union of text and image messages.
+ */
+type IMCPMessage = IMCPTextMessage | IMCPImageMessage;
+/**
+ * Portfolio snapshot passed to getMessages, keyed by traded symbol.
+ * One entry per live instance of the schema's strategy.
+ */
+interface IMCPContext {
+    [symbol: string]: {
+        /** Signal DTO queued to open a position on the next tick, or null if none queued */
+        createdSignal: ISignalDto | null;
+        /** Active position with unrealized PnL computed at currentPrice, or null if none open */
+        pendingSignal: IPublicSignalRow | null;
+        /** Deferred user-initiated close waiting to be drained, or null if none queued */
+        closedSignal: ISignalCloseRow | null;
+        /** Current VWAP price of the symbol */
+        currentPrice: number;
+    };
+}
+/**
+ * Command payload for MCP.commitPositionOpen.
+ * Opens a moonbag position (fixed 50% TP, grid-snapped hard SL) for a symbol
+ * enabled in live trading for the schema's strategy.
+ */
+interface IMCPPositionOpenCommand {
+    /** Trading pair symbol (e.g., "BTCUSDT") */
+    symbol: string;
+    /** Trade direction: "long" (buy) or "short" (sell) */
+    position: "long" | "short";
+    /** Name of the registered MCP schema issuing the command */
+    mcpName: MCPName;
+    /** Human-readable reason attached to the created signal */
+    note: string;
+}
+/**
+ * Command payload for MCP.commitPositionClose.
+ * Closes the pending position of a symbol enabled in live trading
+ * for the schema's strategy.
+ */
+interface IMCPPositionCloseCommand {
+    /** Trading pair symbol (e.g., "BTCUSDT") */
+    symbol: string;
+    /** Name of the registered MCP schema issuing the command */
+    mcpName: MCPName;
+    /** Human-readable reason attached to the close commit */
+    note: string;
+}
+/**
+ * Lifecycle callbacks of an MCP instance (all optional).
+ *
+ * Fire AFTER the corresponding engine effect succeeds, with the raw data
+ * the effect was built from — a test registers them to observe what the
+ * MCP actually did (rendered snapshot, submitted signal, consumed pending
+ * id) without mocking the live machinery. An omitted callback is simply
+ * never fired; a callback that throws is logged and does not fail the
+ * operation.
+ */
+interface IMCPCallbacks {
+    /**
+     * Fired after getStatus renders the portfolio: the snapshot the
+     * renderer received and the messages it produced.
+     */
+    onStatus(mcpName: MCPName, context: IMCPContext, messages: IMCPMessage[]): void;
+    /**
+     * Fired after a position open commit is accepted: the exact signal DTO
+     * submitted to the live strategy (moonbag TP/SL levels, cost, note).
+     */
+    onPositionOpen(symbol: string, signal: ISignalDto, dto: IMCPPositionOpenCommand): void;
+    /**
+     * Fired after a close commit is accepted: the id of the pending signal
+     * the close was queued for.
+     */
+    onPositionClose(symbol: string, signalId: string, dto: IMCPPositionCloseCommand): void;
+}
+/**
+ * Registration schema of an MCP instance.
+ *
+ * Binds an MCP name to a strategy: status and position commands operate on
+ * every live instance of that strategy.
+ * - mcpName — registry key; duplicate registration is a validation error.
+ * - strategyName — the strategy whose live instances the MCP observes and trades.
+ * - positionCost — entry cost in USD for commitPositionOpen; defaults to
+ *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
+ * - getMessages — renders the portfolio snapshot into agent messages; when
+ *   omitted the default renderer emits one text message per symbol.
+ * - callbacks — all optional; an omitted callback is simply never fired.
+ */
+interface IMCPSchema {
+    /** Unique MCP identifier for the schema registry */
+    mcpName: MCPName;
+    /** Strategy whose live instances this MCP observes and trades */
+    strategyName: StrategyName;
+    /** Entry cost in USD for opened positions. Default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST */
+    positionCost?: number;
+    /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
+    getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
+    /** Lifecycle callbacks (all optional) */
+    callbacks?: Partial<IMCPCallbacks>;
+}
+/**
+ * Unique MCP identifier.
+ */
+type MCPName = string;
+
+/**
  * Retrieves a registered strategy schema by name.
  *
  * @param strategyName - Unique strategy identifier
@@ -6634,6 +6765,21 @@ declare function getActionSchema(actionName: ActionName): IActionSchema;
  * ```
  */
 declare function getSweepSchema(sweepName: SweepName): ISweepSchema;
+/**
+ * Retrieves a registered MCP schema by name.
+ *
+ * @param mcpName - Unique MCP identifier
+ * @returns The MCP schema configuration object
+ * @throws Error if MCP is not registered
+ *
+ * @example
+ * ```typescript
+ * const mcp = getMCPSchema("my-mcp");
+ * console.log(mcp.strategyName); // "my-strategy"
+ * console.log(mcp.positionCost); // entry cost override or undefined
+ * ```
+ */
+declare function getMCPSchema(mcpName: MCPName): IMCPSchema;
 
 /**
  * Blocks until the schema registries needed to start trading are populated.
@@ -9196,6 +9342,35 @@ declare function addActionSchema(actionSchema: IActionSchema): void;
  * ```
  */
 declare function addSweepSchema(sweepSchema: ISweepSchema): void;
+/**
+ * Registers an MCP instance in the framework — the bridge exposing
+ * live trading of a strategy to an MCP agent (see MCP.getStatus).
+ *
+ * The MCP binds to a strategy: status snapshots and position commands
+ * operate on every live instance of that strategy. getMessages renders
+ * the portfolio for the agent; when omitted the default renderer emits
+ * one text message per traded symbol.
+ *
+ * @param mcpSchema - MCP configuration object
+ * @param mcpSchema.mcpName - Unique MCP identifier
+ * @param mcpSchema.strategyName - Strategy whose live instances the MCP observes and trades
+ * @param mcpSchema.positionCost - Optional entry cost in USD (default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST)
+ * @param mcpSchema.getMessages - Optional portfolio renderer for the agent
+ * @param mcpSchema.callbacks - Optional lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * addMCPSchema({
+ *   mcpName: "my-mcp",
+ *   strategyName: "my-strategy",
+ *   positionCost: 100,
+ *   getMessages: (context, when) => [
+ *     { type: "text", text: `Symbols: ${Object.keys(context).join(", ")}` },
+ *   ],
+ * });
+ * ```
+ */
+declare function addMCPSchema(mcpSchema: IMCPSchema): void;
 
 /**
  * Partial strategy schema for override operations.
@@ -9389,6 +9564,29 @@ type TActionSchema = {
 type TSweepSchema = {
     sweepName: ISweepSchema["sweepName"];
 } & Partial<ISweepSchema>;
+/**
+ * Partial MCP schema for override operations.
+ *
+ * Requires only the MCP name identifier, all other fields are optional.
+ * Used by overrideMCPSchema() to perform partial updates without replacing entire configuration.
+ *
+ * @property mcpName - Required: Unique MCP identifier (must exist in registry)
+ * @property strategyName - Optional: New strategy whose live instances the MCP observes and trades
+ * @property positionCost - Optional: Updated entry cost in USD for opened positions
+ * @property getMessages - Optional: New portfolio renderer for the agent
+ * @property callbacks - Optional: Updated lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * const partialUpdate: TMCPSchema = {
+ *   mcpName: "my-mcp",
+ *   positionCost: 250 // Only raise the entry cost, keep the renderer
+ * };
+ * ```
+ */
+type TMCPSchema = {
+    mcpName: IMCPSchema["mcpName"];
+} & Partial<IMCPSchema>;
 /**
  * Overrides an existing trading strategy in the framework.
  *
@@ -9614,6 +9812,28 @@ declare function overrideActionSchema(actionSchema: TActionSchema): Promise<IAct
  * ```
  */
 declare function overrideSweepSchema(sweepSchema: TSweepSchema): Promise<ISweepSchema>;
+/**
+ * Overrides an existing MCP configuration in the framework.
+ *
+ * This function partially updates a previously registered MCP with new configuration.
+ * Only the provided fields will be updated, other fields remain unchanged.
+ *
+ * @param mcpSchema - Partial MCP configuration object
+ * @param mcpSchema.mcpName - Unique MCP identifier (must exist)
+ * @param mcpSchema.strategyName - Optional: Strategy whose live instances the MCP observes and trades
+ * @param mcpSchema.positionCost - Optional: Entry cost in USD for opened positions
+ * @param mcpSchema.getMessages - Optional: Portfolio renderer for the agent
+ * @param mcpSchema.callbacks - Optional: Lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * overrideMCPSchema({
+ *   mcpName: "my-mcp",
+ *   positionCost: 250, // Only raise the entry cost
+ * });
+ * ```
+ */
+declare function overrideMCPSchema(mcpSchema: TMCPSchema): Promise<IMCPSchema>;
 
 /**
  * Returns a list of all registered exchange schemas.
@@ -9818,6 +10038,29 @@ declare function listRiskSchema(): Promise<IRiskSchema[]>;
  * ```
  */
 declare function listSweepSchema(): Promise<ISweepSchema[]>;
+/**
+ * Returns a list of all registered MCP schemas.
+ *
+ * Retrieves all MCP instances that have been registered via addMCPSchema().
+ * Useful for debugging, documentation, or building dynamic UIs.
+ *
+ * @returns Array of MCP schemas with their configurations
+ *
+ * @example
+ * ```typescript
+ * import { listMCPSchema, addMCPSchema } from "backtest-kit";
+ *
+ * addMCPSchema({
+ *   mcpName: "my-mcp",
+ *   strategyName: "my-strategy",
+ * });
+ *
+ * const mcps = await listMCPSchema();
+ * console.log(mcps);
+ * // [{ mcpName: "my-mcp", strategyName: "my-strategy", ... }]
+ * ```
+ */
+declare function listMCPSchema(): Promise<IMCPSchema[]>;
 
 /**
  * Contract for background execution completion events.
@@ -32176,6 +32419,136 @@ declare class ActionBase implements IPublicAction {
 }
 
 /**
+ * Utility class exposing live trading to an MCP agent.
+ *
+ * Provides static-like methods (via singleton instance) to observe every
+ * live instance of the schema's strategy and to open/close positions on
+ * the agent's command.
+ *
+ * Features:
+ * - Portfolio status rendered as human-readable agent messages
+ * - Manual position open (moonbag levels, grid-snapped hard stop)
+ * - Manual close of the pending position
+ *
+ * Every method validates the full MCP -> strategy -> risk/action chain
+ * before touching the live state.
+ *
+ * @example
+ * ```typescript
+ * import { MCP } from "backtest-kit";
+ *
+ * // Render the portfolio for the agent
+ * const messages = await MCP.getStatus("my-mcp");
+ *
+ * // Open a long position on the agent's command
+ * await MCP.commitPositionOpen({ mcpName: "my-mcp", symbol: "BTCUSDT", position: "long", note: "agent decision" });
+ *
+ * // Close it later
+ * await MCP.commitPositionClose({ mcpName: "my-mcp", symbol: "BTCUSDT", note: "take profit manually" });
+ * ```
+ */
+declare class MCPUtils {
+    /**
+     * Renders a portfolio snapshot with the DEFAULT text renderer, regardless
+     * of the schema's getMessages.
+     *
+     * Emits one header message with the snapshot time plus one text message per
+     * traded symbol: capital balance, the queued entry order, the active
+     * position with its unrealized PnL and the queued close order.
+     *
+     * The signature matches IMCPSchema.getMessages, so a custom renderer can
+     * delegate here and extend the default output instead of rebuilding it.
+     *
+     * @param context - Portfolio snapshot keyed by traded symbol
+     * @param when - Snapshot time stamped into the header message
+     * @param mcpName - Name of the registered MCP schema (validated before rendering)
+     * @returns Messages for the MCP agent
+     *
+     * @example
+     * ```typescript
+     * addMCPSchema({
+     *   mcpName: "my-mcp",
+     *   strategyName: "my-strategy",
+     *   getMessages: (context, when, mcpName) => [
+     *     ...MCP.getDefaultMessages(context, when, mcpName),
+     *     { type: "text", text: "Custom trailer for the agent" },
+     *   ],
+     * });
+     * ```
+     */
+    getDefaultMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[];
+    /**
+     * Renders the current portfolio of the MCP's strategy into agent messages.
+     *
+     * Builds a per-symbol snapshot (current price, queued entry, active
+     * position with PnL, queued close) over every live instance of the bound
+     * strategy and passes it to the schema's getMessages (or the default
+     * text renderer). Fires the schema's onStatus callback with the snapshot
+     * and the rendered messages.
+     *
+     * @param mcpName - Name of the registered MCP schema
+     * @returns Promise resolving to messages for the MCP agent
+     *
+     * @example
+     * ```typescript
+     * const messages = await MCP.getStatus("my-mcp");
+     * for (const message of messages) {
+     *   if (message.type === "text") console.log(message.text);
+     * }
+     * ```
+     */
+    getStatus: (mcpName: string) => Promise<IMCPMessage[]>;
+    /**
+     * Opens a position for a symbol on the agent's command.
+     *
+     * The symbol must be enabled in live trading for the schema's strategy and
+     * must have no pending signal. Levels are moonbag: fixed 50% take profit,
+     * hard stop-loss snapped one notch below CC_MAX_STOPLOSS_DISTANCE_PERCENT;
+     * entry cost comes from the schema's positionCost.
+     *
+     * @param dto - Open command with symbol, direction, mcpName and note
+     * @returns Promise resolving when the create-signal commit is accepted
+     * @throws Error when the symbol is not live-enabled or a pending signal exists
+     *
+     * @example
+     * ```typescript
+     * await MCP.commitPositionOpen({ mcpName: "my-mcp", symbol: "BTCUSDT", position: "long", note: "breakout entry" });
+     * ```
+     */
+    commitPositionOpen: (dto: IMCPPositionOpenCommand) => Promise<void>;
+    /**
+     * Closes the pending position of a symbol on the agent's command.
+     *
+     * The symbol must be enabled in live trading for the schema's strategy and
+     * must have a pending signal; its id is consumed by the close commit.
+     *
+     * @param dto - Close command with symbol, mcpName and note
+     * @returns Promise resolving when the close-pending commit is accepted
+     * @throws Error when the symbol is not live-enabled or no pending signal exists
+     *
+     * @example
+     * ```typescript
+     * await MCP.commitPositionClose({ mcpName: "my-mcp", symbol: "BTCUSDT", note: "manual exit" });
+     * ```
+     */
+    commitPositionClose: (dto: IMCPPositionCloseCommand) => Promise<void>;
+}
+/**
+ * Global singleton instance of MCPUtils.
+ * Provides static-like access to MCP agent trading methods.
+ *
+ * @example
+ * ```typescript
+ * import { MCP } from "backtest-kit";
+ *
+ * const messages = await MCP.getStatus("my-mcp");
+ * await MCP.commitPositionOpen({ mcpName: "my-mcp", symbol: "BTCUSDT", position: "long", note: "agent decision" });
+ * await MCP.commitPositionClose({ mcpName: "my-mcp", symbol: "BTCUSDT", note: "agent decision" });
+ * ```
+ */
+declare const MCP: MCPUtils;
+
+/**
  * Payload for the signal-open broker event.
  *
  * Emitted automatically via syncSubject and forwarded to the registered IBroker adapter via
@@ -42982,6 +43355,106 @@ declare class SweepCoreService implements TSweep {
     }) => Promise<ISweepResult>;
 }
 
+/**
+ * Registry of MCP schemas.
+ *
+ * Stores IMCPSchema records by MCP name with shallow validation on
+ * registration. MCPUtils reads schemas from here when resolving the
+ * target strategy and rendering agent messages.
+ */
+declare class MCPSchemaService {
+    readonly loggerService: {
+        readonly methodContextService: {
+            readonly context: IMethodContext;
+        };
+        readonly executionContextService: {
+            readonly context: IExecutionContext;
+        };
+        _commonLogger: ILogger;
+        readonly _methodContext: {};
+        readonly _executionContext: {};
+        log: (topic: string, ...args: any[]) => Promise<void>;
+        debug: (topic: string, ...args: any[]) => Promise<void>;
+        info: (topic: string, ...args: any[]) => Promise<void>;
+        warn: (topic: string, ...args: any[]) => Promise<void>;
+        setLogger: (logger: ILogger) => void;
+    };
+    private _registry;
+    /**
+     * Registers an MCP schema under its name after shallow
+     * validation. Registering the same key twice replaces the record.
+     *
+     * @param key - MCP name to register under
+     * @param value - Schema to store
+     */
+    register(key: MCPName, value: IMCPSchema): void;
+    /**
+     * Shallow structural validation of a schema: required string
+     * fields only, no deep checks — getMessages and callbacks are
+     * validated by their consumers.
+     *
+     * @param mcpSchema - Schema to check
+     * @throws Error when mcpName or strategyName is missing
+     */
+    private validateShallow;
+    /**
+     * Partially overrides a registered schema and returns the merged
+     * record. Used by overrideMCPSchema-style public APIs.
+     *
+     * @param key - MCP name to override
+     * @param value - Partial schema patch
+     * @returns The merged schema after override
+     */
+    override(key: MCPName, value: Partial<IMCPSchema>): IMCPSchema;
+    /**
+     * Returns the registered schema by MCP name.
+     *
+     * @param key - MCP name to look up
+     * @returns The stored schema
+     * @throws Error when no schema is registered under the name
+     */
+    get(key: MCPName): IMCPSchema;
+}
+
+/**
+ * Existence and dependency validation of MCP instances.
+ *
+ * Tracks every registered MCP and verifies at use time that a
+ * referenced MCP exists and its strategy dependency is valid.
+ * Registration here is uniqueness-guarded, unlike the schema
+ * registry where re-registering replaces the record.
+ */
+declare class MCPValidationService {
+    private readonly loggerService;
+    private readonly strategyValidationService;
+    private _mcpMap;
+    /**
+     * Tracks an MCP for validation. Called on schema
+     * registration; duplicate names are rejected.
+     *
+     * @param mcpName - MCP name to track
+     * @param mcpSchema - Schema stored for dependency checks
+     * @throws Error when the name is already tracked
+     */
+    addMCP: (mcpName: MCPName, mcpSchema: IMCPSchema) => void;
+    /**
+     * Validates that an MCP is registered and its strategy
+     * dependency passes validation. Memoized by MCP name — the
+     * check runs once per name, later calls are no-ops.
+     *
+     * @param mcpName - MCP name to validate
+     * @param source - Caller tag included in error messages
+     * @throws Error when the MCP or its strategy is unknown
+     */
+    validate: (mcpName: MCPName, source: string) => void;
+    /**
+     * Lists every tracked MCP schema.
+     *
+     * @returns All schemas registered for validation
+     */
+    list: () => Promise<IMCPSchema[]>;
+}
+
 declare const backtest: {
     notificationHelperService: NotificationHelperService;
     exchangeValidationService: ExchangeValidationService;
@@ -42994,6 +43467,7 @@ declare const backtest: {
     configValidationService: ConfigValidationService;
     columnValidationService: ColumnValidationService;
     sweepValidationService: SweepValidationService;
+    mcpValidationService: MCPValidationService;
     backtestReportService: BacktestReportService;
     liveReportService: LiveReportService;
     scheduleReportService: ScheduleReportService;
@@ -43108,6 +43582,7 @@ declare const backtest: {
     riskSchemaService: RiskSchemaService;
     actionSchemaService: ActionSchemaService;
     sweepSchemaService: SweepSchemaService;
+    mcpSchemaService: MCPSchemaService;
     exchangeConnectionService: ExchangeConnectionService;
     strategyConnectionService: StrategyConnectionService;
     frameConnectionService: FrameConnectionService;
@@ -43577,4 +44052,4 @@ declare class OrderTransientError extends Error {
     static fromError(error: object): OrderTransientError;
 }
 
-export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ISweepBest, type ISweepGridAxes, type ISweepGridPoint, type ISweepIdea, type ISweepMetricReport, type ISweepPointReport, type ISweepResult, type ISweepSchema, type ISweepTrack, type ISweepTrade, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sweep, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addRiskSchema, addSizingSchema, addStrategySchema, addSweepSchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSweepSchema, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listSweepSchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideSweepSchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
+export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMCPContext, type IMCPImageMessage, type IMCPMessage, type IMCPPositionCloseCommand, type IMCPPositionOpenCommand, type IMCPSchema, type IMCPTextMessage, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ISweepBest, type ISweepGridAxes, type ISweepGridPoint, type ISweepIdea, type ISweepMetricReport, type ISweepPointReport, type ISweepResult, type ISweepSchema, type ISweepTrack, type ISweepTrade, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, MCP, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sweep, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addMCPSchema, addRiskSchema, addSizingSchema, addStrategySchema, addSweepSchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMCPSchema, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSweepSchema, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMCPSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listSweepSchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideMCPSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideSweepSchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
