@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Зеркальная механика SHORT-сделок (LONG покрыт mechanics.test.mjs):
@@ -65,8 +65,8 @@ test("SIM: short hard stop fires on the upper wick and fills at the stop level",
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_smech_stop",
+  addSweepSchema({
+    sweepName: "sim_smech_stop",
     exchangeName: "sim-smech-stop",
     gridAxes: {
       hardStopPercent: [5],
@@ -79,7 +79,7 @@ test("SIM: short hard stop fires on the upper wick and fills at the stop level",
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_smech_stop", ideas: shortIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_smech_stop", ideas: shortIdea() });
 
   const [{ trades }] = captured;
   const [trade] = trades;
@@ -118,8 +118,8 @@ test("SIM: short trailing take arms from the running LOW and fills on the bounce
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_smech_trail",
+  addSweepSchema({
+    sweepName: "sim_smech_trail",
     exchangeName: "sim-smech-trail",
     gridAxes: {
       hardStopPercent: [50],
@@ -132,7 +132,7 @@ test("SIM: short trailing take arms from the running LOW and fills on the bounce
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_smech_trail", ideas: shortIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_smech_trail", ideas: shortIdea() });
 
   const [{ trades }] = captured;
   const [trade] = trades;
@@ -166,8 +166,8 @@ test("SIM: short bounce reaching both trailing and stop resolves to hard_stop", 
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_smech_pess",
+  addSweepSchema({
+    sweepName: "sim_smech_pess",
     exchangeName: "sim-smech-pess",
     gridAxes: {
       hardStopPercent: [50],
@@ -180,7 +180,7 @@ test("SIM: short bounce reaching both trailing and stop resolves to hard_stop", 
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_smech_pess", ideas: shortIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_smech_pess", ideas: shortIdea() });
 
   const [{ trades }] = captured;
   const [trade] = trades;

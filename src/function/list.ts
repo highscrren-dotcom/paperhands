@@ -5,7 +5,7 @@ import { IFrameSchema } from "../interfaces/Frame.interface";
 import { IWalkerSchema } from "../interfaces/Walker.interface";
 import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
-import { ISimulatorSchema } from "../interfaces/Simulator.interface";
+import { ISweepSchema } from "../interfaces/Sweep.interface";
 
 const LIST_EXCHANGES_METHOD_NAME = "list.listExchangeSchema";
 const LIST_STRATEGIES_METHOD_NAME = "list.listStrategySchema";
@@ -13,7 +13,7 @@ const LIST_FRAMES_METHOD_NAME = "list.listFrameSchema";
 const LIST_WALKERS_METHOD_NAME = "list.listWalkerSchema";
 const LIST_SIZINGS_METHOD_NAME = "list.listSizingSchema";
 const LIST_RISKS_METHOD_NAME = "list.listRiskSchema";
-const LIST_SIMULATORS_METHOD_NAME = "list.listSimulatorSchema";
+const LIST_SIMULATORS_METHOD_NAME = "list.listSweepSchema";
 
 /**
  * Returns a list of all registered exchange schemas.
@@ -219,29 +219,29 @@ export async function listRiskSchema(): Promise<IRiskSchema[]> {
 }
 
 /**
- * Returns a list of all registered simulator schemas.
+ * Returns a list of all registered sweep schemas.
  *
- * Retrieves all simulators that have been registered via addSimulatorSchema().
+ * Retrieves all sweeps that have been registered via addSweepSchema().
  * Useful for debugging, documentation, or building dynamic UIs.
  *
- * @returns Array of simulator schemas with their configurations
+ * @returns Array of sweep schemas with their configurations
  *
  * @example
  * ```typescript
- * import { listSimulatorSchema, addSimulatorSchema } from "backtest-kit";
+ * import { listSweepSchema, addSweepSchema } from "backtest-kit";
  *
- * addSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * addSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   exchangeName: "ccxt-exchange",
  *   callbacks: {},
  * });
  *
- * const simulators = await listSimulatorSchema();
- * console.log(simulators);
- * // [{ simulatorName: "tv-ideas-simulator", exchangeName: "ccxt-exchange", ... }]
+ * const sweeps = await listSweepSchema();
+ * console.log(sweeps);
+ * // [{ sweepName: "tv-ideas-sweep", exchangeName: "ccxt-exchange", ... }]
  * ```
  */
-export async function listSimulatorSchema(): Promise<ISimulatorSchema[]> {
+export async function listSweepSchema(): Promise<ISweepSchema[]> {
   backtest.loggerService.log(LIST_SIMULATORS_METHOD_NAME);
-  return await backtest.simulatorValidationService.list();
+  return await backtest.sweepValidationService.list();
 }

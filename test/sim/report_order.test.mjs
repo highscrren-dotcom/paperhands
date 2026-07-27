@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Порядок result.reports — контракт потребителя run() (reportOrder):
@@ -54,19 +54,19 @@ const isSortedDesc = (values) =>
 test("SIM: reportOrder orders result.reports by the declared criterion, default stays sharpe", async ({ pass, fail }) => {
   registerExchange("sim-order-exchange");
 
-  addSimulatorSchema({
-    simulatorName: "sim_order_pnl",
+  addSweepSchema({
+    sweepName: "sim_order_pnl",
     exchangeName: "sim-order-exchange",
     gridAxes: AXES,
     reportOrder: "pnl",
   });
-  addSimulatorSchema({
-    simulatorName: "sim_order_default",
+  addSweepSchema({
+    sweepName: "sim_order_default",
     exchangeName: "sim-order-exchange",
     gridAxes: AXES,
   });
 
-  const byPnl = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_order_pnl", ideas: IDEAS });
+  const byPnl = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_order_pnl", ideas: IDEAS });
   if (byPnl.reports.reports.length !== 3) {
     fail(`expected 3 reports, got ${byPnl.reports.reports.length}`);
     return;
@@ -90,7 +90,7 @@ test("SIM: reportOrder orders result.reports by the declared criterion, default 
     return;
   }
 
-  const byDefault = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_order_default", ideas: IDEAS });
+  const byDefault = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_order_default", ideas: IDEAS });
   const sharpes = byDefault.reports.reports.map(({ sharpe }) => sharpe);
   if (!isSortedDesc(sharpes)) {
     fail(`default must keep sharpe desc, got ${JSON.stringify(sharpes)}`);

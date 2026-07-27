@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Hits единственной метрики profit-before-stop зависят от СТОПА
@@ -58,8 +58,8 @@ test("SIM: hit counts follow the point's stop — two trainings for H=[3,5]", as
 
   const trainings = [];
   const byStop = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_reachstop",
+  addSweepSchema({
+    sweepName: "sim_reachstop",
     exchangeName: "sim-reachstop-exchange",
     gridAxes: {
       hardStopPercent: [3, 5],
@@ -73,9 +73,9 @@ test("SIM: hit counts follow the point's stop — two trainings for H=[3,5]", as
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_reachstop",
+    sweepName: "sim_reachstop",
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE)),
   });
 

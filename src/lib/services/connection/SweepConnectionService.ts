@@ -2,22 +2,22 @@ import { inject } from "../../core/di";
 import { TLoggerService } from "../base/LoggerService";
 import TYPES from "../../core/types";
 import {
-  SimulatorName,
-  ISimulator,
-  ISimulatorIdea,
-  ISimulatorGridAxes,
-  SimulatorRankingCriterion,
-} from "../../../interfaces/Simulator.interface";
+  SweepName,
+  ISweep,
+  ISweepIdea,
+  ISweepGridAxes,
+  SweepRankingCriterion,
+} from "../../../interfaces/Sweep.interface";
 import { memoize } from "functools-kit";
-import SimulatorSchemaService from "../schema/SimulatorSchemaService";
-import { ClientSimulator } from "../../../client/ClientSimulator";
+import SweepSchemaService from "../schema/SweepSchemaService";
+import { ClientSweep } from "../../../client/ClientSweep";
 
 /**
  * Report order applied when the schema omits reportOrder: the
  * result.reports.reports list is sorted by Sharpe descending — the
  * canonical order.
  */
-const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
+const DEFAULT_REPORT_ORDER: SweepRankingCriterion = "sharpe";
 
 /**
  * Grid axes applied per-axis when the schema omits them (schema
@@ -53,7 +53,7 @@ const DEFAULT_REPORT_ORDER: SimulatorRankingCriterion = "sharpe";
  *   the window end (timeout is a bad outcome). One report bucket, one
  *   set of winners, one tracks[] — nothing is split by metric.
  */
-const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
+const DEFAULT_GRID_AXES: ISweepGridAxes = {
   hardStopPercent: [
     1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10,
   ],
@@ -78,43 +78,43 @@ const DEFAULT_GRID_AXES: ISimulatorGridAxes = {
 };
 
 /**
- * Structural mirror of ISimulator: the connection service exposes the
+ * Structural mirror of ISweep: the connection service exposes the
  * same public surface as the client it manages, with DI-level DTOs.
  */
-type TSimulator = {
-  [key in keyof ISimulator]: any;
+type TSweep = {
+  [key in keyof ISweep]: any;
 };
 
 /**
- * Connection layer of the Simulator entity.
+ * Connection layer of the Sweep entity.
  *
- * Owns the ClientSimulator lifecycle: resolves the registered schema
- * by simulatorName, applies grid axes defaults, injects the logger
- * and memoizes one client instance per simulator name. Public
+ * Owns the ClientSweep lifecycle: resolves the registered schema
+ * by sweepName, applies grid axes defaults, injects the logger
+ * and memoizes one client instance per sweep name. Public
  * methods accept flat DTOs and delegate to the memoized client.
  */
-export class SimulatorConnectionService implements TSimulator {
+export class SweepConnectionService implements TSweep {
   private readonly loggerService = inject<TLoggerService>(TYPES.loggerService);
-  private readonly simulatorSchemaService = inject<SimulatorSchemaService>(
-    TYPES.simulatorSchemaService,
+  private readonly sweepSchemaService = inject<SweepSchemaService>(
+    TYPES.sweepSchemaService,
   );
 
   /**
-   * Returns the ClientSimulator for a simulator name, creating it on
-   * first access. Memoized by simulator name — one client instance
-   * per registered simulator; gridAxes fall back to
+   * Returns the ClientSweep for a sweep name, creating it on
+   * first access. Memoized by sweep name — one client instance
+   * per registered sweep; gridAxes fall back to
    * DEFAULT_GRID_AXES when the schema omits them.
    *
-   * @param simulatorName - Registered simulator name
-   * @returns Memoized ClientSimulator instance
+   * @param sweepName - Registered sweep name
+   * @returns Memoized ClientSweep instance
    */
-  public getSimulator = memoize(
-    ([simulatorName]) => `${simulatorName}`,
-    (simulatorName: SimulatorName) => {
+  public getSweep = memoize(
+    ([sweepName]) => `${sweepName}`,
+    (sweepName: SweepName) => {
       const { exchangeName, gridAxes, reportOrder, callbacks } =
-        this.simulatorSchemaService.get(simulatorName);
-      return new ClientSimulator({
-        simulatorName,
+        this.sweepSchemaService.get(sweepName);
+      return new ClientSweep({
+        sweepName,
         logger: this.loggerService,
         exchangeName,
         gridAxes: { ...DEFAULT_GRID_AXES, ...gridAxes },
@@ -129,41 +129,41 @@ export class SimulatorConnectionService implements TSimulator {
    * client: profiles -> author filter -> grid evaluation -> rankings.
    *
    * @param dto.symbol - Trading pair symbol to simulate
-   * @param dto.simulatorName - Registered simulator name
+   * @param dto.sweepName - Registered sweep name
    * @param dto.ideas - Ideas feed (other symbols are filtered out by the client)
    * @returns Final simulation result (reports, rankings; the author artifact lives per-winner in best[])
    */
   public run = async (dto: {
     symbol: string;
-    simulatorName: SimulatorName;
-    ideas: ISimulatorIdea[];
+    sweepName: SweepName;
+    ideas: ISweepIdea[];
   }) => {
-    this.loggerService.log("simulatorConnectionService run", {
+    this.loggerService.log("sweepConnectionService run", {
       symbol: dto.symbol,
-      simulatorName: dto.simulatorName,
+      sweepName: dto.sweepName,
       ideasLen: dto.ideas.length,
     });
-    const instance = await this.getSimulator(dto.simulatorName);
+    const instance = await this.getSweep(dto.sweepName);
     return await instance.run(dto.symbol, dto.ideas);
   };
 
   /**
    * Drops memoized client instances: a specific one by name or all
-   * of them when called without arguments. The next getSimulator
+   * of them when called without arguments. The next getSweep
    * call re-reads the schema and builds a fresh client.
    *
-   * @param simulatorName - Simulator to drop; omit to drop all
+   * @param sweepName - Sweep to drop; omit to drop all
    */
-  public clear = (simulatorName?: SimulatorName) => {
-    this.loggerService.log("simulatorConnectionService clear", {
-      simulatorName,
+  public clear = (sweepName?: SweepName) => {
+    this.loggerService.log("sweepConnectionService clear", {
+      sweepName,
     });
-    if (simulatorName === undefined) {
-      this.getSimulator.clear();
+    if (sweepName === undefined) {
+      this.getSweep.clear();
       return;
     }
-    this.getSimulator.clear(`${simulatorName}`);
+    this.getSweep.clear(`${sweepName}`);
   };
 }
 
-export default SimulatorConnectionService;
+export default SweepConnectionService;

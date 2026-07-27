@@ -2,22 +2,22 @@ import { getErrorMessage } from "functools-kit";
 import { Exchange } from "../classes/Exchange";
 import { ICandleData } from "../interfaces/Exchange.interface";
 import {
-  ISimulatorTrack,
-  ISimulatorBest,
-  ISimulatorIdea,
-  ISimulatorIdeaProfile,
-  ISimulatorMetricReport,
-  ISimulator,
-  ISimulatorGridAxes,
-  ISimulatorGridPoint,
-  ISimulatorParams,
-  ISimulatorPointReport,
-  ISimulatorResult,
-  ISimulatorTrade,
-  ISimulatorGradingRule,
-  SimulatorExitReason,
-  SimulatorRankingCriterion,
-} from "../interfaces/Simulator.interface";
+  ISweepTrack,
+  ISweepBest,
+  ISweepIdea,
+  ISweepIdeaProfile,
+  ISweepMetricReport,
+  ISweep,
+  ISweepGridAxes,
+  ISweepGridPoint,
+  ISweepParams,
+  ISweepPointReport,
+  ISweepResult,
+  ISweepTrade,
+  ISweepGradingRule,
+  SweepExitReason,
+  SweepRankingCriterion,
+} from "../interfaces/Sweep.interface";
 
 import { intervalStart } from "../utils/intervalStart";
 
@@ -39,11 +39,11 @@ const DAY_MS = 24 * 60 * MINUTE_MS;
  * @param axes - Grid axes carrying the holdMinutes list
  * @returns Profile horizon in minutes
  */
-const HORIZON_MINUTES_FN = (axes: ISimulatorGridAxes): number => {
+const HORIZON_MINUTES_FN = (axes: ISweepGridAxes): number => {
   const horizonMinutes = Math.max(...axes.holdMinutes);
   if (!Number.isFinite(horizonMinutes) || horizonMinutes <= 0) {
     throw new Error(
-      `ClientSimulator: holdMinutes axis must contain at least one ` +
+      `ClientSweep: holdMinutes axis must contain at least one ` +
         `positive value — it defines the idea profile horizon`,
     );
   }
@@ -68,7 +68,7 @@ const AUTHOR_DEDUPE_MINUTES = 8 * 60;
 const SORTINO_NO_LOSSES = Number.POSITIVE_INFINITY;
 
 async function* ITERATE_CANDLES_FN(
-  self: ClientSimulator,
+  self: ClientSweep,
   symbol: string,
   fromTs: number,
   count: number,
@@ -97,7 +97,7 @@ async function* ITERATE_CANDLES_FN(
         // свечей не будет вовсе (null-профиль): у края истории есть
         // теневая зона глубиной в один чанк. Реальные транзиентные
         // сбои сети гасятся ретраями Exchange до этой точки.
-        self.params.logger.debug("ClientSimulator candle feed exhausted", {
+        self.params.logger.debug("ClientSweep candle feed exhausted", {
           symbol,
           cursor,
           error: `${getErrorMessage(error)}`,
@@ -138,9 +138,9 @@ async function* ITERATE_CANDLES_FN(
  * @param ideas - Ideas sorted by publication time ascending
  * @returns Deduplicated ideas (order preserved)
  */
-const DEDUPE_IDEAS_FN = (ideas: ISimulatorIdea[]): ISimulatorIdea[] => {
+const DEDUPE_IDEAS_FN = (ideas: ISweepIdea[]): ISweepIdea[] => {
   const lastKept = new Map<string, number>();
-  const result: ISimulatorIdea[] = [];
+  const result: ISweepIdea[] = [];
   for (const idea of ideas) {
     const key = `${idea.author}:${idea.direction}`;
     const last = lastKept.get(key);
@@ -173,18 +173,18 @@ const DEDUPE_IDEAS_FN = (ideas: ISimulatorIdea[]): ISimulatorIdea[] => {
  * of history (fewer candles than the horizon, but > 0) stays legal —
  * it is marked truncated, not dropped.
  *
- * @param self - ClientSimulator instance reference
+ * @param self - ClientSweep instance reference
  * @param symbol - Trading pair symbol
  * @param idea - Idea to profile
  * @param horizonMinutes - Forward horizon (the grid's longest hold)
  * @returns Idea profile (never null — throws when candles are absent)
  */
 const BUILD_PROFILE_FN = async (
-  self: ClientSimulator,
+  self: ClientSweep,
   symbol: string,
-  idea: ISimulatorIdea,
+  idea: ISweepIdea,
   horizonMinutes: number,
-): Promise<ISimulatorIdeaProfile> => {
+): Promise<ISweepIdeaProfile> => {
   const entryTimestamp = intervalStart(idea.ts, "1m") + MINUTE_MS;
   const candles: ICandleData[] = [];
   for await (const candle of ITERATE_CANDLES_FN(
@@ -197,7 +197,7 @@ const BUILD_PROFILE_FN = async (
   }
   if (!candles.length) {
     throw new Error(
-      `ClientSimulator ${self.params.simulatorName}: no candles for ` +
+      `ClientSweep ${self.params.sweepName}: no candles for ` +
         `${symbol} idea ${idea.id} @ ${new Date(entryTimestamp).toISOString()} ` +
         `— the exchange feed returned nothing (broken getCandles or empty ` +
         `history); a run built on missing candles is garbage, aborting`,
@@ -263,7 +263,7 @@ const BUILD_PROFILE_FN = async (
  * is userspace.
  */
 interface IAuthorFilterContext {
-  tracks: ISimulatorTrack[];
+  tracks: ISweepTrack[];
 }
 
 /**
@@ -276,7 +276,7 @@ interface IAuthorFilterContext {
  * @param point - Grid point carrying the rule fields
  * @returns Grading rule
  */
-const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): ISimulatorGradingRule => ({
+const AUTHOR_RULE_FN = (point: ISweepGridPoint): ISweepGradingRule => ({
   holdMinutes: point.holdMinutes,
   profitLockPercent: point.profitLockPercent,
   hardStopPercent: point.hardStopPercent,
@@ -310,8 +310,8 @@ const AUTHOR_RULE_FN = (point: ISimulatorGridPoint): ISimulatorGradingRule => ({
  * @returns Whether the idea counts as the author's hit
  */
 const AUTHOR_HIT_FN = (
-  profile: ISimulatorIdeaProfile,
-  rule: ISimulatorGradingRule,
+  profile: ISweepIdeaProfile,
+  rule: ISweepGradingRule,
 ): boolean => {
   const { candles, entryPrice } = profile;
   const direction = profile.idea.direction === "LONG" ? 1 : -1;
@@ -360,8 +360,8 @@ const AUTHOR_HIT_FN = (
  * @returns Filter context with the rule's tracks (sorted by ideas)
  */
 const TRAIN_AUTHOR_FILTER_FN = (
-  profiles: ISimulatorIdeaProfile[],
-  rule: ISimulatorGradingRule,
+  profiles: ISweepIdeaProfile[],
+  rule: ISweepGradingRule,
 ): IAuthorFilterContext => {
   const byAuthor = new Map<string, { ideas: number; hits: number }>();
   for (const profile of profiles) {
@@ -374,7 +374,7 @@ const TRAIN_AUTHOR_FILTER_FN = (
   }
   // lock и stop теперь всегда часть идентичности правила (единственная
   // метрика profit-before-stop зависит от обоих) — кладём как есть
-  const tracks: ISimulatorTrack[] = [...byAuthor].map(([author, stat]) => ({
+  const tracks: ISweepTrack[] = [...byAuthor].map(([author, stat]) => ({
     holdMinutes: rule.holdMinutes,
     profitLockPercent: rule.profitLockPercent,
     hardStopPercent: rule.hardStopPercent,
@@ -412,9 +412,9 @@ const TRAIN_AUTHOR_FILTER_FN = (
  * @returns Simulated trade with net PnL
  */
 const SIMULATE_TRADE_FN = (
-  profile: ISimulatorIdeaProfile,
-  point: ISimulatorGridPoint,
-): ISimulatorTrade => {
+  profile: ISweepIdeaProfile,
+  point: ISweepGridPoint,
+): ISweepTrade => {
   const direction = profile.idea.direction === "LONG" ? 1 : -1;
   const slip = GLOBAL_CONFIG.CC_PERCENT_SLIPPAGE / 100;
   const entryFill = profile.entryPrice * (1 + direction * slip);
@@ -434,7 +434,7 @@ const SIMULATE_TRADE_FN = (
 
   let peak = entryFill;
   let exitLevel: number | null = null;
-  let exitReason: SimulatorExitReason = "time_expired";
+  let exitReason: SweepExitReason = "time_expired";
   let exitIndex = Math.min(point.holdMinutes, profile.candles.length) - 1;
 
   for (let i = 0; i <= exitIndex; i++) {
@@ -571,13 +571,13 @@ const COMPUTE_HOLD_STATS_FN = (
  * @returns Aggregated report and the trade list
  */
 const EVALUATE_POINT_FN = (
-  profiles: ISimulatorIdeaProfile[],
-  point: ISimulatorGridPoint,
+  profiles: ISweepIdeaProfile[],
+  point: ISweepGridPoint,
   rangeStartTs: number,
   rangeDays: number,
-): { report: ISimulatorPointReport; trades: ISimulatorTrade[] } => {
-  const trades: ISimulatorTrade[] = [];
-  const exitReasons: Record<SimulatorExitReason, number> = {
+): { report: ISweepPointReport; trades: ISweepTrade[] } => {
+  const trades: ISweepTrade[] = [];
+  const exitReasons: Record<SweepExitReason, number> = {
     hard_stop: 0,
     trailing_take: 0,
     profit_lock: 0,
@@ -592,7 +592,7 @@ const EVALUATE_POINT_FN = (
   // друга — это его собственное свойство. busyUntil/holdingTrade —
   // по автору
   const busyUntilByAuthor = new Map<string, number>();
-  const holdingTradeByAuthor = new Map<string, ISimulatorTrade>();
+  const holdingTradeByAuthor = new Map<string, ISweepTrade>();
 
   for (const profile of profiles) {
     // все авторы торгуются — банов нет; кого отсеять решает userspace
@@ -729,7 +729,7 @@ const EVALUATE_POINT_FN = (
  * @param axes - Value lists per axis
  * @returns All grid points
  */
-const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
+const BUILD_GRID_FN = (axes: ISweepGridAxes): ISweepGridPoint[] =>
   axes.hardStopPercent.flatMap((hardStopPercent) =>
     axes.trailingTakePercent.flatMap((trailingTakePercent) =>
       axes.holdMinutes.flatMap((holdMinutes) =>
@@ -751,8 +751,8 @@ const BUILD_GRID_FN = (axes: ISimulatorGridAxes): ISimulatorGridPoint[] =>
  * @param point - The grid point (for error context)
  */
 const ASSERT_TRADE_INVARIANTS_FN = (
-  trades: ISimulatorTrade[],
-  point: ISimulatorGridPoint,
+  trades: ISweepTrade[],
+  point: ISweepGridPoint,
 ): void => {
   const costFloor =
     2 * GLOBAL_CONFIG.CC_PERCENT_FEE +
@@ -762,7 +762,7 @@ const ASSERT_TRADE_INVARIANTS_FN = (
   for (const trade of trades) {
     if (trade.pnlPercent < worstAllowed) {
       throw new Error(
-        `ClientSimulator invariant: pnl ${trade.pnlPercent.toFixed(3)} below floor ` +
+        `ClientSweep invariant: pnl ${trade.pnlPercent.toFixed(3)} below floor ` +
           `${worstAllowed.toFixed(3)} (idea ${trade.ideaId}, ${JSON.stringify(point)})`,
       );
     }
@@ -771,7 +771,7 @@ const ASSERT_TRADE_INVARIANTS_FN = (
       trade.pnlPercent < -costFloor
     ) {
       throw new Error(
-        `ClientSimulator invariant: trailing take locked a loss ${trade.pnlPercent.toFixed(3)} ` +
+        `ClientSweep invariant: trailing take locked a loss ${trade.pnlPercent.toFixed(3)} ` +
           `(idea ${trade.ideaId}, ${JSON.stringify(point)})`,
       );
     }
@@ -780,13 +780,13 @@ const ASSERT_TRADE_INVARIANTS_FN = (
       trade.pnlPercent < point.profitLockPercent - costFloor
     ) {
       throw new Error(
-        `ClientSimulator invariant: profit lock filled below its level ${trade.pnlPercent.toFixed(3)} ` +
+        `ClientSweep invariant: profit lock filled below its level ${trade.pnlPercent.toFixed(3)} ` +
           `(idea ${trade.ideaId}, ${JSON.stringify(point)})`,
       );
     }
     if (trade.exitTimestamp < trade.entryTimestamp) {
       throw new Error(
-        `ClientSimulator invariant: exit before entry (idea ${trade.ideaId})`,
+        `ClientSweep invariant: exit before entry (idea ${trade.ideaId})`,
       );
     }
   }
@@ -797,18 +797,18 @@ const ASSERT_TRADE_INVARIANTS_FN = (
  * filter training -> grid evaluation -> four rankings.
  *
  * Every progress point the reference Sweep script printed to console
- * is emitted through ISimulatorCallbacks instead.
+ * is emitted through ISweepCallbacks instead.
  *
- * @param self - ClientSimulator instance reference
+ * @param self - ClientSweep instance reference
  * @param symbol - Trading pair symbol
  * @param allIdeas - Ideas to simulate (other symbols are filtered out)
  * @returns Final result with reports and rankings; the author artifact lives per-winner in best[]
  */
 const RUN_FN = async (
-  self: ClientSimulator,
+  self: ClientSweep,
   symbol: string,
-  allIdeas: ISimulatorIdea[],
-): Promise<ISimulatorResult> => {
+  allIdeas: ISweepIdea[],
+): Promise<ISweepResult> => {
   const ideas = allIdeas
     .filter((idea) => idea.symbol === symbol)
     .sort((a, b) => a.ts - b.ts);
@@ -820,7 +820,7 @@ const RUN_FN = async (
   }
 
   const horizonMinutes = HORIZON_MINUTES_FN(self.params.gridAxes);
-  const profiles: ISimulatorIdeaProfile[] = [];
+  const profiles: ISweepIdeaProfile[] = [];
   for (let index = 0; index < directional.length; index++) {
     // нет свечей у идеи -> BUILD_PROFILE_FN бросает: прогон на
     // отсутствующих свечах — мусор, падаем громко, а не молча нулями
@@ -848,11 +848,11 @@ const RUN_FN = async (
   // мемоизации; наружу выходит плоский tracks[]
   const filterByRule = new Map<
     string,
-    { rule: ISimulatorGradingRule; filter: IAuthorFilterContext }
+    { rule: ISweepGradingRule; filter: IAuthorFilterContext }
   >();
-  const ruleKeyOf = (rule: ISimulatorGradingRule): string =>
+  const ruleKeyOf = (rule: ISweepGradingRule): string =>
     `${rule.holdMinutes}:${rule.profitLockPercent}:${rule.hardStopPercent}:${rule.trailingTakePercent}`;
-  const trainRule = (point: ISimulatorGridPoint): void => {
+  const trainRule = (point: ISweepGridPoint): void => {
     const rule = AUTHOR_RULE_FN(point);
     const key = ruleKeyOf(rule);
     if (filterByRule.has(key)) {
@@ -881,11 +881,11 @@ const RUN_FN = async (
   // (пустой axis), о которой нужно кричать, а не молча вернуть нули
   if (!points.length) {
     throw new Error(
-      `ClientSimulator ${self.params.simulatorName}: the grid is empty — ` +
+      `ClientSweep ${self.params.sweepName}: the grid is empty — ` +
         `every gridAxes list must carry at least one value`,
     );
   }
-  const reports: ISimulatorPointReport[] = [];
+  const reports: ISweepPointReport[] = [];
   const allHoldMinutes: number[] = [];
   for (let index = 0; index < points.length; index++) {
     const point = points[index];
@@ -917,8 +917,8 @@ const RUN_FN = async (
   const holdStats = COMPUTE_HOLD_STATS_FN(allHoldMinutes);
 
   const rankings: {
-    criterion: SimulatorRankingCriterion;
-    value: (report: ISimulatorPointReport) => number;
+    criterion: SweepRankingCriterion;
+    value: (report: ISweepPointReport) => number;
   }[] = [
     { criterion: "sharpe", value: ({ sharpe }) => sharpe },
     { criterion: "sortino", value: ({ sortino }) => sortino },
@@ -929,8 +929,8 @@ const RUN_FN = async (
   // ломает контракт компаратора (sortino/profitFactor бесконечны
   // на сериях без убытков)
   const byRankingDesc =
-    (value: (report: ISimulatorPointReport) => number) =>
-    (a: ISimulatorPointReport, b: ISimulatorPointReport) => {
+    (value: (report: ISweepPointReport) => number) =>
+    (a: ISweepPointReport, b: ISweepPointReport) => {
       const va = value(a);
       const vb = value(b);
       if (va === vb) {
@@ -945,7 +945,7 @@ const RUN_FN = async (
   // единственная корзина: все точки сетки градируются одной метрикой
   // profit-before-stop, поэтому reports/best/tracks — плоские, без
   // словаря по метрике
-  const bucket: ISimulatorMetricReport = {
+  const bucket: ISweepMetricReport = {
     reports: [...reports],
     best: [],
     tracks: [],
@@ -957,7 +957,7 @@ const RUN_FN = async (
     const winner = sorted[0] ?? null;
     // сделки победителя не дублируются — лежат на winner.tradesList;
     // трек — в bucket.tracks
-    const bestEntry: ISimulatorBest = {
+    const bestEntry: ISweepBest = {
       criterion: ranking.criterion,
       report: winner,
     };
@@ -983,7 +983,7 @@ const RUN_FN = async (
     bucket.tracks.push(...filter.tracks);
   }
 
-  const result: ISimulatorResult = {
+  const result: ISweepResult = {
     symbol,
     ideasTotal: ideas.length,
     ideasDirectional: directional.length,
@@ -1001,7 +1001,7 @@ const RUN_FN = async (
 };
 
 /**
- * Parameter sweep engine over crowd trading ideas (the "Simulator").
+ * Parameter sweep engine over crowd trading ideas (the "Sweep").
  *
  * Finds production strategy parameters (hard stop, trailing take,
  * hold duration, author ban rule) by simulating every idea against
@@ -1034,15 +1034,15 @@ const RUN_FN = async (
  * 4. Grid winners are picked by four rankings (Sharpe, Sortino, PnL,
  *    total PnL) with an anti-fluke minimum-trades guard.
  *
- * Every stage emits an ISimulatorCallbacks hook; the client itself
+ * Every stage emits an ISweepCallbacks hook; the client itself
  * is stateless between runs — each run() call is independent.
  *
  * Validation of the chosen parameters MUST be done by a real engine
- * backtest (Backtest.run): the simulator picks candidates, it does
+ * backtest (Backtest.run): the sweep picks candidates, it does
  * not replace the engine.
  */
-export class ClientSimulator implements ISimulator {
-  constructor (readonly params: ISimulatorParams) { }
+export class ClientSweep implements ISweep {
+  constructor (readonly params: ISweepParams) { }
 
   /**
    * Runs the full simulation pipeline for a symbol.
@@ -1080,9 +1080,9 @@ export class ClientSimulator implements ISimulator {
    */
   public run = async (
     symbol: string,
-    ideas: ISimulatorIdea[],
-  ): Promise<ISimulatorResult> => {
-    this.params.logger.debug("ClientSimulator run", {
+    ideas: ISweepIdea[],
+  ): Promise<ISweepResult> => {
+    this.params.logger.debug("ClientSweep run", {
       symbol,
       ideasLen: ideas.length,
     });

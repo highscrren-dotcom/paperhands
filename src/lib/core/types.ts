@@ -16,7 +16,7 @@ const connectionServices = {
     actionConnectionService: Symbol('actionConnectionService'),
     partialConnectionService: Symbol('partialConnectionService'),
     breakevenConnectionService: Symbol('breakevenConnectionService'),
-    simulatorConnectionService: Symbol('simulatorConnectionService'),
+    sweepConnectionService: Symbol('sweepConnectionService'),
 };
 
 const schemaServices = {
@@ -27,11 +27,11 @@ const schemaServices = {
     sizingSchemaService: Symbol('sizingSchemaService'),
     riskSchemaService: Symbol('riskSchemaService'),
     actionSchemaService: Symbol('actionSchemaService'),
-    simulatorSchemaService: Symbol('simulatorSchemaService'),
+    sweepSchemaService: Symbol('sweepSchemaService'),
 }
 
 const coreServices = {
-    simulatorCoreService: Symbol('simulatorCoreService'),
+    sweepCoreService: Symbol('sweepCoreService'),
     exchangeCoreService: Symbol('exchangeCoreService'),
     strategyCoreService: Symbol('strategyCoreService'),
     actionCoreService: Symbol('actionCoreService'),
@@ -46,7 +46,7 @@ const metaServices = {
 }
 
 const globalServices = {
-    simulatorGlobalService: Symbol('simulatorGlobalService'),
+    sweepGlobalService: Symbol('sweepGlobalService'),
     sizingGlobalService: Symbol('sizingGlobalService'),
     riskGlobalService: Symbol('riskGlobalService'),
     partialGlobalService: Symbol('partialGlobalService'),
@@ -118,7 +118,7 @@ const validationServices = {
     actionValidationService: Symbol('actionValidationService'),
     configValidationService: Symbol('configValidationService'),
     columnValidationService: Symbol('columnValidationService'),
-    simulatorValidationService: Symbol('simulatorValidationService'),
+    sweepValidationService: Symbol('sweepValidationService'),
 }
 
 export const TYPES = {

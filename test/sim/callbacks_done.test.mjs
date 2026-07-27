@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * onDone — единственный колбек, не имевший ни одного ассерта:
@@ -37,8 +37,8 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
   });
 
   const doneCalls = [];
-  addSimulatorSchema({
-    simulatorName: "sim_done",
+  addSweepSchema({
+    sweepName: "sim_done",
     exchangeName: "sim-done-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -51,9 +51,9 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_done",
+    sweepName: "sim_done",
     ideas: [{ id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "solo" }],
   });
 

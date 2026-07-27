@@ -1,5 +1,5 @@
-import { addSimulatorSchema, Simulator, listExchangeSchema, overrideExchangeSchema } from "backtest-kit";
-import type { ISimulatorIdea, ISimulatorResult, ISimulatorGridAxes, ISimulatorSchema } from "backtest-kit";
+import { addSweepSchema, Sweep, listExchangeSchema, overrideExchangeSchema } from "backtest-kit";
+import type { ISweepIdea, ISweepResult, ISweepGridAxes, ISweepSchema } from "backtest-kit";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join, resolve } from "path";
 import { getArgs } from "../helpers/getArgs";
@@ -8,7 +8,7 @@ import cli from "../lib";
 import path from "path";
 import dotenv from "dotenv";
 
-const SIMULATOR_NAME = "cli_simulator";
+const SIMULATOR_NAME = "cli_sweep";
 
 /**
  * Позиционный JSON-конфиг пробы: оси сетки и порядок отчёта. Оба
@@ -16,8 +16,8 @@ const SIMULATOR_NAME = "cli_simulator";
  * дефолты движка из connection-сервиса.
  */
 interface IProbeConfig {
-  gridAxes?: ISimulatorGridAxes;
-  reportOrder?: ISimulatorSchema["reportOrder"];
+  gridAxes?: ISweepGridAxes;
+  reportOrder?: ISweepSchema["reportOrder"];
 }
 
 const CONFIG_KEYS = ["gridAxes", "reportOrder"];
@@ -61,14 +61,14 @@ const validateIdea = (idea: any, line: number): string | null => {
 const fmtSimRatio = (value: number): string =>
   Number.isFinite(value) ? value.toFixed(2) : "inf";
 
-const toMarkdown = (result: ISimulatorResult): string => {
+const toMarkdown = (result: ISweepResult): string => {
   const bucket = result.reports;
   const allReports = bucket.reports;
   const profitable = allReports.filter(
     ({ totalPnlPercent }) => totalPnlPercent > 0,
   ).length;
   const lines: string[] = [];
-  lines.push(`# Simulator Report — ${result.symbol}`);
+  lines.push(`# Sweep Report — ${result.symbol}`);
   lines.push("");
   lines.push(`| Metric | Value |`);
   lines.push(`| --- | --- |`);
@@ -120,7 +120,7 @@ export const main = async () => {
 
   const { values, positionals } = getArgs();
 
-  if (!values.simulator) {
+  if (!values.sweep) {
     return;
   }
 
@@ -154,13 +154,13 @@ export const main = async () => {
     }
     const problem = validateConfig(config);
     if (problem) {
-      console.error(`Error: simulator config does not match the structure — ${problem}`);
-      console.error(`Expected shape: { "gridAxes"?: ISimulatorGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }`);
+      console.error(`Error: sweep config does not match the structure — ${problem}`);
+      console.error(`Expected shape: { "gridAxes"?: ISweepGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }`);
       process.exit(1);
     }
   }
 
-  let ideas: ISimulatorIdea[] = [];
+  let ideas: ISweepIdea[] = [];
   {
     let content: string;
     try {
@@ -214,7 +214,7 @@ export const main = async () => {
     }
   }
 
-  await cli.moduleConnectionService.loadModule("simulator.module");
+  await cli.moduleConnectionService.loadModule("sweep.module");
 
   {
     await cli.exchangeSchemaService.addSchema();
@@ -243,8 +243,8 @@ export const main = async () => {
 
   // оси и порядок отчёта приходят позиционным конфигом потребителя;
   // пустой конфиг — дефолтная сетка движка из connection-сервиса
-  addSimulatorSchema({
-    simulatorName: SIMULATOR_NAME,
+  addSweepSchema({
+    sweepName: SIMULATOR_NAME,
     exchangeName,
     ...(config.gridAxes ? { gridAxes: config.gridAxes } : {}),
     ...(config.reportOrder ? { reportOrder: config.reportOrder } : {}),
@@ -305,13 +305,13 @@ export const main = async () => {
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol,
-    simulatorName: SIMULATOR_NAME,
+    sweepName: SIMULATOR_NAME,
     ideas,
   });
 
-  const dumpName = <string>values.output || `simulator_${symbol}_${Date.now()}`;
+  const dumpName = <string>values.output || `sweep_${symbol}_${Date.now()}`;
   const dumpDir = join(process.cwd(), "dump");
 
   if (values.json) {

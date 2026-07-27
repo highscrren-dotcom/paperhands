@@ -6,7 +6,7 @@ import { IWalkerSchema } from "../interfaces/Walker.interface";
 import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
 import { IActionSchema } from "../interfaces/Action.interface";
-import { ISimulatorSchema } from "../interfaces/Simulator.interface";
+import { ISweepSchema } from "../interfaces/Sweep.interface";
 
 const ADD_STRATEGY_METHOD_NAME = "add.addStrategySchema";
 const ADD_EXCHANGE_METHOD_NAME = "add.addExchangeSchema";
@@ -15,7 +15,7 @@ const ADD_WALKER_METHOD_NAME = "add.addWalkerSchema";
 const ADD_SIZING_METHOD_NAME = "add.addSizingSchema";
 const ADD_RISK_METHOD_NAME = "add.addRiskSchema";
 const ADD_ACTION_METHOD_NAME = "add.addActionSchema";
-const ADD_SIMULATOR_METHOD_NAME = "add.addSimulatorSchema";
+const ADD_SIMULATOR_METHOD_NAME = "add.addSweepSchema";
 
 /**
  * Registers a trading strategy in the framework.
@@ -426,25 +426,25 @@ export function addActionSchema(actionSchema: IActionSchema) {
 }
 
 /**
- * Registers a simulator in the framework — a parameter sweep engine
- * over crowd trading ideas (see Simulator.run).
+ * Registers a sweep in the framework — a parameter sweep engine
+ * over crowd trading ideas (see Sweep.run).
  *
- * The simulator profiles every idea with one candle pass through the
+ * The sweep profiles every idea with one candle pass through the
  * referenced exchange, trains the author whitelist/ban list on the
  * simulated range and evaluates the grid of exit/entry parameters
  * arithmetically from the profiles. Grid axes are optional — bounded
  * defaults apply when omitted.
  *
- * @param simulatorSchema - Simulator configuration object
- * @param simulatorSchema.simulatorName - Unique simulator identifier
- * @param simulatorSchema.exchangeName - Exchange schema to fetch candles through
- * @param simulatorSchema.gridAxes - Optional grid axes override (hard stop, trailing take, hold, consensus threshold)
- * @param simulatorSchema.callbacks - Optional lifecycle callbacks (onIdeas, onProfiles, onAuthorsTrained, onGridPoint, onRanking, onDone)
+ * @param sweepSchema - Sweep configuration object
+ * @param sweepSchema.sweepName - Unique sweep identifier
+ * @param sweepSchema.exchangeName - Exchange schema to fetch candles through
+ * @param sweepSchema.gridAxes - Optional grid axes override (hard stop, trailing take, hold, consensus threshold)
+ * @param sweepSchema.callbacks - Optional lifecycle callbacks (onIdeas, onProfiles, onAuthorsTrained, onGridPoint, onRanking, onDone)
  *
  * @example
  * ```typescript
- * addSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * addSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   exchangeName: "ccxt-exchange",
  *   callbacks: {
  *     onRanking: (symbol, criterion, sorted, best) =>
@@ -453,16 +453,16 @@ export function addActionSchema(actionSchema: IActionSchema) {
  * });
  * ```
  */
-export function addSimulatorSchema(simulatorSchema: ISimulatorSchema) {
+export function addSweepSchema(sweepSchema: ISweepSchema) {
   backtest.loggerService.info(ADD_SIMULATOR_METHOD_NAME, {
-    simulatorSchema,
+    sweepSchema,
   });
-  backtest.simulatorValidationService.addSimulator(
-    simulatorSchema.simulatorName,
-    simulatorSchema
+  backtest.sweepValidationService.addSweep(
+    sweepSchema.sweepName,
+    sweepSchema
   );
-  backtest.simulatorSchemaService.register(
-    simulatorSchema.simulatorName,
-    simulatorSchema
+  backtest.sweepSchemaService.register(
+    sweepSchema.sweepName,
+    sweepSchema
   );
 }

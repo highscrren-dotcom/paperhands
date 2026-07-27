@@ -4,13 +4,13 @@ import { ILogger } from "./Logger.interface";
 /**
  * Direction of a trading idea (crowd forecast).
  */
-export type SimulatorIdeaDirection = "LONG" | "SHORT" | "NEUTRAL";
+export type SweepIdeaDirection = "LONG" | "SHORT" | "NEUTRAL";
 
 /**
  * Single trading idea: a public forecast published by an author.
  * The unit of simulation — candles are iterated per idea, not per grid point.
  */
-export interface ISimulatorIdea {
+export interface ISweepIdea {
   /** Unique idea identifier from the source platform. */
   id: number;
   /** Unix timestamp in milliseconds when the idea was published. */
@@ -18,7 +18,7 @@ export interface ISimulatorIdea {
   /** Trading pair symbol the idea refers to (e.g., "BTCUSDT"). */
   symbol: string;
   /** Forecast direction claimed by the author. */
-  direction: SimulatorIdeaDirection;
+  direction: SweepIdeaDirection;
   /** Author login on the source platform (unique per author). */
   author: string;
 }
@@ -32,9 +32,9 @@ export interface ISimulatorIdea {
  * the consumer; ban training never reads them — every rule grades
  * the raw candle trajectory inside its own hold window.
  */
-export interface ISimulatorIdeaProfile {
+export interface ISweepIdeaProfile {
   /** The idea this profile belongs to. */
-  idea: ISimulatorIdea;
+  idea: ISweepIdea;
   /** Entry minute: the minute FOLLOWING publication (no lookahead). */
   entryTimestamp: number;
   /** Open price of the first candle (entry basis before slippage). */
@@ -85,7 +85,7 @@ export interface ISimulatorIdeaProfile {
  * userspace). lock = 0 is valid: fixation then means the trailing
  * arm alone.
  */
-export interface ISimulatorGradingRule {
+export interface ISweepGradingRule {
   /** Grading window, minutes — the point's own hold. */
   holdMinutes: number;
   /** Profit lock level, percent (0 = fixation is the trailing arm only). */
@@ -105,7 +105,7 @@ export interface ISimulatorGradingRule {
  * it is IGNORED — no axis is allowed to be a silent no-op without
  * that being documented here.
  */
-export interface ISimulatorGridAxes {
+export interface ISweepGridAxes {
   /**
    * Hard stop levels to sweep, percent from entry.
    * Tunes: the catastrophe exit — how deep a position may sink
@@ -113,7 +113,7 @@ export interface ISimulatorGridAxes {
    * floor are reachable inside one candle (pessimism contract). Also
    * the loss side of the profit-before-stop grading: an author's idea
    * is a MISS when this stop fires before any fixation (see
-   * ISimulatorGradingRule).
+   * ISweepGradingRule).
    * Ignored: never — every trade checks it and it is part of the
    * grading rule for every point.
    */
@@ -170,7 +170,7 @@ export interface ISimulatorGridAxes {
 /**
  * Single point of the grid (scalar per axis).
  */
-export interface ISimulatorGridPoint {
+export interface ISweepGridPoint {
   /** Hard stop level, percent from entry. */
   hardStopPercent: number;
   /** Trailing take pullback, percent from the running peak. */
@@ -187,7 +187,7 @@ export interface ISimulatorGridPoint {
 /**
  * Why a simulated trade was closed.
  */
-export type SimulatorExitReason =
+export type SweepExitReason =
   | "hard_stop"
   | "trailing_take"
   | "profit_lock"
@@ -204,14 +204,14 @@ export type SimulatorExitReason =
  * trade's author). Carries the author as well as the id so
  * per-author analysis reads straight off the artifact, no feed join.
  */
-export interface ISimulatorAbsorbedIdea {
+export interface ISweepAbsorbedIdea {
   /** Identifier of the absorbed idea. */
   ideaId: number;
   /** Author of the absorbed idea. */
   author: string;
 }
 
-export interface ISimulatorTrade {
+export interface ISweepTrade {
   /** Identifier of the idea that triggered the trade. */
   ideaId: number;
   /**
@@ -230,13 +230,13 @@ export interface ISimulatorTrade {
    */
   author: string;
   /** Position direction inherited from the idea. */
-  direction: SimulatorIdeaDirection;
+  direction: SweepIdeaDirection;
   /** Unix timestamp in milliseconds of the trade entry minute. */
   entryTimestamp: number;
   /** Unix timestamp in milliseconds of the exit candle. */
   exitTimestamp: number;
   /** Why the trade was closed. */
-  exitReason: SimulatorExitReason;
+  exitReason: SweepExitReason;
   /** Actual holding time, minutes (entry candle inclusive). */
   holdMinutesActual: number;
   /** Trade PnL percent, net of fees on both legs. */
@@ -246,15 +246,15 @@ export interface ISimulatorTrade {
    * holding the slot — each {ideaId, author}, so which author's
    * signals a long hold ate is visible idea by idea, no feed join.
    */
-  absorbedIdeas: ISimulatorAbsorbedIdea[];
+  absorbedIdeas: ISweepAbsorbedIdea[];
 }
 
 /**
  * Aggregated metrics of one grid point (production slot semantics).
  */
-export interface ISimulatorPointReport {
+export interface ISweepPointReport {
   /** The grid point these metrics belong to. */
-  point: ISimulatorGridPoint;
+  point: ISweepGridPoint;
   /** Ideas skipped because their author's own slot was busy (absorbed). */
   skippedBusy: number;
   /** Sum of trade PnL percents over the range. */
@@ -302,7 +302,7 @@ export interface ISimulatorPointReport {
    */
   sortino: number;
   /** Trade counts per exit reason. */
-  exitReasons: Record<SimulatorExitReason, number>;
+  exitReasons: Record<SweepExitReason, number>;
   /**
    * The point's trades in full — the SAME list for every point,
    * winner or not, so any point is traceable ("why this pnl") by jq
@@ -313,7 +313,7 @@ export interface ISimulatorPointReport {
    * it lives deduplicated in tracks[] (far smaller than repeating it
    * on every point).
    */
-  tradesList: ISimulatorTrade[];
+  tradesList: ISweepTrade[];
 }
 
 /**
@@ -327,7 +327,7 @@ export interface ISimulatorPointReport {
  * track into a 0/1 flag and lost information). One line per
  * (rule x author), self-contained for grep/jq.
  */
-export interface ISimulatorTrack {
+export interface ISweepTrack {
   /**
    * Grading window of the rule — the point's holdMinutes. The track
    * depends on it: the same author has different hits in different
@@ -392,7 +392,7 @@ export interface ISimulatorTrack {
  * recoveryFactor times a constant (365/days of the shared bucket
  * window) — so only the raw criterion exists.
  */
-export type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
+export type SweepRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
 
 /**
  * Winner of one ranking criterion — just the criterion and the
@@ -400,11 +400,11 @@ export type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery
  * never duplicated here: the trades in `report.tradesList`; the
  * author track lives deduplicated in the bucket's tracks[].
  */
-export interface ISimulatorBest {
+export interface ISweepBest {
   /** The ranking criterion this winner belongs to. */
-  criterion: SimulatorRankingCriterion;
+  criterion: SweepRankingCriterion;
   /** Winning point report; null when the bucket produced no reports. */
-  report: ISimulatorPointReport | null;
+  report: ISweepPointReport | null;
 }
 
 /**
@@ -412,17 +412,17 @@ export interface ISimulatorBest {
  * one profit-before-stop metric, its ranking winners, and its author
  * TRACKS. One bucket — there is no per-metric split.
  */
-export interface ISimulatorMetricReport {
+export interface ISweepMetricReport {
   /**
    * Grid point reports, sorted descending by the schema's reportOrder
    * criterion (default sharpe).
    */
-  reports: ISimulatorPointReport[];
+  reports: ISweepPointReport[];
   /**
    * Winners of the four ranking criteria. Empty only when the grid
    * produced no reports.
    */
-  best: ISimulatorBest[];
+  best: ISweepBest[];
   /**
    * Author tracks — one line per (rule x author), deduplicated by
    * grading rule (hold x lock x stop x trailing). This is the RAW
@@ -432,7 +432,7 @@ export interface ISimulatorMetricReport {
    * is self-contained (carries hold/lock/stop/trailing/author) for grep/jq
    * without a join.
    */
-  tracks: ISimulatorTrack[];
+  tracks: ISweepTrack[];
 }
 
 /**
@@ -440,7 +440,7 @@ export interface ISimulatorMetricReport {
  * profit-before-stop grading) with its reports, ranking winners and
  * author tracks, plus the run-level idea/profile/hold counters.
  */
-export interface ISimulatorResult {
+export interface ISweepResult {
   /** Trading pair symbol the simulation ran for. */
   symbol: string;
   /** Total ideas of the symbol received (including NEUTRAL). */
@@ -463,15 +463,15 @@ export interface ISimulatorResult {
    * reportOrder), the ranking winners in best[], and the per-author
    * tracks[].
    */
-  reports: ISimulatorMetricReport;
+  reports: ISweepMetricReport;
 }
 
 /**
- * Registration schema of a simulator instance.
+ * Registration schema of a sweep instance.
  *
  * Field-by-field contract — what each parameter allows to tune and
  * when it is ignored:
- * - simulatorName — registry key; duplicate registration is a
+ * - sweepName — registry key; duplicate registration is a
  *   validation error.
  * - exchangeName — candle source for idea profiles. The Exchange
  *   contract is strict (exactly `limit` candles or throw): end of
@@ -483,21 +483,21 @@ export interface ISimulatorResult {
  *   a single-value list freezes an axis. Pinning example:
  *   profitLockPercent: [0] disables the lock (fixation is then the
  *   trailing arm alone). Each axis documents its own tune/ignore
- *   conditions in ISimulatorGridAxes.
+ *   conditions in ISweepGridAxes.
  * - callbacks — all optional; an omitted callback is simply never
  *   fired (silent run). onAuthorsTrained fires once per unique
  *   grading RULE (hold x lock x stop x trailing), not per grid point.
  */
-export interface ISimulatorSchema {
-    /** Unique simulator identifier for the schema registry. */
-    simulatorName: SimulatorName;
+export interface ISweepSchema {
+    /** Unique sweep identifier for the schema registry. */
+    sweepName: SweepName;
     /** Exchange schema to fetch candles through. */
     exchangeName: ExchangeName;
     /**
      * Grid axes override, merged per-axis over the defaults at params
      * creation — a schema may override only the axes it cares about.
      */
-    gridAxes?: Partial<ISimulatorGridAxes>;
+    gridAxes?: Partial<ISweepGridAxes>;
     /**
      * Ranking criterion ordering the reports list (descending). The
      * return value of run() is the consumer
@@ -507,9 +507,9 @@ export interface ISimulatorSchema {
      * sortino/recovery of loss-free series). Default: "sharpe".
      * Does not affect best[] or tracks in any way.
      */
-    reportOrder?: SimulatorRankingCriterion;
+    reportOrder?: SweepRankingCriterion;
     /** Lifecycle callbacks (all optional). */
-    callbacks?: Partial<ISimulatorCallbacks>;
+    callbacks?: Partial<ISweepCallbacks>;
 }
 
 /**
@@ -517,13 +517,13 @@ export interface ISimulatorSchema {
  * "profiles" — one candle pass per idea (dominated by candle IO),
  * "grid" — arithmetic evaluation of grid points.
  */
-export type SimulatorProgressStage = "profiles" | "grid";
+export type SweepProgressStage = "profiles" | "grid";
 
 /**
  * Lifecycle callbacks of a simulation run. Every progress point the
  * reference Sweep script printed to console is exposed here instead.
  */
-export interface ISimulatorCallbacks {
+export interface ISweepCallbacks {
   /**
    * Progress of a long-running stage: fires after every processed
    * item — idea (stage "profiles") or grid point (stage "grid").
@@ -531,7 +531,7 @@ export interface ISimulatorCallbacks {
    */
   onProgress(
     symbol: string,
-    stage: SimulatorProgressStage,
+    stage: SweepProgressStage,
     processed: number,
     total: number,
   ): void;
@@ -543,7 +543,7 @@ export interface ISimulatorCallbacks {
    */
   onProfiles(
     symbol: string,
-    profiles: ISimulatorIdeaProfile[],
+    profiles: ISweepIdeaProfile[],
     truncatedCount: number,
   ): void;
   /**
@@ -552,12 +552,12 @@ export interface ISimulatorCallbacks {
    * the raw per-author track (ideas/hits/hitRate) under that rule. No
    * ban verdict — the engine grades, userspace decides who to trust.
    */
-  onAuthorsTrained(symbol: string, tracks: ISimulatorTrack[]): void;
+  onAuthorsTrained(symbol: string, tracks: ISweepTrack[]): void;
   /** One grid point evaluated. */
   onGridPoint(
     symbol: string,
-    report: ISimulatorPointReport,
-    trades: ISimulatorTrade[],
+    report: ISweepPointReport,
+    trades: ISweepTrade[],
   ): void;
   /**
    * Ranking computed over the single report bucket: the reports
@@ -566,39 +566,39 @@ export interface ISimulatorCallbacks {
    */
   onRanking(
     symbol: string,
-    criterion: SimulatorRankingCriterion,
-    sorted: ISimulatorPointReport[],
-    best: ISimulatorBest,
+    criterion: SweepRankingCriterion,
+    sorted: ISweepPointReport[],
+    best: ISweepBest,
   ): void;
   /** Simulation finished. */
-  onDone(symbol: string, result: ISimulatorResult): void;
+  onDone(symbol: string, result: ISweepResult): void;
 }
 
 /**
- * Runtime parameters of a simulator client: the schema with defaults
+ * Runtime parameters of a sweep client: the schema with defaults
  * resolved plus injected infrastructure dependencies.
  */
-export interface ISimulatorParams extends ISimulatorSchema {
+export interface ISweepParams extends ISweepSchema {
     /** Logger instance for debug output. */
     logger: ILogger;
     /** Grid axes with defaults applied (no longer optional). */
-    gridAxes: ISimulatorGridAxes;
+    gridAxes: ISweepGridAxes;
     /** Report order with the default applied (no longer optional). */
-    reportOrder: SimulatorRankingCriterion;
+    reportOrder: SweepRankingCriterion;
 }
 
 /**
- * Public surface of a simulator client.
+ * Public surface of a sweep client.
  */
-export interface ISimulator {
+export interface ISweep {
   /**
    * Runs the full simulation for a symbol over the given ideas:
    * profiles -> author filter -> grid evaluation -> rankings.
    */
-  run(symbol: string, ideas: ISimulatorIdea[]): Promise<ISimulatorResult>;
+  run(symbol: string, ideas: ISweepIdea[]): Promise<ISweepResult>;
 }
 
 /**
- * Unique simulator identifier.
+ * Unique sweep identifier.
  */
-export type SimulatorName = string;
+export type SweepName = string;

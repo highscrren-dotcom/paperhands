@@ -22,7 +22,7 @@ import "./main/editor";
 import "./main/dump";
 import "./main/pnldebug";
 import "./main/brokerdebug";
-import "./main/simulator";
+import "./main/sweep";
 import "./main/flush";
 import "./main/init";
 import "./main/docker";

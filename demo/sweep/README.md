@@ -1,13 +1,13 @@
 ---
-title: other/simulator/readme
-group: other/simulator
+title: other/sweep/readme
+group: other/sweep
 ---
 
-# Simulator Demo
+# Sweep Demo
 
-> Link to [the source code](https://github.com/tripolskypetr/backtest-kit/tree/master/demo/simulator)
+> Link to [the source code](https://github.com/tripolskypetr/backtest-kit/tree/master/demo/sweep)
 
-A **grid sweep** over a signal feed, driven by the `Simulator` entity. The dataset is a scrape of TradingView ideas — author, direction, publish time — for June 2026, a month where BTC fell **−20.4%** while the crowd kept posting longs. The demo answers two questions in one run: **is there a profitable corridor at all**, and **what does the raw per-author track look like** — how often did each author's calls actually land, over exactly the window a point trades.
+A **grid sweep** over a signal feed, driven by the `Sweep` entity. The dataset is a scrape of TradingView ideas — author, direction, publish time — for June 2026, a month where BTC fell **−20.4%** while the crowd kept posting longs. The demo answers two questions in one run: **is there a profitable corridor at all**, and **what does the raw per-author track look like** — how often did each author's calls actually land, over exactly the window a point trades.
 
 The crucial contract: **the engine bans nobody.** Every author's idea is traded; the engine reports the raw track (ideas / hits / hitRate per grading rule) and leaves the decision of *who to trust* to userspace. There is no `minAuthorTrack` / `minAuthorHitRate` threshold — that step collapsed continuous trust into a 0/1 flag and threw information away. So the corridor you see is the crowd's UNFILTERED result; the tracks next to it are the material a userspace scorer would filter on.
 
@@ -23,7 +23,7 @@ This project exists for the concrete checks below.
 
 ### 1. Is there a profitable corridor at all?
 
-One `Simulator.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is the full cartesian product — **1,560 points** (stop 13 × trailing 6 × hold 5 × lock 4) — because the whole harvesting machinery is swept. If no point of the corridor is profitable, the crowd's direction carries no extractable edge on this feed even with the exit engineering searched.
+One `Sweep.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is the full cartesian product — **1,560 points** (stop 13 × trailing 6 × hold 5 × lock 4) — because the whole harvesting machinery is swept. If no point of the corridor is profitable, the crowd's direction carries no extractable edge on this feed even with the exit engineering searched.
 
 ### 2. How much does the window cut?
 
@@ -43,7 +43,7 @@ The result carries a single report bucket: ranking winners (time-based Sharpe/So
 
 ## Actual Results — June 2026, BTCUSDT, full feed
 
-The committed artifact is [`assets/simulator.done.json`](https://github.com/tripolskypetr/backtest-kit/tree/master/demo/simulator/assets/simulator.done.json). The feed is strictly crypto-venue: ideas are classified by the `fullName` exchange prefix — Binance, Coinbase, Bitstamp, Bybit, OKX and the like — forex, CFD, metals, stocks and indices never enter the file, so no fabricated pairs.
+The committed artifact is [`assets/sweep.done.json`](https://github.com/tripolskypetr/backtest-kit/tree/master/demo/sweep/assets/sweep.done.json). The feed is strictly crypto-venue: ideas are classified by the `fullName` exchange prefix — Binance, Coinbase, Bitstamp, Bybit, OKX and the like — forex, CFD, metals, stocks and indices never enter the file, so no fabricated pairs.
 
 | Stage | Numbers |
 |---|---|
@@ -79,23 +79,23 @@ The signal also lives in the **tracks**. Filter the WINNING rule (stop 5.5 · tr
 ## Project Structure
 
 ```
-demo/simulator/
+demo/sweep/
 ├── assets/
 │   ├── tv-ideas.normalized.jsonl   # crypto-venue ideas only, symbols normalized to *USDT
-│   └── simulator.done.json         # sweep artifact: full-feed run, 1,560-point full grid
+│   └── sweep.done.json             # sweep artifact: full-feed run, full cartesian grid
 ├── src/
-│   └── index.mjs                   # Exchange + simulator schema + Simulator.run
+│   └── index.mjs                   # Exchange + sweep schema + Sweep.run
 ├── dump/                           # raw run outputs and the candle persist cache
 ├── package.json                    # Scripts and dependencies
 └── README.md                       # This file
 ```
 
-The ideas feed contains every crypto symbol seen on the source platform — BTCUSDT 421, ETHUSDT 205, XRPUSDT 86 and so on, 1,049 ideas total. `Simulator.run` filters by the requested symbol itself, so one shared feed serves any run.
+The ideas feed contains every crypto symbol seen on the source platform — BTCUSDT 421, ETHUSDT 205, XRPUSDT 86 and so on, 1,049 ideas total. `Sweep.run` filters by the requested symbol itself, so one shared feed serves any run.
 
 ## Installation
 
 ```bash
-cd demo/simulator
+cd demo/sweep
 npm install
 ```
 
@@ -109,20 +109,19 @@ npm start
 npm run cli
 ```
 
-The script registers a CCXT Binance spot exchange, a simulator schema with explicit grid axes, loads the ideas feed and runs the sweep for BTCUSDT:
+The script registers a CCXT Binance spot exchange, a sweep schema with explicit grid axes, loads the ideas feed and runs the sweep for BTCUSDT:
 
 ```javascript
-addSimulatorSchema({
-  simulatorName: "tv_probe",
+addSweepSchema({
+  sweepName: "tv_probe",
   exchangeName: "ccxt_cached",
-  // gridAxes опущены — движок метёт полную сетку по умолчанию:
-  // stop 1–7% × trailing 0.5–3% × hold 24–120h × lock 1.5–5%.
+  // gridAxes опущены — движок метёт полную сетку по умолчанию.
   // Метрика одна — profit-before-stop, задавать нечего.
   reportOrder: "sharpe",
 });
 ```
 
-Candles are fetched lazily in chunks through the exchange schema — persist cache first, network after. Only the horizons of actual ideas are requested, gaps between sparse ideas are never downloaded. The full result is written to `./dump/simulator.done.json`.
+Candles are fetched lazily in chunks through the exchange schema — persist cache first, network after. Only the horizons of actual ideas are requested, gaps between sparse ideas are never downloaded. The full result is written to `./dump/sweep.done.json`.
 
 ## Reading the Result
 
@@ -131,7 +130,7 @@ The result is read in two independent layers — the corridor and the tracks:
 1. **The corridor** (`reports.reports` — the single report bucket, sorted by the schema's `reportOrder`, with its ranking winners in `reports.best`). Count the positive-PnL share and how it distributes over the hold axis; `p95HoldMinutes` / `p99HoldMinutes` make eternal holds visible instantly. A negative corridor means the *unfiltered* crowd has no edge — it does not mean the feed is worthless (see the tracks).
 2. **The tracks** (`reports.tracks` — one line per grading rule × author, `{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`). This is the raw material for a userspace scorer: pick a rule (the four levels), require a minimum track (`ideas >= N`), rank by `hitRate`. There is no ban and no threshold in the engine — that judgement is yours, on continuous evidence.
 
-The final arbiter for any point or author picked from the tracks is always a real engine backtest via `Backtest.run` — the simulator makes the search cheap, it does not replace the engine.
+The final arbiter for any point or author picked from the tracks is always a real engine backtest via `Backtest.run` — the sweep makes the search cheap, it does not replace the engine.
 
 ## License
 

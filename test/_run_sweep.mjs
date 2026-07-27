@@ -3,7 +3,7 @@ import "./config/setup.mjs"
 import { run } from 'worker-testbed'
 
 import "./sim/eternal_hold.test.mjs";
-import "./sim/simulator_jsonl.test.mjs";
+import "./sim/sweep_jsonl.test.mjs";
 import "./sim/dedupe.test.mjs";
 import "./sim/mechanics.test.mjs";
 import "./sim/progress.test.mjs";

@@ -104,7 +104,7 @@ Every invocation is **one mode** (a primary flag) + a positional strategy/entry 
 | **Candle Dump** | `--dump` | Fetch & save raw OHLCV candles to a file |
 | **PnL Debug** | `--pnldebug` | Simulate per-minute PnL for a given entry price & direction |
 | **Broker Debug** | `--brokerdebug` | Fire a single broker commit against the live adapter |
-| **Simulator** | `--simulator` | Grid sweep over a crowd-ideas feed: profit-before-stop corridor + raw author tracks, axes from a positional JSON config |
+| **Sweep** | `--sweep` | Grid sweep over a crowd-ideas feed: profit-before-stop corridor + raw author tracks, axes from a positional JSON config |
 | **Flush** | `--flush` | Delete report/log/markdown/agent folders from a strategy dump dir |
 | **Init** | `--init` | Scaffold a new project |
 | **Docker** | `--docker` | Scaffold a self-contained Docker workspace |
@@ -272,7 +272,7 @@ Utilities that don't run a strategy. They share one convention, explained once h
 > **The `<mode>.module` convention.** By default the CLI auto-registers CCXT Binance. To use a different exchange (custom API keys, rate limits, a non-spot market), drop a `modules/<mode>.module.ts` that calls `addExchangeSchema` from `backtest-kit`. The CLI loads it automatically before running, trying `.ts`/`.mjs`/`.cjs`; it's searched **next to the target file first, then in the project root**. `.env` is loaded root-first then the target-file dir (override), so API keys stay out of code.
 
 <details>
-<summary>The shared <code>&lt;mode&gt;.module.ts</code> shape (pine / editor / dump / pnldebug / brokerdebug / simulator)</summary>
+<summary>The shared <code>&lt;mode&gt;.module.ts</code> shape (pine / editor / dump / pnldebug / brokerdebug / sweep)</summary>
 
 ```typescript
 // modules/pine.module.ts  (same shape for editor/dump/pnldebug.module; brokerdebug registers a Broker instead)
@@ -450,32 +450,32 @@ The CLI loads `./modules/brokerdebug.module`, fetches the last candle for `--sym
 
 </details>
 
-### 🎛️ Simulator (`--simulator`)
+### 🎛️ Sweep (`--sweep`)
 
 A **grid sweep** over a feed of crowd trading ideas: the grid axes come from a positional JSON config of the consumer — from a small feasibility probe to a full parameter search. Without a config the engine defaults apply. Authors are graded by ONE binary outcome — **profit-before-stop**: walking each point's own hold window candle by candle, an idea is a HIT when a fixation (the profit lock if lock > 0, OR the trailing arm level) fires BEFORE the hard stop, a MISS when the hard stop fires first, the window times out, or the candles run out. Prints a Markdown report with the corridor share, the ranking winners, and the **raw author tracks** (ideas/hits/hitRate per grading rule) — the engine grades every author but bans none; who to trust is userspace.
 
 ```bash
-npx @backtest-kit/cli --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
+npx @backtest-kit/cli --sweep --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
 # → engine-default grid; add a config to shape the sweep:
-npx @backtest-kit/cli --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl ./assets/probe.config.json
+npx @backtest-kit/cli --sweep --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl ./assets/probe.config.json
 ```
 
 <details>
-<summary>Simulator flags, input format & behavior</summary>
+<summary>Sweep flags, input format & behavior</summary>
 
 | Flag | Type | Description |
 |------|------|-------------|
-| `--simulator` | boolean | Enable the grid sweep |
+| `--sweep` | boolean | Enable the grid sweep |
 | `--symbol` | string | Trading pair to simulate (default `"BTCUSDT"`) |
 | `--exchange` | string | Exchange (default: first registered, falls back to CCXT Binance) |
-| `--output` | string | Output base name (default `simulator_{SYMBOL}_{TIMESTAMP}`) |
-| `--json` | boolean | Save the full `ISimulatorResult` to `./dump/<output>.json` |
+| `--output` | string | Output base name (default `sweep_{SYMBOL}_{TIMESTAMP}`) |
+| `--json` | boolean | Save the full `ISweepResult` to `./dump/<output>.json` |
 | `--markdown` | boolean | Save the summary report to `./dump/<output>.md` |
-| `--verbose` | boolean | Log every simulator lifecycle callback to the console |
+| `--verbose` | boolean | Log every sweep lifecycle callback to the console |
 
-**Positionals:** path to an ideas `.jsonl` file (required) — one idea per line, exact shape `{ "id": number, "ts": number, "symbol": string, "direction": "LONG"|"SHORT"|"NEUTRAL", "author": string }` — and an **optional config `.json`** with the shape `{ "gridAxes"?: ISimulatorGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }`. Both files are validated **before any work starts** — a structure mismatch (including an unknown config key) aborts the run with an error naming the field. No config → an empty object → the engine defaults. Ideas of other symbols are filtered out by the engine, so one shared feed serves any `--symbol`.
+**Positionals:** path to an ideas `.jsonl` file (required) — one idea per line, exact shape `{ "id": number, "ts": number, "symbol": string, "direction": "LONG"|"SHORT"|"NEUTRAL", "author": string }` — and an **optional config `.json`** with the shape `{ "gridAxes"?: ISweepGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }`. Both files are validated **before any work starts** — a structure mismatch (including an unknown config key) aborts the run with an error naming the field. No config → an empty object → the engine defaults. Ideas of other symbols are filtered out by the engine, so one shared feed serves any `--symbol`.
 
-Under the hood: one candle pass per idea to the grid's longest hold (lazy chunked fetch through the exchange, persist cache first), flood dedupe (one idea per author per direction per 8h), EVERY author traded (the engine grades every author on the raw per-author track **inside each point's own hold window** and bans none — userspace filters on the continuous `hitRate`), production slot semantics (one open position per author), time-based Sharpe/Sortino over daily equity buckets. The result is a single report bucket — `result.reports.reports` (grid point reports, sorted by `reportOrder`), `result.reports.best` (the four ranking winners), and `result.reports.tracks` (author tracks). Each track line is self-contained (`{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`) for grep/jq without a join. With `--verbose` every lifecycle callback (`onIdeas`, `onProfiles`, `onAuthorsTrained`, `onGridPoint`, `onRanking`, `onDone`) is logged to the console as it fires, so long runs show progress. Exchange via `simulator.module` (see convention above).
+Under the hood: one candle pass per idea to the grid's longest hold (lazy chunked fetch through the exchange, persist cache first), flood dedupe (one idea per author per direction per 8h), EVERY author traded (the engine grades every author on the raw per-author track **inside each point's own hold window** and bans none — userspace filters on the continuous `hitRate`), production slot semantics (one open position per author), time-based Sharpe/Sortino over daily equity buckets. The result is a single report bucket — `result.reports.reports` (grid point reports, sorted by `reportOrder`), `result.reports.best` (the four ranking winners), and `result.reports.tracks` (author tracks). Each track line is self-contained (`{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`) for grep/jq without a join. With `--verbose` every lifecycle callback (`onIdeas`, `onProfiles`, `onAuthorsTrained`, `onGridPoint`, `onRanking`, `onDone`) is logged to the console as it fires, so long runs show progress. Exchange via `sweep.module` (see convention above).
 
 </details>
 

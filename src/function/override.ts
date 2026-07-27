@@ -5,7 +5,7 @@ import { IWalkerSchema } from "../interfaces/Walker.interface";
 import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
 import { IActionSchema } from "../interfaces/Action.interface";
-import { ISimulatorSchema } from "../interfaces/Simulator.interface";
+import { ISweepSchema } from "../interfaces/Sweep.interface";
 import backtest from "../lib/index";
 
 const METHOD_NAME_OVERRIDE_STRATEGY = "function.override.overrideStrategySchema";
@@ -15,7 +15,7 @@ const METHOD_NAME_OVERRIDE_WALKER = "function.override.overrideWalkerSchema";
 const METHOD_NAME_OVERRIDE_SIZING = "function.override.overrideSizingSchema";
 const METHOD_NAME_OVERRIDE_RISK = "function.override.overrideRiskSchema";
 const METHOD_NAME_OVERRIDE_ACTION = "function.override.overrideActionSchema";
-const METHOD_NAME_OVERRIDE_SIMULATOR = "function.override.overrideSimulatorSchema";
+const METHOD_NAME_OVERRIDE_SIMULATOR = "function.override.overrideSweepSchema";
 
 /**
  * Partial strategy schema for override operations.
@@ -191,20 +191,20 @@ type TActionSchema = {
 } & Partial<IActionSchema>;
 
 /**
- * Partial simulator schema for override operations.
+ * Partial sweep schema for override operations.
  *
- * Requires only the simulator name identifier, all other fields are optional.
- * Used by overrideSimulatorSchema() to perform partial updates without replacing entire configuration.
+ * Requires only the sweep name identifier, all other fields are optional.
+ * Used by overrideSweepSchema() to perform partial updates without replacing entire configuration.
  *
- * @property simulatorName - Required: Unique simulator identifier (must exist in registry)
+ * @property sweepName - Required: Unique sweep identifier (must exist in registry)
  * @property exchangeName - Optional: New exchange to fetch candles through
  * @property gridAxes - Optional: Updated grid axes (hard stop, trailing take, hold, consensus threshold)
  * @property callbacks - Optional: Updated lifecycle callbacks
  *
  * @example
  * ```typescript
- * const partialUpdate: TSimulatorSchema = {
- *   simulatorName: "tv-ideas-simulator",
+ * const partialUpdate: TSweepSchema = {
+ *   sweepName: "tv-ideas-sweep",
  *   gridAxes: {
  *     hardStopPercent: [3, 5, 7],
  *     trailingTakePercent: [1.5, 2, 3],
@@ -213,9 +213,9 @@ type TActionSchema = {
  * };
  * ```
  */
-type TSimulatorSchema = {
-  simulatorName: ISimulatorSchema["simulatorName"];
-} & Partial<ISimulatorSchema>;
+type TSweepSchema = {
+  sweepName: ISweepSchema["sweepName"];
+} & Partial<ISweepSchema>;
 
 /**
  * Overrides an existing trading strategy in the framework.
@@ -519,25 +519,25 @@ export async function overrideActionSchema(actionSchema: TActionSchema) {
 }
 
 /**
- * Overrides an existing simulator configuration in the framework.
+ * Overrides an existing sweep configuration in the framework.
  *
- * This function partially updates a previously registered simulator with new configuration.
+ * This function partially updates a previously registered sweep with new configuration.
  * Only the provided fields will be updated, other fields remain unchanged.
  *
- * Note: the connection layer memoizes ClientSimulator instances by
- * simulator name — an override after the first run takes effect for
- * new instances only (see SimulatorConnectionService.clear).
+ * Note: the connection layer memoizes ClientSweep instances by
+ * sweep name — an override after the first run takes effect for
+ * new instances only (see SweepConnectionService.clear).
  *
- * @param simulatorSchema - Partial simulator configuration object
- * @param simulatorSchema.simulatorName - Unique simulator identifier (must exist)
- * @param simulatorSchema.exchangeName - Optional: Exchange to fetch candles through
- * @param simulatorSchema.gridAxes - Optional: Grid axes override
- * @param simulatorSchema.callbacks - Optional: Lifecycle callbacks
+ * @param sweepSchema - Partial sweep configuration object
+ * @param sweepSchema.sweepName - Unique sweep identifier (must exist)
+ * @param sweepSchema.exchangeName - Optional: Exchange to fetch candles through
+ * @param sweepSchema.gridAxes - Optional: Grid axes override
+ * @param sweepSchema.callbacks - Optional: Lifecycle callbacks
  *
  * @example
  * ```typescript
- * overrideSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * overrideSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   gridAxes: {
  *     hardStopPercent: [3, 5, 7],
  *     trailingTakePercent: [1.5, 2, 3],
@@ -546,18 +546,18 @@ export async function overrideActionSchema(actionSchema: TActionSchema) {
  * });
  * ```
  */
-export async function overrideSimulatorSchema(simulatorSchema: TSimulatorSchema) {
+export async function overrideSweepSchema(sweepSchema: TSweepSchema) {
   backtest.loggerService.log(METHOD_NAME_OVERRIDE_SIMULATOR, {
-    simulatorSchema,
+    sweepSchema,
   });
 
-  await backtest.simulatorValidationService.validate(
-    simulatorSchema.simulatorName,
+  await backtest.sweepValidationService.validate(
+    sweepSchema.sweepName,
     METHOD_NAME_OVERRIDE_SIMULATOR
   );
 
-  return backtest.simulatorSchemaService.override(
-    simulatorSchema.simulatorName,
-    simulatorSchema
+  return backtest.sweepSchemaService.override(
+    sweepSchema.sweepName,
+    sweepSchema
   );
 }

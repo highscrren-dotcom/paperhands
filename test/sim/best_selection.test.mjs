@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Победитель рейтинга без анти-флюк порога: критерий решает сам.
@@ -52,8 +52,8 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
   });
 
   const rankings = [];
-  addSimulatorSchema({
-    simulatorName: "sim_best",
+  addSweepSchema({
+    sweepName: "sim_best",
     exchangeName: "sim-best-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -68,9 +68,9 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_best",
+    sweepName: "sim_best",
     ideas: Array.from({ length: CYCLES }, (_, k) => ({
       id: 1 + k,
       ts: START + k * SPACING * MINUTE,

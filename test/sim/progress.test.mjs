@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * onProgress и гигиена фида:
@@ -34,8 +34,8 @@ test("SIM: onProgress streams both stages; foreign symbols and NEUTRAL are filte
   });
 
   const events = [];
-  addSimulatorSchema({
-    simulatorName: "sim_progress",
+  addSweepSchema({
+    sweepName: "sim_progress",
     exchangeName: "sim-progress-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -62,9 +62,9 @@ test("SIM: onProgress streams both stages; foreign symbols and NEUTRAL are filte
     { id: 6, ts: START + 60 * MINUTE, symbol: "OTHERUSDT", direction: "SHORT", author: "Y" },
   ];
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_progress",
+    sweepName: "sim_progress",
     ideas,
   });
 

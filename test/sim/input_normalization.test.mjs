@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Нормализация входа: run() обязан сам отсортировать ленту и
@@ -48,8 +48,8 @@ test("SIM: reversed feed with mid-minute timestamps is bit-identical to the clea
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({ simulatorName: "sim_norm_clean", exchangeName: "sim-norm-exchange", gridAxes: AXES });
-  addSimulatorSchema({ simulatorName: "sim_norm_dirty", exchangeName: "sim-norm-exchange", gridAxes: AXES });
+  addSweepSchema({ sweepName: "sim_norm_clean", exchangeName: "sim-norm-exchange", gridAxes: AXES });
+  addSweepSchema({ sweepName: "sim_norm_dirty", exchangeName: "sim-norm-exchange", gridAxes: AXES });
 
   const clean = Array.from({ length: 5 }, (_, k) => ({
     id: 1 + k,
@@ -63,8 +63,8 @@ test("SIM: reversed feed with mid-minute timestamps is bit-identical to the clea
     .reverse()
     .map((idea) => ({ ...idea, ts: idea.ts + 37_000 }));
 
-  const cleanResult = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_norm_clean", ideas: clean });
-  const dirtyResult = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_norm_dirty", ideas: dirty });
+  const cleanResult = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_norm_clean", ideas: clean });
+  const dirtyResult = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_norm_dirty", ideas: dirty });
 
   if (cleanResult.reports.reports[0].tradesList.length !== 5) {
     fail(`sanity: clean run must trade 5, got ${cleanResult.reports.reports[0].trades}`);

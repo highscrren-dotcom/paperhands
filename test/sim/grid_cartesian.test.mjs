@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Полнота декартова произведения сетки: 4 оси по 2 значения дают
@@ -38,8 +38,8 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
   };
 
   const seen = [];
-  addSimulatorSchema({
-    simulatorName: "sim_grid",
+  addSweepSchema({
+    sweepName: "sim_grid",
     exchangeName: "sim-grid-exchange",
     gridAxes: axes,
     callbacks: {
@@ -47,9 +47,9 @@ test("SIM: cartesian grid emits every axis combination exactly once", async ({ p
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_grid",
+    sweepName: "sim_grid",
     ideas: [],
   });
 

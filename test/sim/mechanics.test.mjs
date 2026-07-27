@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Механика исполнения сделки (контракты честности SIMULATE_TRADE_FN):
@@ -70,8 +70,8 @@ test("SIM: hard stop fires on the wick and fills at the stop level with costs", 
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_mech_stop",
+  addSweepSchema({
+    sweepName: "sim_mech_stop",
     exchangeName: "sim-mech-stop",
     gridAxes: {
       hardStopPercent: [5],
@@ -84,7 +84,7 @@ test("SIM: hard stop fires on the wick and fills at the stop level with costs", 
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_mech_stop", ideas: singleIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_mech_stop", ideas: singleIdea() });
 
   const [{ trades }] = captured;
   if (trades.length !== 1) {
@@ -128,8 +128,8 @@ test("SIM: trailing take arms from previous-candle peak and fills at the pullbac
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_mech_trail",
+  addSweepSchema({
+    sweepName: "sim_mech_trail",
     exchangeName: "sim-mech-trail",
     gridAxes: {
       hardStopPercent: [50],
@@ -142,7 +142,7 @@ test("SIM: trailing take arms from previous-candle peak and fills at the pullbac
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_mech_trail", ideas: singleIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_mech_trail", ideas: singleIdea() });
 
   const [{ trades }] = captured;
   const [trade] = trades;
@@ -176,8 +176,8 @@ test("SIM: stop wins when stop and trailing are both reachable inside one candle
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_mech_pess",
+  addSweepSchema({
+    sweepName: "sim_mech_pess",
     exchangeName: "sim-mech-pess",
     gridAxes: {
       hardStopPercent: [50],
@@ -190,7 +190,7 @@ test("SIM: stop wins when stop and trailing are both reachable inside one candle
     },
   });
 
-  await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_mech_pess", ideas: singleIdea() });
+  await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_mech_pess", ideas: singleIdea() });
 
   const [{ trades }] = captured;
   const [trade] = trades;
@@ -220,8 +220,8 @@ test("SIM: entry is the NEXT-minute open — no lookahead for mid-minute publica
   });
 
   const profilesSeen = [];
-  addSimulatorSchema({
-    simulatorName: "sim_mech_entry",
+  addSweepSchema({
+    sweepName: "sim_mech_entry",
     exchangeName: "sim-mech-entry",
     gridAxes: {
       hardStopPercent: [50],
@@ -234,9 +234,9 @@ test("SIM: entry is the NEXT-minute open — no lookahead for mid-minute publica
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_mech_entry",
+    sweepName: "sim_mech_entry",
     ideas: [
       // середина минуты 4
       { id: 1, ts: START + 4 * MINUTE + 30_000, symbol: "TESTUSDT", direction: "LONG", author: "solo" },

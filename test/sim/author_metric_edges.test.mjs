@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Границы математики единственной метрики profit-before-stop
@@ -90,8 +90,8 @@ test("SIM: profit-before-stop thresholds are exact — >= on the lock touch, str
     });
 
     const trainedStats = [];
-    addSimulatorSchema({
-      simulatorName: `sim_reach_${name}`,
+    addSweepSchema({
+      sweepName: `sim_reach_${name}`,
       exchangeName: `sim-reach-${name}-exchange`,
       gridAxes: {
         hardStopPercent: [5],
@@ -106,9 +106,9 @@ test("SIM: profit-before-stop thresholds are exact — >= on the lock touch, str
       },
     });
 
-    await Simulator.run({
+    await Sweep.run({
       symbol: "TESTUSDT",
-      simulatorName: `sim_reach_${name}`,
+      sweepName: `sim_reach_${name}`,
       ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE, name)),
     });
 
@@ -140,8 +140,8 @@ test("SIM: lock=0 is valid — fixation is the trailing arm alone, the grid is n
   });
 
   const trainedStats = [];
-  addSimulatorSchema({
-    simulatorName: "sim_lock0",
+  addSweepSchema({
+    sweepName: "sim_lock0",
     exchangeName: "sim-lock0-exchange",
     gridAxes: {
       hardStopPercent: [5],
@@ -156,9 +156,9 @@ test("SIM: lock=0 is valid — fixation is the trailing arm alone, the grid is n
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_lock0",
+    sweepName: "sim_lock0",
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE, "spiker")),
   });
 

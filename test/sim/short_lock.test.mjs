@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * SHORT-зеркало профит-лока — направленная арифметика, не сверенная
@@ -56,8 +56,8 @@ test("SIM: short profit lock fills exactly at the mirrored level on the rebound"
     return 1010;
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_shortlock",
+  addSweepSchema({
+    sweepName: "sim_shortlock",
     exchangeName: "sim-shortlock-exchange",
     gridAxes: {
       ...AXES,
@@ -66,9 +66,9 @@ test("SIM: short profit lock fills exactly at the mirrored level on the rebound"
       profitLockPercent: [3],
     },
   });
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_shortlock",
+    sweepName: "sim_shortlock",
     ideas: [idea(1, 0, "bear")],
   });
   const [report] = result.reports.reports;
@@ -105,8 +105,8 @@ test("SIM: short runner rebound through both floors fills the LOWER trailing lev
     return 990;
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_shortcrash",
+  addSweepSchema({
+    sweepName: "sim_shortcrash",
     exchangeName: "sim-shortcrash-exchange",
     gridAxes: {
       ...AXES,
@@ -115,9 +115,9 @@ test("SIM: short runner rebound through both floors fills the LOWER trailing lev
       profitLockPercent: [3],
     },
   });
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_shortcrash",
+    sweepName: "sim_shortcrash",
     ideas: [idea(1, 0, "bear")],
   });
   const [report] = result.reports.reports;

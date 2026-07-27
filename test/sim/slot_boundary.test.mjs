@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Слот НА АВТОРА: занятая позиция автора поглощает только ЕГО же
@@ -41,8 +41,8 @@ test("SIM: a slot is per-author — an author's hold absorbs only his own overla
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_slot",
+  addSweepSchema({
+    sweepName: "sim_slot",
     exchangeName: "sim-slot-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -55,9 +55,9 @@ test("SIM: a slot is per-author — an author's hold absorbs only his own overla
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_slot",
+    sweepName: "sim_slot",
     ideas: [
       { id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "X" },
       { id: 2, ts: START + 9 * HOUR, symbol: "TESTUSDT", direction: "LONG", author: "X" },

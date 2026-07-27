@@ -1,11 +1,11 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
- * Stateless-гарантия клиента: SimulatorConnectionService мемоизирует
- * ОДИН ClientSimulator на имя, а JSDoc класса обещает независимость
- * прогонов. Два подряд Simulator.run с одним simulatorName и тем же
+ * Stateless-гарантия клиента: SweepConnectionService мемоизирует
+ * ОДИН ClientSweep на имя, а JSDoc класса обещает независимость
+ * прогонов. Два подряд Sweep.run с одним sweepName и тем же
  * фидом обязаны дать бит-в-бит одинаковый результат — любое
  * накопленное состояние (кеши, мутируемые профили, счётчики)
  * проявится расхождением.
@@ -44,8 +44,8 @@ test("SIM: repeated run on the memoized client is bit-for-bit identical", async 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_stateless",
+  addSweepSchema({
+    sweepName: "sim_stateless",
     exchangeName: "sim-stateless-exchange",
     gridAxes: {
       hardStopPercent: [5, 50],
@@ -64,8 +64,8 @@ test("SIM: repeated run on the memoized client is bit-for-bit identical", async 
     author: "prophet",
   }));
 
-  const first = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_stateless", ideas });
-  const second = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_stateless", ideas });
+  const first = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_stateless", ideas });
+  const second = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_stateless", ideas });
 
   // содержательность: прогон не вырожден
   if (first.reports.reports.length !== 8 || first.reports.best.some((b) => !b.report)) {

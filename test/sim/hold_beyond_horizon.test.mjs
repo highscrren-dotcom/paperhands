@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Горизонт профиля следует за самым длинным холдом сетки: никакого
@@ -36,8 +36,8 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_longhold",
+  addSweepSchema({
+    sweepName: "sim_longhold",
     exchangeName: "sim-longhold-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -47,9 +47,9 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_longhold",
+    sweepName: "sim_longhold",
     ideas: [{ id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "holder" }],
   });
 

@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Пол прибыли (profitLockPercent): взводится при касании +X% от
@@ -57,8 +57,8 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
   registerWorld("sim-lock-bleed-exchange", priceAt);
 
   const tradesByLock = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_lock_bleed",
+  addSweepSchema({
+    sweepName: "sim_lock_bleed",
     exchangeName: "sim-lock-bleed-exchange",
     gridAxes: {
       hardStopPercent: [5],
@@ -73,9 +73,9 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_lock_bleed",
+    sweepName: "sim_lock_bleed",
     ideas: [idea(1, 0, "LONG", "bleeder")],
   });
 
@@ -137,8 +137,8 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
   };
   registerWorld("sim-lock-runner-exchange", priceAt);
 
-  addSimulatorSchema({
-    simulatorName: "sim_lock_runner",
+  addSweepSchema({
+    sweepName: "sim_lock_runner",
     exchangeName: "sim-lock-runner-exchange",
     gridAxes: {
       hardStopPercent: [5],
@@ -149,9 +149,9 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_lock_runner",
+    sweepName: "sim_lock_runner",
     ideas: [idea(1, 0, "LONG", "runner")],
   });
 

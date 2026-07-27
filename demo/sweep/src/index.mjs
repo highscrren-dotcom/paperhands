@@ -1,4 +1,4 @@
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "backtest-kit";
+import { addExchangeSchema, addSweepSchema, Sweep } from "backtest-kit";
 import { readFileSync, writeFileSync } from "fs";
 import { singleshot } from "functools-kit";
 import { createWriteStream } from 'fs';
@@ -42,8 +42,8 @@ addExchangeSchema({
   },
 });
 
-addSimulatorSchema({
-  simulatorName: "tv_probe",
+addSweepSchema({
+  sweepName: "tv_probe",
   exchangeName: "ccxt_cached",
   reportOrder: "sharpe",
   callbacks: {
@@ -58,9 +58,9 @@ const ideas = readFileSync("./assets/tv-ideas.normalized.jsonl", "utf-8")
   .filter(Boolean)
   .map((line) => JSON.parse(line));
 
-const result = await Simulator.run({
+const result = await Sweep.run({
   symbol: "BTCUSDT",
-  simulatorName: "tv_probe",
+  sweepName: "tv_probe",
   ideas,
 });
 

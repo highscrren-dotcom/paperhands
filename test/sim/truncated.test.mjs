@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Обрезка горизонта концом данных (truncated):
@@ -63,8 +63,8 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
   });
 
   const captured = [];
-  addSimulatorSchema({
-    simulatorName: "sim_trunc",
+  addSweepSchema({
+    sweepName: "sim_trunc",
     exchangeName: "sim-trunc-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -85,9 +85,9 @@ test("SIM: end-of-data truncation — data_truncated exit and no track credit fo
     ...Array.from({ length: 3 }, (_, k) => idea(20 + k, END_M - 1990 + k * 481, "LONG", "shadow")),
   ];
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_trunc",
+    sweepName: "sim_trunc",
     ideas,
   });
 

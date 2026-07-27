@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Fallback анти-флюка: когда НИ ОДНА точка не добирает
@@ -50,8 +50,8 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_fallback",
+  addSweepSchema({
+    sweepName: "sim_fallback",
     exchangeName: "sim-fallback-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -63,9 +63,9 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_fallback",
+    sweepName: "sim_fallback",
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE)),
   });
 

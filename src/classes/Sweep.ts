@@ -1,11 +1,11 @@
-import { ISimulatorIdea, SimulatorName } from "../interfaces/Simulator.interface";
+import { ISweepIdea, SweepName } from "../interfaces/Sweep.interface";
 
 import backtest from "../lib";
 
-const METHOD_NAME_RUN = "Simulator.run";
+const METHOD_NAME_RUN = "Sweep.run";
 
 /**
- * Public API of the Simulator entity — parameter sweep over crowd
+ * Public API of the Sweep entity — parameter sweep over crowd
  * trading ideas. Profiles every idea with ONE candle pass and
  * evaluates the whole grid arithmetically from the profiles; the
  * result carries four ranking winners (sharpe / sortino / pnl /
@@ -13,8 +13,8 @@ const METHOD_NAME_RUN = "Simulator.run";
  * plus per-point reports with trade-level detail.
  *
  * Parameter map — what each knob tunes and when it is ignored
- * (full per-field contracts live in ISimulatorGridAxes and
- * ISimulatorSchema):
+ * (full per-field contracts live in ISweepGridAxes and
+ * ISweepSchema):
  *
  * Exit axes (always active in trade simulation):
  * - hardStopPercent — catastrophe exit; wins an ambiguous candle.
@@ -54,17 +54,17 @@ const METHOD_NAME_RUN = "Simulator.run";
  * ranking winners and its raw per-author tracks (one line per unique
  * rule x author). There is no per-metric split.
  *
- * The simulator picks candidates — honest confirmation is a
+ * The sweep picks candidates — honest confirmation is a
  * walk-forward test() shot, and the final arbiter for the chosen
  * parameters is a real engine backtest (Backtest.run).
  */
-export class SimulatorUtils {
+export class SweepUtils {
     /**
      * Runs the full simulation for a symbol through the service
-     * stack (global -> core/connection -> ClientSimulator):
+     * stack (global -> core/connection -> ClientSweep):
      * profiles -> author filter training -> grid evaluation ->
-     * rankings. The referenced simulator schema must be registered
-     * via addSimulatorSchema beforehand.
+     * rankings. The referenced sweep schema must be registered
+     * via addSweepSchema beforehand.
      *
      * What is silently dropped from the input before any math —
      * ideas of OTHER symbols (one shared feed serves every run),
@@ -79,14 +79,14 @@ export class SimulatorUtils {
      * over the engine defaults (an omitted axis is swept with the
      * default list; a single-value list freezes it), then every
      * point of the cartesian product is evaluated arithmetically
-     * from the same profiles; see ISimulatorGridAxes for each axis'
+     * from the same profiles; see ISweepGridAxes for each axis'
      * tune/ignore contract. Ranking winners honor the anti-fluke
      * floor PER metric bucket (a point below MIN_TRADES_FOR_BEST
      * trades can win only when NO point of its bucket clears the
      * floor).
      *
      * @param dto.symbol - Trading pair symbol to simulate (e.g., "BTCUSDT")
-     * @param dto.simulatorName - Registered simulator name
+     * @param dto.sweepName - Registered sweep name
      * @param dto.ideas - Ideas feed; other symbols are filtered out,
      * so one shared feed can be passed for every symbol
      * @returns Final simulation result: a bucket per author metric,
@@ -94,15 +94,15 @@ export class SimulatorUtils {
      * ranking winners carrying authorStats / allowedAuthors /
      * bannedAuthors under ITS OWN rule, and its trained ban
      * dictionaries (bans); plus hold-time distribution
-     * @throws Error when the simulator or its exchange is not registered
+     * @throws Error when the sweep or its exchange is not registered
      *
      * @example
      * ```typescript
-     * import { Simulator } from "backtest-kit";
+     * import { Sweep } from "backtest-kit";
      *
-     * const result = await Simulator.run({
+     * const result = await Sweep.run({
      *   symbol: "BTCUSDT",
-     *   simulatorName: "tv-ideas-simulator",
+     *   sweepName: "tv-ideas-sweep",
      *   ideas,
      * });
      * // result.reports.close.best -> winners by sharpe/sortino/pnl/recovery,
@@ -112,21 +112,21 @@ export class SimulatorUtils {
     public run = async (
         dto: {
             symbol: string;
-            simulatorName: SimulatorName;
-            ideas: ISimulatorIdea[];
+            sweepName: SweepName;
+            ideas: ISweepIdea[];
         }
     ) => {
         backtest.loggerService.log(METHOD_NAME_RUN, {
-            simulatorName: dto.simulatorName,
+            sweepName: dto.sweepName,
             ideasLen: dto.ideas.length,
             symbol: dto.symbol,
         });
-        return await backtest.simulatorGlobalService.run(dto);
+        return await backtest.sweepGlobalService.run(dto);
     }
 }
 
 /**
- * Singleton instance of SimulatorUtils — the public entry point:
- * `Simulator.run({ symbol, simulatorName, ideas })`.
+ * Singleton instance of SweepUtils — the public entry point:
+ * `Sweep.run({ symbol, sweepName, ideas })`.
  */
-export const Simulator = new SimulatorUtils();
+export const Sweep = new SweepUtils();

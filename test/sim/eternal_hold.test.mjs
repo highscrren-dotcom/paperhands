@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Синтетический мир "пила": после каждой идеи цена всплескивает на +1%
@@ -25,7 +25,7 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  * короткий холд — метрика математически штрафует ожидание.
  */
 
-const START = 1704067200000; // 2024-01-01T00:00:00Z, совпадает с data/simulator_1.jsonl
+const START = 1704067200000; // 2024-01-01T00:00:00Z, совпадает с data/sweep_1.jsonl
 const MINUTE = 60_000;
 const SPACING = 481;
 const IDEAS_COUNT = 90;
@@ -91,16 +91,16 @@ const GRID_AXES = {
 
 test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", async ({ pass, fail }) => {
   registerExchange("sim-eternal-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_eternal",
+  addSweepSchema({
+    sweepName: "sim_eternal",
     exchangeName: "sim-eternal-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_eternal",
+    sweepName: "sim_eternal",
     ideas: makeIdeas(),
   });
 
@@ -171,8 +171,8 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
   registerExchange("sim-absorb-exchange");
 
   const tradesByHold = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_absorb",
+  addSweepSchema({
+    sweepName: "sim_absorb",
     exchangeName: "sim-absorb-exchange",
     gridAxes: GRID_AXES,
     callbacks: {
@@ -182,9 +182,9 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_absorb",
+    sweepName: "sim_absorb",
     ideas: makeIdeas(),
   });
 

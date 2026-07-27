@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Грейдинг в окне холда СВОЕЙ точки: одна сетка с двумя холдами
@@ -50,8 +50,8 @@ test("SIM: hits are graded inside each point's own hold window — two holds, tw
 
   const trained = [];
   const pointReports = [];
-  addSimulatorSchema({
-    simulatorName: "sim_holdwindow",
+  addSweepSchema({
+    sweepName: "sim_holdwindow",
     exchangeName: "sim-holdwindow-exchange",
     gridAxes: {
       hardStopPercent: [5],
@@ -66,9 +66,9 @@ test("SIM: hits are graded inside each point's own hold window — two holds, tw
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_holdwindow",
+    sweepName: "sim_holdwindow",
     ideas: Array.from({ length: 5 }, (_, k) => ({
       id: 1 + k,
       ts: START + k * CYCLE * MINUTE,

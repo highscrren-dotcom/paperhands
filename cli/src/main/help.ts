@@ -21,7 +21,7 @@ Modes:
   --dump                Fetch and save raw OHLCV candles
   --pnldebug            Simulate PnL per minute for a given entry price and direction
   --brokerdebug         Fire a single broker commit against the live broker adapter
-  --simulator <ideas.jsonl> [config.json]  Grid sweep over crowd ideas: per-point metrics + raw author tracks
+  --sweep <ideas.jsonl> [config.json]  Grid sweep over crowd ideas: profit-before-stop corridor + raw author tracks
   --flush  <entry...>   Delete report/log/markdown/agent folders from strategy dump dir
   --init                Scaffold a new project in the current directory
   --docker              Scaffold a Docker workspace for running strategies in a container
@@ -142,19 +142,19 @@ Broker debug flags (--brokerdebug):
   Loads ./live.module, fetches the last candle for --symbol/--timeframe, and calls
   the selected broker commit with synthetic payload values derived from current price.
 
-Simulator flags (--simulator):
+Sweep flags (--sweep):
 
   --symbol      <string>   Trading pair to simulate (default: BTCUSDT)
   --exchange    <string>   Exchange name (default: first registered)
-  --output      <string>   Output file base name (default: simulator_{SYMBOL}_{TIMESTAMP})
-  --json                   Save full ISimulatorResult to ./dump/<output>.json
+  --output      <string>   Output file base name (default: sweep_{SYMBOL}_{TIMESTAMP})
+  --json                   Save full ISweepResult to ./dump/<output>.json
   --markdown               Save summary report to ./dump/<output>.md
-  --verbose                Log every simulator lifecycle callback to the console
+  --verbose                Log every sweep lifecycle callback to the console
 
   Positionals: path to an ideas .jsonl file — one idea per line with the exact shape
   { "id": number, "ts": number, "symbol": string, "direction": "LONG"|"SHORT"|"NEUTRAL",
   "author": string } — and an OPTIONAL config .json with the shape
-  { "gridAxes"?: ISimulatorGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }.
+  { "gridAxes"?: ISweepGridAxes, "reportOrder"?: "sharpe"|"sortino"|"pnl"|"recovery" }.
   Both files are validated BEFORE any work; a mismatch aborts the run with an error.
   No config -> an empty object is used and the engine defaults apply (the full
   default grid axes and reportOrder "sharpe" of the connection service).
@@ -168,10 +168,10 @@ Simulator flags (--simulator):
   symbols are filtered out — one shared feed serves any --symbol.
 
   No output flag → print the Markdown summary to stdout. With --verbose every
-  simulator lifecycle callback (onProgress, onIdeas, onProfiles, onAuthorsTrained,
+  sweep lifecycle callback (onProgress, onIdeas, onProfiles, onAuthorsTrained,
   onGridPoint, onRanking, onDone) is logged to the console as it fires.
 
-  Module file ./modules/simulator.module is loaded automatically if it exists
+  Module file ./modules/sweep.module is loaded automatically if it exists
   (register your exchange there); without it CCXT Binance is used by default.
 
 Flush flags (--flush):
@@ -207,7 +207,7 @@ Module hooks (loaded automatically by each mode):
   modules/dump.module       --dump       Exchange schema for candle dumps
   modules/pnldebug.module   --pnldebug      Exchange schema for PnL debug runs
   modules/brokerdebug.module  --brokerdebug   Broker adapter used for broker commit testing
-  modules/simulator.module  --simulator     Exchange schema for the crowd-ideas feasibility probe
+  modules/sweep.module  --sweep     Exchange schema for the crowd-ideas feasibility probe
 
   --flush has no associated module. It only removes dump subdirectories.
 
@@ -236,8 +236,8 @@ Examples:
   node ${ENTRY_PATH} --pnldebug --priceopen 67956.73 --direction long --when 1772064000000 --minutes 60 --markdown
   node ${ENTRY_PATH} --brokerdebug --commit signal-open --symbol BTCUSDT
   node ${ENTRY_PATH} --brokerdebug --commit partial-profit --symbol ETHUSDT
-  node ${ENTRY_PATH} --simulator --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
-  node ${ENTRY_PATH} --simulator --symbol BTCUSDT --json --output jun_2026_probe ./assets/tv-ideas.normalized.jsonl ./assets/probe.config.json
+  node ${ENTRY_PATH} --sweep --symbol BTCUSDT ./assets/tv-ideas.normalized.jsonl
+  node ${ENTRY_PATH} --sweep --symbol BTCUSDT --json --output jun_2026_probe ./assets/tv-ideas.normalized.jsonl ./assets/probe.config.json
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts
   node ${ENTRY_PATH} --flush ./content/feb_2026.strategy/feb_2026.strategy.ts ./content/feb_2026.strategy/feb_2026.test.ts
   node ${ENTRY_PATH} --init --output my-trading-bot

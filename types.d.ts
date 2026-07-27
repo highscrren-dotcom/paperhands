@@ -5981,12 +5981,12 @@ type SizingName = string;
 /**
  * Direction of a trading idea (crowd forecast).
  */
-type SimulatorIdeaDirection = "LONG" | "SHORT" | "NEUTRAL";
+type SweepIdeaDirection = "LONG" | "SHORT" | "NEUTRAL";
 /**
  * Single trading idea: a public forecast published by an author.
  * The unit of simulation — candles are iterated per idea, not per grid point.
  */
-interface ISimulatorIdea {
+interface ISweepIdea {
     /** Unique idea identifier from the source platform. */
     id: number;
     /** Unix timestamp in milliseconds when the idea was published. */
@@ -5994,7 +5994,7 @@ interface ISimulatorIdea {
     /** Trading pair symbol the idea refers to (e.g., "BTCUSDT"). */
     symbol: string;
     /** Forecast direction claimed by the author. */
-    direction: SimulatorIdeaDirection;
+    direction: SweepIdeaDirection;
     /** Author login on the source platform (unique per author). */
     author: string;
 }
@@ -6007,9 +6007,9 @@ interface ISimulatorIdea {
  * the consumer; ban training never reads them — every rule grades
  * the raw candle trajectory inside its own hold window.
  */
-interface ISimulatorIdeaProfile {
+interface ISweepIdeaProfile {
     /** The idea this profile belongs to. */
-    idea: ISimulatorIdea;
+    idea: ISweepIdea;
     /** Entry minute: the minute FOLLOWING publication (no lookahead). */
     entryTimestamp: number;
     /** Open price of the first candle (entry basis before slippage). */
@@ -6051,7 +6051,7 @@ interface ISimulatorIdeaProfile {
  * it is IGNORED — no axis is allowed to be a silent no-op without
  * that being documented here.
  */
-interface ISimulatorGridAxes {
+interface ISweepGridAxes {
     /**
      * Hard stop levels to sweep, percent from entry.
      * Tunes: the catastrophe exit — how deep a position may sink
@@ -6059,7 +6059,7 @@ interface ISimulatorGridAxes {
      * floor are reachable inside one candle (pessimism contract). Also
      * the loss side of the profit-before-stop grading: an author's idea
      * is a MISS when this stop fires before any fixation (see
-     * ISimulatorGradingRule).
+     * ISweepGradingRule).
      * Ignored: never — every trade checks it and it is part of the
      * grading rule for every point.
      */
@@ -6115,7 +6115,7 @@ interface ISimulatorGridAxes {
 /**
  * Single point of the grid (scalar per axis).
  */
-interface ISimulatorGridPoint {
+interface ISweepGridPoint {
     /** Hard stop level, percent from entry. */
     hardStopPercent: number;
     /** Trailing take pullback, percent from the running peak. */
@@ -6131,7 +6131,7 @@ interface ISimulatorGridPoint {
 /**
  * Why a simulated trade was closed.
  */
-type SimulatorExitReason = "hard_stop" | "trailing_take" | "profit_lock" | "time_expired" | "data_truncated";
+type SweepExitReason = "hard_stop" | "trailing_take" | "profit_lock" | "time_expired" | "data_truncated";
 /**
  * Single simulated trade: an idea evaluated against a grid point.
  */
@@ -6142,13 +6142,13 @@ type SimulatorExitReason = "hard_stop" | "trailing_take" | "profit_lock" | "time
  * trade's author). Carries the author as well as the id so
  * per-author analysis reads straight off the artifact, no feed join.
  */
-interface ISimulatorAbsorbedIdea {
+interface ISweepAbsorbedIdea {
     /** Identifier of the absorbed idea. */
     ideaId: number;
     /** Author of the absorbed idea. */
     author: string;
 }
-interface ISimulatorTrade {
+interface ISweepTrade {
     /** Identifier of the idea that triggered the trade. */
     ideaId: number;
     /**
@@ -6167,13 +6167,13 @@ interface ISimulatorTrade {
      */
     author: string;
     /** Position direction inherited from the idea. */
-    direction: SimulatorIdeaDirection;
+    direction: SweepIdeaDirection;
     /** Unix timestamp in milliseconds of the trade entry minute. */
     entryTimestamp: number;
     /** Unix timestamp in milliseconds of the exit candle. */
     exitTimestamp: number;
     /** Why the trade was closed. */
-    exitReason: SimulatorExitReason;
+    exitReason: SweepExitReason;
     /** Actual holding time, minutes (entry candle inclusive). */
     holdMinutesActual: number;
     /** Trade PnL percent, net of fees on both legs. */
@@ -6183,14 +6183,14 @@ interface ISimulatorTrade {
      * holding the slot — each {ideaId, author}, so which author's
      * signals a long hold ate is visible idea by idea, no feed join.
      */
-    absorbedIdeas: ISimulatorAbsorbedIdea[];
+    absorbedIdeas: ISweepAbsorbedIdea[];
 }
 /**
  * Aggregated metrics of one grid point (production slot semantics).
  */
-interface ISimulatorPointReport {
+interface ISweepPointReport {
     /** The grid point these metrics belong to. */
-    point: ISimulatorGridPoint;
+    point: ISweepGridPoint;
     /** Ideas skipped because their author's own slot was busy (absorbed). */
     skippedBusy: number;
     /** Sum of trade PnL percents over the range. */
@@ -6238,7 +6238,7 @@ interface ISimulatorPointReport {
      */
     sortino: number;
     /** Trade counts per exit reason. */
-    exitReasons: Record<SimulatorExitReason, number>;
+    exitReasons: Record<SweepExitReason, number>;
     /**
      * The point's trades in full — the SAME list for every point,
      * winner or not, so any point is traceable ("why this pnl") by jq
@@ -6249,7 +6249,7 @@ interface ISimulatorPointReport {
      * it lives deduplicated in tracks[] (far smaller than repeating it
      * on every point).
      */
-    tradesList: ISimulatorTrade[];
+    tradesList: ISweepTrade[];
 }
 /**
  * One author's TRACK under ONE grading rule (rule = the point's
@@ -6262,7 +6262,7 @@ interface ISimulatorPointReport {
  * track into a 0/1 flag and lost information). One line per
  * (rule x author), self-contained for grep/jq.
  */
-interface ISimulatorTrack {
+interface ISweepTrack {
     /**
      * Grading window of the rule — the point's holdMinutes. The track
      * depends on it: the same author has different hits in different
@@ -6326,35 +6326,35 @@ interface ISimulatorTrack {
  * recoveryFactor times a constant (365/days of the shared bucket
  * window) — so only the raw criterion exists.
  */
-type SimulatorRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
+type SweepRankingCriterion = "sharpe" | "sortino" | "pnl" | "recovery";
 /**
  * Winner of one ranking criterion — just the criterion and the
  * winning point's report. Everything else lives on the report and is
  * never duplicated here: the trades in `report.tradesList`; the
  * author track lives deduplicated in the bucket's tracks[].
  */
-interface ISimulatorBest {
+interface ISweepBest {
     /** The ranking criterion this winner belongs to. */
-    criterion: SimulatorRankingCriterion;
+    criterion: SweepRankingCriterion;
     /** Winning point report; null when the bucket produced no reports. */
-    report: ISimulatorPointReport | null;
+    report: ISweepPointReport | null;
 }
 /**
  * The single report bucket of a run: every grid point graded by the
  * one profit-before-stop metric, its ranking winners, and its author
  * TRACKS. One bucket — there is no per-metric split.
  */
-interface ISimulatorMetricReport {
+interface ISweepMetricReport {
     /**
      * Grid point reports, sorted descending by the schema's reportOrder
      * criterion (default sharpe).
      */
-    reports: ISimulatorPointReport[];
+    reports: ISweepPointReport[];
     /**
      * Winners of the four ranking criteria. Empty only when the grid
      * produced no reports.
      */
-    best: ISimulatorBest[];
+    best: ISweepBest[];
     /**
      * Author tracks — one line per (rule x author), deduplicated by
      * grading rule (hold x lock x stop x trailing). This is the RAW
@@ -6364,14 +6364,14 @@ interface ISimulatorMetricReport {
      * is self-contained (carries hold/lock/stop/trailing/author) for grep/jq
      * without a join.
      */
-    tracks: ISimulatorTrack[];
+    tracks: ISweepTrack[];
 }
 /**
  * Final result of a simulation run: one report bucket (the single
  * profit-before-stop grading) with its reports, ranking winners and
  * author tracks, plus the run-level idea/profile/hold counters.
  */
-interface ISimulatorResult {
+interface ISweepResult {
     /** Trading pair symbol the simulation ran for. */
     symbol: string;
     /** Total ideas of the symbol received (including NEUTRAL). */
@@ -6394,14 +6394,14 @@ interface ISimulatorResult {
      * reportOrder), the ranking winners in best[], and the per-author
      * tracks[].
      */
-    reports: ISimulatorMetricReport;
+    reports: ISweepMetricReport;
 }
 /**
- * Registration schema of a simulator instance.
+ * Registration schema of a sweep instance.
  *
  * Field-by-field contract — what each parameter allows to tune and
  * when it is ignored:
- * - simulatorName — registry key; duplicate registration is a
+ * - sweepName — registry key; duplicate registration is a
  *   validation error.
  * - exchangeName — candle source for idea profiles. The Exchange
  *   contract is strict (exactly `limit` candles or throw): end of
@@ -6413,21 +6413,21 @@ interface ISimulatorResult {
  *   a single-value list freezes an axis. Pinning example:
  *   profitLockPercent: [0] disables the lock (fixation is then the
  *   trailing arm alone). Each axis documents its own tune/ignore
- *   conditions in ISimulatorGridAxes.
+ *   conditions in ISweepGridAxes.
  * - callbacks — all optional; an omitted callback is simply never
  *   fired (silent run). onAuthorsTrained fires once per unique
  *   grading RULE (hold x lock x stop x trailing), not per grid point.
  */
-interface ISimulatorSchema {
-    /** Unique simulator identifier for the schema registry. */
-    simulatorName: SimulatorName;
+interface ISweepSchema {
+    /** Unique sweep identifier for the schema registry. */
+    sweepName: SweepName;
     /** Exchange schema to fetch candles through. */
     exchangeName: ExchangeName;
     /**
      * Grid axes override, merged per-axis over the defaults at params
      * creation — a schema may override only the axes it cares about.
      */
-    gridAxes?: Partial<ISimulatorGridAxes>;
+    gridAxes?: Partial<ISweepGridAxes>;
     /**
      * Ranking criterion ordering the reports list (descending). The
      * return value of run() is the consumer
@@ -6437,78 +6437,78 @@ interface ISimulatorSchema {
      * sortino/recovery of loss-free series). Default: "sharpe".
      * Does not affect best[] or tracks in any way.
      */
-    reportOrder?: SimulatorRankingCriterion;
+    reportOrder?: SweepRankingCriterion;
     /** Lifecycle callbacks (all optional). */
-    callbacks?: Partial<ISimulatorCallbacks>;
+    callbacks?: Partial<ISweepCallbacks>;
 }
 /**
  * Long-running stage of a simulation run reported by onProgress:
  * "profiles" — one candle pass per idea (dominated by candle IO),
  * "grid" — arithmetic evaluation of grid points.
  */
-type SimulatorProgressStage = "profiles" | "grid";
+type SweepProgressStage = "profiles" | "grid";
 /**
  * Lifecycle callbacks of a simulation run. Every progress point the
  * reference Sweep script printed to console is exposed here instead.
  */
-interface ISimulatorCallbacks {
+interface ISweepCallbacks {
     /**
      * Progress of a long-running stage: fires after every processed
      * item — idea (stage "profiles") or grid point (stage "grid").
      * processed grows from 1 to total within a stage.
      */
-    onProgress(symbol: string, stage: SimulatorProgressStage, processed: number, total: number): void;
+    onProgress(symbol: string, stage: SweepProgressStage, processed: number, total: number): void;
     /** Ideas received: total vs directional (NEUTRAL excluded). */
     onIdeas(symbol: string, ideasTotal: number, ideasDirectional: number): void;
     /**
      * All idea profiles built (one candle pass per idea).
      * truncatedCount — profiles cut short by end of candle data.
      */
-    onProfiles(symbol: string, profiles: ISimulatorIdeaProfile[], truncatedCount: number): void;
+    onProfiles(symbol: string, profiles: ISweepIdeaProfile[], truncatedCount: number): void;
     /**
      * Author track trained for one grading rule of the grid (fires
      * once per unique grading rule = hold x lock x stop x trailing):
      * the raw per-author track (ideas/hits/hitRate) under that rule. No
      * ban verdict — the engine grades, userspace decides who to trust.
      */
-    onAuthorsTrained(symbol: string, tracks: ISimulatorTrack[]): void;
+    onAuthorsTrained(symbol: string, tracks: ISweepTrack[]): void;
     /** One grid point evaluated. */
-    onGridPoint(symbol: string, report: ISimulatorPointReport, trades: ISimulatorTrade[]): void;
+    onGridPoint(symbol: string, report: ISweepPointReport, trades: ISweepTrade[]): void;
     /**
      * Ranking computed over the single report bucket: the reports
      * sorted by the criterion (descending) and the winner. Fires once
      * per criterion.
      */
-    onRanking(symbol: string, criterion: SimulatorRankingCriterion, sorted: ISimulatorPointReport[], best: ISimulatorBest): void;
+    onRanking(symbol: string, criterion: SweepRankingCriterion, sorted: ISweepPointReport[], best: ISweepBest): void;
     /** Simulation finished. */
-    onDone(symbol: string, result: ISimulatorResult): void;
+    onDone(symbol: string, result: ISweepResult): void;
 }
 /**
- * Runtime parameters of a simulator client: the schema with defaults
+ * Runtime parameters of a sweep client: the schema with defaults
  * resolved plus injected infrastructure dependencies.
  */
-interface ISimulatorParams extends ISimulatorSchema {
+interface ISweepParams extends ISweepSchema {
     /** Logger instance for debug output. */
     logger: ILogger;
     /** Grid axes with defaults applied (no longer optional). */
-    gridAxes: ISimulatorGridAxes;
+    gridAxes: ISweepGridAxes;
     /** Report order with the default applied (no longer optional). */
-    reportOrder: SimulatorRankingCriterion;
+    reportOrder: SweepRankingCriterion;
 }
 /**
- * Public surface of a simulator client.
+ * Public surface of a sweep client.
  */
-interface ISimulator {
+interface ISweep {
     /**
      * Runs the full simulation for a symbol over the given ideas:
      * profiles -> author filter -> grid evaluation -> rankings.
      */
-    run(symbol: string, ideas: ISimulatorIdea[]): Promise<ISimulatorResult>;
+    run(symbol: string, ideas: ISweepIdea[]): Promise<ISweepResult>;
 }
 /**
- * Unique simulator identifier.
+ * Unique sweep identifier.
  */
-type SimulatorName = string;
+type SweepName = string;
 
 /**
  * Retrieves a registered strategy schema by name.
@@ -6620,20 +6620,20 @@ declare function getRiskSchema(riskName: RiskName): IRiskSchema;
  */
 declare function getActionSchema(actionName: ActionName): IActionSchema;
 /**
- * Retrieves a registered simulator schema by name.
+ * Retrieves a registered sweep schema by name.
  *
- * @param simulatorName - Unique simulator identifier
- * @returns The simulator schema configuration object
- * @throws Error if simulator is not registered
+ * @param sweepName - Unique sweep identifier
+ * @returns The sweep schema configuration object
+ * @throws Error if sweep is not registered
  *
  * @example
  * ```typescript
- * const simulator = getSimulatorSchema("tv-ideas-simulator");
- * console.log(simulator.exchangeName); // "ccxt-exchange"
- * console.log(simulator.gridAxes); // grid axes override or undefined
+ * const sweep = getSweepSchema("tv-ideas-sweep");
+ * console.log(sweep.exchangeName); // "ccxt-exchange"
+ * console.log(sweep.gridAxes); // grid axes override or undefined
  * ```
  */
-declare function getSimulatorSchema(simulatorName: SimulatorName): ISimulatorSchema;
+declare function getSweepSchema(sweepName: SweepName): ISweepSchema;
 
 /**
  * Blocks until the schema registries needed to start trading are populated.
@@ -9168,25 +9168,25 @@ declare function addRiskSchema(riskSchema: IRiskSchema): void;
  */
 declare function addActionSchema(actionSchema: IActionSchema): void;
 /**
- * Registers a simulator in the framework — a parameter sweep engine
- * over crowd trading ideas (see Simulator.run).
+ * Registers a sweep in the framework — a parameter sweep engine
+ * over crowd trading ideas (see Sweep.run).
  *
- * The simulator profiles every idea with one candle pass through the
+ * The sweep profiles every idea with one candle pass through the
  * referenced exchange, trains the author whitelist/ban list on the
  * simulated range and evaluates the grid of exit/entry parameters
  * arithmetically from the profiles. Grid axes are optional — bounded
  * defaults apply when omitted.
  *
- * @param simulatorSchema - Simulator configuration object
- * @param simulatorSchema.simulatorName - Unique simulator identifier
- * @param simulatorSchema.exchangeName - Exchange schema to fetch candles through
- * @param simulatorSchema.gridAxes - Optional grid axes override (hard stop, trailing take, hold, consensus threshold)
- * @param simulatorSchema.callbacks - Optional lifecycle callbacks (onIdeas, onProfiles, onAuthorsTrained, onGridPoint, onRanking, onDone)
+ * @param sweepSchema - Sweep configuration object
+ * @param sweepSchema.sweepName - Unique sweep identifier
+ * @param sweepSchema.exchangeName - Exchange schema to fetch candles through
+ * @param sweepSchema.gridAxes - Optional grid axes override (hard stop, trailing take, hold, consensus threshold)
+ * @param sweepSchema.callbacks - Optional lifecycle callbacks (onIdeas, onProfiles, onAuthorsTrained, onGridPoint, onRanking, onDone)
  *
  * @example
  * ```typescript
- * addSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * addSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   exchangeName: "ccxt-exchange",
  *   callbacks: {
  *     onRanking: (symbol, criterion, sorted, best) =>
@@ -9195,7 +9195,7 @@ declare function addActionSchema(actionSchema: IActionSchema): void;
  * });
  * ```
  */
-declare function addSimulatorSchema(simulatorSchema: ISimulatorSchema): void;
+declare function addSweepSchema(sweepSchema: ISweepSchema): void;
 
 /**
  * Partial strategy schema for override operations.
@@ -9364,20 +9364,20 @@ type TActionSchema = {
     actionName: IActionSchema["actionName"];
 } & Partial<IActionSchema>;
 /**
- * Partial simulator schema for override operations.
+ * Partial sweep schema for override operations.
  *
- * Requires only the simulator name identifier, all other fields are optional.
- * Used by overrideSimulatorSchema() to perform partial updates without replacing entire configuration.
+ * Requires only the sweep name identifier, all other fields are optional.
+ * Used by overrideSweepSchema() to perform partial updates without replacing entire configuration.
  *
- * @property simulatorName - Required: Unique simulator identifier (must exist in registry)
+ * @property sweepName - Required: Unique sweep identifier (must exist in registry)
  * @property exchangeName - Optional: New exchange to fetch candles through
  * @property gridAxes - Optional: Updated grid axes (hard stop, trailing take, hold, consensus threshold)
  * @property callbacks - Optional: Updated lifecycle callbacks
  *
  * @example
  * ```typescript
- * const partialUpdate: TSimulatorSchema = {
- *   simulatorName: "tv-ideas-simulator",
+ * const partialUpdate: TSweepSchema = {
+ *   sweepName: "tv-ideas-sweep",
  *   gridAxes: {
  *     hardStopPercent: [3, 5, 7],
  *     trailingTakePercent: [1.5, 2, 3],
@@ -9386,9 +9386,9 @@ type TActionSchema = {
  * };
  * ```
  */
-type TSimulatorSchema = {
-    simulatorName: ISimulatorSchema["simulatorName"];
-} & Partial<ISimulatorSchema>;
+type TSweepSchema = {
+    sweepName: ISweepSchema["sweepName"];
+} & Partial<ISweepSchema>;
 /**
  * Overrides an existing trading strategy in the framework.
  *
@@ -9586,25 +9586,25 @@ declare function overrideRiskSchema(riskSchema: TRiskSchema): Promise<IRiskSchem
  */
 declare function overrideActionSchema(actionSchema: TActionSchema): Promise<IActionSchema>;
 /**
- * Overrides an existing simulator configuration in the framework.
+ * Overrides an existing sweep configuration in the framework.
  *
- * This function partially updates a previously registered simulator with new configuration.
+ * This function partially updates a previously registered sweep with new configuration.
  * Only the provided fields will be updated, other fields remain unchanged.
  *
- * Note: the connection layer memoizes ClientSimulator instances by
- * simulator name — an override after the first run takes effect for
- * new instances only (see SimulatorConnectionService.clear).
+ * Note: the connection layer memoizes ClientSweep instances by
+ * sweep name — an override after the first run takes effect for
+ * new instances only (see SweepConnectionService.clear).
  *
- * @param simulatorSchema - Partial simulator configuration object
- * @param simulatorSchema.simulatorName - Unique simulator identifier (must exist)
- * @param simulatorSchema.exchangeName - Optional: Exchange to fetch candles through
- * @param simulatorSchema.gridAxes - Optional: Grid axes override
- * @param simulatorSchema.callbacks - Optional: Lifecycle callbacks
+ * @param sweepSchema - Partial sweep configuration object
+ * @param sweepSchema.sweepName - Unique sweep identifier (must exist)
+ * @param sweepSchema.exchangeName - Optional: Exchange to fetch candles through
+ * @param sweepSchema.gridAxes - Optional: Grid axes override
+ * @param sweepSchema.callbacks - Optional: Lifecycle callbacks
  *
  * @example
  * ```typescript
- * overrideSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * overrideSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   gridAxes: {
  *     hardStopPercent: [3, 5, 7],
  *     trailingTakePercent: [1.5, 2, 3],
@@ -9613,7 +9613,7 @@ declare function overrideActionSchema(actionSchema: TActionSchema): Promise<IAct
  * });
  * ```
  */
-declare function overrideSimulatorSchema(simulatorSchema: TSimulatorSchema): Promise<ISimulatorSchema>;
+declare function overrideSweepSchema(sweepSchema: TSweepSchema): Promise<ISweepSchema>;
 
 /**
  * Returns a list of all registered exchange schemas.
@@ -9795,29 +9795,29 @@ declare function listSizingSchema(): Promise<ISizingSchema[]>;
  */
 declare function listRiskSchema(): Promise<IRiskSchema[]>;
 /**
- * Returns a list of all registered simulator schemas.
+ * Returns a list of all registered sweep schemas.
  *
- * Retrieves all simulators that have been registered via addSimulatorSchema().
+ * Retrieves all sweeps that have been registered via addSweepSchema().
  * Useful for debugging, documentation, or building dynamic UIs.
  *
- * @returns Array of simulator schemas with their configurations
+ * @returns Array of sweep schemas with their configurations
  *
  * @example
  * ```typescript
- * import { listSimulatorSchema, addSimulatorSchema } from "backtest-kit";
+ * import { listSweepSchema, addSweepSchema } from "backtest-kit";
  *
- * addSimulatorSchema({
- *   simulatorName: "tv-ideas-simulator",
+ * addSweepSchema({
+ *   sweepName: "tv-ideas-sweep",
  *   exchangeName: "ccxt-exchange",
  *   callbacks: {},
  * });
  *
- * const simulators = await listSimulatorSchema();
- * console.log(simulators);
- * // [{ simulatorName: "tv-ideas-simulator", exchangeName: "ccxt-exchange", ... }]
+ * const sweeps = await listSweepSchema();
+ * console.log(sweeps);
+ * // [{ sweepName: "tv-ideas-sweep", exchangeName: "ccxt-exchange", ... }]
  * ```
  */
-declare function listSimulatorSchema(): Promise<ISimulatorSchema[]>;
+declare function listSweepSchema(): Promise<ISweepSchema[]>;
 
 /**
  * Contract for background execution completion events.
@@ -19862,7 +19862,7 @@ declare class PersistSessionUtils {
 declare const PersistSessionAdapter: PersistSessionUtils;
 
 /**
- * Public API of the Simulator entity — parameter sweep over crowd
+ * Public API of the Sweep entity — parameter sweep over crowd
  * trading ideas. Profiles every idea with ONE candle pass and
  * evaluates the whole grid arithmetically from the profiles; the
  * result carries four ranking winners (sharpe / sortino / pnl /
@@ -19870,8 +19870,8 @@ declare const PersistSessionAdapter: PersistSessionUtils;
  * plus per-point reports with trade-level detail.
  *
  * Parameter map — what each knob tunes and when it is ignored
- * (full per-field contracts live in ISimulatorGridAxes and
- * ISimulatorSchema):
+ * (full per-field contracts live in ISweepGridAxes and
+ * ISweepSchema):
  *
  * Exit axes (always active in trade simulation):
  * - hardStopPercent — catastrophe exit; wins an ambiguous candle.
@@ -19911,17 +19911,17 @@ declare const PersistSessionAdapter: PersistSessionUtils;
  * ranking winners and its raw per-author tracks (one line per unique
  * rule x author). There is no per-metric split.
  *
- * The simulator picks candidates — honest confirmation is a
+ * The sweep picks candidates — honest confirmation is a
  * walk-forward test() shot, and the final arbiter for the chosen
  * parameters is a real engine backtest (Backtest.run).
  */
-declare class SimulatorUtils {
+declare class SweepUtils {
     /**
      * Runs the full simulation for a symbol through the service
-     * stack (global -> core/connection -> ClientSimulator):
+     * stack (global -> core/connection -> ClientSweep):
      * profiles -> author filter training -> grid evaluation ->
-     * rankings. The referenced simulator schema must be registered
-     * via addSimulatorSchema beforehand.
+     * rankings. The referenced sweep schema must be registered
+     * via addSweepSchema beforehand.
      *
      * What is silently dropped from the input before any math —
      * ideas of OTHER symbols (one shared feed serves every run),
@@ -19936,14 +19936,14 @@ declare class SimulatorUtils {
      * over the engine defaults (an omitted axis is swept with the
      * default list; a single-value list freezes it), then every
      * point of the cartesian product is evaluated arithmetically
-     * from the same profiles; see ISimulatorGridAxes for each axis'
+     * from the same profiles; see ISweepGridAxes for each axis'
      * tune/ignore contract. Ranking winners honor the anti-fluke
      * floor PER metric bucket (a point below MIN_TRADES_FOR_BEST
      * trades can win only when NO point of its bucket clears the
      * floor).
      *
      * @param dto.symbol - Trading pair symbol to simulate (e.g., "BTCUSDT")
-     * @param dto.simulatorName - Registered simulator name
+     * @param dto.sweepName - Registered sweep name
      * @param dto.ideas - Ideas feed; other symbols are filtered out,
      * so one shared feed can be passed for every symbol
      * @returns Final simulation result: a bucket per author metric,
@@ -19951,15 +19951,15 @@ declare class SimulatorUtils {
      * ranking winners carrying authorStats / allowedAuthors /
      * bannedAuthors under ITS OWN rule, and its trained ban
      * dictionaries (bans); plus hold-time distribution
-     * @throws Error when the simulator or its exchange is not registered
+     * @throws Error when the sweep or its exchange is not registered
      *
      * @example
      * ```typescript
-     * import { Simulator } from "backtest-kit";
+     * import { Sweep } from "backtest-kit";
      *
-     * const result = await Simulator.run({
+     * const result = await Sweep.run({
      *   symbol: "BTCUSDT",
-     *   simulatorName: "tv-ideas-simulator",
+     *   sweepName: "tv-ideas-sweep",
      *   ideas,
      * });
      * // result.reports.close.best -> winners by sharpe/sortino/pnl/recovery,
@@ -19968,15 +19968,15 @@ declare class SimulatorUtils {
      */
     run: (dto: {
         symbol: string;
-        simulatorName: SimulatorName;
-        ideas: ISimulatorIdea[];
-    }) => Promise<ISimulatorResult>;
+        sweepName: SweepName;
+        ideas: ISweepIdea[];
+    }) => Promise<ISweepResult>;
 }
 /**
- * Singleton instance of SimulatorUtils — the public entry point:
- * `Simulator.run({ symbol, simulatorName, ideas })`.
+ * Singleton instance of SweepUtils — the public entry point:
+ * `Sweep.run({ symbol, sweepName, ideas })`.
  */
-declare const Simulator: SimulatorUtils;
+declare const Sweep: SweepUtils;
 
 /**
  * Configuration interface for selective markdown service enablement.
@@ -42676,52 +42676,52 @@ declare class MaxDrawdownReportService {
 }
 
 /**
- * Existence and dependency validation of simulators.
+ * Existence and dependency validation of sweeps.
  *
- * Tracks every registered simulator and verifies at use time that a
- * referenced simulator exists and its exchange dependency is valid.
+ * Tracks every registered sweep and verifies at use time that a
+ * referenced sweep exists and its exchange dependency is valid.
  * Registration here is uniqueness-guarded, unlike the schema
  * registry where re-registering replaces the record.
  */
-declare class SimulatorValidationService {
+declare class SweepValidationService {
     private readonly loggerService;
     private readonly exchangeValidationService;
-    private _simulatorMap;
+    private _sweepMap;
     /**
-     * Tracks a simulator for validation. Called on schema
+     * Tracks a sweep for validation. Called on schema
      * registration; duplicate names are rejected.
      *
-     * @param simulatorName - Simulator name to track
-     * @param simulatorSchema - Schema stored for dependency checks
+     * @param sweepName - Sweep name to track
+     * @param sweepSchema - Schema stored for dependency checks
      * @throws Error when the name is already tracked
      */
-    addSimulator: (simulatorName: SimulatorName, simulatorSchema: ISimulatorSchema) => void;
+    addSweep: (sweepName: SweepName, sweepSchema: ISweepSchema) => void;
     /**
-     * Validates that a simulator is registered and its exchange
-     * dependency passes validation. Memoized by simulator name — the
+     * Validates that a sweep is registered and its exchange
+     * dependency passes validation. Memoized by sweep name — the
      * check runs once per name, later calls are no-ops.
      *
-     * @param simulatorName - Simulator name to validate
+     * @param sweepName - Sweep name to validate
      * @param source - Caller tag included in error messages
-     * @throws Error when the simulator or its exchange is unknown
+     * @throws Error when the sweep or its exchange is unknown
      */
-    validate: (simulatorName: SimulatorName, source: string) => void;
+    validate: (sweepName: SweepName, source: string) => void;
     /**
-     * Lists every tracked simulator schema.
+     * Lists every tracked sweep schema.
      *
      * @returns All schemas registered for validation
      */
-    list: () => Promise<ISimulatorSchema[]>;
+    list: () => Promise<ISweepSchema[]>;
 }
 
 /**
- * Registry of simulator schemas.
+ * Registry of sweep schemas.
  *
- * Stores ISimulatorSchema records by simulator name with shallow
+ * Stores ISweepSchema records by sweep name with shallow
  * validation on registration. The connection service reads schemas
- * from here when building ClientSimulator instances.
+ * from here when building ClientSweep instances.
  */
-declare class SimulatorSchemaService {
+declare class SweepSchemaService {
     readonly loggerService: {
         readonly methodContextService: {
             readonly context: IMethodContext;
@@ -42740,43 +42740,43 @@ declare class SimulatorSchemaService {
     };
     private _registry;
     /**
-     * Registers a simulator schema under its name after shallow
+     * Registers a sweep schema under its name after shallow
      * validation. Registering the same key twice replaces the record.
      *
-     * @param key - Simulator name to register under
+     * @param key - Sweep name to register under
      * @param value - Schema to store
      */
-    register(key: SimulatorName, value: ISimulatorSchema): void;
+    register(key: SweepName, value: ISweepSchema): void;
     /**
      * Shallow structural validation of a schema: required string
      * fields only, no deep checks — grid axes and callbacks are
      * validated by their consumers.
      *
-     * @param simulatorSchema - Schema to check
-     * @throws Error when simulatorName or exchangeName is missing
+     * @param sweepSchema - Schema to check
+     * @throws Error when sweepName or exchangeName is missing
      */
     private validateShallow;
     /**
      * Partially overrides a registered schema and returns the merged
-     * record. Used by overrideSimulatorSchema-style public APIs.
+     * record. Used by overrideSweepSchema-style public APIs.
      *
-     * @param key - Simulator name to override
+     * @param key - Sweep name to override
      * @param value - Partial schema patch
      * @returns The merged schema after override
      */
-    override(key: SimulatorName, value: Partial<ISimulatorSchema>): ISimulatorSchema;
+    override(key: SweepName, value: Partial<ISweepSchema>): ISweepSchema;
     /**
-     * Returns the registered schema by simulator name.
+     * Returns the registered schema by sweep name.
      *
-     * @param key - Simulator name to look up
+     * @param key - Sweep name to look up
      * @returns The stored schema
      * @throws Error when no schema is registered under the name
      */
-    get(key: SimulatorName): ISimulatorSchema;
+    get(key: SweepName): ISweepSchema;
 }
 
 /**
- * Parameter sweep engine over crowd trading ideas (the "Simulator").
+ * Parameter sweep engine over crowd trading ideas (the "Sweep").
  *
  * Finds production strategy parameters (hard stop, trailing take,
  * hold duration, author ban rule) by simulating every idea against
@@ -42809,16 +42809,16 @@ declare class SimulatorSchemaService {
  * 4. Grid winners are picked by four rankings (Sharpe, Sortino, PnL,
  *    total PnL) with an anti-fluke minimum-trades guard.
  *
- * Every stage emits an ISimulatorCallbacks hook; the client itself
+ * Every stage emits an ISweepCallbacks hook; the client itself
  * is stateless between runs — each run() call is independent.
  *
  * Validation of the chosen parameters MUST be done by a real engine
- * backtest (Backtest.run): the simulator picks candidates, it does
+ * backtest (Backtest.run): the sweep picks candidates, it does
  * not replace the engine.
  */
-declare class ClientSimulator implements ISimulator {
-    readonly params: ISimulatorParams;
-    constructor(params: ISimulatorParams);
+declare class ClientSweep implements ISweep {
+    readonly params: ISweepParams;
+    constructor(params: ISweepParams);
     /**
      * Runs the full simulation pipeline for a symbol.
      *
@@ -42853,133 +42853,133 @@ declare class ClientSimulator implements ISimulator {
      * arithmetic invariants (PnL below the hard stop floor, trailing
      * take locking a loss, exit before entry)
      */
-    run: (symbol: string, ideas: ISimulatorIdea[]) => Promise<ISimulatorResult>;
+    run: (symbol: string, ideas: ISweepIdea[]) => Promise<ISweepResult>;
 }
 
 /**
- * Structural mirror of ISimulator: the connection service exposes the
+ * Structural mirror of ISweep: the connection service exposes the
  * same public surface as the client it manages, with DI-level DTOs.
  */
-type TSimulator$2 = {
-    [key in keyof ISimulator]: any;
+type TSweep$2 = {
+    [key in keyof ISweep]: any;
 };
 /**
- * Connection layer of the Simulator entity.
+ * Connection layer of the Sweep entity.
  *
- * Owns the ClientSimulator lifecycle: resolves the registered schema
- * by simulatorName, applies grid axes defaults, injects the logger
- * and memoizes one client instance per simulator name. Public
+ * Owns the ClientSweep lifecycle: resolves the registered schema
+ * by sweepName, applies grid axes defaults, injects the logger
+ * and memoizes one client instance per sweep name. Public
  * methods accept flat DTOs and delegate to the memoized client.
  */
-declare class SimulatorConnectionService implements TSimulator$2 {
+declare class SweepConnectionService implements TSweep$2 {
     private readonly loggerService;
-    private readonly simulatorSchemaService;
+    private readonly sweepSchemaService;
     /**
-     * Returns the ClientSimulator for a simulator name, creating it on
-     * first access. Memoized by simulator name — one client instance
-     * per registered simulator; gridAxes fall back to
+     * Returns the ClientSweep for a sweep name, creating it on
+     * first access. Memoized by sweep name — one client instance
+     * per registered sweep; gridAxes fall back to
      * DEFAULT_GRID_AXES when the schema omits them.
      *
-     * @param simulatorName - Registered simulator name
-     * @returns Memoized ClientSimulator instance
+     * @param sweepName - Registered sweep name
+     * @returns Memoized ClientSweep instance
      */
-    getSimulator: ((simulatorName: SimulatorName) => ClientSimulator) & functools_kit.IClearableMemoize<string> & functools_kit.IControlMemoize<string, ClientSimulator>;
+    getSweep: ((sweepName: SweepName) => ClientSweep) & functools_kit.IClearableMemoize<string> & functools_kit.IControlMemoize<string, ClientSweep>;
     /**
      * Runs the full simulation for a symbol through the memoized
      * client: profiles -> author filter -> grid evaluation -> rankings.
      *
      * @param dto.symbol - Trading pair symbol to simulate
-     * @param dto.simulatorName - Registered simulator name
+     * @param dto.sweepName - Registered sweep name
      * @param dto.ideas - Ideas feed (other symbols are filtered out by the client)
      * @returns Final simulation result (reports, rankings; the author artifact lives per-winner in best[])
      */
     run: (dto: {
         symbol: string;
-        simulatorName: SimulatorName;
-        ideas: ISimulatorIdea[];
-    }) => Promise<ISimulatorResult>;
+        sweepName: SweepName;
+        ideas: ISweepIdea[];
+    }) => Promise<ISweepResult>;
     /**
      * Drops memoized client instances: a specific one by name or all
-     * of them when called without arguments. The next getSimulator
+     * of them when called without arguments. The next getSweep
      * call re-reads the schema and builds a fresh client.
      *
-     * @param simulatorName - Simulator to drop; omit to drop all
+     * @param sweepName - Sweep to drop; omit to drop all
      */
-    clear: (simulatorName?: SimulatorName) => void;
+    clear: (sweepName?: SweepName) => void;
 }
 
 /**
- * Structural mirror of ISimulator: the global service exposes the
+ * Structural mirror of ISweep: the global service exposes the
  * same public surface as the client it fronts, with DI-level DTOs.
  */
-type TSimulator$1 = {
-    [key in keyof ISimulator]: any;
+type TSweep$1 = {
+    [key in keyof ISweep]: any;
 };
 /**
- * Global entry point of the Simulator entity.
+ * Global entry point of the Sweep entity.
  *
  * The outermost service layer the public API talks to: validates the
- * referenced simulator (existence + exchange dependency) and
+ * referenced sweep (existence + exchange dependency) and
  * delegates to the connection layer, which owns the memoized
- * ClientSimulator instances.
+ * ClientSweep instances.
  */
-declare class SimulatorGlobalService implements TSimulator$1 {
+declare class SweepGlobalService implements TSweep$1 {
     private readonly loggerService;
-    private readonly simulatorConnectionService;
-    private readonly simulatorValidationService;
+    private readonly sweepConnectionService;
+    private readonly sweepValidationService;
     /**
      * Runs the full simulation for a symbol after validating the
-     * simulator reference: profiles -> author filter -> grid
+     * sweep reference: profiles -> author filter -> grid
      * evaluation -> rankings.
      *
      * @param dto.symbol - Trading pair symbol to simulate
-     * @param dto.simulatorName - Registered simulator name
+     * @param dto.sweepName - Registered sweep name
      * @param dto.ideas - Ideas feed (other symbols are filtered out by the client)
      * @returns Final simulation result (reports, rankings; the author artifact lives per-winner in best[])
-     * @throws Error when the simulator or its exchange is not registered
+     * @throws Error when the sweep or its exchange is not registered
      */
     run: (dto: {
         symbol: string;
-        simulatorName: SimulatorName;
-        ideas: ISimulatorIdea[];
-    }) => Promise<ISimulatorResult>;
+        sweepName: SweepName;
+        ideas: ISweepIdea[];
+    }) => Promise<ISweepResult>;
 }
 
 /**
- * Structural mirror of ISimulator: the core service exposes the same
+ * Structural mirror of ISweep: the core service exposes the same
  * public surface as the client it fronts, with DI-level DTOs.
  */
-type TSimulator = {
-    [key in keyof ISimulator]: any;
+type TSweep = {
+    [key in keyof ISweep]: any;
 };
 /**
- * Core layer of the Simulator entity.
+ * Core layer of the Sweep entity.
  *
- * Validates the simulator reference (existence + exchange
+ * Validates the sweep reference (existence + exchange
  * dependency) and delegates to the connection layer. Sits between
- * the global entry point and the memoized ClientSimulator instances
- * owned by SimulatorConnectionService.
+ * the global entry point and the memoized ClientSweep instances
+ * owned by SweepConnectionService.
  */
-declare class SimulatorCoreService implements TSimulator {
+declare class SweepCoreService implements TSweep {
     private readonly loggerService;
-    private readonly simulatorConnectionService;
-    private readonly simulatorValidationService;
+    private readonly sweepConnectionService;
+    private readonly sweepValidationService;
     /**
      * Runs the full simulation for a symbol after validating the
-     * simulator reference: profiles -> author filter -> grid
+     * sweep reference: profiles -> author filter -> grid
      * evaluation -> rankings.
      *
      * @param dto.symbol - Trading pair symbol to simulate
-     * @param dto.simulatorName - Registered simulator name
+     * @param dto.sweepName - Registered sweep name
      * @param dto.ideas - Ideas feed (other symbols are filtered out by the client)
      * @returns Final simulation result (reports, rankings; the author artifact lives per-winner in best[])
-     * @throws Error when the simulator or its exchange is not registered
+     * @throws Error when the sweep or its exchange is not registered
      */
     run: (dto: {
         symbol: string;
-        simulatorName: SimulatorName;
-        ideas: ISimulatorIdea[];
-    }) => Promise<ISimulatorResult>;
+        sweepName: SweepName;
+        ideas: ISweepIdea[];
+    }) => Promise<ISweepResult>;
 }
 
 declare const backtest: {
@@ -42993,7 +42993,7 @@ declare const backtest: {
     actionValidationService: ActionValidationService;
     configValidationService: ConfigValidationService;
     columnValidationService: ColumnValidationService;
-    simulatorValidationService: SimulatorValidationService;
+    sweepValidationService: SweepValidationService;
     backtestReportService: BacktestReportService;
     liveReportService: LiveReportService;
     scheduleReportService: ScheduleReportService;
@@ -43029,7 +43029,7 @@ declare const backtest: {
     liveCommandService: LiveCommandService;
     backtestCommandService: BacktestCommandService;
     walkerCommandService: WalkerCommandService;
-    simulatorGlobalService: SimulatorGlobalService;
+    sweepGlobalService: SweepGlobalService;
     sizingGlobalService: SizingGlobalService;
     riskGlobalService: RiskGlobalService;
     partialGlobalService: PartialGlobalService;
@@ -43095,7 +43095,7 @@ declare const backtest: {
             frameName: string;
         }, backtest: boolean) => Promise<IRuntimeInfo<Data>>;
     };
-    simulatorCoreService: SimulatorCoreService;
+    sweepCoreService: SweepCoreService;
     exchangeCoreService: ExchangeCoreService;
     strategyCoreService: StrategyCoreService;
     actionCoreService: ActionCoreService;
@@ -43107,7 +43107,7 @@ declare const backtest: {
     sizingSchemaService: SizingSchemaService;
     riskSchemaService: RiskSchemaService;
     actionSchemaService: ActionSchemaService;
-    simulatorSchemaService: SimulatorSchemaService;
+    sweepSchemaService: SweepSchemaService;
     exchangeConnectionService: ExchangeConnectionService;
     strategyConnectionService: StrategyConnectionService;
     frameConnectionService: FrameConnectionService;
@@ -43116,7 +43116,7 @@ declare const backtest: {
     actionConnectionService: ActionConnectionService;
     partialConnectionService: PartialConnectionService;
     breakevenConnectionService: BreakevenConnectionService;
-    simulatorConnectionService: SimulatorConnectionService;
+    sweepConnectionService: SweepConnectionService;
     executionContextService: {
         readonly context: IExecutionContext;
     };
@@ -43577,4 +43577,4 @@ declare class OrderTransientError extends Error {
     static fromError(error: object): OrderTransientError;
 }
 
-export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISimulatorBest, type ISimulatorGridAxes, type ISimulatorGridPoint, type ISimulatorIdea, type ISimulatorMetricReport, type ISimulatorPointReport, type ISimulatorResult, type ISimulatorSchema, type ISimulatorTrack, type ISimulatorTrade, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, Simulator, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addRiskSchema, addSimulatorSchema, addSizingSchema, addStrategySchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSimulatorSchema, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMemory, listRiskSchema, listSimulatorSchema, listSizingSchema, listStrategySchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideRiskSchema, overrideSimulatorSchema, overrideSizingSchema, overrideStrategySchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
+export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ISweepBest, type ISweepGridAxes, type ISweepGridPoint, type ISweepIdea, type ISweepMetricReport, type ISweepPointReport, type ISweepResult, type ISweepSchema, type ISweepTrack, type ISweepTrade, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sweep, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addRiskSchema, addSizingSchema, addStrategySchema, addSweepSchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSweepSchema, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listSweepSchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideSweepSchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };

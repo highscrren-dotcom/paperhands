@@ -13,7 +13,7 @@ export {
   getSizingSchema,
   getRiskSchema,
   getActionSchema,
-  getSimulatorSchema,
+  getSweepSchema,
 } from "./function/get";
 export {
   waitForReady,
@@ -100,7 +100,7 @@ export {
   addWalkerSchema,
   addSizingSchema,
   addRiskSchema,
-  addSimulatorSchema,
+  addSweepSchema,
 } from "./function/add";
 export {
   overrideActionSchema,
@@ -110,7 +110,7 @@ export {
   overrideSizingSchema,
   overrideStrategySchema,
   overrideWalkerSchema,
-  overrideSimulatorSchema,
+  overrideSweepSchema,
 } from "./function/override";
 export {
   listExchangeSchema,
@@ -119,7 +119,7 @@ export {
   listWalkerSchema,
   listSizingSchema,
   listRiskSchema,
-  listSimulatorSchema,
+  listSweepSchema,
 } from "./function/list";
 export {
   listenSignal,
@@ -251,17 +251,17 @@ export {
 } from "./interfaces/Exchange.interface";
 
 export {
-  ISimulatorIdea,
-  ISimulatorGridAxes,
-  ISimulatorGridPoint,
-  ISimulatorPointReport,
-  ISimulatorTrade,
-  ISimulatorTrack,
-  ISimulatorBest,
-  ISimulatorMetricReport,
-  ISimulatorResult,
-  ISimulatorSchema,
-} from "./interfaces/Simulator.interface";
+  ISweepIdea,
+  ISweepGridAxes,
+  ISweepGridPoint,
+  ISweepPointReport,
+  ISweepTrade,
+  ISweepTrack,
+  ISweepBest,
+  ISweepMetricReport,
+  ISweepResult,
+  ISweepSchema,
+} from "./interfaces/Sweep.interface";
 
 export {
   IPublicAction,
@@ -565,8 +565,8 @@ export {
 } from "./classes/Persist";
 
 export {
-  Simulator,
-} from "./classes/Simulator";
+  Sweep,
+} from "./classes/Sweep";
 
 export {
   Report,

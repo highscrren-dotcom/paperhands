@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Вырожденные фиды:
@@ -9,7 +9,7 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  *     разрешены, ничего не падает;
  *  2) идея без единой свечи (за краем данных / битый getCandles) —
  *     это НЕ тихий дроп, а ФАТАЛ: прогон на отсутствующих свечах
- *     мусор, поэтому Simulator.run обязан упасть с внятной ошибкой,
+ *     мусор, поэтому Sweep.run обязан упасть с внятной ошибкой,
  *     а не выдать нулевой профиль и наёбалово из нулей.
  */
 
@@ -47,16 +47,16 @@ const GRID_AXES = {
 
 test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, rankings intact", async ({ pass, fail }) => {
   registerBoundedExchange("sim-empty-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_empty",
+  addSweepSchema({
+    sweepName: "sim_empty",
     exchangeName: "sim-empty-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_empty",
+    sweepName: "sim_empty",
     ideas: [],
   });
 
@@ -86,8 +86,8 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
 
 test("SIM: an idea with no candles is FATAL — the run throws loudly, not silently zeros", async ({ pass, fail }) => {
   registerBoundedExchange("sim-beyond-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_beyond",
+  addSweepSchema({
+    sweepName: "sim_beyond",
     exchangeName: "sim-beyond-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
@@ -95,9 +95,9 @@ test("SIM: an idea with no candles is FATAL — the run throws loudly, not silen
 
   let error = null;
   try {
-    await Simulator.run({
+    await Sweep.run({
       symbol: "TESTUSDT",
-      simulatorName: "sim_beyond",
+      sweepName: "sim_beyond",
       ideas: [
         // целиком за краем данных: ни одной свечи -> прогон обязан упасть
         { id: 7, ts: END_TS + 1000 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "ghost" },

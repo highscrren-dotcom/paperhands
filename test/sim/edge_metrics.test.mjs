@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Граничные случаи метрик и правила бана:
@@ -54,8 +54,8 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_sortino",
+  addSweepSchema({
+    sweepName: "sim_sortino",
     exchangeName: "sim-sortino-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -66,9 +66,9 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_sortino",
+    sweepName: "sim_sortino",
     ideas: Array.from({ length: CYCLES }, (_, k) => idea(1 + k, k * 481, "LONG", "prophet")),
   });
 
@@ -123,8 +123,8 @@ test("SIM: track hitRate is the exact raw ratio — 2/4 = 0.5, 1/4 = 0.25 (no ba
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_boundary",
+  addSweepSchema({
+    sweepName: "sim_boundary",
     exchangeName: "sim-boundary-exchange",
     gridAxes: {
       // замок +2% берётся LONG'ом на росте раньше хардстопа = hit;
@@ -139,9 +139,9 @@ test("SIM: track hitRate is the exact raw ratio — 2/4 = 0.5, 1/4 = 0.25 (no ba
 
   // каждая идея выровнена на начало цикла (phase 0), чтобы войти
   // прямо перед +3% рампой: LONG = hit (замок), SHORT = miss (стоп)
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_boundary",
+    sweepName: "sim_boundary",
     ideas: [
       // coin: ровно 2 hit (LONG) + 2 miss (SHORT) = 0.5
       idea(1, 0, "LONG", "coin"),
