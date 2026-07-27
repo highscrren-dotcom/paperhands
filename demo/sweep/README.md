@@ -15,7 +15,7 @@ Grading is **one binary outcome — profit-before-stop**: walking each point's o
 
 This is a run of the model over its own full history — train-on-train, stated openly, no out-of-sample split here. The full harvesting machinery IS swept: hard stop, trailing take, hold duration and profit lock all vary across the grid, so the sweep looks for the exit engineering that turns the raw direction into a corridor.
 
-June 2026 is the honest example: the crowd average bleeds at short holds, but the corridor **turns positive at the longest hold** — the best point (**stop 5.5% · trail 1.5% · hold 120h · lock 1.5%**) makes **+26.26%** at a **79% win rate** over 253 trades. The value is the corridor AND the raw tracks, which tell you which authors called this month well.
+June 2026 is the honest example: the crowd average bleeds at short holds, but the corridor **turns positive once the hold is long enough** — the best point (**stop 6% · trail 3% · hold 11d · lock 5%**) makes **+218.8%** at a **71% win rate** over 220 trades, and **24% of the whole grid (5,100 of 21,280 points) is profitable**. The value is the corridor AND the raw tracks, which tell you which authors called this month well.
 
 ## Purpose
 
@@ -23,7 +23,7 @@ This project exists for the concrete checks below.
 
 ### 1. Is there a profitable corridor at all?
 
-One `Sweep.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is the full cartesian product — **1,560 points** (stop 13 × trailing 6 × hold 5 × lock 4) — because the whole harvesting machinery is swept. If no point of the corridor is profitable, the crowd's direction carries no extractable edge on this feed even with the exit engineering searched.
+One `Sweep.run` over the whole feed: each idea gets ONE asynchronous candle pass from the minute after its publication, as deep as the longest hold of the grid — the schema owns the horizon, the engine has no hidden constant. Execution is wick-honest: exits by high and low, never close-to-close, the stop wins inside an ambiguous candle, fees and slippage on both legs. The outcome of **any** grid point is derived from the profiles arithmetically. The grid is the full cartesian product — **21,280 points** (stop 19 × trailing 10 × hold 14 × lock 8) — because the whole harvesting machinery is swept. If no point of the corridor is profitable, the crowd's direction carries no extractable edge on this feed even with the exit engineering searched.
 
 ### 2. How much does the window cut?
 
@@ -31,11 +31,11 @@ Before any trading logic runs, the feed passes the honesty filters: NEUTRAL idea
 
 ### 3. What is each author's raw track?
 
-The engine grades every author by the single **profit-before-stop** outcome INSIDE EACH POINT'S OWN HOLD WINDOW: a 24-hour point scores the 24-hour window, a 120-hour point the 120-hour window — the author is graded on exactly the trade the point takes. The result is `tracks[]`: one line per (grading rule × author) carrying `{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`. No ban, no verdict — the raw ratio. Because the full rule (all four levels) is part of the identity, the same author appears once per rule: **240,240 track lines = 154 authors × 1,560 rules**. Userspace picks a rule and a threshold and reads the survivors off directly (`hitRate >= 0.5`, `ideas >= 3`).
+The engine grades every author by the single **profit-before-stop** outcome INSIDE EACH POINT'S OWN HOLD WINDOW: a 1-day point scores the 1-day window, a 14-day point the 14-day window — the author is graded on exactly the trade the point takes. The result is `tracks[]`: one line per (grading rule × author) carrying `{holdMinutes, profitLockPercent, hardStopPercent, trailingTakePercent, author, ideas, hits, hitRate}`. No ban, no verdict — the raw ratio. Because the full rule (all four levels) is part of the identity, the same author appears once per rule: **3,277,120 track lines = 154 authors × 21,280 rules**. Userspace picks a rule and a threshold and reads the survivors off directly (`hitRate >= 0.5`, `ideas >= 3`).
 
 ### 4. The mechanics are the full sweep
 
-Every idea triggers an entry (one open position PER AUTHOR — slots are per-author, so authors never collide, and each absorbs only his own overlapping posts). Authors are graded strictly in isolation — no interaction metrics (consensus, vote weighting, Wilson bounds) exist by design. What is swept is the whole exit machinery: catastrophe stop 1–7%, trailing take 0.5–3%, hold 24–120h, profit lock 1.5–5%.
+Every idea triggers an entry (one open position PER AUTHOR — slots are per-author, so authors never collide, and each absorbs only his own overlapping posts). Authors are graded strictly in isolation — no interaction metrics (consensus, vote weighting, Wilson bounds) exist by design. What is swept is the whole exit machinery: catastrophe stop 1–10%, trailing take 0.5–5%, hold 1–14 days, profit lock 1–5%.
 
 ### 5. Reading the result
 
@@ -43,51 +43,59 @@ The result carries a single report bucket: ranking winners (time-based Sharpe/So
 
 ## Actual Results — June 2026, BTCUSDT, full feed
 
-The committed artifact is [`assets/sweep.done.json`](https://github.com/tripolskypetr/backtest-kit/tree/master/demo/sweep/assets/sweep.done.json). The feed is strictly crypto-venue: ideas are classified by the `fullName` exchange prefix — Binance, Coinbase, Bitstamp, Bybit, OKX and the like — forex, CFD, metals, stocks and indices never enter the file, so no fabricated pairs.
+Numbers below are from a local `npm start` run — the sweep output (`result.json` plus the `result_*.jsonl` streams) is written next to the script and is not committed (the reports stream alone runs to gigabytes). The feed is strictly crypto-venue: ideas are classified by the `fullName` exchange prefix — Binance, Coinbase, Bitstamp, Bybit, OKX and the like — forex, CFD, metals, stocks and indices never enter the file, so no fabricated pairs.
 
 | Stage | Numbers |
 |---|---|
 | Ideas in feed, BTCUSDT | 421 total → 300 after NEUTRAL + flood dedupe |
 | Profiles built | 300, none truncated |
-| Grid | 1,560 points — stop 13 × trailing 6 × hold 5 × lock 4, full sweep, no ban |
-| Author tracks | 240,240 — one per (rule × author) = 154 authors × 1,560 rules |
-| Profitable corridor | **36 of 1,560 points** — the edge lives at the longest hold |
+| Grid | 21,280 points — stop 19 × trailing 10 × hold 14 × lock 8, full sweep, no ban |
+| Author tracks | 3,277,120 — one per (rule × author) = 154 authors × 21,280 rules |
+| Profitable corridor | **5,100 of 21,280 points (24%)** — a wide zone, but only in the deep-stop / long-hold / high-lock corner |
 
-All four ranking winners resolve to the same point — the corridor's peak:
+The four ranking winners all sit in that corner:
 
 | Criterion | Point | Trades | PnL | Win rate | Sharpe | Sortino |
 |---|---|---|---|---|---|---|
-| Sharpe / Sortino / PnL / Recovery | stop 5.5 · trail 1.5 · hold 120h · lock 1.5 | 253 | **+26.26%** | 79% | 0.40 | 0.56 |
+| Sharpe / Sortino | stop 7 · trail 3 · hold 13d · lock 5 | 214 | +191.3% | 73% | **2.45** | 9.22 |
+| PnL | stop 6 · trail 3 · hold 11d · lock 5 | 220 | **+218.8%** | 71% | 1.72 | 4.31 |
+| Recovery | stop 6 · trail 3 · hold 13d · lock 5 | 220 | +218.6% | 71% | 1.70 | 4.31 |
 
-The corridor is honest about WHERE the edge is. By hold, the best point per window: **−80.2% @ 24h, −62.8% @ 48h, −66.4% @ 72h, −23.8% @ 96h, +26.3% @ 120h** — short holds bleed the falling market, only the 5-day hold rides the crowd's longs into the black. The profit-harvesting sweep matters: with the lock and trailing switched off there is no positive point at all; it is the exit engineering, found by the grid, that surfaces the corridor.
+The corridor is honest about WHERE the edge is. Three monotone gradients, best PnL per axis value:
 
-The signal also lives in the **tracks**. Filter the WINNING rule (stop 5.5 · trail 1.5 · hold 120h · lock 1.5) to authors with a real track (ideas ≥ 3) and rank by hitRate:
+- **Hold** — bleeds short, pays long: **−80% @ 1d, +47% @ 5d, +163% @ 7d, +219% @ 11d, plateau to 14d**. The crossover into the black is at 5 days; profit saturates past 11. Only sitting through the whole post-−20% rebound pays.
+- **Stop** — a dome: tight stops kill (**−110% @ 1%**, the shakeout stops out future winners), the turn is at **stop 4% (+27%)**, peak at **stop 6% (+219%)**, slow decay to 10%.
+- **Lock** — monotone up: **−5% @ lock 1% → +219% @ lock 5%**; the higher the fixation floor, the more the long hold harvests. Every winner sits at **trail 3** — the middle of 0.5–5%, wide enough not to clip a runner, tight enough not to give it all back.
+
+The signal also lives in the **tracks**. Filter the WINNING rule (stop 7 · trail 3 · hold 13d · lock 5) to authors with a real track (ideas ≥ 3) and rank by hitRate:
 
 | Author | Hits / Ideas | HitRate |
 |---|---|---|
-| PremiumTrader57 | 8/8 | 100% |
-| melikatrader94 | 5/5 | 100% |
 | CandleKing09 | 5/5 | 100% |
 | KennyYenKen | 3/3 | 100% |
 | Prime_X_Trader | 3/3 | 100% |
+| CryptoSkullSignal | 7/8 | 88% |
+| MarketStrategysignals | 7/8 | 88% |
+| TradingShot | 13/15 | 87% |
+| InvestingScope | 5/6 | 83% |
 | XAUxBTC_Pro | 5/6 | 83% |
-| Apex_Legends | 9/11 | 82% |
-| TradingShot | 12/15 | 80% |
 
-**21 of the 23 authors with a 3-idea track clear hitRate ≥ 0.5 under the winning rule.** That population is what a userspace swarm scorer carries forward: the raw track is the evidence, no ban baked in.
+**20 of the 23 authors with a 3-idea track clear hitRate ≥ 0.5 under the winning rule.** That population is what a userspace swarm scorer carries forward: the raw track is the evidence, no ban baked in.
 
 ## Project Structure
 
 ```
 demo/sweep/
 ├── assets/
-│   ├── tv-ideas.normalized.jsonl   # crypto-venue ideas only, symbols normalized to *USDT
-│   └── sweep.done.json             # sweep artifact: full-feed run, full cartesian grid
+│   └── tv-ideas.normalized.jsonl   # crypto-venue ideas only, symbols normalized to *USDT
 ├── src/
 │   └── index.mjs                   # Exchange + sweep schema + Sweep.run
-├── dump/                           # raw run outputs and the candle persist cache
+├── dump/                           # candle persist cache
 ├── package.json                    # Scripts and dependencies
 └── README.md                       # This file
+
+# result.json + result_*.jsonl are written by `npm start` and are NOT committed
+# (the reports stream runs to gigabytes)
 ```
 
 The ideas feed contains every crypto symbol seen on the source platform — BTCUSDT 421, ETHUSDT 205, XRPUSDT 86 and so on, 1,049 ideas total. `Sweep.run` filters by the requested symbol itself, so one shared feed serves any run.
@@ -121,7 +129,7 @@ addSweepSchema({
 });
 ```
 
-Candles are fetched lazily in chunks through the exchange schema — persist cache first, network after. Only the horizons of actual ideas are requested, gaps between sparse ideas are never downloaded. The full result is written to `./dump/sweep.done.json`.
+Candles are fetched lazily in chunks through the exchange schema — persist cache first, network after. Only the horizons of actual ideas are requested, gaps between sparse ideas are never downloaded. The run writes `./result.json` (run-level counters) plus three streams next to the script — `result_reports.jsonl` (every grid point), `result_best.jsonl` (the four ranking winners), `result_tracks.jsonl` (per-rule author tracks). None are committed.
 
 ## Reading the Result
 
