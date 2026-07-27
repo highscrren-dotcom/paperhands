@@ -773,6 +773,12 @@ npm install @backtest-kit/ollama agent-swarm-kit backtest-kit
 npm install @backtest-kit/signals backtest-kit
 ```
 
+### `@backtest-kit/mcp` — [npm](https://www.npmjs.com/package/@backtest-kit/mcp)
+Model Context Protocol server: an LLM agent (Claude, any MCP client) watches the live portfolio and opens/closes positions through 3 guarded tools — TP/SL/cost stay engine-owned, stdio server talks to the trading process over HTTP.
+```bash
+npm install @backtest-kit/mcp backtest-kit @modelcontextprotocol/sdk
+```
+
 ### `@backtest-kit/sidekick` — [npm](https://www.npmjs.com/package/@backtest-kit/sidekick)
 The "eject" of `--init`: scaffolds a project where exchange adapter, frames, risk rules, strategy, and runner are all editable source. 4H-trend + 15m-signal Pine template, partial profit taking, breakeven trailing.
 ```bash
