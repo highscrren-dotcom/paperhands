@@ -45,11 +45,8 @@ const serveInternal = singleshot(
   },
 );
 
-export function serve(host?: string, port?: number, cwd = process.cwd(), callback?: CallbackFn) {
-  ioc.loggerService.log(METHOD_NAME_SERVE, {
-    host,
-    port,
-  });
+export function serve(callback?: CallbackFn) {
+  ioc.loggerService.log(METHOD_NAME_SERVE);
   return serveInternal(callback);
 }
 

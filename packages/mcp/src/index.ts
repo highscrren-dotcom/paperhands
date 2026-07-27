@@ -1,3 +1,5 @@
+import "./main/entry";
+
 export { 
     setLogger,
 } from "./functions/setup.function";
