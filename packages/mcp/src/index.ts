@@ -1,6 +1,11 @@
 export { 
     setLogger,
-} from "./functions/setup";
+} from "./functions/setup.function";
+
+export {
+    getRouter,
+    serve,
+} from "./functions/serve.function";
 
 export {
     setConfig,

@@ -1,3 +1,5 @@
+import http from 'http';
+
 interface ILogger {
     log(topic: string, ...args: any[]): void;
     debug(topic: string, ...args: any[]): void;
@@ -26,6 +28,10 @@ interface ILogger {
  */
 declare function setLogger(logger: ILogger): void;
 
+type CallbackFn = (error?: Error) => void;
+declare function serve(host?: string, port?: number, cwd?: string, callback?: CallbackFn): () => void;
+declare function getRouter(): http.RequestListener;
+
 declare const GLOBAL_CONFIG: {
     CC_MCP_HOST: string;
     CC_MCP_PORT: number;
@@ -37,4 +43,4 @@ declare const getConfig: () => {
 };
 declare const setConfig: (config: Partial<Config>) => void;
 
-export { getConfig, setConfig, setLogger };
+export { getConfig, getRouter, serve, setConfig, setLogger };
