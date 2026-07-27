@@ -7,6 +7,7 @@ import {
   IMCPMessage,
   IMCPPositionCloseCommand,
   IMCPPositionOpenCommand,
+  MCPName,
 } from "../interfaces/MCP.interface";
 import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
@@ -14,6 +15,7 @@ import { Position } from "./Position";
 import { GLOBAL_CONFIG } from "../config/params";
 
 const METHOD_NAME_GET_STATUS = "MCPUtils.getStatus";
+const METHOD_NAME_GET_DEFAULT_MESSAGES = "MCPUtils.getDefaultMessages";
 const METHOD_NAME_COMMIT_POSITION_OPEN = "MCPUtils.commitPositionOpen";
 const METHOD_NAME_COMMIT_POSITION_CLOSE = "MCPUtils.commitPositionClose";
 
@@ -366,6 +368,52 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
  * ```
  */
 export class MCPUtils {
+
+  /**
+   * Renders a portfolio snapshot with the DEFAULT text renderer, regardless
+   * of the schema's getMessages.
+   *
+   * Emits one header message with the snapshot time plus one text message per
+   * traded symbol: capital balance, the queued entry order, the active
+   * position with its unrealized PnL and the queued close order.
+   *
+   * The signature matches IMCPSchema.getMessages, so a custom renderer can
+   * delegate here and extend the default output instead of rebuilding it.
+   *
+   * @param context - Portfolio snapshot keyed by traded symbol
+   * @param when - Snapshot time stamped into the header message
+   * @param mcpName - Name of the registered MCP schema (validated before rendering)
+   * @returns Messages for the MCP agent
+   *
+   * @example
+   * ```typescript
+   * addMCPSchema({
+   *   mcpName: "my-mcp",
+   *   strategyName: "my-strategy",
+   *   getMessages: (context, when, mcpName) => [
+   *     ...MCP.getDefaultMessages(context, when, mcpName),
+   *     { type: "text", text: "Custom trailer for the agent" },
+   *   ],
+   * });
+   * ```
+   */
+  public getDefaultMessages = (
+    context: IMCPContext,
+    when: Date,
+    mcpName: MCPName
+  ) => {
+    backtest.loggerService.log(METHOD_NAME_GET_DEFAULT_MESSAGES, {
+      mcpName,
+      when,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_DEFAULT_MESSAGES);
+    }
+
+    return DEFAULT_GET_MESSAGES(context, when);
+  }
+
   /**
    * Renders the current portfolio of the MCP's strategy into agent messages.
    *
