@@ -40,13 +40,26 @@ const COMPUTE_HARD_STOP_FN = (maxDistance: number): number =>
   HARD_STOP_STEP_PERCENT;
 
 /**
+ * Formats a signed value for agent messages: explicit "+" on non-negative,
+ * two decimals (e.g. 1.5 -> "+1.50", -2.3 -> "-2.30").
+ *
+ * @param value - Number to format
+ * @returns Signed fixed-point string
+ */
+const FORMAT_SIGNED_FN = (value: number): string =>
+  `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+
+/**
  * Default portfolio-to-text renderer for the MCP agent.
  *
  * Emits one header message with the snapshot time plus one text message per
  * traded symbol: capital balance, the queued entry order (createdSignal), the
- * active position with its unrealized PnL (pendingSignal) and the queued
- * close order (closedSignal). Slots without data are stated explicitly so the
- * agent never has to guess whether a field was omitted or empty.
+ * active position (pendingSignal) and the queued close order (closedSignal).
+ * A symbol holding a position is rendered PnL-first — unrealized PnL percent,
+ * peak profit percent and max drawdown percent instead of the raw price; the
+ * current price is shown only for symbols with no position, where no PnL
+ * exists. Slots without data are stated explicitly so the agent never has to
+ * guess whether a field was omitted or empty.
  */
 const DEFAULT_GET_MESSAGES = (
   context: IMCPContext,
@@ -72,13 +85,16 @@ const DEFAULT_GET_MESSAGES = (
       context[symbol];
     const lines: string[] = [];
     lines.push(`Symbol: ${symbol}`);
-    lines.push(`Current price: ${currentPrice}`);
     if (pendingSignal) {
-      const { pnl } = pendingSignal;
+      const { pnl, peakProfit, maxDrawdown } = pendingSignal;
       lines.push(
-        `Balance: ${pnl.pnlEntries.toFixed(2)} USD invested, unrealized PnL ${pnl.pnlCost >= 0 ? "+" : ""}${pnl.pnlCost.toFixed(2)} USD`,
+        `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlPercentage)}% (${FORMAT_SIGNED_FN(pnl.pnlCost)} USD)`,
       );
+      lines.push(`Peak profit: ${FORMAT_SIGNED_FN(peakProfit.pnlPercentage)}%`);
+      lines.push(`Max drawdown: ${FORMAT_SIGNED_FN(maxDrawdown.pnlPercentage)}%`);
+      lines.push(`Balance: ${pnl.pnlEntries.toFixed(2)} USD invested`);
     } else {
+      lines.push(`Current price: ${currentPrice}`);
       lines.push(`Balance: no capital invested in ${symbol}`);
     }
     if (createdSignal) {
@@ -103,7 +119,6 @@ const DEFAULT_GET_MESSAGES = (
       lines.push("Entry queue: empty, no order waiting to open a position");
     }
     if (pendingSignal) {
-      const { pnl } = pendingSignal;
       const details = [
         `take profit ${pendingSignal.priceTakeProfit}`,
         `stop loss ${pendingSignal.priceStopLoss}`,
@@ -111,9 +126,7 @@ const DEFAULT_GET_MESSAGES = (
       ]
         .filter(Boolean)
         .join(", ");
-      lines.push(
-        `Active position: ${pendingSignal.position} opened at ${pendingSignal.priceOpen} (${details}), unrealized PnL ${pnl.pnlPercentage >= 0 ? "+" : ""}${pnl.pnlPercentage.toFixed(2)}% (${pnl.pnlCost >= 0 ? "+" : ""}${pnl.pnlCost.toFixed(2)} USD of ${pnl.pnlEntries.toFixed(2)} USD invested)`,
-      );
+      lines.push(`Active position: ${pendingSignal.position} (${details})`);
     } else {
       lines.push("Active position: none");
     }
