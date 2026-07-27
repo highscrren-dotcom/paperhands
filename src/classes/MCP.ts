@@ -1,4 +1,4 @@
-import { memoize } from "functools-kit";
+import { memoize, trycatch, errorData, getErrorMessage } from "functools-kit";
 import backtest from "../lib";
 import { Exchange } from "./Exchange";
 import { Live } from "./Live";
@@ -9,6 +9,8 @@ import {
   IMCPPositionOpenCommand,
   MCPName,
 } from "../interfaces/MCP.interface";
+import { ISignalDto } from "../interfaces/Strategy.interface";
+import { errorEmitter } from "../config/emitters";
 import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
 import { Position } from "./Position";
@@ -131,6 +133,111 @@ const DEFAULT_GET_MESSAGES = (
 };
 
 /**
+ * Wrapper to call onStatus callback with error handling.
+ * Catches and logs any errors thrown by the user-provided callback —
+ * a broken callback never fails getStatus itself.
+ *
+ * @param mcpName - MCP name whose schema supplies the callbacks
+ * @param context - Portfolio snapshot the renderer received
+ * @param messages - Messages the renderer produced
+ */
+const CALL_STATUS_CALLBACKS_FN = trycatch(
+  async (
+    mcpName: MCPName,
+    context: IMCPContext,
+    messages: IMCPMessage[],
+  ): Promise<void> => {
+    const { callbacks } = backtest.mcpSchemaService.get(mcpName);
+    if (callbacks?.onStatus) {
+      await callbacks.onStatus(mcpName, context, messages);
+    }
+  },
+  {
+    fallback: (error) => {
+      const message = "MCPUtils CALL_STATUS_CALLBACKS_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      backtest.loggerService.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  },
+);
+
+/**
+ * Wrapper to call onPositionOpen callback with error handling.
+ * Fires AFTER the create-signal commit is accepted, with the exact signal
+ * DTO submitted to the live strategy. Catches and logs any errors thrown
+ * by the user-provided callback — a broken callback never fails the open.
+ *
+ * @param symbol - Trading pair symbol the position was opened for
+ * @param signal - Signal DTO submitted to Live.commitCreateSignal
+ * @param dto - Original open command from the agent
+ */
+const CALL_POSITION_OPEN_CALLBACKS_FN = trycatch(
+  async (
+    symbol: string,
+    signal: ISignalDto,
+    dto: IMCPPositionOpenCommand,
+  ): Promise<void> => {
+    const { callbacks } = backtest.mcpSchemaService.get(dto.mcpName);
+    if (callbacks?.onPositionOpen) {
+      await callbacks.onPositionOpen(symbol, signal, dto);
+    }
+  },
+  {
+    fallback: (error) => {
+      const message = "MCPUtils CALL_POSITION_OPEN_CALLBACKS_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      backtest.loggerService.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  },
+);
+
+/**
+ * Wrapper to call onPositionClose callback with error handling.
+ * Fires AFTER the close-pending commit is accepted, with the id of the
+ * pending signal the close was queued for. Catches and logs any errors
+ * thrown by the user-provided callback — a broken callback never fails
+ * the close.
+ *
+ * @param symbol - Trading pair symbol the position was closed for
+ * @param signalId - Id of the pending signal consumed by the close
+ * @param dto - Original close command from the agent
+ */
+const CALL_POSITION_CLOSE_CALLBACKS_FN = trycatch(
+  async (
+    symbol: string,
+    signalId: string,
+    dto: IMCPPositionCloseCommand,
+  ): Promise<void> => {
+    const { callbacks } = backtest.mcpSchemaService.get(dto.mcpName);
+    if (callbacks?.onPositionClose) {
+      await callbacks.onPositionClose(symbol, signalId, dto);
+    }
+  },
+  {
+    fallback: (error) => {
+      const message = "MCPUtils CALL_POSITION_CLOSE_CALLBACKS_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      backtest.loggerService.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  },
+);
+
+/**
  * Validates the full dependency chain of an MCP schema, memoized by mcpName.
  *
  * Checks that the MCP is registered, then cascades into the bound strategy's
@@ -245,7 +352,8 @@ const GET_TARGET_MESSAGES_FN = async (
  * {@link COMPUTE_HARD_STOP_FN}, entry cost from the schema's positionCost.
  *
  * Requires the symbol to be enabled in live trading for the schema's
- * strategy and no pending signal to exist.
+ * strategy and no pending signal to exist. Fires the schema's
+ * onPositionOpen callback after the commit is accepted.
  *
  * @param dto - Open command with symbol, direction, mcpName and note
  * @returns Promise resolving when the create-signal commit is accepted
@@ -275,22 +383,25 @@ const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
     const percentStopLoss = COMPUTE_HARD_STOP_FN(
       config.CC_MAX_STOPLOSS_DISTANCE_PERCENT,
     );
-    return await Live.commitCreateSignal(
+    const signal: ISignalDto = {
+      ...Position.moonbag({
+        position: dto.position,
+        currentPrice,
+        percentStopLoss,
+      }),
+      cost: positionCost,
+      note: dto.note,
+    };
+    const result = await Live.commitCreateSignal(
       dto.symbol,
       {
         exchangeName: liveTarget.exchangeName,
         strategyName: liveTarget.strategyName,
       },
-      {
-        ...Position.moonbag({
-          position: dto.position,
-          currentPrice,
-          percentStopLoss,
-        }),
-        cost: positionCost,
-        note: dto.note,
-      },
+      signal,
     );
+    await CALL_POSITION_OPEN_CALLBACKS_FN(dto.symbol, signal, dto);
+    return result;
   }
   throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
 };
@@ -300,7 +411,8 @@ const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
  * strategy by queueing a user-initiated close for the pending signal's id.
  *
  * Requires the symbol to be enabled in live trading for the schema's
- * strategy and a pending signal to exist.
+ * strategy and a pending signal to exist. Fires the schema's
+ * onPositionClose callback after the commit is accepted.
  *
  * @param dto - Close command with symbol, mcpName and note
  * @returns Promise resolving when the close-pending commit is accepted
@@ -323,7 +435,7 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
     if (!pending) {
       throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
     }
-    return await Live.commitClosePending(
+    const result = await Live.commitClosePending(
       dto.symbol,
       {
         exchangeName: liveTarget.exchangeName,
@@ -334,6 +446,8 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
         note: dto.note,
       },
     );
+    await CALL_POSITION_CLOSE_CALLBACKS_FN(dto.symbol, pending.id, dto);
+    return result;
   }
   throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
 };
@@ -420,7 +534,8 @@ export class MCPUtils {
    * Builds a per-symbol snapshot (current price, queued entry, active
    * position with PnL, queued close) over every live instance of the bound
    * strategy and passes it to the schema's getMessages (or the default
-   * text renderer).
+   * text renderer). Fires the schema's onStatus callback with the snapshot
+   * and the rendered messages.
    *
    * @param mcpName - Name of the registered MCP schema
    * @returns Promise resolving to messages for the MCP agent
@@ -444,6 +559,8 @@ export class MCPUtils {
 
     const context = await GET_TARGET_CONTEXT_FN(mcpName);
     const messages = await GET_TARGET_MESSAGES_FN(mcpName, context);
+
+    await CALL_STATUS_CALLBACKS_FN(mcpName, context, messages);
 
     return messages;
   };
