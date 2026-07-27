@@ -28,7 +28,7 @@ export default function registerOpenPositionTool(server: McpServer) {
     },
     async ({ symbol, position, note }) => {
       try {
-        await ioc.mcpPublicService.commitPositionOpen({
+        await ioc.mcpCommandService.commitPositionOpen({
           symbol,
           position,
           note,

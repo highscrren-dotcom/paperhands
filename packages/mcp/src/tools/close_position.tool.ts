@@ -24,7 +24,7 @@ export default function registerClosePositionTool(server: McpServer) {
     },
     async ({ symbol, note }) => {
       try {
-        await ioc.mcpPublicService.commitPositionClose({
+        await ioc.mcpCommandService.commitPositionClose({
           symbol,
           note,
         });

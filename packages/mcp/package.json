@@ -1,5 +1,6 @@
 {
   "name": "@backtest-kit/mcp",
+  "type": "module",
   "version": "17.0.0",
   "author": {
     "name": "Petr Tripolsky",
@@ -35,7 +36,10 @@
     "build:postbuild": "node ./scripts/postbuild.mjs",
     "build": "rollup -c"
   },
-  "main": "build/index.cjs",
+  "main": "build/index.mjs",
+  "bin": {
+    "backtest-kit-mcp": "./build/index.mjs"
+  },
   "module": "build/index.mjs",
   "source": "src/index.ts",
   "types": "./types.d.ts",

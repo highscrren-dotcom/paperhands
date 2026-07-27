@@ -13,3 +13,5 @@ export {
     setConfig,
     getConfig,
 } from "./config/params";
+
+export { ioc as lib } from "./lib";

@@ -3,6 +3,7 @@ import Router from "router";
 import finalhandler from "finalhandler";
 
 import health from "../routes/health";
+import mcp from "../routes/mcp";
 
 const router = Router({
   params: true,
@@ -10,6 +11,10 @@ const router = Router({
 
 router.all("/api/v1/health/*", (req, res) => {
   return health(req, res, finalhandler(req, res));
+});
+
+router.all("/api/v1/mcp/*", (req, res) => {
+  return mcp(req, res, finalhandler(req, res));
 });
 
 router.get("/*", async (_, res) =>{

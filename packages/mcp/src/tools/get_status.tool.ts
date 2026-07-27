@@ -19,7 +19,7 @@ export default function registerGetStatusTool(server: McpServer) {
     {},
     async () => {
       try {
-        const messages = await ioc.mcpPublicService.getStatus();
+        const messages = await ioc.mcpCommandService.getStatus();
 
         return {
           content: messages.map((message) =>

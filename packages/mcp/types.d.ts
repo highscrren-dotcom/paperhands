@@ -1,4 +1,6 @@
 import http from 'http';
+import * as backtest_kit from 'backtest-kit';
+import { IMCPPositionOpenCommand, IMCPPositionCloseCommand, IMCPMessage } from 'backtest-kit';
 
 interface ILogger {
     log(topic: string, ...args: any[]): void;
@@ -29,18 +31,72 @@ interface ILogger {
 declare function setLogger(logger: ILogger): void;
 
 type CallbackFn = (error?: Error) => void;
-declare function serve(host?: string, port?: number, cwd?: string, callback?: CallbackFn): () => void;
+declare function serve(callback?: CallbackFn): () => void;
 declare function getRouter(): http.RequestListener;
 
 declare const GLOBAL_CONFIG: {
     CC_MCP_HOST: string;
     CC_MCP_PORT: number;
+    CC_MCP_NAME: string;
 };
 type Config = typeof GLOBAL_CONFIG;
 declare const getConfig: () => {
     CC_MCP_HOST: string;
     CC_MCP_PORT: number;
+    CC_MCP_NAME: string;
 };
 declare const setConfig: (config: Partial<Config>) => void;
 
-export { getConfig, getRouter, serve, setConfig, setLogger };
+declare class LoggerService implements ILogger {
+    private _commonLogger;
+    log: (topic: string, ...args: any[]) => Promise<void>;
+    debug: (topic: string, ...args: any[]) => Promise<void>;
+    info: (topic: string, ...args: any[]) => Promise<void>;
+    warn: (topic: string, ...args: any[]) => Promise<void>;
+    setLogger: (logger: ILogger) => void;
+}
+
+declare class MCPPrivateService {
+    private readonly loggerService;
+    getStatus: (mcpName: string) => Promise<backtest_kit.IMCPMessage[]>;
+    commitPositionOpen: (dto: IMCPPositionOpenCommand) => Promise<void>;
+    commitPositionClose: (dto: IMCPPositionCloseCommand) => Promise<void>;
+}
+
+declare class MCPPublicService {
+    private readonly loggerService;
+    private readonly mcpPrivateService;
+    getStatus: () => Promise<backtest_kit.IMCPMessage[]>;
+    commitPositionOpen: (dto: {
+        symbol: string;
+        position: "long" | "short";
+        note: string;
+    }) => Promise<void>;
+    commitPositionClose: (dto: {
+        symbol: string;
+        note: string;
+    }) => Promise<void>;
+}
+
+declare class MCPCommandService {
+    private readonly loggerService;
+    getStatus: () => Promise<IMCPMessage[]>;
+    commitPositionOpen: (dto: {
+        symbol: string;
+        position: "long" | "short";
+        note: string;
+    }) => Promise<any>;
+    commitPositionClose: (dto: {
+        symbol: string;
+        note: string;
+    }) => Promise<any>;
+}
+
+declare const ioc: {
+    mcpCommandService: MCPCommandService;
+    mcpPublicService: MCPPublicService;
+    mcpPrivateService: MCPPrivateService;
+    loggerService: LoggerService;
+};
+
+export { getConfig, getRouter, ioc as lib, serve, setConfig, setLogger };
