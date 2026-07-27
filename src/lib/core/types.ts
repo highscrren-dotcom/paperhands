@@ -28,6 +28,7 @@ const schemaServices = {
     riskSchemaService: Symbol('riskSchemaService'),
     actionSchemaService: Symbol('actionSchemaService'),
     sweepSchemaService: Symbol('sweepSchemaService'),
+    mcpSchemaService: Symbol('mcpSchemaService'),
 }
 
 const coreServices = {
@@ -119,6 +120,7 @@ const validationServices = {
     configValidationService: Symbol('configValidationService'),
     columnValidationService: Symbol('columnValidationService'),
     sweepValidationService: Symbol('sweepValidationService'),
+    mcpValidationService: Symbol('mcpValidationService'),
 }
 
 export const TYPES = {

@@ -264,6 +264,16 @@ export {
 } from "./interfaces/Sweep.interface";
 
 export {
+  IMCPPositionOpenCommand,
+  IMCPPositionCloseCommand,
+  IMCPImageMessage,
+  IMCPTextMessage,
+  IMCPMessage,
+  IMCPContext,
+  IMCPSchema,
+} from "./interfaces/MCP.interface";
+
+export {
   IPublicAction,
   IActionSchema,
 } from "./interfaces/Action.interface";
@@ -692,6 +702,7 @@ export {
 export { Breakeven } from "./classes/Breakeven";
 export { Strategy } from "./classes/Strategy";
 export { ActionBase } from "./classes/ActionBase";
+export { MCP } from "./classes/MCP";
 
 export { 
   Broker,
