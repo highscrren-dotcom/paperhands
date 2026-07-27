@@ -1,4 +1,5 @@
 import LoggerService from "../services/base/LoggerService";
+import MCPCommandService from "../services/command/MCPCommandService";
 import MCPPrivateService from "../services/private/MCPPrivateService";
 import MCPPublicService from "../services/public/MCPPublicService";
 
@@ -15,4 +16,8 @@ import TYPES from "./types";
 
 {
     provide(TYPES.mcpPublicService, () => new MCPPublicService());
+}
+
+{
+    provide(TYPES.mcpCommandService, () => new MCPCommandService());
 }
