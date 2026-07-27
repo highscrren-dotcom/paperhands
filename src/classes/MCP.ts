@@ -35,11 +35,97 @@ const COMPUTE_HARD_STOP_FN = (maxDistance: number): number =>
   Math.round(maxDistance / HARD_STOP_STEP_PERCENT) * HARD_STOP_STEP_PERCENT -
   HARD_STOP_STEP_PERCENT;
 
+/**
+ * Default portfolio-to-text renderer for the MCP agent.
+ *
+ * Emits one header message with the snapshot time plus one text message per
+ * traded symbol: capital balance, the queued entry order (createdSignal), the
+ * active position with its unrealized PnL (pendingSignal) and the queued
+ * close order (closedSignal). Slots without data are stated explicitly so the
+ * agent never has to guess whether a field was omitted or empty.
+ */
 const DEFAULT_GET_MESSAGES = (
   context: IMCPContext,
   when: Date,
 ): IMCPMessage[] => {
-  return [];
+  const symbols = Object.keys(context);
+  if (!symbols.length) {
+    return [
+      {
+        type: "text",
+        text: `Portfolio status at ${when.toISOString()}: no symbols are enabled for live trading.`,
+      },
+    ];
+  }
+  const messages: IMCPMessage[] = [
+    {
+      type: "text",
+      text: `Portfolio status at ${when.toISOString()} (${symbols.length} traded symbol${symbols.length === 1 ? "" : "s"}):`,
+    },
+  ];
+  for (const symbol of symbols) {
+    const { createdSignal, pendingSignal, closedSignal, currentPrice } =
+      context[symbol];
+    const lines: string[] = [];
+    lines.push(`Symbol: ${symbol}`);
+    lines.push(`Current price: ${currentPrice}`);
+    if (pendingSignal) {
+      const { pnl } = pendingSignal;
+      lines.push(
+        `Balance: ${pnl.pnlEntries.toFixed(2)} USD invested, unrealized PnL ${pnl.pnlCost >= 0 ? "+" : ""}${pnl.pnlCost.toFixed(2)} USD`,
+      );
+    } else {
+      lines.push(`Balance: no capital invested in ${symbol}`);
+    }
+    if (createdSignal) {
+      const entry =
+        createdSignal.priceOpen !== undefined
+          ? `at price ${createdSignal.priceOpen}`
+          : "at market price";
+      const details = [
+        `take profit ${createdSignal.priceTakeProfit}`,
+        `stop loss ${createdSignal.priceStopLoss}`,
+        createdSignal.cost !== undefined
+          ? `cost ${createdSignal.cost} USD`
+          : "",
+        createdSignal.note ? `note: ${createdSignal.note}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+      lines.push(
+        `Entry queue: ${createdSignal.position} order waiting to open ${entry} (${details})`,
+      );
+    } else {
+      lines.push("Entry queue: empty, no order waiting to open a position");
+    }
+    if (pendingSignal) {
+      const { pnl } = pendingSignal;
+      const details = [
+        `take profit ${pendingSignal.priceTakeProfit}`,
+        `stop loss ${pendingSignal.priceStopLoss}`,
+        pendingSignal.note ? `note: ${pendingSignal.note}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+      lines.push(
+        `Active position: ${pendingSignal.position} opened at ${pendingSignal.priceOpen} (${details}), unrealized PnL ${pnl.pnlPercentage >= 0 ? "+" : ""}${pnl.pnlPercentage.toFixed(2)}% (${pnl.pnlCost >= 0 ? "+" : ""}${pnl.pnlCost.toFixed(2)} USD of ${pnl.pnlEntries.toFixed(2)} USD invested)`,
+      );
+    } else {
+      lines.push("Active position: none");
+    }
+    if (closedSignal) {
+      const note = closedSignal.closeNote
+        ? ` (note: ${closedSignal.closeNote})`
+        : "";
+      lines.push(
+        `Close queue: close order waiting for the ${closedSignal.position} position of signal ${closedSignal.id}${note}`,
+      );
+    } else {
+      lines.push("Close queue: empty, no order waiting to close a position");
+    }
+    messages.push({ type: "text", text: lines.join("\n") });
+  }
+  return messages;
 };
 
 const VALIDATE_SCHEMA_FN = memoize(
