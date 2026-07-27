@@ -1,12 +1,12 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, overrideSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, overrideSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
- * Жизненный цикл сущности Simulator:
+ * Жизненный цикл сущности Sweep:
  *  1) повторная регистрация того же имени — ошибка валидации
  *     (реестр схем перезаписывает, валидация — нет);
- *  2) overrideSimulatorSchema ДО первого использования вступает в
+ *  2) overrideSweepSchema ДО первого использования вступает в
  *     силу (клиент ещё не создан);
  *  3) override ПОСЛЕ первого run() НЕ вступает в силу — клиент
  *     мемоизирован по имени. Это зафиксированный контракт: override
@@ -21,10 +21,7 @@ const SINGLE_POINT = {
   hardStopPercent: [50],
   trailingTakePercent: [100],
   holdMinutes: [60],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 const TWO_POINTS = { ...SINGLE_POINT, holdMinutes: [60, 120] };
@@ -49,10 +46,10 @@ test("SIM: duplicate registration throws, override applies before first use and 
   });
 
   // 1) дубль имени — ошибка валидации
-  addSimulatorSchema({ simulatorName: "sim_lc_dup", exchangeName: "sim-lifecycle-exchange", gridAxes: SINGLE_POINT });
+  addSweepSchema({ sweepName: "sim_lc_dup", exchangeName: "sim-lifecycle-exchange", gridAxes: SINGLE_POINT });
   let duplicateError = null;
   try {
-    addSimulatorSchema({ simulatorName: "sim_lc_dup", exchangeName: "sim-lifecycle-exchange", gridAxes: SINGLE_POINT });
+    addSweepSchema({ sweepName: "sim_lc_dup", exchangeName: "sim-lifecycle-exchange", gridAxes: SINGLE_POINT });
   } catch (error) {
     duplicateError = error;
   }
@@ -62,25 +59,25 @@ test("SIM: duplicate registration throws, override applies before first use and 
   }
 
   // 2) override ДО первого использования: сетка сжимается до 1 точки
-  addSimulatorSchema({ simulatorName: "sim_lc_before", exchangeName: "sim-lifecycle-exchange", gridAxes: TWO_POINTS });
-  await overrideSimulatorSchema({ simulatorName: "sim_lc_before", gridAxes: SINGLE_POINT });
-  const before = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_lc_before", ideas: IDEAS });
-  if (Object.values(before.reports).flatMap((b) => b.reports).length !== 1) {
-    fail(`override before first use must apply (1 point), got ${Object.values(before.reports).flatMap((b) => b.reports).length}`);
+  addSweepSchema({ sweepName: "sim_lc_before", exchangeName: "sim-lifecycle-exchange", gridAxes: TWO_POINTS });
+  await overrideSweepSchema({ sweepName: "sim_lc_before", gridAxes: SINGLE_POINT });
+  const before = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_lc_before", ideas: IDEAS });
+  if (before.reports.reports.length !== 1) {
+    fail(`override before first use must apply (1 point), got ${before.reports.reports.length}`);
     return;
   }
 
   // 3) override ПОСЛЕ первого run: клиент мемоизирован, сетка прежняя
-  addSimulatorSchema({ simulatorName: "sim_lc_after", exchangeName: "sim-lifecycle-exchange", gridAxes: TWO_POINTS });
-  const first = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_lc_after", ideas: IDEAS });
-  if (Object.values(first.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`sanity: pre-override run must see 2 points, got ${Object.values(first.reports).flatMap((b) => b.reports).length}`);
+  addSweepSchema({ sweepName: "sim_lc_after", exchangeName: "sim-lifecycle-exchange", gridAxes: TWO_POINTS });
+  const first = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_lc_after", ideas: IDEAS });
+  if (first.reports.reports.length !== 2) {
+    fail(`sanity: pre-override run must see 2 points, got ${first.reports.reports.length}`);
     return;
   }
-  await overrideSimulatorSchema({ simulatorName: "sim_lc_after", gridAxes: SINGLE_POINT });
-  const second = await Simulator.run({ symbol: "TESTUSDT", simulatorName: "sim_lc_after", ideas: IDEAS });
-  if (Object.values(second.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`override after first use must NOT apply to the memoized client, got ${Object.values(second.reports).flatMap((b) => b.reports).length} points`);
+  await overrideSweepSchema({ sweepName: "sim_lc_after", gridAxes: SINGLE_POINT });
+  const second = await Sweep.run({ symbol: "TESTUSDT", sweepName: "sim_lc_after", ideas: IDEAS });
+  if (second.reports.reports.length !== 2) {
+    fail(`override after first use must NOT apply to the memoized client, got ${second.reports.reports.length} points`);
     return;
   }
 

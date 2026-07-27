@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Вырожденные фиды:
@@ -9,7 +9,7 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  *     разрешены, ничего не падает;
  *  2) идея без единой свечи (за краем данных / битый getCandles) —
  *     это НЕ тихий дроп, а ФАТАЛ: прогон на отсутствующих свечах
- *     мусор, поэтому Simulator.run обязан упасть с внятной ошибкой,
+ *     мусор, поэтому Sweep.run обязан упасть с внятной ошибкой,
  *     а не выдать нулевой профиль и наёбалово из нулей.
  */
 
@@ -42,24 +42,21 @@ const GRID_AXES = {
   hardStopPercent: [5, 50],
   trailingTakePercent: [100],
   holdMinutes: [60],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, rankings intact", async ({ pass, fail }) => {
   registerBoundedExchange("sim-empty-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_empty",
+  addSweepSchema({
+    sweepName: "sim_empty",
     exchangeName: "sim-empty-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_empty",
+    sweepName: "sim_empty",
     ideas: [],
   });
 
@@ -67,16 +64,16 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
     fail(`counters must be zero, got ${result.ideasTotal}/${result.ideasDirectional}/${result.profileCount}`);
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2 || Object.values(result.reports).flatMap((b) => b.reports).some((r) => r.trades !== 0 || r.totalPnlPercent !== 0)) {
-    fail(`grid must be full of zero points, got ${JSON.stringify(Object.values(result.reports).flatMap((b) => b.reports).map((r) => r.trades))}`);
+  if (result.reports.reports.length !== 2 || result.reports.reports.some((r) => r.tradesList.length !== 0 || r.totalPnlPercent !== 0)) {
+    fail(`grid must be full of zero points, got ${JSON.stringify(result.reports.reports.map((r) => r.tradesList.length))}`);
     return;
   }
-  if (result.reports.close.best.length !== 4 || result.reports.close.best.some((b) => !b.report)) {
+  if (result.reports.best.length !== 4 || result.reports.best.some((b) => !b.report)) {
     fail("rankings must resolve on an empty feed");
     return;
   }
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.bannedAuthors.length !== 0 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.length !== 0) {
-    fail("author artifacts must be empty");
+  if (result.reports.tracks.length !== 0) {
+    fail(`author tracks must be empty on an empty feed, got ${result.reports.tracks.length}`);
     return;
   }
   if (result.avgHoldMinutes !== 0 || result.p99HoldMinutes !== 0) {
@@ -89,8 +86,8 @@ test("SIM: empty ideas feed resolves structurally — zero counters, zero grid, 
 
 test("SIM: an idea with no candles is FATAL — the run throws loudly, not silently zeros", async ({ pass, fail }) => {
   registerBoundedExchange("sim-beyond-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_beyond",
+  addSweepSchema({
+    sweepName: "sim_beyond",
     exchangeName: "sim-beyond-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
@@ -98,9 +95,9 @@ test("SIM: an idea with no candles is FATAL — the run throws loudly, not silen
 
   let error = null;
   try {
-    await Simulator.run({
+    await Sweep.run({
       symbol: "TESTUSDT",
-      simulatorName: "sim_beyond",
+      sweepName: "sim_beyond",
       ideas: [
         // целиком за краем данных: ни одной свечи -> прогон обязан упасть
         { id: 7, ts: END_TS + 1000 * MINUTE, symbol: "TESTUSDT", direction: "LONG", author: "ghost" },

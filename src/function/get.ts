@@ -5,7 +5,7 @@ import { WalkerName } from "../interfaces/Walker.interface";
 import { SizingName } from "../interfaces/Sizing.interface";
 import { RiskName } from "../interfaces/Risk.interface";
 import { ActionName } from "../interfaces/Action.interface";
-import { SimulatorName } from "../interfaces/Simulator.interface";
+import { SweepName } from "../interfaces/Sweep.interface";
 import backtest from "../lib";
 
 const GET_STRATEGY_METHOD_NAME = "get.getStrategySchema";
@@ -15,7 +15,7 @@ const GET_WALKER_METHOD_NAME = "get.getWalkerSchema";
 const GET_SIZING_METHOD_NAME = "get.getSizingSchema";
 const GET_RISK_METHOD_NAME = "get.getRiskSchema";
 const GET_ACTION_METHOD_NAME = "get.getActionSchema";
-const GET_SIMULATOR_METHOD_NAME = "get.getSimulatorSchema";
+const GET_SIMULATOR_METHOD_NAME = "get.getSweepSchema";
 
 /**
  * Retrieves a registered strategy schema by name.
@@ -211,28 +211,28 @@ export function getActionSchema(actionName: ActionName) {
 }
 
 /**
- * Retrieves a registered simulator schema by name.
+ * Retrieves a registered sweep schema by name.
  *
- * @param simulatorName - Unique simulator identifier
- * @returns The simulator schema configuration object
- * @throws Error if simulator is not registered
+ * @param sweepName - Unique sweep identifier
+ * @returns The sweep schema configuration object
+ * @throws Error if sweep is not registered
  *
  * @example
  * ```typescript
- * const simulator = getSimulatorSchema("tv-ideas-simulator");
- * console.log(simulator.exchangeName); // "ccxt-exchange"
- * console.log(simulator.gridAxes); // grid axes override or undefined
+ * const sweep = getSweepSchema("tv-ideas-sweep");
+ * console.log(sweep.exchangeName); // "ccxt-exchange"
+ * console.log(sweep.gridAxes); // grid axes override or undefined
  * ```
  */
-export function getSimulatorSchema(simulatorName: SimulatorName) {
+export function getSweepSchema(sweepName: SweepName) {
   backtest.loggerService.log(GET_SIMULATOR_METHOD_NAME, {
-    simulatorName,
+    sweepName,
   });
 
-  backtest.simulatorValidationService.validate(
-    simulatorName,
+  backtest.sweepValidationService.validate(
+    sweepName,
     GET_SIMULATOR_METHOD_NAME
   );
 
-  return backtest.simulatorSchemaService.get(simulatorName);
+  return backtest.sweepSchemaService.get(sweepName);
 }

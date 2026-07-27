@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Коллизии уровней в ОДНОЙ свече — ветки SIMULATE_TRADE_FN, которые
@@ -46,22 +46,19 @@ const registerWorld = (exchangeName, priceAt) => {
   });
 };
 
-const runSingle = async (simulatorName, exchangeName, gridAxes) => {
-  addSimulatorSchema({ simulatorName, exchangeName, gridAxes });
-  const result = await Simulator.run({
+const runSingle = async (sweepName, exchangeName, gridAxes) => {
+  addSweepSchema({ sweepName, exchangeName, gridAxes });
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName,
+    sweepName,
     ideas: [idea(1, 0, "solo")],
   });
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
+  const [report] = result.reports.reports;
+  const [trade] = result.reports.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
   return { report, trade };
 };
 
 const AXES = {
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
-  authorMetric: ["close"],
   holdMinutes: [240],
 };
 

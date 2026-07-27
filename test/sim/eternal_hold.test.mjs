@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Синтетический мир "пила": после каждой идеи цена всплескивает на +1%
@@ -25,7 +25,7 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  * короткий холд — метрика математически штрафует ожидание.
  */
 
-const START = 1704067200000; // 2024-01-01T00:00:00Z, совпадает с data/simulator_1.jsonl
+const START = 1704067200000; // 2024-01-01T00:00:00Z, совпадает с data/sweep_1.jsonl
 const MINUTE = 60_000;
 const SPACING = 481;
 const IDEAS_COUNT = 90;
@@ -86,51 +86,52 @@ const GRID_AXES = {
   hardStopPercent: [50],
   trailingTakePercent: [100],
   holdMinutes: [60, 7200],
-  minAuthorTrack: [3],
-  minAuthorHitRate: [0.5],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", async ({ pass, fail }) => {
   registerExchange("sim-eternal-exchange");
-  addSimulatorSchema({
-    simulatorName: "sim_eternal",
+  addSweepSchema({
+    sweepName: "sim_eternal",
     exchangeName: "sim-eternal-exchange",
     gridAxes: GRID_AXES,
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_eternal",
+    sweepName: "sim_eternal",
     ideas: makeIdeas(),
   });
 
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`expected 2 grid points, got ${Object.values(result.reports).flatMap((b) => b.reports).length}`);
+  if (result.reports.reports.length !== 2) {
+    fail(`expected 2 grid points, got ${result.reports.reports.length}`);
     return;
   }
 
-  const short = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const eternal = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const short = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const eternal = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!short || !eternal) {
     fail("short/eternal hold reports not found");
     return;
   }
 
-  // автор должен пройти фильтр: 90 идей, все hit
-  if (result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.length !== 1 || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors[0] !== "prophet") {
-    fail(`expected prophet allowed, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
+  // трек автора: prophet присутствует. Замок выключен, трейлинг
+  // (100%) не взводится, поэтому фиксации нет ни у кого — единственная
+  // метрика profit-before-stop даёт hitRate 0 (таймаут = miss); тест
+  // про Sharpe/вечный холд, не про сам трек
+  const prophetTrack = result.reports.tracks.find(({ author }) => author === "prophet");
+  if (!prophetTrack || prophetTrack.hitRate !== 0) {
+    fail(`prophet track must be present with hitRate 0 (no fixation possible), got ${JSON.stringify(prophetTrack)}`);
     return;
   }
 
   // короткий холд торгует каждую идею, вечный — поглощает пачки
-  if (short.trades < 80) {
+  if (short.tradesList.length < 80) {
     fail(`short hold expected ~90 trades, got ${short.trades}`);
     return;
   }
-  if (eternal.trades > 10) {
+  if (eternal.tradesList.length > 10) {
     fail(`eternal hold expected ~6 trades, got ${eternal.trades}`);
     return;
   }
@@ -147,7 +148,7 @@ test("SIM: time-based Sharpe punishes eternal hold in favor of normal entries", 
 
   // победители всех рейтингов — короткий холд (вечный ещё и не проходит
   // анти-флюк порог по числу сделок)
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (!best.report || best.report.point.holdMinutes !== 60) {
       fail(`ranking ${best.criterion} must pick hold=60, got ${best.report?.point.holdMinutes}`);
       return;
@@ -170,8 +171,8 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
   registerExchange("sim-absorb-exchange");
 
   const tradesByHold = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_absorb",
+  addSweepSchema({
+    sweepName: "sim_absorb",
     exchangeName: "sim-absorb-exchange",
     gridAxes: GRID_AXES,
     callbacks: {
@@ -181,9 +182,9 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_absorb",
+    sweepName: "sim_absorb",
     ideas: makeIdeas(),
   });
 
@@ -223,7 +224,7 @@ test("SIM: eternal hold absorbs foreign ideas and the accounting proves it", asy
   }
 
   pass(
-    `eternal hold: ${eternal.report.trades} trades absorbed ${absorbed} ideas ` +
+    `eternal hold: ${eternal.report.tradesList.length} trades absorbed ${absorbed} ideas ` +
     `(first trade ate ${firstTrade.absorbedIdeas.length}); short hold absorbed 0`
   );
 });

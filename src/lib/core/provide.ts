@@ -75,11 +75,11 @@ import { MaxDrawdownMarkdownService } from "../services/markdown/MaxDrawdownMark
 import ContextMetaService from "../services/meta/ContextMetaService";
 import NotificationHelperService from "../services/helpers/NotificationHelperService";
 import RuntimeMetaService from "../services/meta/RuntimeMetaService";
-import SimulatorSchemaService from "../services/schema/SimulatorSchemaService";
-import SimulatorValidationService from "../services/validation/SimulatorValidationService";
-import SimulatorConnectionService from "../services/connection/SimulatorConnectionService";
-import SimulatorCoreService from "../services/core/SimulatorCoreService";
-import SimulatorGlobalService from "../services/global/SimulatorGlobalService";
+import SweepSchemaService from "../services/schema/SweepSchemaService";
+import SweepValidationService from "../services/validation/SweepValidationService";
+import SweepConnectionService from "../services/connection/SweepConnectionService";
+import SweepCoreService from "../services/core/SweepCoreService";
+import SweepGlobalService from "../services/global/SweepGlobalService";
 
 {
     provide(TYPES.loggerService, () => new LoggerService());
@@ -99,7 +99,7 @@ import SimulatorGlobalService from "../services/global/SimulatorGlobalService";
     provide(TYPES.actionConnectionService, () => new ActionConnectionService());
     provide(TYPES.partialConnectionService, () => new PartialConnectionService());
     provide(TYPES.breakevenConnectionService, () => new BreakevenConnectionService());
-    provide(TYPES.simulatorConnectionService, () => new SimulatorConnectionService());
+    provide(TYPES.sweepConnectionService, () => new SweepConnectionService());
 }
 
 {
@@ -110,11 +110,11 @@ import SimulatorGlobalService from "../services/global/SimulatorGlobalService";
     provide(TYPES.sizingSchemaService, () => new SizingSchemaService());
     provide(TYPES.riskSchemaService, () => new RiskSchemaService());
     provide(TYPES.actionSchemaService, () => new ActionSchemaService());
-    provide(TYPES.simulatorSchemaService, () => new SimulatorSchemaService());
+    provide(TYPES.sweepSchemaService, () => new SweepSchemaService());
 }
 
 {
-    provide(TYPES.simulatorCoreService, () => new SimulatorCoreService());
+    provide(TYPES.sweepCoreService, () => new SweepCoreService());
     provide(TYPES.exchangeCoreService, () => new ExchangeCoreService());
     provide(TYPES.strategyCoreService, () => new StrategyCoreService());
     provide(TYPES.actionCoreService, () => new ActionCoreService());
@@ -129,7 +129,7 @@ import SimulatorGlobalService from "../services/global/SimulatorGlobalService";
 }
 
 {
-    provide(TYPES.simulatorGlobalService, () => new SimulatorGlobalService());
+    provide(TYPES.sweepGlobalService, () => new SweepGlobalService());
     provide(TYPES.sizingGlobalService, () => new SizingGlobalService());
     provide(TYPES.riskGlobalService, () => new RiskGlobalService());
     provide(TYPES.partialGlobalService, () => new PartialGlobalService());
@@ -200,5 +200,5 @@ import SimulatorGlobalService from "../services/global/SimulatorGlobalService";
     provide(TYPES.actionValidationService, () => new ActionValidationService());
     provide(TYPES.configValidationService, () => new ConfigValidationService());
     provide(TYPES.columnValidationService, () => new ColumnValidationService());
-    provide(TYPES.simulatorValidationService, () => new SimulatorValidationService());
+    provide(TYPES.sweepValidationService, () => new SweepValidationService());
 }

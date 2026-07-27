@@ -1,12 +1,12 @@
 import { test } from "worker-testbed";
 import { readFileSync } from "fs";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Интеграционный вариант eternal_hold.test.mjs: идеи приходят не из
- * кода, а из data/simulator_1.jsonl — тем же путём, каким их подаёт
- * CLI-режим --simulator (jsonl-файл, строка = ISimulatorIdea).
+ * кода, а из data/sweep_1.jsonl — тем же путём, каким их подаёт
+ * CLI-режим --sweep (jsonl-файл, строка = ISweepIdea).
  * Свечной мир — та же детерминированная "пила" (см. eternal_hold).
  *
  * Проверяется тот же математический инвариант: точка с вечным холдом
@@ -38,7 +38,7 @@ const priceAt = (timestamp) => {
 
 test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", async ({ pass, fail }) => {
   const ideas = readFileSync(
-    new URL("../data/simulator_1.jsonl", import.meta.url),
+    new URL("../data/sweep_1.jsonl", import.meta.url),
     "utf-8",
   )
     .split("\n")
@@ -46,7 +46,7 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     .map((line) => JSON.parse(line));
 
   if (ideas.length !== IDEAS_COUNT) {
-    fail(`data/simulator_1.jsonl expected ${IDEAS_COUNT} ideas, got ${ideas.length}`);
+    fail(`data/sweep_1.jsonl expected ${IDEAS_COUNT} ideas, got ${ideas.length}`);
     return;
   }
 
@@ -74,24 +74,21 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_jsonl",
+  addSweepSchema({
+    sweepName: "sim_jsonl",
     exchangeName: "sim-jsonl-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60, 7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_jsonl",
+    sweepName: "sim_jsonl",
     ideas,
   });
 
@@ -104,8 +101,8 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     return;
   }
 
-  const short = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const eternal = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const short = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const eternal = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!short || !eternal) {
     fail("short/eternal hold reports not found");
     return;
@@ -118,7 +115,7 @@ test("SIM: jsonl feed end-to-end — eternal hold loses to normal entries", asyn
     );
     return;
   }
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (!best.report || best.report.point.holdMinutes !== 60) {
       fail(`ranking ${best.criterion} must pick hold=60`);
       return;

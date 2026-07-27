@@ -80,11 +80,11 @@ import PriceMetaService from "./services/meta/PriceMetaService";
 import { TContextMetaService } from "./services/meta/ContextMetaService";
 import NotificationHelperService from "./services/helpers/NotificationHelperService";
 import { TRuntimeMetaService } from "./services/meta/RuntimeMetaService";
-import SimulatorValidationService from "./services/validation/SimulatorValidationService";
-import SimulatorSchemaService from "./services/schema/SimulatorSchemaService";
-import SimulatorConnectionService from "./services/connection/SimulatorConnectionService";
-import SimulatorGlobalService from "./services/global/SimulatorGlobalService";
-import SimulatorCoreService from "./services/core/SimulatorCoreService";
+import SweepValidationService from "./services/validation/SweepValidationService";
+import SweepSchemaService from "./services/schema/SweepSchemaService";
+import SweepConnectionService from "./services/connection/SweepConnectionService";
+import SweepGlobalService from "./services/global/SweepGlobalService";
+import SweepCoreService from "./services/core/SweepCoreService";
 
 const baseServices = {
   loggerService: inject<TLoggerService>(TYPES.loggerService),
@@ -124,8 +124,8 @@ const connectionServices = {
   breakevenConnectionService: inject<BreakevenConnectionService>(
     TYPES.breakevenConnectionService
   ),
-  simulatorConnectionService: inject<SimulatorConnectionService>(
-    TYPES.simulatorConnectionService,
+  sweepConnectionService: inject<SweepConnectionService>(
+    TYPES.sweepConnectionService,
   ),
 };
 
@@ -141,11 +141,11 @@ const schemaServices = {
   sizingSchemaService: inject<SizingSchemaService>(TYPES.sizingSchemaService),
   riskSchemaService: inject<RiskSchemaService>(TYPES.riskSchemaService),
   actionSchemaService: inject<ActionSchemaService>(TYPES.actionSchemaService),
-  simulatorSchemaService: inject<SimulatorSchemaService>(TYPES.simulatorSchemaService),
+  sweepSchemaService: inject<SweepSchemaService>(TYPES.sweepSchemaService),
 };
 
 const coreServices = {
-  simulatorCoreService: inject<SimulatorCoreService>(TYPES.simulatorCoreService),
+  sweepCoreService: inject<SweepCoreService>(TYPES.sweepCoreService),
   exchangeCoreService: inject<ExchangeCoreService>(TYPES.exchangeCoreService),
   strategyCoreService: inject<StrategyCoreService>(TYPES.strategyCoreService),
   actionCoreService: inject<ActionCoreService>(TYPES.actionCoreService),
@@ -160,7 +160,7 @@ const metaServices = {
 }
 
 const globalServices = {
-  simulatorGlobalService: inject<SimulatorGlobalService>(TYPES.simulatorGlobalService),
+  sweepGlobalService: inject<SweepGlobalService>(TYPES.sweepGlobalService),
   sizingGlobalService: inject<SizingGlobalService>(TYPES.sizingGlobalService),
   riskGlobalService: inject<RiskGlobalService>(TYPES.riskGlobalService),
   partialGlobalService: inject<PartialGlobalService>(
@@ -293,8 +293,8 @@ const validationServices = {
   columnValidationService: inject<ColumnValidationService>(
     TYPES.columnValidationService
   ),
-  simulatorValidationService: inject<SimulatorValidationService>(
-    TYPES.simulatorValidationService,
+  sweepValidationService: inject<SweepValidationService>(
+    TYPES.sweepValidationService,
   ),
 };
 

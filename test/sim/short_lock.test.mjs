@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * SHORT-зеркало профит-лока — направленная арифметика, не сверенная
@@ -44,9 +44,6 @@ const registerWorld = (exchangeName, priceAt) => {
 };
 
 const AXES = {
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
-  authorMetric: ["close"],
   holdMinutes: [240],
 };
 
@@ -59,8 +56,8 @@ test("SIM: short profit lock fills exactly at the mirrored level on the rebound"
     return 1010;
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_shortlock",
+  addSweepSchema({
+    sweepName: "sim_shortlock",
     exchangeName: "sim-shortlock-exchange",
     gridAxes: {
       ...AXES,
@@ -69,13 +66,13 @@ test("SIM: short profit lock fills exactly at the mirrored level on the rebound"
       profitLockPercent: [3],
     },
   });
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_shortlock",
+    sweepName: "sim_shortlock",
     ideas: [idea(1, 0, "bear")],
   });
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
+  const [report] = result.reports.reports;
+  const [trade] = result.reports.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
 
   if (trade.exitReason !== "profit_lock") {
     fail(`short rebound to the lock must exit profit_lock, got ${trade.exitReason}`);
@@ -108,8 +105,8 @@ test("SIM: short runner rebound through both floors fills the LOWER trailing lev
     return 990;
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_shortcrash",
+  addSweepSchema({
+    sweepName: "sim_shortcrash",
     exchangeName: "sim-shortcrash-exchange",
     gridAxes: {
       ...AXES,
@@ -118,13 +115,13 @@ test("SIM: short runner rebound through both floors fills the LOWER trailing lev
       profitLockPercent: [3],
     },
   });
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_shortcrash",
+    sweepName: "sim_shortcrash",
     ideas: [idea(1, 0, "bear")],
   });
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
+  const [report] = result.reports.reports;
+  const [trade] = result.reports.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
 
   if (trade.exitReason !== "trailing_take") {
     fail(`short rebound through both floors must fill the lower (trailing), got ${trade.exitReason}`);

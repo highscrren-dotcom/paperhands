@@ -1,17 +1,19 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Грейдинг в окне холда СВОЕЙ точки: одна сетка с двумя холдами
- * обязана судить одного и того же автора по-разному. Мир «спринтер»:
- * каждая идея даёт +2% и держит уровень два часа, к 5-му часу цена
- * сливается в -3% и стоит там до конца цикла.
+ * обязана судить одного и того же автора по-разному. Мир «поздний
+ * старт»: цена стоит на базе почти четыре часа, затем на фазах
+ * 200..240 растёт на +3% и держит уровень до конца цикла.
  *
- *  - точка hold=120: close окна = +2% -> автор 5/5, допущен, 5 сделок;
- *  - точка hold=720: close окна = -3% -> автор 0/5, забанен, 0 сделок;
- *  - тренировки ДВЕ (окно входит в ключ правила), словари банов
- *    close-корзины самоидентифицируются полем holdMinutes.
+ *  - точка hold=120: окно кончается ДО роста — ни замок, ни трейлинг
+ *    не сработали -> автор 0/5 (таймаут = miss);
+ *  - точка hold=720: окно захватывает рост — замок +2% фиксируется
+ *    раньше стопа -> автор 5/5;
+ *  - тренировки ДВЕ (окно входит в ключ правила), треки
+ *    самоидентифицируются полем holdMinutes.
  *
  * Профиль при этом один на идею (fetch = max(holdMinutes) = 720) —
  * различие только в окне арифметики.
@@ -25,13 +27,12 @@ const priceAt = (timestamp) => {
   const m = Math.floor((timestamp - START) / MINUTE);
   if (m < 0) return 1000;
   const phase = m % CYCLE;
-  if (phase < 2) return 1000;
-  if (phase <= 120) return 1020;
-  if (phase <= 300) return 1020 - (50 * (phase - 120)) / 180;
-  return 970;
+  if (phase <= 200) return 1000;
+  if (phase <= 240) return 1000 + (30 * (phase - 200)) / 40; // +3% к фазе 240
+  return 1030;
 };
 
-test("SIM: author metrics are graded inside each point's own hold window — two holds, two verdicts", async ({ pass, fail }) => {
+test("SIM: hits are graded inside each point's own hold window — two holds, two verdicts", async ({ pass, fail }) => {
   addExchangeSchema({
     exchangeName: "sim-holdwindow-exchange",
     getCandles: async (_symbol, _interval, since, limit) => {
@@ -49,18 +50,15 @@ test("SIM: author metrics are graded inside each point's own hold window — two
 
   const trained = [];
   const pointReports = [];
-  addSimulatorSchema({
-    simulatorName: "sim_holdwindow",
+  addSweepSchema({
+    sweepName: "sim_holdwindow",
     exchangeName: "sim-holdwindow-exchange",
     gridAxes: {
       hardStopPercent: [5],
       trailingTakePercent: [100],
       // два окна грейдинга в одной сетке — сердце теста
       holdMinutes: [120, 720],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
-      profitLockPercent: [0],
-      authorMetric: ["close"],
+      profitLockPercent: [2],
     },
     callbacks: {
       onAuthorsTrained: (_symbol, stats) => trained.push(stats),
@@ -68,9 +66,9 @@ test("SIM: author metrics are graded inside each point's own hold window — two
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_holdwindow",
+    sweepName: "sim_holdwindow",
     ideas: Array.from({ length: 5 }, (_, k) => ({
       id: 1 + k,
       ts: START + k * CYCLE * MINUTE,
@@ -86,40 +84,31 @@ test("SIM: author metrics are graded inside each point's own hold window — two
     return;
   }
 
-  // словари банов самоидентифицируются окном (белый/чёрный список —
-  // свойство правила, лежит в bans)
-  const shortBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 120);
-  const longBan = result.reports.close.bans.find(({ banKey }) => banKey.holdMinutes === 720);
-  if (!shortBan || !longBan) {
-    fail(`bans must carry holdMinutes 120 and 720, got ${JSON.stringify(result.reports.close.bans.map(({ banKey }) => banKey.holdMinutes))}`);
+  // трек самоидентифицируется окном: одна строка на (окно x автор),
+  // holdMinutes прямо в треке
+  const shortTrack = result.reports.tracks.find(({ author, holdMinutes }) => author === "sprinter" && holdMinutes === 120);
+  const longTrack = result.reports.tracks.find(({ author, holdMinutes }) => author === "sprinter" && holdMinutes === 720);
+  // hold=120: окно кончается до роста — фиксации нет, 0/5 (таймаут)
+  if (!shortTrack || shortTrack.hits !== 0 || shortTrack.hitRate !== 0) {
+    fail(`120m window must score the sprinter 0/5 (window ends before the move), got ${JSON.stringify(shortTrack)}`);
     return;
   }
-  // трек-рекорд под окно лежит на report точки этого окна
-  const shortPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 120);
-  const longPoint = result.reports.close.reports.find(({ point }) => point.holdMinutes === 720);
-  const shortStat = shortPoint.authorStats.find(({ author }) => author === "sprinter");
-  const longStat = longPoint.authorStats.find(({ author }) => author === "sprinter");
-  const verdictOf = (ban) => ban.authors.find(({ author }) => author === "sprinter");
-  // hold=120: close окна +2% — 5/5, допуск
-  if (shortStat.hits !== 5 || shortStat.banned || verdictOf(shortBan).banned !== false) {
-    fail(`120m window must credit the sprinter 5/5, got ${JSON.stringify(shortStat)}`);
-    return;
-  }
-  // hold=720: close окна -3% — 0/5, бан по низкому hitRate
-  if (longStat.hits !== 0 || !longStat.banned || !verdictOf(longBan).reasons.includes("hitRate<minAuthorHitRate")) {
-    fail(`720m window must ban the sprinter 0/5, got ${JSON.stringify(longStat)}`);
+  // hold=720: окно захватывает рост — замок +2% фиксируется, 5/5
+  if (!longTrack || longTrack.hits !== 5 || longTrack.hitRate !== 1) {
+    fail(`720m window must credit the sprinter 5/5, got ${JSON.stringify(longTrack)}`);
     return;
   }
 
-  // сделки следуют вердиктам своих окон: короткая точка торгует все
-  // 5 идей, длинная — ни одной
-  if (shortPoint.trades !== 5 || longPoint.trades !== 0) {
-    fail(`expected 5/0 trades for 120m/720m points, got ${shortPoint.trades}/${longPoint.trades}`);
+  // банов нет — ОБЕ точки торгуют все 5 идей; окно меняет только трек
+  const shortPoint = result.reports.reports.find(({ point }) => point.holdMinutes === 120);
+  const longPoint = result.reports.reports.find(({ point }) => point.holdMinutes === 720);
+  if (shortPoint.tradesList.length !== 5 || longPoint.tradesList.length !== 5) {
+    fail(`both windows trade all 5 (no ban), got ${shortPoint.tradesList.length}/${longPoint.tradesList.length}`);
     return;
   }
 
   pass(
-    `hold-window grading: sprinter 5/5 allowed at 120m (+2% window close) and 0/5 banned at 720m ` +
-    `(-3% window close); 2 trainings, bans self-identified by holdMinutes, trades 5 vs 0`
+    `hold-window grading: sprinter 0/5 at 120m (window ends before the +3% move), ` +
+    `5/5 at 720m (window catches the +2% lock); 2 tracks self-identified by holdMinutes; no ban -> both trade 5`
   );
 });

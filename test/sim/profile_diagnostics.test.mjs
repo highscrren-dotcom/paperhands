@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Численная точность диагностики профиля — именно на этих полях
@@ -43,26 +43,23 @@ test("SIM: profile MFE/MAE/shakeout are numerically exact and shakeout ignores p
   });
 
   const profiles = [];
-  addSimulatorSchema({
-    simulatorName: "sim_diag",
+  addSweepSchema({
+    sweepName: "sim_diag",
     exchangeName: "sim-diag-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [120],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onProfiles: (_symbol, list) => profiles.push(...list),
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_diag",
+    sweepName: "sim_diag",
     ideas: [
       { id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "solo" },
     ],

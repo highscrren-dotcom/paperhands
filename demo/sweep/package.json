@@ -1,10 +1,10 @@
 {
-  "name": "tune",
+  "name": "sweep",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node ./src/index.mjs",
-    "test": "node ./src/test.mjs"
+    "start": "node --max-old-space-size=8192  ./src/index.mjs",
+    "cli": "npx -y @backtest-kit/cli@latest --sweep ./assets/tv-ideas.normalized.jsonl --verbose --json"
   },
   "dependencies": {
     "backtest-kit": "17.0.0",

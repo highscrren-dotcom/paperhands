@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Антифлуд-дедуп: не более одной идеи автора в одном направлении за
@@ -42,10 +42,7 @@ const GRID_AXES = {
   hardStopPercent: [50],
   trailingTakePercent: [100],
   holdMinutes: [60],
-  minAuthorTrack: [1],
-  minAuthorHitRate: [0],
   profitLockPercent: [0],
-  authorMetric: ["close"],
 };
 
 const idea = (id, minute, direction, author) => ({
@@ -58,8 +55,8 @@ const idea = (id, minute, direction, author) => ({
 
 test("SIM: flood collapses and the dedupe window is not extended by dropped posts", async ({ pass, fail }) => {
   registerFlatExchange("sim-dedupe-a");
-  addSimulatorSchema({
-    simulatorName: "sim_dedupe_a",
+  addSweepSchema({
+    sweepName: "sim_dedupe_a",
     exchangeName: "sim-dedupe-a",
     gridAxes: GRID_AXES,
     callbacks: {},
@@ -68,9 +65,9 @@ test("SIM: flood collapses and the dedupe window is not extended by dropped post
   // [0, 300, 600]: 300 отброшена (< 480 от 0), 600 оставлена
   // (600 - 0 >= 480) — если бы окно продлевалось отброшенной 300,
   // идея 600 была бы отброшена тоже (600 - 300 < 480)
-  const tripleResult = await Simulator.run({
+  const tripleResult = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_dedupe_a",
+    sweepName: "sim_dedupe_a",
     ideas: [
       idea(1, 0, "LONG", "spam"),
       idea(2, 300, "LONG", "spam"),
@@ -87,8 +84,8 @@ test("SIM: flood collapses and the dedupe window is not extended by dropped post
 
 test("SIM: dense flood keeps one idea per 8h window", async ({ pass, fail }) => {
   registerFlatExchange("sim-dedupe-b");
-  addSimulatorSchema({
-    simulatorName: "sim_dedupe_b",
+  addSweepSchema({
+    sweepName: "sim_dedupe_b",
     exchangeName: "sim-dedupe-b",
     gridAxes: GRID_AXES,
     callbacks: {},
@@ -98,9 +95,9 @@ test("SIM: dense flood keeps one idea per 8h window", async ({ pass, fail }) => 
   const ideas = Array.from({ length: 25 }, (_, k) =>
     idea(100 + k, k * 60, "LONG", "spam"),
   );
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_dedupe_b",
+    sweepName: "sim_dedupe_b",
     ideas,
   });
   if (result.ideasTotal !== 25 || result.ideasDirectional !== 4) {
@@ -113,16 +110,16 @@ test("SIM: dense flood keeps one idea per 8h window", async ({ pass, fail }) => 
 
 test("SIM: opposite direction is an opinion change, not flood", async ({ pass, fail }) => {
   registerFlatExchange("sim-dedupe-c");
-  addSimulatorSchema({
-    simulatorName: "sim_dedupe_c",
+  addSweepSchema({
+    sweepName: "sim_dedupe_c",
     exchangeName: "sim-dedupe-c",
     gridAxes: GRID_AXES,
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_dedupe_c",
+    sweepName: "sim_dedupe_c",
     ideas: [
       idea(1, 0, "LONG", "flipper"),
       idea(2, 60, "SHORT", "flipper"),

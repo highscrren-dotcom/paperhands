@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Пол прибыли (profitLockPercent): взводится при касании +X% от
@@ -57,17 +57,14 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
   registerWorld("sim-lock-bleed-exchange", priceAt);
 
   const tradesByLock = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_lock_bleed",
+  addSweepSchema({
+    sweepName: "sim_lock_bleed",
     exchangeName: "sim-lock-bleed-exchange",
     gridAxes: {
       hardStopPercent: [5],
       trailingTakePercent: [3],
       holdMinutes: [240],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0, 2],
-      authorMetric: ["close"],
     },
     callbacks: {
       onGridPoint: (_symbol, report, trades) => {
@@ -76,15 +73,15 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_lock_bleed",
+    sweepName: "sim_lock_bleed",
     ideas: [idea(1, 0, "LONG", "bleeder")],
   });
 
   const locked = tradesByLock.get(2);
   const bare = tradesByLock.get(0);
-  if (!locked || !bare || locked.report.trades !== 1 || bare.report.trades !== 1) {
+  if (!locked || !bare || locked.report.tradesList.length !== 1 || bare.report.tradesList.length !== 1) {
     fail(`both grid points must trade once, got ${JSON.stringify([...tradesByLock.keys()])}`);
     return;
   }
@@ -119,8 +116,8 @@ test("SIM: profit lock catches the +2.5%-then-dump bleed the trailing take never
     fail(`lock must beat the bleed: ${lockTrade.pnlPercent} vs ${bareTrade.pnlPercent}`);
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 2) {
-    fail(`grid must have exactly 2 points, got ${Object.values(result.reports).flatMap((b) => b.reports).length}`);
+  if (result.reports.reports.length !== 2) {
+    fail(`grid must have exactly 2 points, got ${result.reports.reports.length}`);
     return;
   }
 
@@ -140,31 +137,28 @@ test("SIM: profit lock never cuts a runner — the trailing floor above it fills
   };
   registerWorld("sim-lock-runner-exchange", priceAt);
 
-  addSimulatorSchema({
-    simulatorName: "sim_lock_runner",
+  addSweepSchema({
+    sweepName: "sim_lock_runner",
     exchangeName: "sim-lock-runner-exchange",
     gridAxes: {
       hardStopPercent: [5],
       trailingTakePercent: [3],
       holdMinutes: [240],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [2],
-      authorMetric: ["close"],
     },
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_lock_runner",
+    sweepName: "sim_lock_runner",
     ideas: [idea(1, 0, "LONG", "runner")],
   });
 
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  const winner = result.reports.close.best.find(({ criterion }) => criterion === "sharpe");
+  const [report] = result.reports.reports;
+  const winner = result.reports.best.find(({ criterion }) => criterion === "sharpe");
   const [trade] = winner.report.tradesList;
-  if (report.trades !== 1 || !trade) {
+  if (report.tradesList.length !== 1 || !trade) {
     fail(`expected exactly one trade, got ${report.trades}`);
     return;
   }

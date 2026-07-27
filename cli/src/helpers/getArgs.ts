@@ -157,11 +157,7 @@ export const getArgs = singleshot(() => {
         type: "boolean",
         default: false,
       },
-      simulator: {
-        type: "boolean",
-        default: false,
-      },
-      tune: {
+      sweep: {
         type: "boolean",
         default: false,
       },

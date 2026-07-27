@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Граничные случаи метрик и правила бана:
@@ -8,9 +8,9 @@ import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/in
  *     profitFactor) при конечном положительном Sharpe — конечный
  *     сентинель вводил бы в заблуждение: реальные значения Sortino
  *     могут превышать любую константу;
- *  2) hitRate ровно на пороге: правило банит СТРОГО ниже порога,
- *     автор с точным 0.5 при пороге 0.5 остаётся допущенным, а
- *     автор с 0.25 — банится.
+ *  2) hitRate — точный сырой ratio без порога и без бана: coin 2/4 =
+ *     0.5, quarter 1/4 = 0.25; движок только считает, кого банить —
+ *     дело userspace.
  */
 
 const START = 1704067200000;
@@ -54,29 +54,26 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_sortino",
+  addSweepSchema({
+    sweepName: "sim_sortino",
     exchangeName: "sim-sortino-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_sortino",
+    sweepName: "sim_sortino",
     ideas: Array.from({ length: CYCLES }, (_, k) => idea(1 + k, k * 481, "LONG", "prophet")),
   });
 
-  const [report] = Object.values(result.reports).flatMap((b) => b.reports);
-  if (report.trades !== CYCLES || report.totalPnlPercent <= 0) {
+  const [report] = result.reports.reports;
+  if (report.tradesList.length !== CYCLES || report.totalPnlPercent <= 0) {
     fail(`expected ${CYCLES} profitable trades, got ${report.trades} / ${report.totalPnlPercent}`);
     return;
   }
@@ -98,11 +95,18 @@ test("SIM: profitable series with no losing day yields infinite Sortino", async 
   pass(`sortino=Infinity, calmar=Infinity, recovery=Infinity with finite sharpe=${report.sharpe.toFixed(2)} on ${report.trades} clean trades`);
 });
 
-test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictly below", async ({ pass, fail }) => {
-  // дрейф вверх: LONG = hit, SHORT = miss
+test("SIM: track hitRate is the exact raw ratio — 2/4 = 0.5, 1/4 = 0.25 (no ban, userspace decides)", async ({ pass, fail }) => {
+  // резкий рост +3% за 40 минут, затем плато. LONG фиксируется замком
+  // +2% РАНЬШЕ хардстопа = hit; SHORT ловит хардстоп на том же росте =
+  // miss (единственная метрика profit-before-stop)
   const priceAt = (timestamp) => {
     const m = Math.floor((timestamp - START) / MINUTE);
-    return m < 0 ? 1000 : 1000 * (1 + 1e-6 * m);
+    if (m < 0) return 1000;
+    const phase = m % 481;
+    const drift = 1 + 1e-9 * m; // микродрейф для уникальности цен
+    if (phase <= 1) return 1000 * drift;
+    if (phase <= 41) return 1000 * drift * (1 + (0.03 * (phase - 1)) / 40);
+    return 1000 * drift * 1.03;
   };
   addExchangeSchema({
     exchangeName: "sim-boundary-exchange",
@@ -119,55 +123,55 @@ test("SIM: hitRate exactly at the threshold stays allowed — the ban is strictl
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_boundary",
+  addSweepSchema({
+    sweepName: "sim_boundary",
     exchangeName: "sim-boundary-exchange",
     gridAxes: {
-      hardStopPercent: [50],
+      // замок +2% берётся LONG'ом на росте раньше хардстопа = hit;
+      // SHORT ловит хардстоп +2% на том же росте = miss
+      hardStopPercent: [2],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [4],
-      minAuthorHitRate: [0.5],
-      profitLockPercent: [0],
-      authorMetric: ["close"],
+      profitLockPercent: [2],
     },
     callbacks: {},
   });
 
-  const result = await Simulator.run({
+  // каждая идея выровнена на начало цикла (phase 0), чтобы войти
+  // прямо перед +3% рампой: LONG = hit (замок), SHORT = miss (стоп)
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_boundary",
+    sweepName: "sim_boundary",
     ideas: [
       // coin: ровно 2 hit (LONG) + 2 miss (SHORT) = 0.5
       idea(1, 0, "LONG", "coin"),
-      idea(2, SPACING, "LONG", "coin"),
-      idea(3, 481, "SHORT", "coin"),
-      idea(4, 481 + SPACING, "SHORT", "coin"),
+      idea(2, 481, "LONG", "coin"),
+      idea(3, 962, "SHORT", "coin"),
+      idea(4, 1443, "SHORT", "coin"),
       // quarter: 1 hit + 3 miss = 0.25
-      idea(11, 100, "LONG", "quarter"),
-      idea(12, 100 + 481, "SHORT", "quarter"),
-      idea(13, 100 + 962, "SHORT", "quarter"),
-      idea(14, 100 + 1443, "SHORT", "quarter"),
+      idea(11, 1924, "LONG", "quarter"),
+      idea(12, 2405, "SHORT", "quarter"),
+      idea(13, 2886, "SHORT", "quarter"),
+      idea(14, 3367, "SHORT", "quarter"),
     ],
   });
 
-  const stats = Object.fromEntries(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.authorStats.map((s) => [s.author, s]));
-  if (stats.coin.hitRate !== 0.5 || stats.coin.ideas !== 4) {
-    fail(`coin must have exactly 0.5 on 4 ideas, got ${JSON.stringify(stats.coin)}`);
+  // трек — сырой ratio, без порога/бана; userspace сам режет
+  const tracks = Object.fromEntries(result.reports.tracks.map((t) => [t.author, t]));
+  if (tracks.coin.hitRate !== 0.5 || tracks.coin.ideas !== 4) {
+    fail(`coin must have exactly 0.5 on 4 ideas, got ${JSON.stringify(tracks.coin)}`);
     return;
   }
-  if (stats.coin.banned) {
-    fail(`hitRate == threshold must stay allowed (ban is strictly below), got banned`);
+  if (tracks.quarter.hitRate !== 0.25 || tracks.quarter.ideas !== 4) {
+    fail(`quarter must be 0.25 on 4 ideas, got ${JSON.stringify(tracks.quarter)}`);
     return;
   }
-  if (stats.quarter.hitRate !== 0.25 || !stats.quarter.banned) {
-    fail(`quarter (0.25) must be banned, got ${JSON.stringify(stats.quarter)}`);
-    return;
-  }
-  if (!result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("coin") || result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors.includes("quarter")) {
-    fail(`whitelist must include coin and exclude quarter, got ${JSON.stringify(result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.allowedAuthors)}`);
+  // банов нет — обе идеи всех авторов торгуются
+  const traded = result.reports.reports[0].tradesList.length;
+  if (traded !== 8) {
+    fail(`all 8 ideas must trade (no ban), got ${traded}`);
     return;
   }
 
-  pass(`boundary: coin 2/4 = 0.50 allowed at threshold 0.5; quarter 1/4 = 0.25 banned`);
+  pass(`raw track ratio exact: coin 2/4 = 0.50, quarter 1/4 = 0.25; no ban, all 8 trade`);
 });

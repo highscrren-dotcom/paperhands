@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Горизонт профиля следует за самым длинным холдом сетки: никакого
@@ -36,23 +36,20 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_longhold",
+  addSweepSchema({
+    sweepName: "sim_longhold",
     exchangeName: "sim-longhold-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [HOLD],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_longhold",
+    sweepName: "sim_longhold",
     ideas: [{ id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "holder" }],
   });
 
@@ -61,7 +58,7 @@ test("SIM: the profile horizon follows the longest hold — a 20-day hold lives 
     fail(`profile must be full, got truncated=${result.truncatedCount}`);
     return;
   }
-  const [trade] = result.reports.close.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
+  const [trade] = result.reports.best.find(({ criterion }) => criterion === "sharpe").report.tradesList;
   if (trade.exitReason !== "time_expired") {
     fail(`a stop-free drift world must exit time_expired, got ${trade.exitReason}`);
     return;

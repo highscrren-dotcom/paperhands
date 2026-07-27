@@ -1,17 +1,17 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
- * Reach-hits зависят от СТОПА точки: ось hardStopPercent [3, 5] при
- * metric "reach" обязана дать ДВЕ тренировки фильтра (ключ кеша
- * включает stop), и автор с ямой -4% до пика:
- *  - при стопе 3 — miss (яма глубже стопа, идею вынесло бы), бан,
- *    ноль сделок у точки H=3;
- *  - при стопе 5 — hit (яма пережита, замок собран), допуск,
- *    5 сделок profit_lock у точки H=5.
- * Регрессия, склеившая тренировки по метрике без стопа, молча
- * приравняет эти правила — тест это ловит.
+ * Hits единственной метрики profit-before-stop зависят от СТОПА
+ * точки: ось hardStopPercent [3, 5] обязана дать ДВЕ тренировки
+ * фильтра (ключ кеша включает stop), и автор с ямой -4% до пика:
+ *  - при стопе 3 — miss (яма глубже стопа: хардстоп выбивает раньше
+ *    фиксации), ноль hits у правила H=3;
+ *  - при стопе 5 — hit (яма пережита, замок +2.5% собран раньше
+ *    стопа), 5/5 hits у правила H=5.
+ * Регрессия, выкинувшая стоп из ключа/грейдинга, молча приравняет
+ * эти правила — тест это ловит.
  *
  * Мир per cycle: яма до -4% (фазы 2..30), пик +4% (31..60), откат к
  * базе (61..100) — яма НЕ задевает стоп 5 в торговле (960 > 950.95).
@@ -40,7 +40,7 @@ const idea = (id, minute) => ({
   author: "dipper",
 });
 
-test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5]", async ({ pass, fail }) => {
+test("SIM: hit counts follow the point's stop — two trainings for H=[3,5]", async ({ pass, fail }) => {
   addExchangeSchema({
     exchangeName: "sim-reachstop-exchange",
     getCandles: async (_symbol, _interval, since, limit) => {
@@ -58,17 +58,14 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
 
   const trainings = [];
   const byStop = new Map();
-  addSimulatorSchema({
-    simulatorName: "sim_reachstop",
+  addSweepSchema({
+    sweepName: "sim_reachstop",
     exchangeName: "sim-reachstop-exchange",
     gridAxes: {
       hardStopPercent: [3, 5],
       trailingTakePercent: [100],
       holdMinutes: [240],
-      minAuthorTrack: [5],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [2.5],
-      authorMetric: ["reach"],
     },
     callbacks: {
       onAuthorsTrained: (_symbol, stats) => trainings.push(stats),
@@ -76,15 +73,15 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
     },
   });
 
-  await Simulator.run({
+  await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_reachstop",
+    sweepName: "sim_reachstop",
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE)),
   });
 
   // две тренировки — по одной на каждый reach-контекст стопа
   if (trainings.length !== 2) {
-    fail(`H=[3,5] under reach must train the filter twice, got ${trainings.length}`);
+    fail(`H=[3,5] must train the filter twice (stop is in the rule key), got ${trainings.length}`);
     return;
   }
   const hitCounts = trainings
@@ -95,18 +92,20 @@ test("SIM: reach hit counts follow the point's stop — two trainings for H=[3,5
     return;
   }
 
-  // H=3: бан по reach (яма -4 глубже стопа 3) -> ноль сделок
+  // банов нет — обе точки торгуют все 5; различие стопа видно в
+  // ТРЕКЕ (0/5 vs 5/5 hits) и в исходах сделок:
+  // H=3: узкий стоп режет сделки в hard_stop
   const strict = byStop.get(3);
-  if (strict.trades !== 0) {
-    fail(`stop 3 point must ban the dipper (shakeout -4), got ${strict.trades} trades`);
+  if (strict.tradesList.length !== 5 || strict.exitReasons.hard_stop !== 5) {
+    fail(`stop 3 point trades all 5 but the dip (-4) stops them out, got ${JSON.stringify(strict.exitReasons)}`);
     return;
   }
-  // H=5: допуск, все 5 идей сняты замком
+  // H=5: широкий стоп переживает яму, все 5 сняты замком
   const soft = byStop.get(5);
-  if (soft.trades !== 5 || soft.exitReasons.profit_lock !== 5) {
+  if (soft.tradesList.length !== 5 || soft.exitReasons.profit_lock !== 5) {
     fail(`stop 5 point must harvest 5/5 by profit_lock, got ${JSON.stringify(soft.exitReasons)}`);
     return;
   }
 
-  pass("reach follows the stop: 0/5 hits vs stop 3 (banned, 0 trades), 5/5 vs stop 5 (5 profit_lock exits), two distinct trainings");
+  pass("hits follow the stop in the TRACK: 0/5 vs stop 3, 5/5 vs stop 5, two distinct trainings; no ban -> both trade 5 (stop 3 -> hard_stop, stop 5 -> profit_lock)");
 });

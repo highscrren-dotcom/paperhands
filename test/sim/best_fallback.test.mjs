@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Fallback анти-флюка: когда НИ ОДНА точка не добирает
@@ -50,8 +50,8 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
     formatQuantity: async (_symbol, qty) => qty.toFixed(8),
   });
 
-  addSimulatorSchema({
-    simulatorName: "sim_fallback",
+  addSweepSchema({
+    sweepName: "sim_fallback",
     exchangeName: "sim-fallback-exchange",
     gridAxes: {
       hardStopPercent: [50],
@@ -59,25 +59,22 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
       // худшая точка (hold=120) первой в сетке — fallback обязан её
       // ПЕРЕПРЫГНУТЬ, если берёт лучшую, а не первую
       holdMinutes: [120, 60],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_fallback",
+    sweepName: "sim_fallback",
     ideas: Array.from({ length: 5 }, (_, k) => idea(1 + k, k * CYCLE)),
   });
 
   // предусловие: обе точки ниже порога 8 сделок, и первая по сетке
   // (hold=120) объективно хуже
-  const byHold = new Map(Object.values(result.reports).flatMap((b) => b.reports).map((r) => [r.point.holdMinutes, r]));
+  const byHold = new Map(result.reports.reports.map((r) => [r.point.holdMinutes, r]));
   const long = byHold.get(120);
   const short = byHold.get(60);
-  if (long.trades !== 5 || short.trades !== 5) {
+  if (long.tradesList.length !== 5 || short.tradesList.length !== 5) {
     fail(`both points must trade 5 (< floor 8), got ${long.trades}/${short.trades}`);
     return;
   }
@@ -86,13 +83,13 @@ test("SIM: with no point above the anti-fluke floor the fallback picks the BEST 
     return;
   }
 
-  for (const best of result.reports.close.best) {
+  for (const best of result.reports.best) {
     if (best.report.point.holdMinutes !== 60) {
       fail(`${best.criterion} fallback must pick the best point (hold=60), got hold=${best.report.point.holdMinutes}`);
       return;
     }
-    if (best.report.trades !== 5) {
-      fail(`${best.criterion} winner must carry its 5 trades, got ${best.report.trades}`);
+    if (best.report.tradesList.length !== 5) {
+      fail(`${best.criterion} winner must carry its 5 trades, got ${best.report.tradesList.length}`);
       return;
     }
   }

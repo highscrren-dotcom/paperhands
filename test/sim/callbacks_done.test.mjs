@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * onDone — единственный колбек, не имевший ни одного ассерта:
@@ -37,26 +37,23 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
   });
 
   const doneCalls = [];
-  addSimulatorSchema({
-    simulatorName: "sim_done",
+  addSweepSchema({
+    sweepName: "sim_done",
     exchangeName: "sim-done-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60],
-      minAuthorTrack: [1],
-      minAuthorHitRate: [0],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onDone: (symbol, result) => doneCalls.push({ symbol, result }),
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_done",
+    sweepName: "sim_done",
     ideas: [{ id: 1, ts: START, symbol: "TESTUSDT", direction: "LONG", author: "solo" }],
   });
 
@@ -73,8 +70,8 @@ test("SIM: onDone fires once and carries the exact result object", async ({ pass
     fail("onDone payload must be the exact object run() returns");
     return;
   }
-  if (Object.values(result.reports).flatMap((b) => b.reports).length !== 1 || result.reports.close.best.length !== 4) {
-    fail(`sanity: expected 1 report / 4 winners, got ${Object.values(result.reports).flatMap((b) => b.reports).length}/${result.reports.close.best.length}`);
+  if (result.reports.reports.length !== 1 || result.reports.best.length !== 4) {
+    fail(`sanity: expected 1 report / 4 winners, got ${result.reports.reports.length}/${result.reports.best.length}`);
     return;
   }
 

@@ -1,6 +1,6 @@
 import { test } from "worker-testbed";
 
-import { addExchangeSchema, addSimulatorSchema, Simulator } from "../../build/index.mjs";
+import { addExchangeSchema, addSweepSchema, Sweep } from "../../build/index.mjs";
 
 /**
  * Победитель рейтинга без анти-флюк порога: критерий решает сам.
@@ -52,17 +52,14 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
   });
 
   const rankings = [];
-  addSimulatorSchema({
-    simulatorName: "sim_best",
+  addSweepSchema({
+    sweepName: "sim_best",
     exchangeName: "sim-best-exchange",
     gridAxes: {
       hardStopPercent: [50],
       trailingTakePercent: [100],
       holdMinutes: [60, 7200],
-      minAuthorTrack: [3],
-      minAuthorHitRate: [0.5],
       profitLockPercent: [0],
-      authorMetric: ["close"],
     },
     callbacks: {
       onRanking: (_symbol, criterion, sorted, best) => {
@@ -71,9 +68,9 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
     },
   });
 
-  const result = await Simulator.run({
+  const result = await Sweep.run({
     symbol: "TESTUSDT",
-    simulatorName: "sim_best",
+    sweepName: "sim_best",
     ideas: Array.from({ length: CYCLES }, (_, k) => ({
       id: 1 + k,
       ts: START + k * SPACING * MINUTE,
@@ -83,19 +80,19 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
     })),
   });
 
-  const steady = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 60);
-  const fluke = Object.values(result.reports).flatMap((b) => b.reports).find(({ point }) => point.holdMinutes === 7200);
+  const steady = result.reports.reports.find(({ point }) => point.holdMinutes === 60);
+  const fluke = result.reports.reports.find(({ point }) => point.holdMinutes === 7200);
   if (!steady || !fluke) {
     fail("both points must be evaluated");
     return;
   }
 
   // флюк: одна сделка, но тотальное доминирование по PnL
-  if (fluke.trades !== 1 || fluke.totalPnlPercent < 30) {
+  if (fluke.tradesList.length !== 1 || fluke.totalPnlPercent < 30) {
     fail(`fluke point must have 1 monster trade (>+30%), got ${fluke.trades}/${fluke.totalPnlPercent.toFixed(2)}`);
     return;
   }
-  if (steady.trades !== CYCLES || !(fluke.totalPnlPercent > steady.totalPnlPercent)) {
+  if (steady.tradesList.length !== CYCLES || !(fluke.totalPnlPercent > steady.totalPnlPercent)) {
     fail(`steady must have ${CYCLES} modest trades below fluke pnl, got ${steady.trades}/${steady.totalPnlPercent.toFixed(2)}`);
     return;
   }
@@ -103,7 +100,7 @@ test("SIM: pnl ranking takes the monster single trade, risk-adjusted rankings ta
   // pnl-рейтинг берёт флюк (сырой PnL выше), риск-скорректированные —
   // steady (одна сделка = высокая дисперсия, худший sharpe/sortino/rec)
   const winnerHold = (criterion) =>
-    result.reports.close.best.find((b) => b.criterion === criterion)?.report?.point.holdMinutes;
+    result.reports.best.find((b) => b.criterion === criterion)?.report?.point.holdMinutes;
   if (winnerHold("pnl") !== 7200) {
     fail(`pnl ranking must take the monster point (hold=7200), got hold=${winnerHold("pnl")}`);
     return;

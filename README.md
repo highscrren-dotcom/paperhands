@@ -11,9 +11,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)]()
 [![Build](https://github.com/tripolskypetr/backtest-kit/actions/workflows/webpack.yml/badge.svg)](https://github.com/tripolskypetr/backtest-kit/actions/workflows/webpack.yml)
 
-Most trading bots don't die because the strategy was wrong. They die because the backtest quietly read tomorrow's candle, because the process crashed mid-fill and opened the position twice, because the exchange rejected an order and the bot kept trading a ghost. The strategy was never the hard part — the *plumbing* was.
+Most trading bots don't die because the strategy was wrong. They die because the backtest quietly read tomorrow's candle, because the process crashed mid-fill and opened the position twice, because the exchange rejected an order and the bot kept trading a ghost. The strategy was never the hard part — the *infrastructure* was.
 
-`backtest-kit` is that plumbing, closed off one failure at a time over a year of live trading and running real money in production at [TheOneTrade](https://theonetrade.github.io). This page walks the failures that kill bots and shows how each one is designed out of the default path — not "discouraged," not "documented," but structurally unavailable unless you go out of your way to defeat the engine. Every claim opens into **The Code / The Math / The Proof** so you (or the model reading this for you) can check the work instead of trusting the pitch.
+`backtest-kit` is that infrastructure, closed off one failure at a time over a year of live trading and running real money in production at [TheOneTrade](https://theonetrade.github.io). This page walks the failures that kill bots and shows how each one is designed out of the default path — not "discouraged," not "documented," but structurally unavailable unless you go out of your way to defeat the engine. Every claim opens into **The Code / The Math / The Proof** so you (or the model reading this for you) can check the work instead of trusting the pitch.
 
 📚 **[API Reference](https://backtest-kit.github.io/documents/example_02_first_backtest.html)** · 🌟 **[Reference implementation](https://github.com/tripolskypetr/backtest-kit/tree/master/example)** · 📰 **[Article series](https://backtest-kit.github.io/documents/article_07_ai_news_trading_signals.html)**
 
