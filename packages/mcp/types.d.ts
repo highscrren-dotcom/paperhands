@@ -1,0 +1,40 @@
+interface ILogger {
+    log(topic: string, ...args: any[]): void;
+    debug(topic: string, ...args: any[]): void;
+    info(topic: string, ...args: any[]): void;
+    warn(topic: string, ...args: any[]): void;
+}
+
+/**
+ * Attaches a custom logger to the internal `LoggerService`.
+ *
+ * By default the package logs to `console`. Pass your own {@link ILogger} implementation
+ * to redirect output to an external logging system (Winston, Pino, Datadog, etc.).
+ *
+ * @param logger - Object with `log`, `debug`, `info`, and `warn` methods.
+ *   Each method receives a string topic followed by arbitrary arguments.
+ *
+ * @example
+ * import winston from "winston";
+ *
+ * setLogger({
+ *   log:   (topic, ...args) => winston.verbose(topic, ...args),
+ *   debug: (topic, ...args) => winston.debug(topic, ...args),
+ *   info:  (topic, ...args) => winston.info(topic, ...args),
+ *   warn:  (topic, ...args) => winston.warn(topic, ...args),
+ * });
+ */
+declare function setLogger(logger: ILogger): void;
+
+declare const GLOBAL_CONFIG: {
+    CC_MCP_HOST: string;
+    CC_MCP_PORT: number;
+};
+type Config = typeof GLOBAL_CONFIG;
+declare const getConfig: () => {
+    CC_MCP_HOST: string;
+    CC_MCP_PORT: number;
+};
+declare const setConfig: (config: Partial<Config>) => void;
+
+export { getConfig, setConfig, setLogger };
