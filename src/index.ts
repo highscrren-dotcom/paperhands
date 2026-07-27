@@ -14,6 +14,7 @@ export {
   getRiskSchema,
   getActionSchema,
   getSweepSchema,
+  getMCPSchema,
 } from "./function/get";
 export {
   waitForReady,
@@ -101,6 +102,7 @@ export {
   addSizingSchema,
   addRiskSchema,
   addSweepSchema,
+  addMCPSchema,
 } from "./function/add";
 export {
   overrideActionSchema,
@@ -111,6 +113,7 @@ export {
   overrideStrategySchema,
   overrideWalkerSchema,
   overrideSweepSchema,
+  overrideMCPSchema,
 } from "./function/override";
 export {
   listExchangeSchema,
@@ -120,6 +123,7 @@ export {
   listSizingSchema,
   listRiskSchema,
   listSweepSchema,
+  listMCPSchema,
 } from "./function/list";
 export {
   listenSignal,

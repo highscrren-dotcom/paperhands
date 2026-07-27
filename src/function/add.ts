@@ -7,6 +7,7 @@ import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
 import { IActionSchema } from "../interfaces/Action.interface";
 import { ISweepSchema } from "../interfaces/Sweep.interface";
+import { IMCPSchema } from "../interfaces/MCP.interface";
 
 const ADD_STRATEGY_METHOD_NAME = "add.addStrategySchema";
 const ADD_EXCHANGE_METHOD_NAME = "add.addExchangeSchema";
@@ -16,6 +17,7 @@ const ADD_SIZING_METHOD_NAME = "add.addSizingSchema";
 const ADD_RISK_METHOD_NAME = "add.addRiskSchema";
 const ADD_ACTION_METHOD_NAME = "add.addActionSchema";
 const ADD_SIMULATOR_METHOD_NAME = "add.addSweepSchema";
+const ADD_MCP_METHOD_NAME = "add.addMCPSchema";
 
 /**
  * Registers a trading strategy in the framework.
@@ -464,5 +466,47 @@ export function addSweepSchema(sweepSchema: ISweepSchema) {
   backtest.sweepSchemaService.register(
     sweepSchema.sweepName,
     sweepSchema
+  );
+}
+
+/**
+ * Registers an MCP instance in the framework — the bridge exposing
+ * live trading of a strategy to an MCP agent (see MCP.getStatus).
+ *
+ * The MCP binds to a strategy: status snapshots and position commands
+ * operate on every live instance of that strategy. getMessages renders
+ * the portfolio for the agent; when omitted the default renderer emits
+ * one text message per traded symbol.
+ *
+ * @param mcpSchema - MCP configuration object
+ * @param mcpSchema.mcpName - Unique MCP identifier
+ * @param mcpSchema.strategyName - Strategy whose live instances the MCP observes and trades
+ * @param mcpSchema.positionCost - Optional entry cost in USD (default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST)
+ * @param mcpSchema.getMessages - Optional portfolio renderer for the agent
+ * @param mcpSchema.callbacks - Optional lifecycle callbacks
+ *
+ * @example
+ * ```typescript
+ * addMCPSchema({
+ *   mcpName: "my-mcp",
+ *   strategyName: "my-strategy",
+ *   positionCost: 100,
+ *   getMessages: (context, when) => [
+ *     { type: "text", text: `Symbols: ${Object.keys(context).join(", ")}` },
+ *   ],
+ * });
+ * ```
+ */
+export function addMCPSchema(mcpSchema: IMCPSchema) {
+  backtest.loggerService.info(ADD_MCP_METHOD_NAME, {
+    mcpSchema,
+  });
+  backtest.mcpValidationService.addMCP(
+    mcpSchema.mcpName,
+    mcpSchema
+  );
+  backtest.mcpSchemaService.register(
+    mcpSchema.mcpName,
+    mcpSchema
   );
 }

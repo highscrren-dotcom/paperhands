@@ -6,6 +6,7 @@ import { IWalkerSchema } from "../interfaces/Walker.interface";
 import { ISizingSchema } from "../interfaces/Sizing.interface";
 import { IRiskSchema } from "../interfaces/Risk.interface";
 import { ISweepSchema } from "../interfaces/Sweep.interface";
+import { IMCPSchema } from "../interfaces/MCP.interface";
 
 const LIST_EXCHANGES_METHOD_NAME = "list.listExchangeSchema";
 const LIST_STRATEGIES_METHOD_NAME = "list.listStrategySchema";
@@ -14,6 +15,7 @@ const LIST_WALKERS_METHOD_NAME = "list.listWalkerSchema";
 const LIST_SIZINGS_METHOD_NAME = "list.listSizingSchema";
 const LIST_RISKS_METHOD_NAME = "list.listRiskSchema";
 const LIST_SIMULATORS_METHOD_NAME = "list.listSweepSchema";
+const LIST_MCP_METHOD_NAME = "list.listMCPSchema";
 
 /**
  * Returns a list of all registered exchange schemas.
@@ -244,4 +246,31 @@ export async function listRiskSchema(): Promise<IRiskSchema[]> {
 export async function listSweepSchema(): Promise<ISweepSchema[]> {
   backtest.loggerService.log(LIST_SIMULATORS_METHOD_NAME);
   return await backtest.sweepValidationService.list();
+}
+
+/**
+ * Returns a list of all registered MCP schemas.
+ *
+ * Retrieves all MCP instances that have been registered via addMCPSchema().
+ * Useful for debugging, documentation, or building dynamic UIs.
+ *
+ * @returns Array of MCP schemas with their configurations
+ *
+ * @example
+ * ```typescript
+ * import { listMCPSchema, addMCPSchema } from "backtest-kit";
+ *
+ * addMCPSchema({
+ *   mcpName: "my-mcp",
+ *   strategyName: "my-strategy",
+ * });
+ *
+ * const mcps = await listMCPSchema();
+ * console.log(mcps);
+ * // [{ mcpName: "my-mcp", strategyName: "my-strategy", ... }]
+ * ```
+ */
+export async function listMCPSchema(): Promise<IMCPSchema[]> {
+  backtest.loggerService.log(LIST_MCP_METHOD_NAME);
+  return await backtest.mcpValidationService.list();
 }
