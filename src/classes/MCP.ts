@@ -137,6 +137,7 @@ const DEFAULT_GET_MESSAGES = (
         minuteEstimatedTime,
         priceOpen,
         totalEntries,
+        _entry,
         _peak,
         _fall,
       } = pendingSignal;
@@ -151,6 +152,13 @@ const DEFAULT_GET_MESSAGES = (
       lines.push(
         `Entry price: ${priceOpen}${totalEntries > 1 ? " (effective average across all DCA entries)" : ""}`,
       );
+      if (_entry && _entry.length > 1) {
+        for (const [index, entry] of _entry.entries()) {
+          lines.push(
+            `- entry ${index + 1}: price ${entry.price}, cost ${entry.cost.toFixed(2)} USD, at ${new Date(entry.timestamp).toISOString()}`,
+          );
+        }
+      }
       lines.push(`Current price: ${currentPrice}`);
       lines.push(
         `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(pnl.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
