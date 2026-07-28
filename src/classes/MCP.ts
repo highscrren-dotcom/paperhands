@@ -136,6 +136,7 @@ const DEFAULT_GET_MESSAGES = (
         pendingAt,
         minuteEstimatedTime,
         priceOpen,
+        totalEntries,
         _peak,
         _fall,
       } = pendingSignal;
@@ -171,7 +172,9 @@ const DEFAULT_GET_MESSAGES = (
       } else {
         lines.push("Expires in: never, the position is a perpetual hold");
       }
-      lines.push(`Balance: ${pnl.pnlEntries.toFixed(2)} USD invested`);
+      lines.push(
+        `Balance: ${pnl.pnlEntries.toFixed(2)} USD invested across ${totalEntries} ${totalEntries === 1 ? "entry" : "entries (DCA averaged)"}`,
+      );
     } else {
       lines.push(`Current price: ${currentPrice}`);
       lines.push(`Balance: no capital invested in ${symbol}`);
