@@ -52,10 +52,12 @@ const FORMAT_SIGNED_FN = (value: number): string =>
 /**
  * Default portfolio-to-text renderer for the MCP agent.
  *
- * Emits one header message — snapshot time plus a portfolio summary (open
- * position count, total invested, total unrealized PnL in USD and percent of
- * invested) so the agent sees the tactical exit picture before reading
- * per-symbol details — followed by one text message per traded symbol:
+ * Emits one header message — snapshot time plus a portfolio summary: open
+ * position count, total invested, total unrealized PnL in USD (percent of
+ * invested alongside) and a per-position dollar PnL list. Dollars lead
+ * everywhere: entry prices differ across positions, so percents are not
+ * comparable between them — USD is the common denominator the tactical exit
+ * decision reads. Then one text message per traded symbol:
  * capital balance, the queued entry order (createdSignal), the active
  * position (pendingSignal) and the queued close order (closedSignal).
  * A symbol holding a position is rendered PnL-first: entry and current price,
@@ -81,19 +83,20 @@ const DEFAULT_GET_MESSAGES = (
       },
     ];
   }
-  const openPositions = symbols
-    .map((symbol) => context[symbol].pendingSignal)
-    .filter((pendingSignal) => !!pendingSignal);
+  const openPositions = symbols.flatMap((symbol) => {
+    const { pendingSignal } = context[symbol];
+    return pendingSignal ? [{ symbol, pendingSignal }] : [];
+  });
   const summaryLines: string[] = [
     `Portfolio status at ${when.toISOString()} (${symbols.length} traded symbol${symbols.length === 1 ? "" : "s"}):`,
   ];
   if (openPositions.length) {
     const totalInvested = openPositions.reduce(
-      (acm, { pnl }) => acm + pnl.pnlEntries,
+      (acm, { pendingSignal }) => acm + pendingSignal.pnl.pnlEntries,
       0,
     );
     const totalPnlCost = openPositions.reduce(
-      (acm, { pnl }) => acm + pnl.pnlCost,
+      (acm, { pendingSignal }) => acm + pendingSignal.pnl.pnlCost,
       0,
     );
     const totalPnlPercent = totalInvested
@@ -106,6 +109,11 @@ const DEFAULT_GET_MESSAGES = (
     summaryLines.push(
       `Total unrealized PnL: ${FORMAT_SIGNED_FN(totalPnlCost)} USD (${FORMAT_SIGNED_FN(totalPnlPercent)}% of invested), net of entry and assumed exit fees and slippage`,
     );
+    for (const { symbol, pendingSignal } of openPositions) {
+      summaryLines.push(
+        `- ${symbol}: ${FORMAT_SIGNED_FN(pendingSignal.pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(pendingSignal.pnl.pnlPercentage)}%)`,
+      );
+    }
   } else {
     summaryLines.push("Open positions: none");
   }
@@ -142,7 +150,7 @@ const DEFAULT_GET_MESSAGES = (
       lines.push(`Entry price: ${priceOpen}`);
       lines.push(`Current price: ${currentPrice}`);
       lines.push(
-        `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlPercentage)}% (${FORMAT_SIGNED_FN(pnl.pnlCost)} USD), net of entry and assumed exit fees and slippage`,
+        `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(pnl.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
       );
       lines.push(
         `Peak profit: ${FORMAT_SIGNED_FN(peakProfit.pnlPercentage)}% (${peakMinutesAgo} minute${peakMinutesAgo === 1 ? "" : "s"} ago)`,
