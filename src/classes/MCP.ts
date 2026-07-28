@@ -2,6 +2,7 @@ import { memoize, trycatch, errorData, getErrorMessage } from "functools-kit";
 import backtest from "../lib";
 import { Exchange } from "./Exchange";
 import { Live } from "./Live";
+import { StorageLive } from "./Storage";
 import {
   IMCPContext,
   IMCPMessage,
@@ -18,11 +19,15 @@ import { GLOBAL_CONFIG } from "../config/params";
 
 const METHOD_NAME_GET_STATUS = "MCPUtils.getStatus";
 const METHOD_NAME_GET_DEFAULT_MESSAGES = "MCPUtils.getDefaultMessages";
+const METHOD_NAME_GET_HISTORY_MESSAGES = "MCPUtils.getHistoryMessages";
 const METHOD_NAME_COMMIT_POSITION_OPEN = "MCPUtils.commitPositionOpen";
 const METHOD_NAME_COMMIT_POSITION_CLOSE = "MCPUtils.commitPositionClose";
 
 /** Grid step (percent) the hard stop-loss distance snaps to. */
 const HARD_STOP_STEP_PERCENT = 2.5;
+
+/** Maximum closed positions included in the trade history messages. */
+const MAX_HISTORY_ROWS = 10;
 
 /**
  * Computes the hard stop-loss distance percent for an opened position.
@@ -226,6 +231,76 @@ const DEFAULT_GET_MESSAGES = (
       );
     } else {
       lines.push("Close queue: empty, no order waiting to close a position");
+    }
+    messages.push({ type: "text", text: lines.join("\n") });
+  }
+  return messages;
+};
+
+/**
+ * Builds the trade history for an MCP from the live signal storage
+ * (StorageLive): recently CLOSED positions of the bound strategy, newest
+ * first — one header message plus one text message per closed trade with
+ * the dollar/percent result, direction, close reason, open/close times and
+ * the note the position was opened with.
+ *
+ * The anti-churn half of the agent's picture: a stateless news agent that
+ * only sees open positions re-trades the same news right after closing;
+ * with the history it sees "this was already traded, result -2.10 USD".
+ *
+ * Depth: at most {@link MAX_HISTORY_ROWS} newest closed rows are rendered.
+ * The underlying live bucket additionally keeps only the last CC_MAX_SIGNALS
+ * rows across ALL strategies (global feed by contract), and rows accumulate
+ * only while the Storage adapter is enabled.
+ *
+ * @param mcpName - MCP name resolved to its bound strategy
+ * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @returns Promise resolving to history messages for the MCP agent
+ */
+const HISTORY_GET_MESSAGES = async (
+  mcpName: MCPName,
+  when: Date,
+): Promise<IMCPMessage[]> => {
+  const { strategyName } = backtest.mcpSchemaService.get(mcpName);
+  const rowList = await StorageLive.list();
+  const closedList = rowList
+    .flatMap((row) =>
+      row.strategyName === strategyName && row.status === "closed" ? [row] : [],
+    )
+    .sort((a, b) => b.closeTimestamp - a.closeTimestamp)
+    .slice(0, MAX_HISTORY_ROWS);
+  if (!closedList.length) {
+    return [
+      {
+        type: "text",
+        text: `Trade history at ${when.toISOString()}: no closed positions recorded yet.`,
+      },
+    ];
+  }
+  const messages: IMCPMessage[] = [
+    {
+      type: "text",
+      text: `Trade history at ${when.toISOString()} (last ${closedList.length} closed position${closedList.length === 1 ? "" : "s"}, newest first):`,
+    },
+  ];
+  for (const row of closedList) {
+    const closedMinutesAgo = Math.max(
+      0,
+      Math.round((when.getTime() - row.closeTimestamp) / 60_000),
+    );
+    const lines: string[] = [];
+    lines.push(`Symbol: ${row.symbol}`);
+    lines.push(`Position: ${row.position}`);
+    lines.push(
+      `Result: ${FORMAT_SIGNED_FN(row.pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnl.pnlPercentage)}%), net of entry and exit fees and slippage`,
+    );
+    lines.push(`Close reason: ${row.closeReason}`);
+    lines.push(
+      `Closed at: ${new Date(row.closeTimestamp).toISOString()} (${closedMinutesAgo} minute${closedMinutesAgo === 1 ? "" : "s"} ago)`,
+    );
+    lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
+    if (row.note) {
+      lines.push(`Note: ${row.note}`);
     }
     messages.push({ type: "text", text: lines.join("\n") });
   }
@@ -588,35 +663,39 @@ export class MCPUtils {
    * Renders a portfolio snapshot with the DEFAULT text renderer, regardless
    * of the schema's getMessages.
    *
-   * Emits one header message with the snapshot time plus one text message per
-   * traded symbol: capital balance, the queued entry order, the active
-   * position with its unrealized PnL and the queued close order.
+   * Emits one header message — snapshot time plus the portfolio summary
+   * (open position count, total invested, total and per-position dollar
+   * PnL) — plus one text message per traded symbol: prices, PnL/peak/
+   * drawdown percents with timing, DCA entries, capital balance and the
+   * entry/position/close slots.
    *
-   * The signature matches IMCPSchema.getMessages, so a custom renderer can
-   * delegate here and extend the default output instead of rebuilding it.
+   * The signature matches IMCPSchema.getMessages (async variant), so a
+   * custom renderer can await this method and extend the default output
+   * instead of rebuilding it.
    *
    * @param context - Portfolio snapshot keyed by traded symbol
    * @param when - Snapshot time stamped into the header message
    * @param mcpName - Name of the registered MCP schema (validated before rendering)
-   * @returns Messages for the MCP agent
+   * @returns Promise resolving to messages for the MCP agent
    *
    * @example
    * ```typescript
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
-   *   getMessages: (context, when, mcpName) => [
-   *     ...MCP.getDefaultMessages(context, when, mcpName),
-   *     { type: "text", text: "Custom trailer for the agent" },
-   *   ],
+   *   getMessages: async (context, when, mcpName) => {
+   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+   *     messages.push({ type: "text", text: "Custom trailer for the agent" });
+   *     return messages;
+   *   },
    * });
    * ```
    */
-  public getDefaultMessages = (
+  public getDefaultMessages = async (
     context: IMCPContext,
     when: Date,
     mcpName: MCPName
-  ) => {
+  ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_DEFAULT_MESSAGES, {
       mcpName,
       when,
@@ -628,6 +707,48 @@ export class MCPUtils {
 
     return DEFAULT_GET_MESSAGES(context, when);
   }
+
+  /**
+   * Renders the trade history of the MCP's strategy into agent messages:
+   * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
+   * storage, newest first — dollar/percent result, direction, close reason,
+   * open/close times and the opening note per trade.
+   *
+   * Complements getStatus for stateless agents: the status shows what is
+   * open, the history shows what was already traded and how it ended, so
+   * the agent does not re-enter the same idea right after closing it.
+   *
+   * @param mcpName - Name of the registered MCP schema (validated before rendering)
+   * @returns Promise resolving to history messages for the MCP agent
+   *
+   * @example
+   * ```typescript
+   * addMCPSchema({
+   *   mcpName: "my-mcp",
+   *   strategyName: "my-strategy",
+   *   getMessages: async (context, when, mcpName) => {
+   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     messages.push(...history);
+   *     return messages;
+   *   },
+   * });
+   * ```
+   */
+  public getHistoryMessages = async (
+    mcpName: MCPName,
+  ): Promise<IMCPMessage[]> => {
+    backtest.loggerService.log(METHOD_NAME_GET_HISTORY_MESSAGES, {
+      mcpName,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_HISTORY_MESSAGES);
+    }
+
+    const when = alignToInterval(new Date(), "1m");
+    return await HISTORY_GET_MESSAGES(mcpName, when);
+  };
 
   /**
    * Renders the current portfolio of the MCP's strategy into agent messages.
