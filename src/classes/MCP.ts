@@ -163,11 +163,14 @@ const DEFAULT_GET_MESSAGES = (
       lines.push("Active position: none");
     }
     if (closedSignal) {
-      const note = closedSignal.closeNote
-        ? ` (note: ${closedSignal.closeNote})`
-        : "";
+      const details = [
+        closedSignal.note ? `note: ${closedSignal.note}` : "",
+        closedSignal.closeNote ? `close note: ${closedSignal.closeNote}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
       lines.push(
-        `Close queue: close order waiting for the ${closedSignal.position} position of signal ${closedSignal.id}${note}`,
+        `Close queue: close order waiting for the ${closedSignal.position} position${details ? ` (${details})` : ""}`,
       );
     } else {
       lines.push("Close queue: empty, no order waiting to close a position");
