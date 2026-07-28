@@ -55,13 +55,15 @@ const FORMAT_SIGNED_FN = (value: number): string =>
  * Emits one header message with the snapshot time plus one text message per
  * traded symbol: capital balance, the queued entry order (createdSignal), the
  * active position (pendingSignal) and the queued close order (closedSignal).
- * A symbol holding a position is rendered PnL-first — unrealized PnL percent,
- * peak profit percent and max drawdown percent instead of the raw price —
- * followed by the open time and the minutes left until time_expired (or an
- * explicit "perpetual hold" when minuteEstimatedTime is Infinity); the
- * current price is shown only for symbols with no position, where no PnL
- * exists. Slots without data are stated explicitly so the agent never has to
- * guess whether a field was omitted or empty.
+ * A symbol holding a position is rendered PnL-first: entry and current price,
+ * unrealized PnL percent (net of entry/exit fees and slippage — the pnl
+ * contract adjusts both legs), peak profit and max drawdown percents with the
+ * minutes elapsed since each extreme (_peak/_fall timestamps), the open time
+ * and the minutes left until time_expired (or an explicit "perpetual hold"
+ * when minuteEstimatedTime is Infinity). A symbol with no position shows the
+ * current price alone — no PnL exists there. Slots without data are stated
+ * explicitly so the agent never has to guess whether a field was omitted or
+ * empty.
  */
 const DEFAULT_GET_MESSAGES = (
   context: IMCPContext,
@@ -88,13 +90,35 @@ const DEFAULT_GET_MESSAGES = (
     const lines: string[] = [];
     lines.push(`Symbol: ${symbol}`);
     if (pendingSignal) {
-      const { pnl, peakProfit, maxDrawdown, pendingAt, minuteEstimatedTime } =
-        pendingSignal;
-      lines.push(
-        `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlPercentage)}% (${FORMAT_SIGNED_FN(pnl.pnlCost)} USD)`,
+      const {
+        pnl,
+        peakProfit,
+        maxDrawdown,
+        pendingAt,
+        minuteEstimatedTime,
+        priceOpen,
+        _peak,
+        _fall,
+      } = pendingSignal;
+      const peakMinutesAgo = Math.max(
+        0,
+        Math.round((when.getTime() - _peak.timestamp) / 60_000),
       );
-      lines.push(`Peak profit: ${FORMAT_SIGNED_FN(peakProfit.pnlPercentage)}%`);
-      lines.push(`Max drawdown: ${FORMAT_SIGNED_FN(maxDrawdown.pnlPercentage)}%`);
+      const fallMinutesAgo = Math.max(
+        0,
+        Math.round((when.getTime() - _fall.timestamp) / 60_000),
+      );
+      lines.push(`Entry price: ${priceOpen}`);
+      lines.push(`Current price: ${currentPrice}`);
+      lines.push(
+        `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlPercentage)}% (${FORMAT_SIGNED_FN(pnl.pnlCost)} USD), net of entry and assumed exit fees and slippage`,
+      );
+      lines.push(
+        `Peak profit: ${FORMAT_SIGNED_FN(peakProfit.pnlPercentage)}% (${peakMinutesAgo} minute${peakMinutesAgo === 1 ? "" : "s"} ago)`,
+      );
+      lines.push(
+        `Max drawdown: ${FORMAT_SIGNED_FN(maxDrawdown.pnlPercentage)}% (${fallMinutesAgo} minute${fallMinutesAgo === 1 ? "" : "s"} ago)`,
+      );
       lines.push(`Opened at: ${new Date(pendingAt).toISOString()}`);
       if (Number.isFinite(minuteEstimatedTime)) {
         const elapsedMinutes = (when.getTime() - pendingAt) / 60_000;
