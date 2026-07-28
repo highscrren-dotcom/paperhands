@@ -56,7 +56,9 @@ const FORMAT_SIGNED_FN = (value: number): string =>
  * traded symbol: capital balance, the queued entry order (createdSignal), the
  * active position (pendingSignal) and the queued close order (closedSignal).
  * A symbol holding a position is rendered PnL-first — unrealized PnL percent,
- * peak profit percent and max drawdown percent instead of the raw price; the
+ * peak profit percent and max drawdown percent instead of the raw price —
+ * followed by the open time and the minutes left until time_expired (or an
+ * explicit "perpetual hold" when minuteEstimatedTime is Infinity); the
  * current price is shown only for symbols with no position, where no PnL
  * exists. Slots without data are stated explicitly so the agent never has to
  * guess whether a field was omitted or empty.
@@ -86,12 +88,26 @@ const DEFAULT_GET_MESSAGES = (
     const lines: string[] = [];
     lines.push(`Symbol: ${symbol}`);
     if (pendingSignal) {
-      const { pnl, peakProfit, maxDrawdown } = pendingSignal;
+      const { pnl, peakProfit, maxDrawdown, pendingAt, minuteEstimatedTime } =
+        pendingSignal;
       lines.push(
         `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlPercentage)}% (${FORMAT_SIGNED_FN(pnl.pnlCost)} USD)`,
       );
       lines.push(`Peak profit: ${FORMAT_SIGNED_FN(peakProfit.pnlPercentage)}%`);
       lines.push(`Max drawdown: ${FORMAT_SIGNED_FN(maxDrawdown.pnlPercentage)}%`);
+      lines.push(`Opened at: ${new Date(pendingAt).toISOString()}`);
+      if (Number.isFinite(minuteEstimatedTime)) {
+        const elapsedMinutes = (when.getTime() - pendingAt) / 60_000;
+        const remainingMinutes = Math.max(
+          0,
+          Math.round(minuteEstimatedTime - elapsedMinutes),
+        );
+        lines.push(
+          `Expires in: ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}`,
+        );
+      } else {
+        lines.push("Expires in: never, the position is a perpetual hold");
+      }
       lines.push(`Balance: ${pnl.pnlEntries.toFixed(2)} USD invested`);
     } else {
       lines.push(`Current price: ${currentPrice}`);
@@ -103,8 +119,6 @@ const DEFAULT_GET_MESSAGES = (
           ? `at price ${createdSignal.priceOpen}`
           : "at market price";
       const details = [
-        `take profit ${createdSignal.priceTakeProfit}`,
-        `stop loss ${createdSignal.priceStopLoss}`,
         createdSignal.cost !== undefined
           ? `cost ${createdSignal.cost} USD`
           : "",
@@ -113,20 +127,14 @@ const DEFAULT_GET_MESSAGES = (
         .filter(Boolean)
         .join(", ");
       lines.push(
-        `Entry queue: ${createdSignal.position} order waiting to open ${entry} (${details})`,
+        `Entry queue: ${createdSignal.position} order waiting to open ${entry}${details ? ` (${details})` : ""}`,
       );
     } else {
       lines.push("Entry queue: empty, no order waiting to open a position");
     }
     if (pendingSignal) {
-      const details = [
-        `take profit ${pendingSignal.priceTakeProfit}`,
-        `stop loss ${pendingSignal.priceStopLoss}`,
-        pendingSignal.note ? `note: ${pendingSignal.note}` : "",
-      ]
-        .filter(Boolean)
-        .join(", ");
-      lines.push(`Active position: ${pendingSignal.position} (${details})`);
+      const note = pendingSignal.note ? ` (note: ${pendingSignal.note})` : "";
+      lines.push(`Active position: ${pendingSignal.position}${note}`);
     } else {
       lines.push("Active position: none");
     }
@@ -373,7 +381,7 @@ const GET_TARGET_MESSAGES_FN = async (
  * @throws Error when the symbol is not live-enabled or a pending signal exists
  */
 const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
-  const { strategyName, positionCost = GLOBAL_CONFIG.CC_POSITION_ENTRY_COST } =
+  const { strategyName, positionCost = GLOBAL_CONFIG.CC_POSITION_ENTRY_COST, minuteEstimatedTime = GLOBAL_CONFIG.CC_MAX_SIGNAL_LIFETIME_MINUTES } =
     backtest.mcpSchemaService.get(dto.mcpName);
   const liveList = await Live.list();
   const liveTarget = liveList.find(
@@ -402,6 +410,7 @@ const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
         currentPrice,
         percentStopLoss,
       }),
+      minuteEstimatedTime,
       cost: positionCost,
       note: dto.note,
     };

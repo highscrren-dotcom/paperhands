@@ -129,6 +129,8 @@ export interface IMCPSchema {
     strategyName: StrategyName;
     /** Entry cost in USD for opened positions. Default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST */
     positionCost?: number;
+    /** Estimated time in minutes for a position to reach its TP or SL. */
+    minuteEstimatedTime?: number;
     /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
     /** Lifecycle callbacks (all optional) */
