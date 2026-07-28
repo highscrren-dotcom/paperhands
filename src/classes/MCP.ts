@@ -52,9 +52,12 @@ const FORMAT_SIGNED_FN = (value: number): string =>
 /**
  * Default portfolio-to-text renderer for the MCP agent.
  *
- * Emits one header message with the snapshot time plus one text message per
- * traded symbol: capital balance, the queued entry order (createdSignal), the
- * active position (pendingSignal) and the queued close order (closedSignal).
+ * Emits one header message — snapshot time plus a portfolio summary (open
+ * position count, total invested, total unrealized PnL in USD and percent of
+ * invested) so the agent sees the tactical exit picture before reading
+ * per-symbol details — followed by one text message per traded symbol:
+ * capital balance, the queued entry order (createdSignal), the active
+ * position (pendingSignal) and the queued close order (closedSignal).
  * A symbol holding a position is rendered PnL-first: entry and current price,
  * unrealized PnL percent (net of entry/exit fees and slippage — the pnl
  * contract adjusts both legs), peak profit and max drawdown percents with the
@@ -78,10 +81,38 @@ const DEFAULT_GET_MESSAGES = (
       },
     ];
   }
+  const openPositions = symbols
+    .map((symbol) => context[symbol].pendingSignal)
+    .filter((pendingSignal) => !!pendingSignal);
+  const summaryLines: string[] = [
+    `Portfolio status at ${when.toISOString()} (${symbols.length} traded symbol${symbols.length === 1 ? "" : "s"}):`,
+  ];
+  if (openPositions.length) {
+    const totalInvested = openPositions.reduce(
+      (acm, { pnl }) => acm + pnl.pnlEntries,
+      0,
+    );
+    const totalPnlCost = openPositions.reduce(
+      (acm, { pnl }) => acm + pnl.pnlCost,
+      0,
+    );
+    const totalPnlPercent = totalInvested
+      ? (totalPnlCost / totalInvested) * 100
+      : 0;
+    summaryLines.push(
+      `Open positions: ${openPositions.length} of ${symbols.length} symbols`,
+    );
+    summaryLines.push(`Total invested: ${totalInvested.toFixed(2)} USD`);
+    summaryLines.push(
+      `Total unrealized PnL: ${FORMAT_SIGNED_FN(totalPnlCost)} USD (${FORMAT_SIGNED_FN(totalPnlPercent)}% of invested), net of entry and assumed exit fees and slippage`,
+    );
+  } else {
+    summaryLines.push("Open positions: none");
+  }
   const messages: IMCPMessage[] = [
     {
       type: "text",
-      text: `Portfolio status at ${when.toISOString()} (${symbols.length} traded symbol${symbols.length === 1 ? "" : "s"}):`,
+      text: summaryLines.join("\n"),
     },
   ];
   for (const symbol of symbols) {
