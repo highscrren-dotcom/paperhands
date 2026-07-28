@@ -148,7 +148,9 @@ const DEFAULT_GET_MESSAGES = (
         0,
         Math.round((when.getTime() - _fall.timestamp) / 60_000),
       );
-      lines.push(`Entry price: ${priceOpen}`);
+      lines.push(
+        `Entry price: ${priceOpen}${totalEntries > 1 ? " (effective average across all DCA entries)" : ""}`,
+      );
       lines.push(`Current price: ${currentPrice}`);
       lines.push(
         `Unrealized PnL: ${FORMAT_SIGNED_FN(pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(pnl.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
