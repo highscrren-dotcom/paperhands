@@ -1,6 +1,6 @@
 import * as di_scoped from 'di-scoped';
 import * as functools_kit from 'functools-kit';
-import { Subject, BehaviorSubject } from 'functools-kit';
+import { TIMEOUT_SYMBOL, Subject, BehaviorSubject } from 'functools-kit';
 import { WriteStream } from 'fs';
 
 /**
@@ -6631,6 +6631,8 @@ interface IMCPSchema {
     strategyName: StrategyName;
     /** Entry cost in USD for opened positions. Default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST */
     positionCost?: number;
+    /** Estimated time in minutes for a position to reach its TP or SL. */
+    minuteEstimatedTime?: number;
     /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
     /** Lifecycle callbacks (all optional) */
@@ -20351,7 +20353,7 @@ declare class MarkdownFileBase implements TMarkdownBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<symbol | void>;
+    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<void | typeof TIMEOUT_SYMBOL>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -20605,7 +20607,7 @@ declare class ReportBase implements TReportBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<symbol | void, [line: string]>;
+    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<void | typeof TIMEOUT_SYMBOL, [line: string]>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -32452,31 +32454,63 @@ declare class MCPUtils {
      * Renders a portfolio snapshot with the DEFAULT text renderer, regardless
      * of the schema's getMessages.
      *
-     * Emits one header message with the snapshot time plus one text message per
-     * traded symbol: capital balance, the queued entry order, the active
-     * position with its unrealized PnL and the queued close order.
+     * Emits one header message — snapshot time plus the portfolio summary
+     * (open position count, total invested, total and per-position dollar
+     * PnL) — plus one text message per traded symbol: prices, PnL/peak/
+     * drawdown percents with timing, DCA entries, capital balance and the
+     * entry/position/close slots.
      *
-     * The signature matches IMCPSchema.getMessages, so a custom renderer can
-     * delegate here and extend the default output instead of rebuilding it.
+     * The signature matches IMCPSchema.getMessages (async variant), so a
+     * custom renderer can await this method and extend the default output
+     * instead of rebuilding it.
      *
      * @param context - Portfolio snapshot keyed by traded symbol
      * @param when - Snapshot time stamped into the header message
      * @param mcpName - Name of the registered MCP schema (validated before rendering)
-     * @returns Messages for the MCP agent
+     * @returns Promise resolving to messages for the MCP agent
      *
      * @example
      * ```typescript
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
-     *   getMessages: (context, when, mcpName) => [
-     *     ...MCP.getDefaultMessages(context, when, mcpName),
-     *     { type: "text", text: "Custom trailer for the agent" },
-     *   ],
+     *   getMessages: async (context, when, mcpName) => {
+     *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+     *     messages.push({ type: "text", text: "Custom trailer for the agent" });
+     *     return messages;
+     *   },
      * });
      * ```
      */
-    getDefaultMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[];
+    getDefaultMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => Promise<IMCPMessage[]>;
+    /**
+     * Renders the trade history of the MCP's strategy into agent messages:
+     * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
+     * storage, newest first — dollar/percent result, direction, close reason,
+     * open/close times and the opening note per trade.
+     *
+     * Complements getStatus for stateless agents: the status shows what is
+     * open, the history shows what was already traded and how it ended, so
+     * the agent does not re-enter the same idea right after closing it.
+     *
+     * @param mcpName - Name of the registered MCP schema (validated before rendering)
+     * @returns Promise resolving to history messages for the MCP agent
+     *
+     * @example
+     * ```typescript
+     * addMCPSchema({
+     *   mcpName: "my-mcp",
+     *   strategyName: "my-strategy",
+     *   getMessages: async (context, when, mcpName) => {
+     *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const history = await MCP.getHistoryMessages(mcpName);
+     *     messages.push(...history);
+     *     return messages;
+     *   },
+     * });
+     * ```
+     */
+    getHistoryMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
      * Renders the current portfolio of the MCP's strategy into agent messages.
      *
