@@ -26,7 +26,8 @@ import { join } from "node:path";
 
 const EARLY_MAX = 2;
 const WIN_H = 24;
-const WINDOW_M = 60;
+/** 12, не 60: длинное окно выводит в топ ушедших с платформы (см. README). */
+const WINDOW_M = 12;
 const MIN_IDEAS = 10;
 const DEDUPE_MS = 8 * 60 * 60 * 1000;
 const MON = Object.fromEntries(
