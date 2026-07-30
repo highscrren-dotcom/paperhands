@@ -15,13 +15,11 @@ const MAX_CONNECTIONS = 1_000;
 const SOCKET_TIMEOUT = 60 * 10 * 1000;
 
 const serveInternal = singleshot(
-  (callback?: CallbackFn) => {
+  (host = getConfig().CC_MCP_HOST, port = getConfig().CC_MCP_PORT, callback?: CallbackFn) => {
     const server = new http.Server(router);
 
-    const GLOBAL_CONFIG = getConfig();
-
-    server.listen(GLOBAL_CONFIG.CC_MCP_PORT, GLOBAL_CONFIG.CC_MCP_HOST).addListener("listening", () => {
-      console.log(`Listening on http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`);
+    server.listen(port, host).addListener("listening", () => {
+      console.log(`Listening on http://${host}:${port}`);
       callback && callback();
     });
 
@@ -45,9 +43,12 @@ const serveInternal = singleshot(
   },
 );
 
-export function serve(callback?: CallbackFn) {
-  ioc.loggerService.log(METHOD_NAME_SERVE);
-  return serveInternal(callback);
+export function serve(host?: string, port?: number, callback?: CallbackFn) {
+  ioc.loggerService.log(METHOD_NAME_SERVE, {
+    host,
+    port,
+  });
+  return serveInternal(host, port, callback);
 }
 
 export function getRouter() {
