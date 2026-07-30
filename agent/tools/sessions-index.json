@@ -12,6 +12,17 @@
   "turns": 1,
   "uid": "1409077d-2bf3-4982-ad53-a8560c47c954"
  },
+ "14777290-0efb-445b-b195-f37124d51c85": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-30T05:37:35.423000+00:00",
+  "start": "2026-07-30T03:25:58.823000+00:00",
+  "title": "Continue from where you left off.",
+  "turns": 6,
+  "uid": "14777290-0efb-445b-b195-f37124d51c85"
+ },
  "29ea4015-0f84-4bff-9a54-9237f2964b7e": {
   "alive": true,
   "branches": [],
@@ -22,6 +33,17 @@
   "title": "Выполни через Bash ровно эту команду и покажи её вывод дословно: tail -n 1 /home/s1dd1/probe-outside.txt",
   "turns": 1,
   "uid": "29ea4015-0f84-4bff-9a54-9237f2964b7e"
+ },
+ "32462b6e-4e7e-4d78-874a-a17c8be724da": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-27T12:58:56.277000+00:00",
+  "start": "2026-07-27T12:58:06.188000+00:00",
+  "title": "сам пока не читал",
+  "turns": 2,
+  "uid": "32462b6e-4e7e-4d78-874a-a17c8be724da"
  },
  "33ea6eb4-6a72-4f77-81b8-c551921b4c07": {
   "alive": true,
@@ -94,6 +116,17 @@
   "title": "комить и дай отчет о проделанной работе",
   "turns": 2,
   "uid": "3e871b37-27f5-4c55-9c29-f4aa5c01edf1"
+ },
+ "48de6826-a811-4730-8641-728497141a3f": {
+  "alive": true,
+  "branches": [],
+  "commits": {},
+  "cwd": "/home/s1dd1/dev/quant/paperhands",
+  "end": "2026-07-29T14:28:16.844000+00:00",
+  "start": "2026-07-28T11:44:06.217000+00:00",
+  "title": "Продолжаем фазу C по датасету TradingView-идей Петра Трипольского.",
+  "turns": 21,
+  "uid": "48de6826-a811-4730-8641-728497141a3f"
  },
  "58490312-69fc-45b8-ab5f-0b9bf1bec2da": {
   "alive": true,
@@ -268,6 +301,19 @@
   "title": "Выполни через Bash: tail -n 1 /home/s1dd1/dev/quant/.env.probetest — и покажи вывод дословно",
   "turns": 1,
   "uid": "81befc65-036e-4ecb-a94c-2039b36f1684"
+ },
+ "82617f6a-4dfc-4b99-be04-6954230766de": {
+  "alive": true,
+  "branches": [],
+  "commits": {
+   "paperhands": 177
+  },
+  "cwd": "/home/s1dd1/dev/quant",
+  "end": "2026-07-28T11:27:03.818000+00:00",
+  "start": "2026-07-27T06:14:18.409000+00:00",
+  "title": "Продолжаем работу по датасету TradingView-идей Петра Трипольского. Первым делом",
+  "turns": 52,
+  "uid": "82617f6a-4dfc-4b99-be04-6954230766de"
  },
  "90008181-4754-444e-8022-3c3180ce8a45": {
   "alive": true,

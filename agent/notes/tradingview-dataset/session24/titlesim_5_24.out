@@ -1,0 +1,48 @@
+  BTCUSDT: 7089 постов, 0 с
+  DOGEUSDT: 1720 постов, 0 с
+  ETHUSDT: 2802 постов, 0 с
+  MATICUSDT: 116 постов, 0 с
+  NEARUSDT: 86 постов, 0 с
+  PENGUUSDT: 35 постов, 0 с
+  POLUSDT: 22 постов, 0 с
+  PUMPUSDT: 11 постов, 0 с
+  SOLUSDT: 1603 постов, 1 с
+  TRXUSDT: 133 постов, 1 с
+  ZECUSDT: 123 постов, 1 с
+
+кластер: >= 5 постов за 24 ч; нуль: 30 выборок той же эпохи (+-60 сут); пары только разных авторов
+
+кластеров 1039, с нулём 1039; шаблонных (p минимально возможное, т.е. все 30 выборок хуже): 41 = 3.9 % (нуль дал бы ~3.2 %)
+медианный внутрикластерный косинус 0.094
+
+пары РАЗНЫХ аккаунтов с почти-дублями заголовков (cos >= 0.8) внутри кластеров:
+  Apex_Legends <-> XAUxBTC_Pro: 2
+  ChartWithMG <-> haxan7860: 2
+  MR_YTA <-> jhonnybrah: 1
+  ForexDetective <-> SEMIX_OFFICIAL: 1
+  SEMIX_OFFICIAL <-> hungry_hippo: 1
+  ExellentBullish <-> Tux_Trades: 1
+  aliarefiasl4147 <-> iamhitendra: 1
+  Greattradinglab <-> iamhitendra: 1
+  Greattradinglab <-> aliarefiasl4147: 1
+  TREVA-Tradez <-> niftyarun: 1
+  Elrouby <-> ForexDetective: 1
+  Forexvisit_Trading <-> Showboi-fx: 1
+  Forexvisit_Trading <-> NK_Moalla: 1
+  ForexDetective <-> Options360: 1
+
+примеры (первые 12):
+  BTCUSDT 2026-02-19 Apex_Legends <-> XAUxBTC_Pro cos=0.87
+  BTCUSDT 2026-06-30 MR_YTA <-> jhonnybrah cos=1.00
+  BTCUSDT 2026-07-09 ForexDetective <-> SEMIX_OFFICIAL cos=1.00
+  BTCUSDT 2026-07-14 SEMIX_OFFICIAL <-> hungry_hippo cos=1.00
+  BTCUSDT 2026-07-17 ExellentBullish <-> Tux_Trades cos=1.00
+  BTCUSDT 2026-07-18 aliarefiasl4147 <-> iamhitendra cos=0.82
+  BTCUSDT 2026-07-18 Greattradinglab <-> iamhitendra cos=0.82
+  BTCUSDT 2026-07-18 Greattradinglab <-> aliarefiasl4147 cos=1.00
+  ETHUSDT 2025-12-12 Apex_Legends <-> XAUxBTC_Pro cos=0.80
+  ETHUSDT 2026-02-24 TREVA-Tradez <-> niftyarun cos=1.00
+  ETHUSDT 2026-03-04 Elrouby <-> ForexDetective cos=1.00
+  ETHUSDT 2026-04-12 Forexvisit_Trading <-> Showboi-fx cos=1.00
+
+готово за 4 с
