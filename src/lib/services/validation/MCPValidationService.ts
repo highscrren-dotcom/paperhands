@@ -62,7 +62,9 @@ export class MCPValidationService {
         );
       }
 
-      this.strategyValidationService.validate(mcp.strategyName, source);
+      if (mcp.strategyName) {
+        this.strategyValidationService.validate(mcp.strategyName, source);
+      }
 
       return true as never;
     }

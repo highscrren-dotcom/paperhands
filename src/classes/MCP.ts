@@ -10,7 +10,7 @@ import {
   IMCPPositionOpenCommand,
   MCPName,
 } from "../interfaces/MCP.interface";
-import { ISignalDto } from "../interfaces/Strategy.interface";
+import { ISignalDto, StrategyName } from "../interfaces/Strategy.interface";
 import { errorEmitter } from "../config/emitters";
 import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
@@ -261,7 +261,10 @@ const HISTORY_GET_MESSAGES = async (
   mcpName: MCPName,
   when: Date,
 ): Promise<IMCPMessage[]> => {
-  const { strategyName } = backtest.mcpSchemaService.get(mcpName);
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    mcpName,
+    METHOD_NAME_GET_HISTORY_MESSAGES,
+  );
   const rowList = await StorageLive.list();
   const closedList = rowList
     .flatMap((row) =>
@@ -413,11 +416,41 @@ const CALL_POSITION_CLOSE_CALLBACKS_FN = trycatch(
 );
 
 /**
- * Validates the full dependency chain of an MCP schema, memoized by mcpName.
+ * Validates a strategy's full dependency chain — the strategy itself plus
+ * its risk(s) and actions — memoized by strategy name. Shared by the
+ * explicit-schema path and the single-registered-strategy resolution of
+ * {@link GET_STRATEGY_NAME_FN}.
  *
- * Checks that the MCP is registered, then cascades into the bound strategy's
- * risk(s) and actions — the same chain public strategy APIs validate. Runs
- * once per MCP name; later calls are no-ops.
+ * @param strategyName - Strategy name to validate
+ * @param source - Caller tag included in error messages
+ * @throws Error when the strategy, its risks or actions are unknown
+ */
+const VALIDATE_STRATEGY_CHAIN_FN = memoize(
+  ([strategyName]) => `${strategyName}`,
+  (strategyName: StrategyName, source: string) => {
+    backtest.strategyValidationService.validate(strategyName, source);
+    const { riskName, riskList, actions } =
+      backtest.strategySchemaService.get(strategyName);
+    riskName && backtest.riskValidationService.validate(riskName, source);
+    riskList &&
+      riskList.forEach((riskName) =>
+        backtest.riskValidationService.validate(riskName, source),
+      );
+    actions &&
+      actions.forEach((actionName) =>
+        backtest.actionValidationService.validate(actionName, source),
+      );
+  },
+);
+
+/**
+ * Validates an MCP schema, memoized by mcpName.
+ *
+ * Checks that the MCP is registered; when the schema names a strategy
+ * explicitly, cascades into its risk(s) and actions — the same chain public
+ * strategy APIs validate. A schema without strategyName defers the strategy
+ * chain to {@link GET_STRATEGY_NAME_FN}, which validates the resolved
+ * strategy at use time. Runs once per MCP name; later calls are no-ops.
  *
  * @param mcpName - MCP name to validate
  * @param source - Caller tag included in error messages
@@ -432,21 +465,52 @@ const VALIDATE_SCHEMA_FN = memoize(
 
     const { strategyName } = backtest.mcpSchemaService.get(mcpName);
 
-    {
-      const { riskName, riskList, actions } =
-        backtest.strategySchemaService.get(strategyName);
-      riskName && backtest.riskValidationService.validate(riskName, source);
-      riskList &&
-        riskList.forEach((riskName) =>
-          backtest.riskValidationService.validate(riskName, source),
-        );
-      actions &&
-        actions.forEach((actionName) =>
-          backtest.actionValidationService.validate(actionName, source),
-        );
+    if (strategyName) {
+      VALIDATE_STRATEGY_CHAIN_FN(strategyName, source);
     }
   },
 );
+
+/**
+ * Resolves the effective strategy of an MCP.
+ *
+ * The schema's explicit strategyName wins. Without it, the SINGLE registered
+ * strategy is used implicitly — the resolved name goes through the same
+ * dependency-chain validation as an explicit one. Zero registered strategies
+ * or two and more make the implicit choice impossible: with several
+ * strategies the schema MUST name one, ambiguity is an error, not a guess.
+ *
+ * Deliberately NOT memoized: strategies register over time, so the
+ * resolution must see the current registry on every call.
+ *
+ * @param mcpName - MCP name whose schema drives the resolution
+ * @param source - Caller tag included in error messages
+ * @returns Promise resolving to the effective strategy name
+ * @throws Error when no strategies are registered or the choice is ambiguous
+ */
+const GET_STRATEGY_NAME_FN = async (
+  mcpName: MCPName,
+  source: string,
+): Promise<StrategyName> => {
+  const { strategyName } = backtest.mcpSchemaService.get(mcpName);
+  if (strategyName) {
+    return strategyName;
+  }
+  const strategyList = await backtest.strategyValidationService.list();
+  if (!strategyList.length) {
+    throw new Error(
+      `MCP Error: mcp ${mcpName} has no strategyName and no strategies are registered source=${source}`,
+    );
+  }
+  if (strategyList.length > 1) {
+    throw new Error(
+      `MCP Error: mcp ${mcpName} must specify strategyName explicitly, ${strategyList.length} strategies are registered source=${source}`,
+    );
+  }
+  const [{ strategyName: resolvedName }] = strategyList;
+  VALIDATE_STRATEGY_CHAIN_FN(resolvedName, source);
+  return resolvedName;
+};
 
 /**
  * Builds the portfolio snapshot for an MCP: one entry per live instance of
@@ -460,7 +524,10 @@ const VALIDATE_SCHEMA_FN = memoize(
  * @returns Promise resolving to the per-symbol IMCPContext snapshot
  */
 const GET_TARGET_CONTEXT_FN = async (mcpName: string) => {
-  const { strategyName } = backtest.mcpSchemaService.get(mcpName);
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    mcpName,
+    METHOD_NAME_GET_STATUS,
+  );
   const liveList = await Live.list();
   const liveTarget = liveList.filter(
     (live) => live.strategyName === strategyName,
@@ -535,8 +602,12 @@ const GET_TARGET_MESSAGES_FN = async (
  * @throws Error when the symbol is not live-enabled or a pending signal exists
  */
 const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
-  const { strategyName, positionCost = GLOBAL_CONFIG.CC_POSITION_ENTRY_COST, minuteEstimatedTime = GLOBAL_CONFIG.CC_MAX_SIGNAL_LIFETIME_MINUTES } =
+  const { positionCost = GLOBAL_CONFIG.CC_POSITION_ENTRY_COST, minuteEstimatedTime = GLOBAL_CONFIG.CC_MAX_SIGNAL_LIFETIME_MINUTES } =
     backtest.mcpSchemaService.get(dto.mcpName);
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    dto.mcpName,
+    METHOD_NAME_COMMIT_POSITION_OPEN,
+  );
   const liveList = await Live.list();
   const liveTarget = liveList.find(
     (live) => live.strategyName === strategyName && live.symbol === dto.symbol,
@@ -595,7 +666,10 @@ const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
  * @throws Error when the symbol is not live-enabled or no pending signal exists
  */
 const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
-  const { strategyName } = backtest.mcpSchemaService.get(dto.mcpName);
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    dto.mcpName,
+    METHOD_NAME_COMMIT_POSITION_CLOSE,
+  );
   const liveList = await Live.list();
   const liveTarget = liveList.find(
     (live) => live.strategyName === strategyName && live.symbol === dto.symbol,

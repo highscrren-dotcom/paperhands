@@ -34,10 +34,12 @@ export class MCPSchemaService {
   /**
    * Shallow structural validation of a schema: required string
    * fields only, no deep checks — getMessages and callbacks are
-   * validated by their consumers.
+   * validated by their consumers. strategyName is optional (the
+   * single registered strategy is resolved at use time) but must
+   * be a string when present.
    *
    * @param mcpSchema - Schema to check
-   * @throws Error when mcpName or strategyName is missing
+   * @throws Error when mcpName is missing or strategyName is not a string
    */
   private validateShallow = (mcpSchema: IMCPSchema) => {
     this.loggerService.log(`mcpSchemaService validateShallow`, {
@@ -50,7 +52,7 @@ export class MCPSchemaService {
       );
     }
 
-    if (typeof mcpSchema.strategyName !== "string") {
+    if (mcpSchema.strategyName && typeof mcpSchema.strategyName !== "string") {
       throw new Error(
         `mcp schema validation failed: missing strategyName`
       );
