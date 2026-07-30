@@ -21,7 +21,8 @@ whoisearly.py дал: walk-forward топ-K по ранности прошлых
 Данные и модель — один в один whoisearly.py (наивная модель фазы C, холд 14 сут,
 издержки 0.4 % на круг, пол стопа −99.2/−99.399, дедуп 8 ч на пару автор+сторона).
 
-usage: permearly.py [порог_ранности] [окно_часов] [жеребьёвок]
+usage: permearly.py [порог_ранности] [окно_часов] [жеребьёвок] [окно_обучения_мес]
+                    [1 = допуск только авторов с PnL>0 в окне обучения]
 """
 import bisect, heapq, json, os, sys, time
 from array import array
@@ -30,6 +31,8 @@ from collections import defaultdict
 EARLY_MAX = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 WIN_H = int(sys.argv[2]) if len(sys.argv) > 2 else 24
 NDRAW = int(sys.argv[3]) if len(sys.argv) > 3 else 1000
+TRAIN_M = int(sys.argv[4]) if len(sys.argv) > 4 else 12
+REQ_POS = bool(int(sys.argv[5])) if len(sys.argv) > 5 else False
 ROOT = "/data/backtests/dataset-master/content"
 UNION = "/data/backtests/_agent/phaseC/union"
 TASKS = "/data/backtests/_agent/phaseA/tasks.tsv"
@@ -160,7 +163,8 @@ for symbol in sorted(months):
     print(f"  {symbol}: {len(recs)} идей, {time.time() - t0:.0f} с", flush=True)
 
 print(f"\nвсего идей {len(recs):,}; «рано» = не больше {EARLY_MAX} чужих за {WIN_H} ч; "
-      f"{NDRAW} жеребьёвок; допуск {MIN_IDEAS} идей за 12 мес")
+      f"{NDRAW} жеребьёвок; допуск {MIN_IDEAS} идей"
+      f"{' И PnL>0 в окне' if REQ_POS else ''}; окно обучения {TRAIN_M} мес")
 
 # ---- агрегаты (month, author): тренировка и тест
 # bym[m][a] = [early, total, sum_pnl, sum_pnl_e, n_e, sum_d, sum_d2, sum_d_e, sum_d2_e,
@@ -187,15 +191,17 @@ tests = []   # (tm, elig_sorted_by_earliness_desc, mt)
 for idx, tm in enumerate(allm):
     if mkey(tm)[0] < 2022:
         continue
-    train = allm[max(0, idx - 12):idx]
+    train = allm[max(0, idx - TRAIN_M):idx]
     if len(train) < 2:
         continue
-    sc = defaultdict(lambda: [0, 0])
+    sc = defaultdict(lambda: [0, 0, 0.0])
     for m in train:
         for a, v in bym[m].items():
             sc[a][0] += v[0]
             sc[a][1] += v[1]
-    elig = [a for a, v in sc.items() if v[1] >= MIN_IDEAS]
+            sc[a][2] += v[2]
+    elig = [a for a, v in sc.items()
+            if v[1] >= MIN_IDEAS and (not REQ_POS or v[2] > 0)]
     if len(elig) < 6:
         continue
     elig.sort(key=lambda a: sc[a][0] / sc[a][1], reverse=True)
