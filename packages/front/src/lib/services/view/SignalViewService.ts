@@ -3,7 +3,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Backtest, Exchange, Live, StorageBacktest, StorageLive } from "backtest-kit";
 import SignalMockService from "../mock/SignalMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 export class SignalViewService {
   private readonly loggerService = inject<LoggerService>(TYPES.loggerService);
@@ -15,7 +15,7 @@ export class SignalViewService {
     this.loggerService.log("signalViewService getLastUpdateTimestamp", {
         signalId,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
         return await this.signalMockService.getLastUpdateTimestamp(signalId);
     }
     {
@@ -37,7 +37,7 @@ export class SignalViewService {
     this.loggerService.log("signalViewService getPendingSignal", {
         symbol,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
         return await this.signalMockService.getPendingSignal(symbol);
     }
     {

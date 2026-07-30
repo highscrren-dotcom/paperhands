@@ -11,7 +11,7 @@ import {
 } from "backtest-kit";
 import StatusMockService from "../mock/StatusMockService";
 import SignalViewService from "./SignalViewService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 export class StatusViewService {
   private readonly loggerService = inject<LoggerService>(TYPES.loggerService);
@@ -24,7 +24,7 @@ export class StatusViewService {
 
   public getStatusList = async () => {
     this.loggerService.log("statusViewService getStatusList");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       const liveList = await this.statusMockService.getStatusList();
       return liveList.filter(({ status }) => status === "pending");
     }
@@ -33,7 +33,7 @@ export class StatusViewService {
 
   public getStatusMap = async () => {
     this.loggerService.log("statusViewService getStatusMap");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.statusMockService.getStatusMap();
     }
     const liveList = await Live.list();
@@ -46,7 +46,7 @@ export class StatusViewService {
     this.loggerService.log("statusViewService getStatusOne", {
       id,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.statusMockService.getStatusOne(id);
     }
     const liveList = await Live.list();
@@ -135,7 +135,7 @@ export class StatusViewService {
   public getStatusInfo = async () => {
     this.loggerService.log("statusViewService getStatusInfo");
 
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return this.statusMockService.getStatusInfo();
     }
 

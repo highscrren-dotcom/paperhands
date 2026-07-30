@@ -3,7 +3,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Exchange, Live, Position, getConfig } from "backtest-kit";
 import ControlMockService from "../mock/ControlMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig as getParamsConfig } from "../../../config/params";
 import { PauseMockService } from "../mock/PauseMockService";
 
 export class PauseViewService {
@@ -15,7 +15,7 @@ export class PauseViewService {
             symbol,
             context,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.pauseMockService.getPaused(symbol, context);
         }
         const liveList = await Live.list();
@@ -36,7 +36,7 @@ export class PauseViewService {
             context,
             paused,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.pauseMockService.setPaused(symbol, context, paused);
         }
         const liveList = await Live.list();

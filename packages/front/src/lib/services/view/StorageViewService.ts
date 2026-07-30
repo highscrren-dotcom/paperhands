@@ -4,7 +4,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { singleshot } from "functools-kit";
 import StorageMockService from "../mock/StorageMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 export class StorageViewService {
   private readonly loggerService = inject<LoggerService>(TYPES.loggerService);
@@ -16,7 +16,7 @@ export class StorageViewService {
     this.loggerService.log("storageViewService findSignalById", {
       signalId,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.storageMockService.findSignalById(signalId);
     }
     if (!Storage.enable.hasValue()) {
@@ -28,7 +28,7 @@ export class StorageViewService {
 
   public listSignalLive = async () => {
     this.loggerService.log("storageViewService listSignalLive");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.storageMockService.listSignalLive();
     }
     if (!Storage.enable.hasValue()) {
@@ -54,7 +54,7 @@ export class StorageViewService {
 
   public listSignalBacktest = async () => {
     this.loggerService.log("storageViewService listSignalBacktest");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.storageMockService.listSignalBacktest();
     }
     if (!Storage.enable.hasValue()) {

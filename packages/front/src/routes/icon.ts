@@ -1,11 +1,13 @@
 import micro from "micro";
 import Router from "router";
 
+import { singleshot } from "functools-kit";
+
 import { join } from "path";
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 
-import { CC_ENABLE_MOCK } from "../config/params";
+import { getConfig } from "../config/params";
 import getModulesPath from "../helpers/getModulesPath";
 
 const router = Router({
@@ -13,17 +15,23 @@ const router = Router({
 });
 
 // getModulesPath
-const ASSET_SVG = CC_ENABLE_MOCK
-  ? join(process.cwd(), "node_modules/cryptocurrency-icons/svg/color")
-  : join(getModulesPath(), "cryptocurrency-icons/svg/color");
+const getAssetSvg = singleshot(() =>
+  getConfig().CC_ENABLE_MOCK
+    ? join(process.cwd(), "node_modules/cryptocurrency-icons/svg/color")
+    : join(getModulesPath(), "cryptocurrency-icons/svg/color"),
+);
 
-const ASSET_128 = CC_ENABLE_MOCK
-  ? join(process.cwd(), "node_modules/cryptocurrency-icons/128/color")
-  : join(getModulesPath(), "cryptocurrency-icons/128/color");
+const getAsset128 = singleshot(() =>
+  getConfig().CC_ENABLE_MOCK
+    ? join(process.cwd(), "node_modules/cryptocurrency-icons/128/color")
+    : join(getModulesPath(), "cryptocurrency-icons/128/color"),
+);
 
-const ASSET_32 = CC_ENABLE_MOCK
-  ? join(process.cwd(), "node_modules/cryptocurrency-icons/32/color")
-  : join(getModulesPath(), "cryptocurrency-icons/32/color");
+const getAsset32 = singleshot(() =>
+  getConfig().CC_ENABLE_MOCK
+    ? join(process.cwd(), "node_modules/cryptocurrency-icons/32/color")
+    : join(getModulesPath(), "cryptocurrency-icons/32/color"),
+);
 
 // File caches to avoid repeated disk reads
 const cache128 = new Map<string, Buffer>();
@@ -39,7 +47,7 @@ router.get("/icon/128/:filename", async (req, res) => {
     return await micro.send(res, 200, cache128.get(filename));
   }
 
-  const filePath = join(ASSET_128, filename);
+  const filePath = join(getAsset128(), filename);
   if (existsSync(filePath)) {
     const fileBuffer = await readFile(filePath);
     cache128.set(filename, fileBuffer);
@@ -58,7 +66,7 @@ router.get("/icon/32/:filename", async (req, res) => {
     return await micro.send(res, 200, cache32.get(filename));
   }
 
-  const filePath = join(ASSET_32, filename);
+  const filePath = join(getAsset32(), filename);
   if (existsSync(filePath)) {
     const fileBuffer = await readFile(filePath);
     cache32.set(filename, fileBuffer);
@@ -77,7 +85,7 @@ router.get("/icon/svg/:filename", async (req, res) => {
     return await micro.send(res, 200, cacheSvg.get(filename));
   }
 
-  const filePath = join(ASSET_SVG, filename);
+  const filePath = join(getAssetSvg(), filename);
   if (existsSync(filePath)) {
     const fileBuffer = await readFile(filePath);
     cacheSvg.set(filename, fileBuffer);
@@ -96,7 +104,7 @@ router.get("/icon/:filename", async (req, res) => {
     return await micro.send(res, 200, cache32.get(filename));
   }
 
-  const filePath = join(ASSET_32, filename);
+  const filePath = join(getAsset32(), filename);
   if (existsSync(filePath)) {
     const fileBuffer = await readFile(filePath);
     cache32.set(filename, fileBuffer);

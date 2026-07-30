@@ -8,7 +8,7 @@ import {
 } from "agent-swarm-kit";
 import IProvider from "../interface/Provider.interface";
 import { getOllama } from "../config/ollama";
-import { GLOBAL_CONFIG } from "../config/params";
+import { getConfig } from "../config/params";
 import { jsonrepair } from "jsonrepair";
 import { get, set } from "lodash-es";
 import { randomString, singleshot } from "functools-kit";
@@ -141,7 +141,7 @@ export class OllamaProvider implements IProvider {
         })),
       })),
       tools,
-      think: GLOBAL_CONFIG.CC_ENABLE_THINKING,
+      think: getConfig().CC_ENABLE_THINKING,
     });
 
     const message: OllamaMessage = response.message;
@@ -159,7 +159,7 @@ export class OllamaProvider implements IProvider {
     };
 
     // Debug logging
-    if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+    if (getConfig().CC_ENABLE_DEBUG) {
       await fs.appendFile(
         "./debug_ollama_provider.txt",
         JSON.stringify({ params, answer: result }, null, 2) + "\n\n"
@@ -227,7 +227,7 @@ export class OllamaProvider implements IProvider {
       messages,
       tools,
       stream: true,
-      think: GLOBAL_CONFIG.CC_ENABLE_THINKING,
+      think: getConfig().CC_ENABLE_THINKING,
     });
 
     for await (const chunk of stream) {
@@ -262,7 +262,7 @@ export class OllamaProvider implements IProvider {
     };
 
     // Debug logging
-    if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+    if (getConfig().CC_ENABLE_DEBUG) {
       await fs.appendFile(
         "./debug_ollama_provider_stream.txt",
         JSON.stringify({ params, answer: result }, null, 2) + "\n\n"
@@ -360,7 +360,7 @@ export class OllamaProvider implements IProvider {
         model: this.contextService.context.model,
         messages,
         tools: [toolDefinition],
-        think: GLOBAL_CONFIG.CC_ENABLE_THINKING,
+        think: getConfig().CC_ENABLE_THINKING,
       });
 
       const { tool_calls } = response.message;
@@ -417,7 +417,7 @@ export class OllamaProvider implements IProvider {
           };
 
           // Debug logging
-          if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+          if (getConfig().CC_ENABLE_DEBUG) {
             await fs.appendFile(
               "./debug_ollama_provider_outline.txt",
               JSON.stringify({ params, answer: result }, null, 2) + "\n\n"

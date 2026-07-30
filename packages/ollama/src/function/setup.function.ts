@@ -1,5 +1,9 @@
-import { getErrorMessage } from "functools-kit";
-import { DEFAULT_CONFIG, GLOBAL_CONFIG, GlobalConfig } from "../config/params";
+import {
+  DEFAULT_CONFIG,
+  GlobalConfig,
+  getConfig as getParamsConfig,
+  setConfig as setParamsConfig,
+} from "../config/params";
 import { ILogger } from "../interface/Logger.interface";
 import lib from "../lib";
 
@@ -58,23 +62,14 @@ export const setLogger = (logger: ILogger) => {
  * ```
  */
 export function setConfig(config: Partial<Cfg>) {
-  const prevConfig = Object.assign({}, GLOBAL_CONFIG);
-  try {
-    Object.assign(GLOBAL_CONFIG, config);
-  } catch (error) {
-    console.warn(
-      `ollama setConfig failed: ${getErrorMessage(error)}`,
-      config
-    );
-    Object.assign(GLOBAL_CONFIG, prevConfig);
-    throw error;
-  }
+  setParamsConfig(config);
 }
 
 /**
  * Retrieves a copy of the current global configuration.
  *
- * Returns a shallow copy of the current GLOBAL_CONFIG to prevent accidental mutations.
+ * Returns the effective configuration (programmatic overrides on top of
+ * environment variables) computed at call time.
  * Use this to inspect the current configuration state without modifying it.
  *
  * @returns {GlobalConfig} A copy of the current global configuration object
@@ -86,7 +81,7 @@ export function setConfig(config: Partial<Cfg>) {
  * ```
  */
 export function getConfig() {
-  return Object.assign({}, GLOBAL_CONFIG);
+  return getParamsConfig();
 }
 
 /**

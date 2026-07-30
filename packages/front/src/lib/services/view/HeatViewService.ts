@@ -2,7 +2,7 @@ import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Backtest, Heat, Live } from "backtest-kit";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 import HeatMockService from "../mock/HeatMockService";
 
 export class HeatViewService {
@@ -13,7 +13,7 @@ export class HeatViewService {
   public getStrategyHeatData = async () => {
     this.loggerService.log("heatViewService getStrategyHeatData");
 
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
         return await this.heatMockService.getStrategyHeatData();
     }
 
@@ -42,7 +42,7 @@ export class HeatViewService {
   public getStrategyHeatReport = async () => {
     this.loggerService.log("heatViewService getStrategyHeatReport");
 
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.heatMockService.getStrategyHeatReport();
     }
 

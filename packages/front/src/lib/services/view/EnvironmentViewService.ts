@@ -1,14 +1,7 @@
 import { TYPES } from "../../../lib/core/types";
 import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
-import {
-    CC_ENABLE_MOCK,
-    CC_QUICKCHART_HOST,
-    CC_TELEGRAM_CHANNEL,
-    CC_WWWROOT_HOST,
-    CC_WWWROOT_PATH,
-    CC_WWWROOT_PORT,
-} from "../../../config/params";
+import { getConfig } from "../../../config/params";
 import EnvironmentMockService from "../mock/EnvironmentMockService";
 
 export class EnvironmentViewService {
@@ -17,6 +10,14 @@ export class EnvironmentViewService {
 
     public getEnvironmentData = async () => {
         this.loggerService.log("environmentViewService getEnvironmentData");
+        const {
+            CC_ENABLE_MOCK,
+            CC_QUICKCHART_HOST,
+            CC_TELEGRAM_CHANNEL,
+            CC_WWWROOT_HOST,
+            CC_WWWROOT_PATH,
+            CC_WWWROOT_PORT,
+        } = getConfig();
         if (CC_ENABLE_MOCK) {
             return await this.enviromentMockService.getEnvironmentData();
         }

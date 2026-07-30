@@ -16,7 +16,7 @@ import {
     Live,
     getConfig,
 } from "backtest-kit";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig as getParamsConfig } from "../../../config/params";
 import SetupMockService from "../mock/SetupMockService";
 
 const GET_MODE_FN = async () => {
@@ -38,7 +38,7 @@ export class SetupViewService {
     public getSetupData = async () => {
         this.loggerService.log("setupViewService getSetupData");
         
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.setupMockService.getSetupData();
         }
 

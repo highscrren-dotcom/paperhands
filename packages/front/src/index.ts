@@ -1,6 +1,8 @@
 export { getRouter, serve } from "./function/serve.function";
 export { setLogger } from "./function/setup.function";
 
+export { setConfig, getConfig } from "./config/params";
+
 export { SymbolModel } from "./model/Symbol.model";
 
 export { getModulesPath } from "./helpers/getModulesPath";

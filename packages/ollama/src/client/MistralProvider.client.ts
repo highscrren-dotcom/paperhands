@@ -9,7 +9,7 @@ import {
 
 import IProvider from "../interface/Provider.interface";
 import { getMistral } from "../config/mistral";
-import { GLOBAL_CONFIG } from "../config/params";
+import { getConfig } from "../config/params";
 import { jsonrepair } from "jsonrepair";
 import fs from "fs/promises";
 import { TContextService } from "../lib/services/base/ContextService";
@@ -128,7 +128,7 @@ export class MistralProvider implements IProvider {
     };
 
     // Debug logging
-    if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+    if (getConfig().CC_ENABLE_DEBUG) {
       await fs.appendFile(
         "./debug_mistral_provider.txt",
         JSON.stringify({ params, answer: result }, null, 2) + "\n\n"
@@ -220,7 +220,7 @@ export class MistralProvider implements IProvider {
     };
 
     // Debug logging
-    if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+    if (getConfig().CC_ENABLE_DEBUG) {
       await fs.appendFile(
         "./debug_mistral_provider_stream.txt",
         JSON.stringify({ params, answer: result }, null, 2) + "\n\n"
@@ -367,7 +367,7 @@ export class MistralProvider implements IProvider {
           };
 
           // Debug logging
-          if (GLOBAL_CONFIG.CC_ENABLE_DEBUG) {
+          if (getConfig().CC_ENABLE_DEBUG) {
             await fs.appendFile(
               "./debug_mistral_provider_outline.txt",
               JSON.stringify({ params, answer: result }, null, 2) + "\n\n"

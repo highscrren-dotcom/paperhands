@@ -13,7 +13,7 @@ import StorageViewService from "./StorageViewService";
 import ExchangeService from "../base/ExchangeService";
 import ExchangeMockService from "../mock/ExchangeMockService";
 import SignalViewService from "./SignalViewService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 const HISTORY_LAST_CANDLES_LIMIT = 200;
 
@@ -40,7 +40,7 @@ export class ExchangeViewService {
       signalId,
       interval,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.exchangeMockService.getSignalCandles(
         signalId,
         interval,
@@ -73,7 +73,7 @@ export class ExchangeViewService {
       signalId,
       interval,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.exchangeMockService.getLiveCandles(signalId, interval);
     }
     const signal = await this.storageViewService.findSignalById(signalId);
@@ -100,7 +100,7 @@ export class ExchangeViewService {
       interval,
     });
 
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.exchangeMockService.getLastCandles(symbol, interval);
     }
 

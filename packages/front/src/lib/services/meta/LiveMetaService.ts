@@ -2,7 +2,7 @@ import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Live } from "backtest-kit";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 const LIVE_LIST = [
   { id: "mock-live-1", symbol: "BTCUSDT", strategyName: "mock-strategy", exchangeName: "binance", status: "running" },
@@ -14,7 +14,7 @@ export class LiveMetaService {
 
     public list = async () => {
         this.loggerService.log("liveMetaService list");
-        if (CC_ENABLE_MOCK) {
+        if (getConfig().CC_ENABLE_MOCK) {
             return LIVE_LIST;
         }
         return await Live.list();

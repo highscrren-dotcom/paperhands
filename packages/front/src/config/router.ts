@@ -15,7 +15,7 @@ import explorer_mock from "../routes/explorer_mock";
 import explorer_view from "../routes/explorer_view";
 import global from "../routes/global";
 
-import { CC_ENABLE_MOCK, CC_WWWROOT_PATH } from "./params";
+import { getConfig } from "./params";
 
 import getPublicPath from "../helpers/getPublicPath";
 
@@ -67,13 +67,14 @@ router.all("/api/v1/global/*", (req, res) => {
   return global(req, res, finalhandler(req, res));
 });
 
-router.get("/*", (req, res) =>
-  serveHandler(req, res, {
+router.get("/*", (req, res) => {
+  const { CC_ENABLE_MOCK, CC_WWWROOT_PATH } = getConfig();
+  return serveHandler(req, res, {
     public: CC_ENABLE_MOCK
       ? CC_WWWROOT_PATH || "./build/modules/frontend/build"
       : CC_WWWROOT_PATH || getPublicPath(),
-  }),
-);
+  });
+});
 
 export default micro.serve(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

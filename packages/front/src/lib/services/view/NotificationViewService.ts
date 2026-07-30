@@ -5,7 +5,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { inject } from "../../../lib/core/di";
 import NotificationMockService from "../mock/NotificationMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 const DEFAULT_LIMIT = 25;
 const DEFAULT_OFFSET = 0;
@@ -33,7 +33,7 @@ export class NotificationViewService {
       limit,
       offset,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.notificationMockService.findByFilter(
         filterData,
         limit,
@@ -63,7 +63,7 @@ export class NotificationViewService {
 
   public getList = async () => {
     this.loggerService.log("notificationViewService getList");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.notificationMockService.getList();
     }
     if (!Notification.enable.hasValue()) {
@@ -97,7 +97,7 @@ export class NotificationViewService {
     this.loggerService.log("notificationViewService getOne", {
       id,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.notificationMockService.getOne(id);
     }
     if (!Notification.enable.hasValue()) {

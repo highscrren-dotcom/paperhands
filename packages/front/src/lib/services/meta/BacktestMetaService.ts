@@ -2,7 +2,7 @@ import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Backtest } from "backtest-kit";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 const BACKTEST_LIST = [
   { id: "mock-backtest-1", symbol: "BTCUSDT", strategyName: "mock-strategy", exchangeName: "binance", frameName: "1m", status: "done" },
@@ -15,7 +15,7 @@ export class BacktestMetaService {
 
     public list = async () => {
         this.loggerService.log("backtestMetaService list");
-        if (CC_ENABLE_MOCK) {
+        if (getConfig().CC_ENABLE_MOCK) {
             return BACKTEST_LIST;
         }
         return await Backtest.list();

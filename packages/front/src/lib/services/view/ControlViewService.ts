@@ -3,7 +3,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Exchange, Live, Position, getConfig } from "backtest-kit";
 import ControlMockService from "../mock/ControlMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig as getParamsConfig } from "../../../config/params";
 
 /** Grid step (percent) the hard stop-loss distance snaps to. */
 const HARD_STOP_STEP_PERCENT = 2.5;
@@ -31,7 +31,7 @@ export class ControlViewService {
             symbol,
             context,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.getStatus(symbol, context);
         }
         const liveList = await Live.list();
@@ -52,7 +52,7 @@ export class ControlViewService {
             symbol,
             context,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.getAveragePrice(symbol, context);
         }
         const liveList = await Live.list();
@@ -75,7 +75,7 @@ export class ControlViewService {
             context,
             dto,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.commitOpenPending(symbol, context, dto);
         }
         const liveList = await Live.list();
@@ -117,7 +117,7 @@ export class ControlViewService {
             context,
             dto,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.commitAverageBuy(symbol, context, dto);
         }
         const liveList = await Live.list();
@@ -154,7 +154,7 @@ export class ControlViewService {
             context,
             dto,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.commitClosePending(symbol, context, dto);
         }
         const liveList = await Live.list();
@@ -187,7 +187,7 @@ export class ControlViewService {
             symbol,
             context,
         })
-        if (CC_ENABLE_MOCK) {
+        if (getParamsConfig().CC_ENABLE_MOCK) {
             return await this.controlMockService.commitBreakeven(symbol, context);
         }
         const liveList = await Live.list();

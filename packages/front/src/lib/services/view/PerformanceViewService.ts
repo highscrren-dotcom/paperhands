@@ -3,7 +3,7 @@ import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import PerformanceMockService from "../mock/PerformanceMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 export class PerformanceViewService {
     private readonly loggerService = inject<LoggerService>(TYPES.loggerService);
@@ -12,7 +12,7 @@ export class PerformanceViewService {
     public getPerformanceData = async () => {
         this.loggerService.log("performanceViewService getPerformanceData");
 
-        if (CC_ENABLE_MOCK) {
+        if (getConfig().CC_ENABLE_MOCK) {
             return await this.performanceMockService.getPerformanceData();
         }
 
@@ -49,7 +49,7 @@ export class PerformanceViewService {
     public getPerformanceReport = async () => {
         this.loggerService.log("performanceViewService getPerformanceReport");
 
-        if (CC_ENABLE_MOCK) {
+        if (getConfig().CC_ENABLE_MOCK) {
             return await this.performanceMockService.getPerformanceReport();
         }
 

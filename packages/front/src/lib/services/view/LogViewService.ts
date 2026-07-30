@@ -5,7 +5,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { inject } from "../../../lib/core/di";
 import LogMockService from "../mock/LogMockService";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 
 const DEFAULT_LIMIT = 25;
 const DEFAULT_OFFSET = 0;
@@ -33,7 +33,7 @@ export class LogViewService {
       limit,
       offset,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.logMockService.findByFilter(filterData, limit, offset);
     }
     const iter = pickDocuments<ILogEntry>(limit, offset);
@@ -55,7 +55,7 @@ export class LogViewService {
 
   public getList = async () => {
     this.loggerService.log("logViewService getList");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.logMockService.getList();
     }
     const logList: ILogEntry[] = await Log.getList();
@@ -65,7 +65,7 @@ export class LogViewService {
 
   public getOne = async (id: string) => {
     this.loggerService.log("logViewService getOne", { id });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.logMockService.getOne(id);
     }
     const logList = await this.getList();

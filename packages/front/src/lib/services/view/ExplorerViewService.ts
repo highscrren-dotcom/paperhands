@@ -7,7 +7,7 @@ import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { inject } from "../../../lib/core/di";
 import { ExplorerDirectory, ExplorerNode } from "../../../model/Explorer.model";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 import ExplorerMockService from "../mock/ExplorerMockService";
 
 const pathId = (p: string) => createHash("sha1").update(p).digest("hex").slice(0, 16);
@@ -66,7 +66,7 @@ export class ExplorerViewService {
     this.loggerService.log("explorerViewService getNode", {
       nodePath,
     });
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.explorerMockService.getNode(nodePath);
     }
     const dir = await this.getDir();
@@ -85,7 +85,7 @@ export class ExplorerViewService {
 
   public getTree = async (): Promise<ExplorerNode[]> => {
     this.loggerService.log("explorerViewService getTree");
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.explorerMockService.getTree();
     }
     const dir = await this.getDir();

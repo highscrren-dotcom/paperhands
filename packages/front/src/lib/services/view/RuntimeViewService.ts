@@ -2,7 +2,7 @@ import { inject } from "../../../lib/core/di";
 import LoggerService from "../base/LoggerService";
 import { TYPES } from "../../../lib/core/types";
 import { Backtest, IRuntimeInfo, lib, Live } from "backtest-kit";
-import { CC_ENABLE_MOCK } from "../../../config/params";
+import { getConfig } from "../../../config/params";
 import RuntimeMockService from "../mock/RuntimeMockService";
 
 export class RuntimeViewService {
@@ -13,7 +13,7 @@ export class RuntimeViewService {
   public getRuntimeInfo = async (): Promise<IRuntimeInfo> => {
     this.loggerService.log("runtimeViewService getRuntimeInfo");
 
-    if (CC_ENABLE_MOCK) {
+    if (getConfig().CC_ENABLE_MOCK) {
       return await this.runtimeMockService.getRuntimeInfo();
     }
 

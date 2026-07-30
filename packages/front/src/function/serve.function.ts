@@ -1,7 +1,7 @@
 import http from "http";
 import { singleshot } from "functools-kit";
 
-import { CC_WWWROOT_HOST, CC_WWWROOT_PORT } from "../config/params";
+import { getConfig } from "../config/params";
 
 import { serveSubject } from "../config/emitters";
 
@@ -17,7 +17,7 @@ const MAX_CONNECTIONS = 1_000;
 const SOCKET_TIMEOUT = 60 * 10 * 1000;
 
 const serveInternal = singleshot(
-  (host = CC_WWWROOT_HOST, port = CC_WWWROOT_PORT, callback?: CallbackFn) => {
+  (host = getConfig().CC_WWWROOT_HOST, port = getConfig().CC_WWWROOT_PORT, callback?: CallbackFn) => {
     const server = new http.Server(router);
 
     server.listen(port, host).addListener("listening", () => {

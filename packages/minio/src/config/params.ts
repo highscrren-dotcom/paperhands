@@ -5,10 +5,10 @@ const GLOBAL_CONFIG = {
   CC_REDIS_PORT: 0,
   CC_REDIS_USER: "",
   CC_REDIS_PASSWORD: "",
-  CC_MINIO_ENDPOINT: process.env.CC_MINIO_ENDPOINT || "",
-  CC_MINIO_PORT: parseInt(process.env.CC_MINIO_PORT) || 0,
-  CC_MINIO_ACCESSKEY: process.env.CC_MINIO_ACCESSKEY || "",
-  CC_MINIO_SECRETKEY: process.env.CC_MINIO_SECRETKEY || "",
+  CC_MINIO_ENDPOINT: "",
+  CC_MINIO_PORT: 0,
+  CC_MINIO_ACCESSKEY: "",
+  CC_MINIO_SECRETKEY: "",
 };
 
 export const DEFAULT_CONFIG = Object.freeze({ ...GLOBAL_CONFIG });
