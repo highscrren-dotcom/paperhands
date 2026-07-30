@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-07-30T05:30:00.000Z",
-  "window": "aug_2021..jul_2026 (60 мес)",
+  "generatedAt": "2026-07-30T06:20:00.000Z",
+  "window": "aug_2025..jul_2026 (12 мес)",
   "params": {
     "EARLY_MAX": 2,
     "WIN_H": 24,
-    "WINDOW_M": 60,
+    "WINDOW_M": 12,
     "MIN_IDEAS": 10,
-    "note": "канонический расчёт fullearly.py на CT105 (session24/fullearly.out); PnL-фильтр запрещён (DECISIONS №138)"
+    "note": "канонический расчёт fullearly.py 2 24 12 на CT105 (phaseD/fullearly_w12.out); окно 60 мес запрещено для live — выводит в топ ушедших с платформы (DECISIONS №142); PnL-фильтр запрещён (№138)"
   },
   "ranked": [
-    { "author": "Avramis", "ideas": 58, "earlyShare": 1.0 },
-    { "author": "Solldy", "ideas": 387, "earlyShare": 0.88 },
-    { "author": "drcrypto14", "ideas": 74, "earlyShare": 0.85 },
-    { "author": "TraderEngineering", "ideas": 46, "earlyShare": 0.83 },
-    { "author": "jhonnybrah", "ideas": 221, "earlyShare": 0.8 },
-    { "author": "DHLawrence", "ideas": 82, "earlyShare": 0.78 },
-    { "author": "BallaJi", "ideas": 103, "earlyShare": 0.78 },
-    { "author": "coinpediamarkets", "ideas": 189, "earlyShare": 0.76 },
-    { "author": "Sporia", "ideas": 100, "earlyShare": 0.76 },
-    { "author": "BulletproofTraders", "ideas": 61, "earlyShare": 0.74 },
-    { "author": "Swoop6", "ideas": 153, "earlyShare": 0.71 },
-    { "author": "mukit1", "ideas": 24, "earlyShare": 0.71 },
-    { "author": "AlmaClub", "ideas": 26, "earlyShare": 0.69 },
-    { "author": "ProjectSyndicate", "ideas": 146, "earlyShare": 0.68 },
-    { "author": "bryandowningqln", "ideas": 243, "earlyShare": 0.66 }
+    { "author": "coinpediamarkets", "ideas": 78, "earlyShare": 0.6 },
+    { "author": "DEXWireNews", "ideas": 15, "earlyShare": 0.6 },
+    { "author": "jhonnybrah", "ideas": 27, "earlyShare": 0.59 },
+    { "author": "CrowdWisdomTrading", "ideas": 19, "earlyShare": 0.53 },
+    { "author": "davidjulien369", "ideas": 69, "earlyShare": 0.52 },
+    { "author": "AlienOvichO", "ideas": 17, "earlyShare": 0.47 },
+    { "author": "The-Thief", "ideas": 42, "earlyShare": 0.45 },
+    { "author": "tomas_jntx", "ideas": 73, "earlyShare": 0.44 },
+    { "author": "EtherNasyonaL", "ideas": 128, "earlyShare": 0.41 },
+    { "author": "FxPro", "ideas": 70, "earlyShare": 0.4 },
+    { "author": "MoonriseTA", "ideas": 20, "earlyShare": 0.4 },
+    { "author": "brokerchampionofficial", "ideas": 20, "earlyShare": 0.4 },
+    { "author": "salahuddin20041", "ideas": 133, "earlyShare": 0.39 },
+    { "author": "FrankAgbo", "ideas": 87, "earlyShare": 0.39 },
+    { "author": "Mrbigman", "ideas": 18, "earlyShare": 0.39 }
   ]
 }
