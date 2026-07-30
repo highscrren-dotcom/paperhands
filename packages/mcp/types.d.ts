@@ -31,7 +31,7 @@ interface ILogger {
 declare function setLogger(logger: ILogger): void;
 
 type CallbackFn = (error?: Error) => void;
-declare function serve(callback?: CallbackFn): () => void;
+declare function serve(host?: string, port?: number, callback?: CallbackFn): () => void;
 declare function getRouter(): http.RequestListener;
 
 declare const GLOBAL_CONFIG: {

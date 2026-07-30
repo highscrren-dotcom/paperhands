@@ -347,6 +347,41 @@ interface ILogger {
 declare const setLogger: (logger: ILogger) => void;
 
 /**
+ * Global configuration parameters for the Ollama package.
+ *
+ * Provides runtime configuration via environment variables with sensible defaults.
+ * Environment variables are read lazily on each {@link getConfig} call, so values
+ * set programmatically via {@link setConfig} always take precedence over env.
+ *
+ * Available configurations:
+ * - CC_ENABLE_DEBUG: Enable detailed debug logging
+ * - CC_ENABLE_THINKING: Enable AI extended reasoning mode
+ *
+ * @example
+ * ```typescript
+ * import { getConfig } from "./config/params";
+ *
+ * if (getConfig().CC_ENABLE_DEBUG) {
+ *   console.log("Debug mode enabled");
+ * }
+ * ```
+ */
+declare const GLOBAL_CONFIG: {
+    CC_ENABLE_DEBUG: boolean;
+    CC_ENABLE_THINKING: boolean;
+};
+/**
+ * Type for global configuration object.
+ * Ensures type safety when accessing configuration values.
+ */
+type GlobalConfig = typeof GLOBAL_CONFIG;
+declare const getConfig: () => {
+    CC_ENABLE_DEBUG: boolean;
+    CC_ENABLE_THINKING: boolean;
+};
+declare const setConfig: (config: Partial<GlobalConfig>) => void;
+
+/**
  * Message role type for LLM conversation context.
  * Defines the sender of a message in a chat-based interaction.
  */
@@ -2300,4 +2335,4 @@ declare const engine: {
     loggerService: LoggerService;
 };
 
-export { CompletionName, type IOptimizerCallbacks, type IOptimizerData, type IOptimizerFetchArgs, type IOptimizerFilterArgs, type IOptimizerRange, type IOptimizerSchema, type IOptimizerSource, type IOptimizerStrategy, type IOptimizerTemplate, type MessageModel, type MessageRole, Module, Optimizer, type ProgressOptimizerContract, Prompt, type PromptModel, addOptimizerSchema, alibaba, claude, cohere, commitPrompt, deepseek, dumpSignalData, getOptimizerSchema, glm4, gpt5, grok, groq, hf, engine as lib, listOptimizerSchema, listenError, listenOptimizerProgress, mistral, ollama, perplexity, setLogger, validate };
+export { CompletionName, type IOptimizerCallbacks, type IOptimizerData, type IOptimizerFetchArgs, type IOptimizerFilterArgs, type IOptimizerRange, type IOptimizerSchema, type IOptimizerSource, type IOptimizerStrategy, type IOptimizerTemplate, type MessageModel, type MessageRole, Module, Optimizer, type ProgressOptimizerContract, Prompt, type PromptModel, addOptimizerSchema, alibaba, claude, cohere, commitPrompt, deepseek, dumpSignalData, getConfig, getOptimizerSchema, glm4, gpt5, grok, groq, hf, engine as lib, listOptimizerSchema, listenError, listenOptimizerProgress, mistral, ollama, perplexity, setConfig, setLogger, validate };

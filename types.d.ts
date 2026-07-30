@@ -6617,7 +6617,10 @@ interface IMCPCallbacks {
  * Binds an MCP name to a strategy: status and position commands operate on
  * every live instance of that strategy.
  * - mcpName — registry key; duplicate registration is a validation error.
- * - strategyName — the strategy whose live instances the MCP observes and trades.
+ * - strategyName — the strategy whose live instances the MCP observes and
+ *   trades. Optional: when omitted, the SINGLE registered strategy is used;
+ *   with two or more strategies registered every MCP call throws until the
+ *   schema names one explicitly — ambiguity is an error, not a guess.
  * - positionCost — entry cost in USD for commitPositionOpen; defaults to
  *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
  * - getMessages — renders the portfolio snapshot into agent messages; when
@@ -6627,8 +6630,8 @@ interface IMCPCallbacks {
 interface IMCPSchema {
     /** Unique MCP identifier for the schema registry */
     mcpName: MCPName;
-    /** Strategy whose live instances this MCP observes and trades */
-    strategyName: StrategyName;
+    /** Strategy whose live instances this MCP observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it */
+    strategyName?: StrategyName;
     /** Entry cost in USD for opened positions. Default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST */
     positionCost?: number;
     /** Estimated time in minutes for a position to reach its TP or SL. */
@@ -43425,10 +43428,12 @@ declare class MCPSchemaService {
     /**
      * Shallow structural validation of a schema: required string
      * fields only, no deep checks — getMessages and callbacks are
-     * validated by their consumers.
+     * validated by their consumers. strategyName is optional (the
+     * single registered strategy is resolved at use time) but must
+     * be a string when present.
      *
      * @param mcpSchema - Schema to check
-     * @throws Error when mcpName or strategyName is missing
+     * @throws Error when mcpName is missing or strategyName is not a string
      */
     private validateShallow;
     /**

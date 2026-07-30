@@ -16,6 +16,25 @@ interface ILogger {
 
 declare const setLogger: (logger: ILogger) => void;
 
+declare const GLOBAL_CONFIG: {
+    CC_WWWROOT_PATH: string;
+    CC_WWWROOT_HOST: string;
+    CC_WWWROOT_PORT: number;
+    CC_TELEGRAM_CHANNEL: string;
+    CC_QUICKCHART_HOST: string;
+    CC_ENABLE_MOCK: boolean;
+};
+type Config = typeof GLOBAL_CONFIG;
+declare const getConfig: () => {
+    CC_WWWROOT_PATH: string;
+    CC_WWWROOT_HOST: string;
+    CC_WWWROOT_PORT: number;
+    CC_TELEGRAM_CHANNEL: string;
+    CC_QUICKCHART_HOST: string;
+    CC_ENABLE_MOCK: boolean;
+};
+declare const setConfig: (config: Partial<Config>) => void;
+
 interface SymbolModel {
     icon: string;
     logo: string;
@@ -602,4 +621,4 @@ declare const ioc: {
     exchangeService: ExchangeService;
 };
 
-export { type SymbolModel, getModulesPath, getPublicPath, getRouter, ioc as lib, serve, setLogger };
+export { type SymbolModel, getConfig, getModulesPath, getPublicPath, getRouter, ioc as lib, serve, setConfig, setLogger };
