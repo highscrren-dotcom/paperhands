@@ -1,0 +1,16 @@
+[Unit]
+Description=quant: возобновление фазы C (холд до 27 суток) после перезагрузки
+Documentation=paperhands/agent/notes/tradingview-dataset/session22/PLAN_PHASE_C.md
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Раскладка по памяти, а не по времени: замер гейта дал ~12.5 МБ кучи на идею,
+# в контейнере 16 ГБ. b0 держит два самых тяжёлых тикеро-месяца подряд.
+Environment=NS=3 NB=2 HEAP_SMALL=2048 HEAP_BIG=8192
+ExecStart=/data/backtests/_agent/phaseC/pipeline_c.sh
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
