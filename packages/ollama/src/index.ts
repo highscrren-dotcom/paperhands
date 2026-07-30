@@ -24,6 +24,11 @@ export {
 } from "./function/setup.function";
 
 export {
+  setConfig,
+  getConfig,
+} from "./config/params";
+
+export {
   dumpSignalData,
 } from "./function/dump";
 

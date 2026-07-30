@@ -1,32 +1,5 @@
-import {
-  DEFAULT_CONFIG,
-  GlobalConfig,
-  getConfig as getParamsConfig,
-  setConfig as setParamsConfig,
-} from "../config/params";
 import { ILogger } from "../interface/Logger.interface";
 import lib from "../lib";
-
-/**
- * Type representing the global configuration object with flexible value types.
- * 
- * Maps all keys from GlobalConfig interface to allow any value type during configuration updates.
- * Used to provide type-safe partial configuration overrides while maintaining flexibility.
- * 
- * @typedef {Object} Cfg
- * @template {keyof GlobalConfig} K - Configuration key names from GlobalConfig
- * 
- * @example
- * ```typescript
- * const customConfig: Partial<Cfg> = {
- *   CC_ENABLE_DEBUG: true,
- *   CC_ENABLE_THINKING: false,
- * };
- * ```
- */
-type Cfg = {
-  [key in keyof GlobalConfig]: any;
-}
 
 /**
  * Sets custom logger implementation for the framework.
@@ -48,56 +21,3 @@ type Cfg = {
 export const setLogger = (logger: ILogger) => {
   lib.loggerService.setLogger(logger);
 };
-
-/**
- * Sets global configuration parameters for the framework.
- * @param config - Partial configuration object to override default settings
- *
- * @example
- * ```typescript
- * setConfig({
- *   CC_ENABLE_DEBUG: true,
- *   CC_ENABLE_THINKING: true,
- * });
- * ```
- */
-export function setConfig(config: Partial<Cfg>) {
-  setParamsConfig(config);
-}
-
-/**
- * Retrieves a copy of the current global configuration.
- *
- * Returns the effective configuration (programmatic overrides on top of
- * environment variables) computed at call time.
- * Use this to inspect the current configuration state without modifying it.
- *
- * @returns {GlobalConfig} A copy of the current global configuration object
- *
- * @example
- * ```typescript
- * const currentConfig = getConfig();
- * console.log(currentConfig.CC_ENABLE_DEBUG);
- * ```
- */
-export function getConfig() {
-  return getParamsConfig();
-}
-
-/**
- * Retrieves the default configuration object for the framework.
- *
- * Returns a reference to the default configuration with all preset values.
- * Use this to see what configuration options are available and their default values.
- *
- * @returns {GlobalConfig} The default configuration object
- *
- * @example
- * ```typescript
- * const defaultConfig = getDefaultConfig();
- * console.log(defaultConfig.CC_ENABLE_DEBUG);
- * ```
- */
-export function getDefaultConfig() {
-  return DEFAULT_CONFIG;
-}
