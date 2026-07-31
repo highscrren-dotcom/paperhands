@@ -6,6 +6,22 @@
 
 ## Session 24 (2026-07-30) — фаза D закрыта: координации нет, ранность — PLAUSIBLE
 
+147. **🔭 ДИСКАВЕРИ + РАСШИРЕНИЕ СБОРА + СТОРОЖ (31.07, «давай по рекомендации»).**
+     (а) `tg-discover.mjs`: channels.getChannelRecommendations по каждому каналу
+     сбора (аккаунт premium — расширенные списки), агрегация hits + крипто-словарь
+     → shortlist.md; суточный таймер quant-tg-discover (06:40Z). Первый проход:
+     520 кандидатов; hits-топ = мемкоин-казино (родня CallAnalyser) — в сбор НЕ
+     взято, кластер отмечен на будущее.
+     (б) По «ок» владельца добавлены 8: WatcherGuru, SOLTRENDING, markettwits,
+     binancekillers, Coin_Post, BinanceLiquidations, CallAnalyser2, walloftrophies
+     — в сборе 24 канала.
+     (в) **Сторож collect-watch.sh** (почасовой, quant-collect-watch на :45):
+     свежесть mtime сторов ТРЁХ сборщиков (урок №99/107 — мерить выход, не
+     процесс), протух >2ч → алерт ботом live-алертов в @s1dd1_stdin; труба
+     проверена тестовым сообщением (ALERT-PIPE-OK), watch.env (600) в gitignore.
+     Итого на CT105 пять таймеров: tv-scrape :00, tv-field :03, tg-collect :05,
+     tg-discover 06:40Z, collect-watch :45.
+
 146. **📨 TG-СБОРЩИК ПОСТРОЕН И ЗАДЕПЛОЕН, ЖДЁТ ОДИН QR-СКАН (Пётр 31.07: «по
      телеграм все которые парсятся, для доступа gram.js»).** Найдено в его стеке:
      MTProto-креды вбиты им как дефолты (api_id 31861455 / api_hash ca60446c…,
