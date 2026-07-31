@@ -8,7 +8,7 @@
 import readline from "node:readline";
 import { writeFile } from "node:fs/promises";
 import { TelegramClient } from "telegram";
-import { StringSession } from "telegram/sessions.js";
+import { StringSession } from "telegram/sessions/index.js";
 import qrcodeTerminal from "qrcode-terminal";
 
 const API_ID = parseInt(process.env.CC_TELEGRAM_API_ID) || 31861455;

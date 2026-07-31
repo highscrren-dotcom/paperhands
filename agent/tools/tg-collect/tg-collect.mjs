@@ -23,7 +23,7 @@
  */
 import { readFile, writeFile, rename, mkdir, appendFile } from "node:fs/promises";
 import { TelegramClient } from "telegram";
-import { StringSession } from "telegram/sessions.js";
+import { StringSession } from "telegram/sessions/index.js";
 
 const API_ID = parseInt(process.env.CC_TELEGRAM_API_ID) || 31861455;
 const API_HASH = process.env.CC_TELEGRAM_API_HASH || "ca60446c67ce250ee4e789c730163449";
