@@ -6,7 +6,8 @@ import { memoize } from "functools-kit";
 import StrategyValidationService from "./StrategyValidationService";
 
 /**
- * Existence and dependency validation of MCP instances.
+ * Existence and dependency validation of MCP (Model Context Protocol)
+ * instances.
  *
  * Tracks every registered MCP and verifies at use time that a
  * referenced MCP exists and its strategy dependency is valid.
@@ -21,10 +22,10 @@ export class MCPValidationService {
   private _mcpMap = new Map<MCPName, IMCPSchema>();
 
   /**
-   * Tracks an MCP for validation. Called on schema
+   * Tracks an MCP (Model Context Protocol) instance for validation. Called on schema
    * registration; duplicate names are rejected.
    *
-   * @param mcpName - MCP name to track
+   * @param mcpName - MCP (Model Context Protocol) name to track
    * @param mcpSchema - Schema stored for dependency checks
    * @throws Error when the name is already tracked
    */
@@ -40,11 +41,11 @@ export class MCPValidationService {
   };
 
   /**
-   * Validates that an MCP is registered and its strategy
+   * Validates that an MCP (Model Context Protocol) instance is registered and its strategy
    * dependency passes validation. Memoized by MCP name — the
    * check runs once per name, later calls are no-ops.
    *
-   * @param mcpName - MCP name to validate
+   * @param mcpName - MCP (Model Context Protocol) name to validate
    * @param source - Caller tag included in error messages
    * @throws Error when the MCP or its strategy is unknown
    */
@@ -71,7 +72,7 @@ export class MCPValidationService {
   ) as (mcpName: MCPName, source: string) => void;
 
   /**
-   * Lists every tracked MCP schema.
+   * Lists every tracked MCP (Model Context Protocol) schema.
    *
    * @returns All schemas registered for validation
    */

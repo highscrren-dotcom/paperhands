@@ -470,15 +470,16 @@ export function addSweepSchema(sweepSchema: ISweepSchema) {
 }
 
 /**
- * Registers an MCP instance in the framework — the bridge exposing
- * live trading of a strategy to an MCP agent (see MCP.getStatus).
+ * Registers an MCP (Model Context Protocol) instance in the framework —
+ * the bridge exposing live trading of a strategy to an MCP agent
+ * (see MCP.getStatus).
  *
  * The MCP binds to a strategy: status snapshots and position commands
  * operate on every live instance of that strategy. getMessages renders
  * the portfolio for the agent; when omitted the default renderer emits
  * one text message per traded symbol.
  *
- * @param mcpSchema - MCP configuration object
+ * @param mcpSchema - MCP (Model Context Protocol) configuration object
  * @param mcpSchema.mcpName - Unique MCP identifier
  * @param mcpSchema.strategyName - Strategy whose live instances the MCP observes and trades
  * @param mcpSchema.positionCost - Optional entry cost in USD (default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST)

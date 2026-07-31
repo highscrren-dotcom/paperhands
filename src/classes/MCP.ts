@@ -56,7 +56,7 @@ const FORMAT_SIGNED_FN = (value: number): string =>
   `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
 
 /**
- * Default portfolio-to-text renderer for the MCP agent.
+ * Default portfolio-to-text renderer for the MCP (Model Context Protocol) agent.
  *
  * Emits one header message — snapshot time plus a portfolio summary: open
  * position count, total invested, total unrealized PnL in USD (percent of
@@ -239,7 +239,7 @@ const DEFAULT_GET_MESSAGES = (
 };
 
 /**
- * Builds the trade history for an MCP from the live signal storage
+ * Builds the trade history for an MCP (Model Context Protocol) instance from the live signal storage
  * (StorageLive): recently CLOSED positions of the bound strategy, newest
  * first — one header message plus one text message per closed trade with
  * the dollar/percent result, direction, close reason, open/close times and
@@ -254,7 +254,7 @@ const DEFAULT_GET_MESSAGES = (
  * rows across ALL strategies (global feed by contract), and rows accumulate
  * only while the Storage adapter is enabled.
  *
- * @param mcpName - MCP name resolved to its bound strategy
+ * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
  * @returns Promise resolving to history messages for the MCP agent
  */
@@ -316,7 +316,7 @@ const HISTORY_GET_MESSAGES = async (
  * Catches and logs any errors thrown by the user-provided callback —
  * a broken callback never fails getStatus itself.
  *
- * @param mcpName - MCP name whose schema supplies the callbacks
+ * @param mcpName - MCP (Model Context Protocol) name whose schema supplies the callbacks
  * @param context - Portfolio snapshot the renderer received
  * @param messages - Messages the renderer produced
  */
@@ -445,7 +445,7 @@ const VALIDATE_STRATEGY_CHAIN_FN = memoize(
 );
 
 /**
- * Validates an MCP schema, memoized by mcpName.
+ * Validates an MCP (Model Context Protocol) schema, memoized by mcpName.
  *
  * Checks that the MCP is registered; when the schema names a strategy
  * explicitly, cascades into its risk(s) and actions — the same chain public
@@ -453,7 +453,7 @@ const VALIDATE_STRATEGY_CHAIN_FN = memoize(
  * chain to {@link GET_STRATEGY_NAME_FN}, which validates the resolved
  * strategy at use time. Runs once per MCP name; later calls are no-ops.
  *
- * @param mcpName - MCP name to validate
+ * @param mcpName - MCP (Model Context Protocol) name to validate
  * @param source - Caller tag included in error messages
  * @throws Error when the MCP, its strategy, risks or actions are unknown
  */
@@ -473,7 +473,7 @@ const VALIDATE_SCHEMA_FN = memoize(
 );
 
 /**
- * Checks that the MCP schema grants a permission for the requested
+ * Checks that the MCP (Model Context Protocol) schema grants a permission for the requested
  * operation: "read" gates status/history rendering, "write" gates
  * opening and closing positions. A schema without the permissions field
  * grants BOTH by default.
@@ -483,7 +483,7 @@ const VALIDATE_SCHEMA_FN = memoize(
  * call. Pure renderer helpers (getDefaultMessages) are not gated — they
  * transform data the caller already holds.
  *
- * @param mcpName - MCP name whose schema carries the permissions
+ * @param mcpName - MCP (Model Context Protocol) name whose schema carries the permissions
  * @param permission - Permission required by the calling operation
  * @param source - Caller tag included in error messages
  * @throws Error when the permission is not granted
@@ -503,7 +503,7 @@ const CHECK_PERMISSION_FN = (
 };
 
 /**
- * Resolves the effective strategy of an MCP.
+ * Resolves the effective strategy of an MCP (Model Context Protocol) instance.
  *
  * The schema's explicit strategyName wins. Without it, the SINGLE registered
  * strategy is used implicitly — the resolved name goes through the same
@@ -514,7 +514,7 @@ const CHECK_PERMISSION_FN = (
  * Deliberately NOT memoized: strategies register over time, so the
  * resolution must see the current registry on every call.
  *
- * @param mcpName - MCP name whose schema drives the resolution
+ * @param mcpName - MCP (Model Context Protocol) name whose schema drives the resolution
  * @param source - Caller tag included in error messages
  * @returns Promise resolving to the effective strategy name
  * @throws Error when no strategies are registered or the choice is ambiguous
@@ -544,14 +544,14 @@ const GET_STRATEGY_NAME_FN = async (
 };
 
 /**
- * Builds the portfolio snapshot for an MCP: one entry per live instance of
+ * Builds the portfolio snapshot for an MCP (Model Context Protocol) instance: one entry per live instance of
  * the schema's strategy, keyed by symbol.
  *
  * For every symbol fetches the current VWAP price, the pending signal with
  * unrealized PnL computed at that price, and the deferred created/closed
  * signal slots from the strategy status.
  *
- * @param mcpName - MCP name resolved to its bound strategy
+ * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @returns Promise resolving to the per-symbol IMCPContext snapshot
  */
 const GET_TARGET_CONTEXT_FN = async (mcpName: string) => {
@@ -605,7 +605,7 @@ const GET_TARGET_CONTEXT_FN = async (mcpName: string) => {
  * getMessages (falling back to {@link DEFAULT_GET_MESSAGES}), with the
  * snapshot time aligned down to the 1m interval.
  *
- * @param mcpName - MCP name whose schema supplies getMessages
+ * @param mcpName - MCP (Model Context Protocol) name whose schema supplies getMessages
  * @param context - Portfolio snapshot built by GET_TARGET_CONTEXT_FN
  * @returns Promise resolving to the rendered message list
  */
@@ -734,7 +734,7 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
 };
 
 /**
- * Utility class exposing live trading to an MCP agent.
+ * Utility class exposing live trading to an MCP (Model Context Protocol) agent.
  *
  * Provides static-like methods (via singleton instance) to observe every
  * live instance of the schema's strategy and to open/close positions on
@@ -780,7 +780,7 @@ export class MCPUtils {
    *
    * @param context - Portfolio snapshot keyed by traded symbol
    * @param when - Snapshot time stamped into the header message
-   * @param mcpName - Name of the registered MCP schema (validated before rendering)
+   * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
    * @returns Promise resolving to messages for the MCP agent
    *
    * @example
@@ -814,7 +814,8 @@ export class MCPUtils {
   }
 
   /**
-   * Renders the trade history of the MCP's strategy into agent messages:
+   * Renders the trade history of the MCP (Model Context Protocol)
+   * instance's strategy into agent messages:
    * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
    * storage, newest first — dollar/percent result, direction, close reason,
    * open/close times and the opening note per trade.
@@ -823,7 +824,7 @@ export class MCPUtils {
    * open, the history shows what was already traded and how it ended, so
    * the agent does not re-enter the same idea right after closing it.
    *
-   * @param mcpName - Name of the registered MCP schema (validated before rendering)
+   * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
    * @returns Promise resolving to history messages for the MCP agent
    *
    * @example
@@ -856,7 +857,8 @@ export class MCPUtils {
   };
 
   /**
-   * Renders the current portfolio of the MCP's strategy into agent messages.
+   * Renders the current portfolio of the MCP (Model Context Protocol)
+   * instance's strategy into agent messages.
    *
    * Builds a per-symbol snapshot (current price, queued entry, active
    * position with PnL, queued close) over every live instance of the bound
@@ -866,7 +868,7 @@ export class MCPUtils {
    *
    * Requires the "read" permission on the schema.
    *
-   * @param mcpName - Name of the registered MCP schema
+   * @param mcpName - Name of the registered MCP (Model Context Protocol) schema
    * @returns Promise resolving to messages for the MCP agent
    * @throws Error when the schema lacks the "read" permission
    *
@@ -959,7 +961,7 @@ export class MCPUtils {
 
 /**
  * Global singleton instance of MCPUtils.
- * Provides static-like access to MCP agent trading methods.
+ * Provides static-like access to MCP (Model Context Protocol) agent trading methods.
  *
  * @example
  * ```typescript

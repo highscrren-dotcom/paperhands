@@ -6511,11 +6511,11 @@ interface ISweep {
 type SweepName = string;
 
 /**
- * Base64-encoded binary payload of an MCP image message.
+ * Base64-encoded binary payload of an MCP (Model Context Protocol) image message.
  */
 type MCPBase64 = string;
 /**
- * Image message for the MCP agent (e.g. a rendered chart).
+ * Image message for the MCP (Model Context Protocol) agent (e.g. a rendered chart).
  * Payload is base64-encoded binary data with its mime type.
  */
 interface IMCPImageMessage {
@@ -6527,7 +6527,7 @@ interface IMCPImageMessage {
     data: MCPBase64;
 }
 /**
- * Plain text message for the MCP agent.
+ * Plain text message for the MCP (Model Context Protocol) agent.
  */
 interface IMCPTextMessage {
     /** Discriminator for type-safe union */
@@ -6536,7 +6536,7 @@ interface IMCPTextMessage {
     text: string;
 }
 /**
- * Message emitted to the MCP agent by getMessages.
+ * Message emitted to the MCP (Model Context Protocol) agent by getMessages.
  * Discriminated union of text and image messages.
  */
 type IMCPMessage = IMCPTextMessage | IMCPImageMessage;
@@ -6557,7 +6557,7 @@ interface IMCPContext {
     };
 }
 /**
- * Command payload for MCP.commitPositionOpen.
+ * Command payload for MCP.commitPositionOpen (MCP — Model Context Protocol).
  * Opens a moonbag position (fixed 50% TP, grid-snapped hard SL) for a symbol
  * enabled in live trading for the schema's strategy.
  */
@@ -6572,7 +6572,7 @@ interface IMCPPositionOpenCommand {
     note: string;
 }
 /**
- * Command payload for MCP.commitPositionClose.
+ * Command payload for MCP.commitPositionClose (MCP — Model Context Protocol).
  * Closes the pending position of a symbol enabled in live trading
  * for the schema's strategy.
  */
@@ -6585,7 +6585,7 @@ interface IMCPPositionCloseCommand {
     note: string;
 }
 /**
- * Lifecycle callbacks of an MCP instance (all optional).
+ * Lifecycle callbacks of an MCP (Model Context Protocol) instance (all optional).
  *
  * Fire AFTER the corresponding engine effect succeeds, with the raw data
  * the effect was built from — a test registers them to observe what the
@@ -6612,13 +6612,13 @@ interface IMCPCallbacks {
     onPositionClose(symbol: string, signalId: string, dto: IMCPPositionCloseCommand): void;
 }
 /**
- * Access level of an MCP instance.
+ * Access level of an MCP (Model Context Protocol) instance.
  * "read" allows status/history rendering, "write" allows opening and
  * closing positions.
  */
 type MCPPermission = "read" | "write";
 /**
- * Registration schema of an MCP instance.
+ * Registration schema of an MCP (Model Context Protocol) instance.
  *
  * Binds an MCP name to a strategy: status and position commands operate on
  * every live instance of that strategy.
@@ -6638,7 +6638,7 @@ type MCPPermission = "read" | "write";
  * - callbacks — all optional; an omitted callback is simply never fired.
  */
 interface IMCPSchema {
-    /** Unique MCP identifier for the schema registry */
+    /** Unique MCP (Model Context Protocol) identifier for the schema registry */
     mcpName: MCPName;
     /** Strategy whose live instances this MCP observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it */
     strategyName?: StrategyName;
@@ -6654,7 +6654,7 @@ interface IMCPSchema {
     callbacks?: Partial<IMCPCallbacks>;
 }
 /**
- * Unique MCP identifier.
+ * Unique MCP (Model Context Protocol) identifier.
  */
 type MCPName = string;
 
@@ -6783,7 +6783,7 @@ declare function getActionSchema(actionName: ActionName): IActionSchema;
  */
 declare function getSweepSchema(sweepName: SweepName): ISweepSchema;
 /**
- * Retrieves a registered MCP schema by name.
+ * Retrieves a registered MCP (Model Context Protocol) schema by name.
  *
  * @param mcpName - Unique MCP identifier
  * @returns The MCP schema configuration object
@@ -9360,15 +9360,16 @@ declare function addActionSchema(actionSchema: IActionSchema): void;
  */
 declare function addSweepSchema(sweepSchema: ISweepSchema): void;
 /**
- * Registers an MCP instance in the framework — the bridge exposing
- * live trading of a strategy to an MCP agent (see MCP.getStatus).
+ * Registers an MCP (Model Context Protocol) instance in the framework —
+ * the bridge exposing live trading of a strategy to an MCP agent
+ * (see MCP.getStatus).
  *
  * The MCP binds to a strategy: status snapshots and position commands
  * operate on every live instance of that strategy. getMessages renders
  * the portfolio for the agent; when omitted the default renderer emits
  * one text message per traded symbol.
  *
- * @param mcpSchema - MCP configuration object
+ * @param mcpSchema - MCP (Model Context Protocol) configuration object
  * @param mcpSchema.mcpName - Unique MCP identifier
  * @param mcpSchema.strategyName - Strategy whose live instances the MCP observes and trades
  * @param mcpSchema.positionCost - Optional entry cost in USD (default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST)
@@ -9582,7 +9583,7 @@ type TSweepSchema = {
     sweepName: ISweepSchema["sweepName"];
 } & Partial<ISweepSchema>;
 /**
- * Partial MCP schema for override operations.
+ * Partial MCP (Model Context Protocol) schema for override operations.
  *
  * Requires only the MCP name identifier, all other fields are optional.
  * Used by overrideMCPSchema() to perform partial updates without replacing entire configuration.
@@ -9830,7 +9831,7 @@ declare function overrideActionSchema(actionSchema: TActionSchema): Promise<IAct
  */
 declare function overrideSweepSchema(sweepSchema: TSweepSchema): Promise<ISweepSchema>;
 /**
- * Overrides an existing MCP configuration in the framework.
+ * Overrides an existing MCP (Model Context Protocol) configuration in the framework.
  *
  * This function partially updates a previously registered MCP with new configuration.
  * Only the provided fields will be updated, other fields remain unchanged.
@@ -10056,7 +10057,7 @@ declare function listRiskSchema(): Promise<IRiskSchema[]>;
  */
 declare function listSweepSchema(): Promise<ISweepSchema[]>;
 /**
- * Returns a list of all registered MCP schemas.
+ * Returns a list of all registered MCP (Model Context Protocol) schemas.
  *
  * Retrieves all MCP instances that have been registered via addMCPSchema().
  * Useful for debugging, documentation, or building dynamic UIs.
@@ -32436,7 +32437,7 @@ declare class ActionBase implements IPublicAction {
 }
 
 /**
- * Utility class exposing live trading to an MCP agent.
+ * Utility class exposing live trading to an MCP (Model Context Protocol) agent.
  *
  * Provides static-like methods (via singleton instance) to observe every
  * live instance of the schema's strategy and to open/close positions on
@@ -32481,7 +32482,7 @@ declare class MCPUtils {
      *
      * @param context - Portfolio snapshot keyed by traded symbol
      * @param when - Snapshot time stamped into the header message
-     * @param mcpName - Name of the registered MCP schema (validated before rendering)
+     * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
      * @returns Promise resolving to messages for the MCP agent
      *
      * @example
@@ -32499,7 +32500,8 @@ declare class MCPUtils {
      */
     getDefaultMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
-     * Renders the trade history of the MCP's strategy into agent messages:
+     * Renders the trade history of the MCP (Model Context Protocol)
+     * instance's strategy into agent messages:
      * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
      * storage, newest first — dollar/percent result, direction, close reason,
      * open/close times and the opening note per trade.
@@ -32508,7 +32510,7 @@ declare class MCPUtils {
      * open, the history shows what was already traded and how it ended, so
      * the agent does not re-enter the same idea right after closing it.
      *
-     * @param mcpName - Name of the registered MCP schema (validated before rendering)
+     * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
      * @returns Promise resolving to history messages for the MCP agent
      *
      * @example
@@ -32527,7 +32529,8 @@ declare class MCPUtils {
      */
     getHistoryMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
-     * Renders the current portfolio of the MCP's strategy into agent messages.
+     * Renders the current portfolio of the MCP (Model Context Protocol)
+     * instance's strategy into agent messages.
      *
      * Builds a per-symbol snapshot (current price, queued entry, active
      * position with PnL, queued close) over every live instance of the bound
@@ -32537,7 +32540,7 @@ declare class MCPUtils {
      *
      * Requires the "read" permission on the schema.
      *
-     * @param mcpName - Name of the registered MCP schema
+     * @param mcpName - Name of the registered MCP (Model Context Protocol) schema
      * @returns Promise resolving to messages for the MCP agent
      * @throws Error when the schema lacks the "read" permission
      *
@@ -32589,7 +32592,7 @@ declare class MCPUtils {
 }
 /**
  * Global singleton instance of MCPUtils.
- * Provides static-like access to MCP agent trading methods.
+ * Provides static-like access to MCP (Model Context Protocol) agent trading methods.
  *
  * @example
  * ```typescript
@@ -43410,7 +43413,7 @@ declare class SweepCoreService implements TSweep {
 }
 
 /**
- * Registry of MCP schemas.
+ * Registry of MCP (Model Context Protocol) schemas.
  *
  * Stores IMCPSchema records by MCP name with shallow validation on
  * registration. MCPUtils reads schemas from here when resolving the
@@ -43435,10 +43438,10 @@ declare class MCPSchemaService {
     };
     private _registry;
     /**
-     * Registers an MCP schema under its name after shallow
+     * Registers an MCP (Model Context Protocol) schema under its name after shallow
      * validation. Registering the same key twice replaces the record.
      *
-     * @param key - MCP name to register under
+     * @param key - MCP (Model Context Protocol) name to register under
      * @param value - Schema to store
      */
     register(key: MCPName, value: IMCPSchema): void;
@@ -43457,15 +43460,15 @@ declare class MCPSchemaService {
      * Partially overrides a registered schema and returns the merged
      * record. Used by overrideMCPSchema-style public APIs.
      *
-     * @param key - MCP name to override
+     * @param key - MCP (Model Context Protocol) name to override
      * @param value - Partial schema patch
      * @returns The merged schema after override
      */
     override(key: MCPName, value: Partial<IMCPSchema>): IMCPSchema;
     /**
-     * Returns the registered schema by MCP name.
+     * Returns the registered schema by MCP (Model Context Protocol) name.
      *
-     * @param key - MCP name to look up
+     * @param key - MCP (Model Context Protocol) name to look up
      * @returns The stored schema
      * @throws Error when no schema is registered under the name
      */
@@ -43473,7 +43476,8 @@ declare class MCPSchemaService {
 }
 
 /**
- * Existence and dependency validation of MCP instances.
+ * Existence and dependency validation of MCP (Model Context Protocol)
+ * instances.
  *
  * Tracks every registered MCP and verifies at use time that a
  * referenced MCP exists and its strategy dependency is valid.
@@ -43485,26 +43489,26 @@ declare class MCPValidationService {
     private readonly strategyValidationService;
     private _mcpMap;
     /**
-     * Tracks an MCP for validation. Called on schema
+     * Tracks an MCP (Model Context Protocol) instance for validation. Called on schema
      * registration; duplicate names are rejected.
      *
-     * @param mcpName - MCP name to track
+     * @param mcpName - MCP (Model Context Protocol) name to track
      * @param mcpSchema - Schema stored for dependency checks
      * @throws Error when the name is already tracked
      */
     addMCP: (mcpName: MCPName, mcpSchema: IMCPSchema) => void;
     /**
-     * Validates that an MCP is registered and its strategy
+     * Validates that an MCP (Model Context Protocol) instance is registered and its strategy
      * dependency passes validation. Memoized by MCP name — the
      * check runs once per name, later calls are no-ops.
      *
-     * @param mcpName - MCP name to validate
+     * @param mcpName - MCP (Model Context Protocol) name to validate
      * @param source - Caller tag included in error messages
      * @throws Error when the MCP or its strategy is unknown
      */
     validate: (mcpName: MCPName, source: string) => void;
     /**
-     * Lists every tracked MCP schema.
+     * Lists every tracked MCP (Model Context Protocol) schema.
      *
      * @returns All schemas registered for validation
      */

@@ -220,7 +220,7 @@ type TSweepSchema = {
 } & Partial<ISweepSchema>;
 
 /**
- * Partial MCP schema for override operations.
+ * Partial MCP (Model Context Protocol) schema for override operations.
  *
  * Requires only the MCP name identifier, all other fields are optional.
  * Used by overrideMCPSchema() to perform partial updates without replacing entire configuration.
@@ -589,7 +589,7 @@ export async function overrideSweepSchema(sweepSchema: TSweepSchema) {
 }
 
 /**
- * Overrides an existing MCP configuration in the framework.
+ * Overrides an existing MCP (Model Context Protocol) configuration in the framework.
  *
  * This function partially updates a previously registered MCP with new configuration.
  * Only the provided fields will be updated, other fields remain unchanged.

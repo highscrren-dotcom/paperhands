@@ -1,12 +1,12 @@
 import { IPublicSignalRow, ISignalCloseRow, ISignalDto, StrategyName } from "./Strategy.interface";
 
 /**
- * Base64-encoded binary payload of an MCP image message.
+ * Base64-encoded binary payload of an MCP (Model Context Protocol) image message.
  */
 export type MCPBase64 = string;
 
 /**
- * Image message for the MCP agent (e.g. a rendered chart).
+ * Image message for the MCP (Model Context Protocol) agent (e.g. a rendered chart).
  * Payload is base64-encoded binary data with its mime type.
  */
 export interface IMCPImageMessage {
@@ -19,7 +19,7 @@ export interface IMCPImageMessage {
 }
 
 /**
- * Plain text message for the MCP agent.
+ * Plain text message for the MCP (Model Context Protocol) agent.
  */
 export interface IMCPTextMessage {
     /** Discriminator for type-safe union */
@@ -29,7 +29,7 @@ export interface IMCPTextMessage {
 }
 
 /**
- * Message emitted to the MCP agent by getMessages.
+ * Message emitted to the MCP (Model Context Protocol) agent by getMessages.
  * Discriminated union of text and image messages.
  */
 export type IMCPMessage = IMCPTextMessage | IMCPImageMessage;
@@ -52,7 +52,7 @@ export interface IMCPContext {
 }
 
 /**
- * Command payload for MCP.commitPositionOpen.
+ * Command payload for MCP.commitPositionOpen (MCP — Model Context Protocol).
  * Opens a moonbag position (fixed 50% TP, grid-snapped hard SL) for a symbol
  * enabled in live trading for the schema's strategy.
  */
@@ -68,7 +68,7 @@ export interface IMCPPositionOpenCommand {
 }
 
 /**
- * Command payload for MCP.commitPositionClose.
+ * Command payload for MCP.commitPositionClose (MCP — Model Context Protocol).
  * Closes the pending position of a symbol enabled in live trading
  * for the schema's strategy.
  */
@@ -82,7 +82,7 @@ export interface IMCPPositionCloseCommand {
 }
 
 /**
- * Lifecycle callbacks of an MCP instance (all optional).
+ * Lifecycle callbacks of an MCP (Model Context Protocol) instance (all optional).
  *
  * Fire AFTER the corresponding engine effect succeeds, with the raw data
  * the effect was built from — a test registers them to observe what the
@@ -110,14 +110,14 @@ export interface IMCPCallbacks {
 }
 
 /**
- * Access level of an MCP instance.
+ * Access level of an MCP (Model Context Protocol) instance.
  * "read" allows status/history rendering, "write" allows opening and
  * closing positions.
  */
 export type MCPPermission = "read" | "write";
 
 /**
- * Registration schema of an MCP instance.
+ * Registration schema of an MCP (Model Context Protocol) instance.
  *
  * Binds an MCP name to a strategy: status and position commands operate on
  * every live instance of that strategy.
@@ -137,7 +137,7 @@ export type MCPPermission = "read" | "write";
  * - callbacks — all optional; an omitted callback is simply never fired.
  */
 export interface IMCPSchema {
-    /** Unique MCP identifier for the schema registry */
+    /** Unique MCP (Model Context Protocol) identifier for the schema registry */
     mcpName: MCPName;
     /** Strategy whose live instances this MCP observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it */
     strategyName?: StrategyName;
@@ -154,6 +154,6 @@ export interface IMCPSchema {
 }
 
 /**
- * Unique MCP identifier.
+ * Unique MCP (Model Context Protocol) identifier.
  */
 export type MCPName = string;

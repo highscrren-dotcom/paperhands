@@ -240,7 +240,7 @@ export function getSweepSchema(sweepName: SweepName) {
 }
 
 /**
- * Retrieves a registered MCP schema by name.
+ * Retrieves a registered MCP (Model Context Protocol) schema by name.
  *
  * @param mcpName - Unique MCP identifier
  * @returns The MCP schema configuration object

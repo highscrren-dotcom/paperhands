@@ -5,7 +5,7 @@ import { ToolRegistry } from "functools-kit";
 import { IMCPSchema, MCPName } from "../../../interfaces/MCP.interface";
 
 /**
- * Registry of MCP schemas.
+ * Registry of MCP (Model Context Protocol) schemas.
  *
  * Stores IMCPSchema records by MCP name with shallow validation on
  * registration. MCPUtils reads schemas from here when resolving the
@@ -19,10 +19,10 @@ export class MCPSchemaService {
   );
 
   /**
-   * Registers an MCP schema under its name after shallow
+   * Registers an MCP (Model Context Protocol) schema under its name after shallow
    * validation. Registering the same key twice replaces the record.
    *
-   * @param key - MCP name to register under
+   * @param key - MCP (Model Context Protocol) name to register under
    * @param value - Schema to store
    */
   public register(key: MCPName, value: IMCPSchema) {
@@ -63,7 +63,7 @@ export class MCPSchemaService {
    * Partially overrides a registered schema and returns the merged
    * record. Used by overrideMCPSchema-style public APIs.
    *
-   * @param key - MCP name to override
+   * @param key - MCP (Model Context Protocol) name to override
    * @param value - Partial schema patch
    * @returns The merged schema after override
    */
@@ -74,9 +74,9 @@ export class MCPSchemaService {
   }
 
   /**
-   * Returns the registered schema by MCP name.
+   * Returns the registered schema by MCP (Model Context Protocol) name.
    *
-   * @param key - MCP name to look up
+   * @param key - MCP (Model Context Protocol) name to look up
    * @returns The stored schema
    * @throws Error when no schema is registered under the name
    */
