@@ -6612,6 +6612,12 @@ interface IMCPCallbacks {
     onPositionClose(symbol: string, signalId: string, dto: IMCPPositionCloseCommand): void;
 }
 /**
+ * Access level of an MCP instance.
+ * "read" allows status/history rendering, "write" allows opening and
+ * closing positions.
+ */
+type MCPPermission = "read" | "write";
+/**
  * Registration schema of an MCP instance.
  *
  * Binds an MCP name to a strategy: status and position commands operate on
@@ -6623,6 +6629,10 @@ interface IMCPCallbacks {
  *   schema names one explicitly — ambiguity is an error, not a guess.
  * - positionCost — entry cost in USD for commitPositionOpen; defaults to
  *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
+ * - permissions — access levels granted to the agent; defaults to BOTH
+ *   "read" and "write" when omitted. Without "read" status/history throw,
+ *   without "write" open/close throw — the check runs per call, so an
+ *   overridden schema applies immediately.
  * - getMessages — renders the portfolio snapshot into agent messages; when
  *   omitted the default renderer emits one text message per symbol.
  * - callbacks — all optional; an omitted callback is simply never fired.
@@ -6636,6 +6646,8 @@ interface IMCPSchema {
     positionCost?: number;
     /** Estimated time in minutes for a position to reach its TP or SL. */
     minuteEstimatedTime?: number;
+    /** Access levels granted to the agent: "read" gates status/history, "write" gates open/close. Default: both */
+    permissions?: MCPPermission[];
     /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
     /** Lifecycle callbacks (all optional) */
@@ -32523,8 +32535,11 @@ declare class MCPUtils {
      * text renderer). Fires the schema's onStatus callback with the snapshot
      * and the rendered messages.
      *
+     * Requires the "read" permission on the schema.
+     *
      * @param mcpName - Name of the registered MCP schema
      * @returns Promise resolving to messages for the MCP agent
+     * @throws Error when the schema lacks the "read" permission
      *
      * @example
      * ```typescript
@@ -32546,6 +32561,7 @@ declare class MCPUtils {
      * @param dto - Open command with symbol, direction, mcpName and note
      * @returns Promise resolving when the create-signal commit is accepted
      * @throws Error when the symbol is not live-enabled or a pending signal exists
+     * @throws Error when the schema lacks the "write" permission
      *
      * @example
      * ```typescript
@@ -32562,6 +32578,7 @@ declare class MCPUtils {
      * @param dto - Close command with symbol, mcpName and note
      * @returns Promise resolving when the close-pending commit is accepted
      * @throws Error when the symbol is not live-enabled or no pending signal exists
+     * @throws Error when the schema lacks the "write" permission
      *
      * @example
      * ```typescript

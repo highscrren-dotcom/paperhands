@@ -110,6 +110,13 @@ export interface IMCPCallbacks {
 }
 
 /**
+ * Access level of an MCP instance.
+ * "read" allows status/history rendering, "write" allows opening and
+ * closing positions.
+ */
+export type MCPPermission = "read" | "write";
+
+/**
  * Registration schema of an MCP instance.
  *
  * Binds an MCP name to a strategy: status and position commands operate on
@@ -121,6 +128,10 @@ export interface IMCPCallbacks {
  *   schema names one explicitly — ambiguity is an error, not a guess.
  * - positionCost — entry cost in USD for commitPositionOpen; defaults to
  *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
+ * - permissions — access levels granted to the agent; defaults to BOTH
+ *   "read" and "write" when omitted. Without "read" status/history throw,
+ *   without "write" open/close throw — the check runs per call, so an
+ *   overridden schema applies immediately.
  * - getMessages — renders the portfolio snapshot into agent messages; when
  *   omitted the default renderer emits one text message per symbol.
  * - callbacks — all optional; an omitted callback is simply never fired.
@@ -134,6 +145,8 @@ export interface IMCPSchema {
     positionCost?: number;
     /** Estimated time in minutes for a position to reach its TP or SL. */
     minuteEstimatedTime?: number;
+    /** Access levels granted to the agent: "read" gates status/history, "write" gates open/close. Default: both */
+    permissions?: MCPPermission[];
     /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
     /** Lifecycle callbacks (all optional) */

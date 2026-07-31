@@ -9,6 +9,7 @@ import {
   IMCPPositionCloseCommand,
   IMCPPositionOpenCommand,
   MCPName,
+  MCPPermission,
 } from "../interfaces/MCP.interface";
 import { ISignalDto, StrategyName } from "../interfaces/Strategy.interface";
 import { errorEmitter } from "../config/emitters";
@@ -472,6 +473,36 @@ const VALIDATE_SCHEMA_FN = memoize(
 );
 
 /**
+ * Checks that the MCP schema grants a permission for the requested
+ * operation: "read" gates status/history rendering, "write" gates
+ * opening and closing positions. A schema without the permissions field
+ * grants BOTH by default.
+ *
+ * Deliberately NOT memoized: overrideMCPSchema may narrow or widen the
+ * grants at runtime, and the check must see the current schema on every
+ * call. Pure renderer helpers (getDefaultMessages) are not gated — they
+ * transform data the caller already holds.
+ *
+ * @param mcpName - MCP name whose schema carries the permissions
+ * @param permission - Permission required by the calling operation
+ * @param source - Caller tag included in error messages
+ * @throws Error when the permission is not granted
+ */
+const CHECK_PERMISSION_FN = (
+  mcpName: MCPName,
+  permission: MCPPermission,
+  source: string,
+): void => {
+  const { permissions = ["read", "write"] } =
+    backtest.mcpSchemaService.get(mcpName);
+  if (!permissions.includes(permission)) {
+    throw new Error(
+      `MCP Error: mcp ${mcpName} is missing the "${permission}" permission source=${source}`,
+    );
+  }
+};
+
+/**
  * Resolves the effective strategy of an MCP.
  *
  * The schema's explicit strategyName wins. Without it, the SINGLE registered
@@ -833,8 +864,11 @@ export class MCPUtils {
    * text renderer). Fires the schema's onStatus callback with the snapshot
    * and the rendered messages.
    *
+   * Requires the "read" permission on the schema.
+   *
    * @param mcpName - Name of the registered MCP schema
    * @returns Promise resolving to messages for the MCP agent
+   * @throws Error when the schema lacks the "read" permission
    *
    * @example
    * ```typescript
@@ -851,6 +885,7 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_STATUS);
+      CHECK_PERMISSION_FN(mcpName, "read", METHOD_NAME_GET_STATUS);
     }
 
     const context = await GET_TARGET_CONTEXT_FN(mcpName);
@@ -872,6 +907,7 @@ export class MCPUtils {
    * @param dto - Open command with symbol, direction, mcpName and note
    * @returns Promise resolving when the create-signal commit is accepted
    * @throws Error when the symbol is not live-enabled or a pending signal exists
+   * @throws Error when the schema lacks the "write" permission
    *
    * @example
    * ```typescript
@@ -885,6 +921,7 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_POSITION_OPEN);
+      CHECK_PERMISSION_FN(dto.mcpName, "write", METHOD_NAME_COMMIT_POSITION_OPEN);
     }
 
     return await COMMIT_POSITION_OPEN_FN(dto);
@@ -899,6 +936,7 @@ export class MCPUtils {
    * @param dto - Close command with symbol, mcpName and note
    * @returns Promise resolving when the close-pending commit is accepted
    * @throws Error when the symbol is not live-enabled or no pending signal exists
+   * @throws Error when the schema lacks the "write" permission
    *
    * @example
    * ```typescript
@@ -912,6 +950,7 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_POSITION_CLOSE);
+      CHECK_PERMISSION_FN(dto.mcpName, "write", METHOD_NAME_COMMIT_POSITION_CLOSE);
     }
 
     return await COMMIT_POSITION_CLOSE_FN(dto);
