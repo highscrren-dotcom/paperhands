@@ -1,0 +1,9 @@
+{
+  "name": "tg-collect",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "telegram": "^2.26.22",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
