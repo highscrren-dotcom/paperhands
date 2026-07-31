@@ -26,3 +26,43 @@
 @BinanceLiquidations
 @CallAnalyser2
 @walloftrophies
+# добавлено 31.07: внешний ресерч (Gemini+Claude), верифицировано tg-verify
+# сигнальные
+@BitcoinBullets
+@wolfoftrading
+@binancesignals
+@cryptoninjas_trading_ann
+@FedRussianInsiders
+@TheWolfOfYourStreet
+@MEMEcrypted
+@fatpigsignals
+@learn2tradectypto
+# новостные
+@cointelegraph
+@CoinDeskGlobal
+@wublockchainenglish
+@CoinMarketCapAnnouncements
+@the_block_crypto
+@unfolded
+@incrypted
+@Incrypted_Headlines
+@forklog
+@forklogfeed
+@RBCCrypto
+@bitsmedia
+@EthereumIC
+@binance_announcements
+@Bybit_Announcements
+@whale_alert_io
+@learn2tradenews
+# аналитика
+@glassnode
+@cryptodiffer
+@cryptodep
+@lunarcrush
+@ico_analytic
+@CryptoScanner100eyes
+@cryptomannnisnotacult
+@toptraders0x
+@doubletop
+@falconinvestors
