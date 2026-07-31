@@ -9,4 +9,4 @@ group: docs
 type MCPBase64 = string;
 ```
 
-Base64-encoded binary payload of an MCP image message.
+Base64-encoded binary payload of an MCP (Model Context Protocol) image message.

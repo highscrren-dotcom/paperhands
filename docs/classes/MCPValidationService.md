@@ -5,7 +5,8 @@ group: docs
 
 # MCPValidationService
 
-Existence and dependency validation of MCP instances.
+Existence and dependency validation of MCP (Model Context Protocol)
+instances.
 
 Tracks every registered MCP and verifies at use time that a
 referenced MCP exists and its strategy dependency is valid.
@@ -44,7 +45,7 @@ _mcpMap: any
 addMCP: (mcpName: string, mcpSchema: IMCPSchema) => void
 ```
 
-Tracks an MCP for validation. Called on schema
+Tracks an MCP (Model Context Protocol) instance for validation. Called on schema
 registration; duplicate names are rejected.
 
 ### validate
@@ -53,7 +54,7 @@ registration; duplicate names are rejected.
 validate: (mcpName: string, source: string) => void
 ```
 
-Validates that an MCP is registered and its strategy
+Validates that an MCP (Model Context Protocol) instance is registered and its strategy
 dependency passes validation. Memoized by MCP name — the
 check runs once per name, later calls are no-ops.
 
@@ -63,4 +64,4 @@ check runs once per name, later calls are no-ops.
 list: () => Promise<IMCPSchema[]>
 ```
 
-Lists every tracked MCP schema.
+Lists every tracked MCP (Model Context Protocol) schema.

@@ -5,7 +5,7 @@ group: docs
 
 # IMCPImageMessage
 
-Image message for the MCP agent (e.g. a rendered chart).
+Image message for the MCP (Model Context Protocol) agent (e.g. a rendered chart).
 Payload is base64-encoded binary data with its mime type.
 
 ## Properties

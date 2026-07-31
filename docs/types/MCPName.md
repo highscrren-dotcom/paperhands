@@ -9,4 +9,4 @@ group: docs
 type MCPName = string;
 ```
 
-Unique MCP identifier.
+Unique MCP (Model Context Protocol) identifier.

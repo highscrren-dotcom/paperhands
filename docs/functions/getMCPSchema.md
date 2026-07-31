@@ -9,7 +9,7 @@ group: docs
 declare function getMCPSchema(mcpName: MCPName): IMCPSchema;
 ```
 
-Retrieves a registered MCP schema by name.
+Retrieves a registered MCP (Model Context Protocol) schema by name.
 
 ## Parameters
 

@@ -5,7 +5,7 @@ group: docs
 
 # IMCPPositionOpenCommand
 
-Command payload for MCP.commitPositionOpen.
+Command payload for MCP.commitPositionOpen (MCP — Model Context Protocol).
 Opens a moonbag position (fixed 50% TP, grid-snapped hard SL) for a symbol
 enabled in live trading for the schema's strategy.
 

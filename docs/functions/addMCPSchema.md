@@ -9,8 +9,9 @@ group: docs
 declare function addMCPSchema(mcpSchema: IMCPSchema): void;
 ```
 
-Registers an MCP instance in the framework — the bridge exposing
-live trading of a strategy to an MCP agent (see MCP.getStatus).
+Registers an MCP (Model Context Protocol) instance in the framework —
+the bridge exposing live trading of a strategy to an MCP agent
+(see MCP.getStatus).
 
 The MCP binds to a strategy: status snapshots and position commands
 operate on every live instance of that strategy. getMessages renders
@@ -21,4 +22,4 @@ one text message per traded symbol.
 
 | Parameter | Description |
 |-----------|-------------|
-| `mcpSchema` | MCP configuration object |
+| `mcpSchema` | MCP (Model Context Protocol) configuration object |

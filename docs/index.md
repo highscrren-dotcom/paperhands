@@ -718,6 +718,7 @@ group: docs
 - [SweepName](types/SweepName.md)
 - [MCPBase64](types/MCPBase64.md)
 - [IMCPMessage](types/IMCPMessage.md)
+- [MCPPermission](types/MCPPermission.md)
 - [MCPName](types/MCPName.md)
 - [SignalNotificationPayload](types/SignalNotificationPayload.md)
 - [GlobalConfig](types/GlobalConfig.md)

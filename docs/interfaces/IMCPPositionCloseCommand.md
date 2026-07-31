@@ -5,7 +5,7 @@ group: docs
 
 # IMCPPositionCloseCommand
 
-Command payload for MCP.commitPositionClose.
+Command payload for MCP.commitPositionClose (MCP — Model Context Protocol).
 Closes the pending position of a symbol enabled in live trading
 for the schema's strategy.
 

@@ -5,7 +5,7 @@ group: docs
 
 # MCPUtils
 
-Utility class exposing live trading to an MCP agent.
+Utility class exposing live trading to an MCP (Model Context Protocol) agent.
 
 Provides static-like methods (via singleton instance) to observe every
 live instance of the schema's strategy and to open/close positions on
@@ -30,18 +30,37 @@ constructor();
 ### getDefaultMessages
 
 ```ts
-getDefaultMessages: (context: IMCPContext, when: Date, mcpName: string) => IMCPMessage[]
+getDefaultMessages: (context: IMCPContext, when: Date, mcpName: string) => Promise<IMCPMessage[]>
 ```
 
 Renders a portfolio snapshot with the DEFAULT text renderer, regardless
 of the schema's getMessages.
 
-Emits one header message with the snapshot time plus one text message per
-traded symbol: capital balance, the queued entry order, the active
-position with its unrealized PnL and the queued close order.
+Emits one header message — snapshot time plus the portfolio summary
+(open position count, total invested, total and per-position dollar
+PnL) — plus one text message per traded symbol: prices, PnL/peak/
+drawdown percents with timing, DCA entries, capital balance and the
+entry/position/close slots.
 
-The signature matches IMCPSchema.getMessages, so a custom renderer can
-delegate here and extend the default output instead of rebuilding it.
+The signature matches IMCPSchema.getMessages (async variant), so a
+custom renderer can await this method and extend the default output
+instead of rebuilding it.
+
+### getHistoryMessages
+
+```ts
+getHistoryMessages: (mcpName: string) => Promise<IMCPMessage[]>
+```
+
+Renders the trade history of the MCP (Model Context Protocol)
+instance's strategy into agent messages:
+the last {@link MAX_HISTORY_ROWS } CLOSED positions from the live signal
+storage, newest first — dollar/percent result, direction, close reason,
+open/close times and the opening note per trade.
+
+Complements getStatus for stateless agents: the status shows what is
+open, the history shows what was already traded and how it ended, so
+the agent does not re-enter the same idea right after closing it.
 
 ### getStatus
 
@@ -49,13 +68,16 @@ delegate here and extend the default output instead of rebuilding it.
 getStatus: (mcpName: string) => Promise<IMCPMessage[]>
 ```
 
-Renders the current portfolio of the MCP's strategy into agent messages.
+Renders the current portfolio of the MCP (Model Context Protocol)
+instance's strategy into agent messages.
 
 Builds a per-symbol snapshot (current price, queued entry, active
 position with PnL, queued close) over every live instance of the bound
 strategy and passes it to the schema's getMessages (or the default
 text renderer). Fires the schema's onStatus callback with the snapshot
 and the rendered messages.
+
+Requires the "read" permission on the schema.
 
 ### commitPositionOpen
 

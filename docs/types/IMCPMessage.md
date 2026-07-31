@@ -9,5 +9,5 @@ group: docs
 type IMCPMessage = IMCPTextMessage | IMCPImageMessage;
 ```
 
-Message emitted to the MCP agent by getMessages.
+Message emitted to the MCP (Model Context Protocol) agent by getMessages.
 Discriminated union of text and image messages.

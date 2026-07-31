@@ -5,7 +5,7 @@ group: docs
 
 # IMCPTextMessage
 
-Plain text message for the MCP agent.
+Plain text message for the MCP (Model Context Protocol) agent.
 
 ## Properties
 

@@ -5,7 +5,7 @@ group: docs
 
 # MCPSchemaService
 
-Registry of MCP schemas.
+Registry of MCP (Model Context Protocol) schemas.
 
 Stores IMCPSchema records by MCP name with shallow validation on
 registration. MCPUtils reads schemas from here when resolving the
@@ -39,7 +39,9 @@ validateShallow: any
 
 Shallow structural validation of a schema: required string
 fields only, no deep checks — getMessages and callbacks are
-validated by their consumers.
+validated by their consumers. strategyName is optional (the
+single registered strategy is resolved at use time) but must
+be a string when present.
 
 ## Methods
 
@@ -49,7 +51,7 @@ validated by their consumers.
 register(key: MCPName, value: IMCPSchema): void;
 ```
 
-Registers an MCP schema under its name after shallow
+Registers an MCP (Model Context Protocol) schema under its name after shallow
 validation. Registering the same key twice replaces the record.
 
 ### override
@@ -67,4 +69,4 @@ record. Used by overrideMCPSchema-style public APIs.
 get(key: MCPName): IMCPSchema;
 ```
 
-Returns the registered schema by MCP name.
+Returns the registered schema by MCP (Model Context Protocol) name.

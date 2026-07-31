@@ -5,7 +5,7 @@ group: docs
 
 # IMCPCallbacks
 
-Lifecycle callbacks of an MCP instance (all optional).
+Lifecycle callbacks of an MCP (Model Context Protocol) instance (all optional).
 
 Fire AFTER the corresponding engine effect succeeds, with the raw data
 the effect was built from — a test registers them to observe what the
