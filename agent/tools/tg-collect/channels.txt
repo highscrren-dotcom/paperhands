@@ -1,3 +1,19 @@
-# по одному @каналу на строку; # — коммент
-# сид заполняется списком Петра / tgstat-топом крипто-сигналов;
-# кандидаты на расширение копятся в discovered.txt (форварды)
+# сид v1 (31.07.2026): сигнальные/аналитические/новостные крипто-каналы из подписок
+# аккаунта сессии; расширение — список Петра + discovered.txt (форварды).
+# по одному @каналу на строку, # — коммент
+@s1dd1_stdin
+@CallAnalyser
+@CallAnalyserSol
+@CallAnalyserEth
+@CallAnalyserTON
+@CallAnalyserBase
+@topslivs
+@crypto_yoda_channel
+@BWEnews_RU
+@midas_crypto_indicator
+@vilarsofree
+@stockgamblerschannel
+@wallstreetqueenofficial
+@marketscreen
+@PapasCall
+@Mc_Babuin61
