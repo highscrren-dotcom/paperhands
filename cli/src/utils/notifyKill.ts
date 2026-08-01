@@ -41,4 +41,6 @@ export const notifyKill = singleshot(() => {
   process.on("SIGINT", () => kill());
 });
 
+Object.assign(globalThis, { kill });
+
 export default notifyKill;
