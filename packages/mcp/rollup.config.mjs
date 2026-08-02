@@ -9,10 +9,12 @@ export default [
     output: [
       {
         file: path.join("build", "index.mjs"),
+        banner: "#!/usr/bin/env node",
         format: "esm",
       },
       {
         file: path.join("build", "index.cjs"),
+        banner: "#!/usr/bin/env node",
         format: "commonjs",
       },
     ],
