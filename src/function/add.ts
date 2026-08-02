@@ -493,7 +493,7 @@ export function addSweepSchema(sweepSchema: ISweepSchema) {
  *   strategyName: "my-strategy",
  *   positionCost: 100,
  *   getMessages: (context, when) => [
- *     { type: "text", text: `Symbols: ${Object.keys(context).join(", ")}` },
+ *     { id: randomString(), type: "text", text: `Symbols: ${Object.keys(context).join(", ")}` },
  *   ],
  * });
  * ```

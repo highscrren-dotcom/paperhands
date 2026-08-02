@@ -1,4 +1,4 @@
-import { memoize, trycatch, errorData, getErrorMessage } from "functools-kit";
+import { memoize, trycatch, errorData, getErrorMessage, randomString } from "functools-kit";
 import backtest from "../lib";
 import { Exchange } from "./Exchange";
 import { Live } from "./Live";
@@ -84,6 +84,7 @@ const DEFAULT_GET_MESSAGES = (
   if (!symbols.length) {
     return [
       {
+        id: randomString(),
         type: "text",
         text: `Portfolio status at ${when.toISOString()}: no symbols are enabled for live trading.`,
       },
@@ -125,6 +126,7 @@ const DEFAULT_GET_MESSAGES = (
   }
   const messages: IMCPMessage[] = [
     {
+      id: randomString(),
       type: "text",
       text: summaryLines.join("\n"),
     },
@@ -233,7 +235,7 @@ const DEFAULT_GET_MESSAGES = (
     } else {
       lines.push("Close queue: empty, no order waiting to close a position");
     }
-    messages.push({ type: "text", text: lines.join("\n") });
+    messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
   return messages;
 };
@@ -276,6 +278,7 @@ const HISTORY_GET_MESSAGES = async (
   if (!closedList.length) {
     return [
       {
+        id: randomString(),
         type: "text",
         text: `Trade history at ${when.toISOString()}: no closed positions recorded yet.`,
       },
@@ -283,6 +286,7 @@ const HISTORY_GET_MESSAGES = async (
   }
   const messages: IMCPMessage[] = [
     {
+      id: randomString(),
       type: "text",
       text: `Trade history at ${when.toISOString()} (last ${closedList.length} closed position${closedList.length === 1 ? "" : "s"}, newest first):`,
     },
@@ -306,7 +310,7 @@ const HISTORY_GET_MESSAGES = async (
     if (row.note) {
       lines.push(`Note: ${row.note}`);
     }
-    messages.push({ type: "text", text: lines.join("\n") });
+    messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
   return messages;
 };
@@ -790,7 +794,7 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
-   *     messages.push({ type: "text", text: "Custom trailer for the agent" });
+   *     messages.push({ id: randomString(), type: "text", text: "Custom trailer for the agent" });
    *     return messages;
    *   },
    * });

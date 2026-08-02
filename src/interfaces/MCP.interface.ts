@@ -1,5 +1,7 @@
 import { IPublicSignalRow, ISignalCloseRow, ISignalDto, StrategyName } from "./Strategy.interface";
 
+export type MCPMessageId = string | number;
+
 /**
  * Base64-encoded binary payload of an MCP (Model Context Protocol) image message.
  */
@@ -10,6 +12,8 @@ export type MCPBase64 = string;
  * Payload is base64-encoded binary data with its mime type.
  */
 export interface IMCPImageMessage {
+    /** Unique identifier for the message (used to track delivery and deduplication) */
+    id: MCPMessageId;
     /** Discriminator for type-safe union */
     type: "image";
     /** Mime type of the encoded payload (e.g., "image/png") */
@@ -22,6 +26,8 @@ export interface IMCPImageMessage {
  * Plain text message for the MCP (Model Context Protocol) agent.
  */
 export interface IMCPTextMessage {
+    /** Unique identifier for the message (used to track delivery and deduplication) */
+    id: MCPMessageId;
     /** Discriminator for type-safe union */
     type: "text";
     /** Human-readable message text */

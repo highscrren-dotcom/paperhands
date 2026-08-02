@@ -75,42 +75,44 @@
     "default": "./build/index.cjs"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "11.1.6",
     "@rollup/plugin-terser": "0.4.4",
+    "@rollup/plugin-typescript": "11.1.6",
     "@types/finalhandler": "1.2.3",
-    "@types/serve-handler": "6.1.4",
-    "cross-env": "7.0.3",
     "@types/node": "22.9.0",
+    "@types/serve-handler": "6.1.4",
+    "backtest-kit": "17.8.0",
+    "ccxt": "4.5.24",
+    "cross-env": "7.0.3",
     "glob": "11.0.1",
+    "markdown-it": "14.1.0",
     "rimraf": "6.0.1",
     "rollup": "3.29.5",
     "rollup-plugin-dts": "6.1.1",
     "rollup-plugin-peer-deps-external": "2.2.4",
+    "touch": "3.1.1",
     "ts-morph": "27.0.2",
+    "file-type": "16.5.4",
     "tslib": "2.7.0",
     "typedoc": "0.27.9",
-    "ccxt": "4.5.24",
-    "touch": "3.1.1",
-    "worker-testbed": "4.0.0",
-    "backtest-kit": "17.8.0",
-    "markdown-it": "14.1.0"
+    "worker-testbed": "4.0.0"
   },
   "peerDependencies": {
     "backtest-kit": "^17.8.0",
-    "markdown-it": "^14.1.0",
+    "file-type": "^16.5.4",
     "ccxt": "^4.5.24",
+    "markdown-it": "^14.1.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "cryptocurrency-icons": "^0.18.1",
     "di-kit": "^1.1.1",
     "di-scoped": "^1.0.21",
+    "finalhandler": "^1.3.1",
     "functools-kit": "^5.0.0",
     "get-moment-stamp": "^3.0.0",
-    "finalhandler": "^1.3.1",
-    "serve-handler": "^6.1.6",
-    "cryptocurrency-icons": "^0.18.1",
+    "micro": "^10.0.1",
     "router": "^1.3.8",
-    "micro": "^10.0.1"
+    "serve-handler": "^6.1.6"
   },
   "publishConfig": {
     "access": "public"

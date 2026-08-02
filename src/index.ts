@@ -275,6 +275,7 @@ export {
   IMCPMessage,
   IMCPContext,
   IMCPSchema,
+  MCPMessageId,
 } from "./interfaces/MCP.interface";
 
 export {

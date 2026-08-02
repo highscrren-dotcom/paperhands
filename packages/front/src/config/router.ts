@@ -4,6 +4,7 @@ import finalhandler from "finalhandler";
 import serveHandler from "serve-handler";
 
 import health from "../routes/health";
+import file from "../routes/file";
 import mock from "../routes/mock";
 import view from "../routes/view";
 import icon from "../routes/icon";
@@ -25,6 +26,10 @@ const router = Router({
 
 router.all("/api/v1/health/*", (req, res) => {
   return health(req, res, finalhandler(req, res));
+});
+
+router.all("/api/v1/file/*", (req, res) => {
+  return file(req, res, finalhandler(req, res));
 });
 
 router.all("/api/v1/mock/*", (req, res) => {
