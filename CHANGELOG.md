@@ -1,9 +1,48 @@
+# 👾 MCP: Claude trades a live portfolio without human action (v18.0.0, 02/08/2026)
+
+> Github [release link](https://github.com/tripolskypetr/backtest-kit/releases/tag/18.0.0)
+
+
+> 🚀 **New to backtest-kit?** The fastest way to get a real, production-ready setup is to clone the [reference implementation](https://github.com/tripolskypetr/backtest-kit/tree/master/example) — a fully working news-sentiment AI trading system with LLM forecasting, multi-timeframe data, and a documented February 2026 backtest. Start there instead of from scratch.
+
+This major turns the live portfolio into something an LLM agent can *operate* — through the narrowest vocabulary that still trades. The new **`@backtest-kit/mcp`** package is a Model Context Protocol server (Claude Code, or any MCP client) exposing exactly three tools: `get_status`, `open_position(symbol, position, note)`, `close_position(symbol, note)`. Nothing else. The agent chooses **when and which way**; entry cost and the emergency stop-loss are computed engine-side and cannot be overridden by the model. An open against a busy symbol is rejected **by the engine, not by prompt engineering** — the validation chain, risk profiles and the symbol whitelist bound the blast radius of any single decision.
+
+**Exits are manual by design.** There is no working take-profit: the position never closes itself on profit, and the engine's stop-loss is a distant safety net that only caps a catastrophic loss. The agent monitors `get_status` — unrealized PnL, peak profit and max drawdown with their timing, remaining hold time — and closes with `close_position` when its thesis plays out or fails. The tool descriptions carry this contract verbatim, so any MCP client learns the rules from the schema alone; an unattended position dies by the emergency stop or the hold timeout.
+
+**Two processes, one contract.** The stdio MCP server lives in the agent's world and holds no trading state; every call is forwarded over HTTP to the trading process (`serve()` on `CC_MCP_HOST`/`CC_MCP_PORT`, default `127.0.0.1:60051`). Transport success is not operation success: the outcome travels in an envelope where `error` is either an empty string or the engine's exact message, relayed to the agent as an `isError` tool result it can read and react to.
+
+**The feed is composable.** `addMCPSchema` in the core lets a rig replace or extend what `get_status` returns — the schema's `getMessages` composes from `MCP.getDefaultMessages` (the engine portfolio, one message per symbol), `MCP.getHistoryMessages` (the command history: every open/close with its result, close reason, `Opened at`/`Closed at` timestamps and the agent's own `note` echoed back), plus anything else — a news wire, a Telegram channel, a screenshot. Messages are typed `IMCPTextMessage | IMCPImageMessage`, so **images ride along as first-class MCP image blocks**. And because *"what did the model know and when did it know it"* must be answerable, `dumpMCPStatus` dumps every status the model saw as markdown.
+
+```typescript
+import { addMCPSchema, MCP } from "backtest-kit";
+
+addMCPSchema({
+  mcpName: "manual_mcp",
+  async getMessages(context, when, mcpName) {
+    const messages = await MCP.getDefaultMessages(context, when, mcpName); // engine portfolio
+    const history = await MCP.getHistoryMessages(mcpName);                 // command audit trail
+    return [...messages, ...history, ...(await myNewsFeed(when))];         // your sensory organ
+  },
+});
+```
+
+**The reference rig.** [ai-trading-mcp](https://github.com/backtest-kit/ai-trading-mcp) is the complete deployment: a GramJS scraper pipes a live Telegram channel — text and chart screenshots — into the `get_status` feed, the strategy file registers **no entry logic at all** (the LLM is the only signal source), every byte the model saw lands in markdown dumps, and a battle-hardened Binance spot broker adapter (OCO brackets, idempotent recovery by `clientOrderId`, verified close) takes it live. Its stance is transferable: the feed is untrusted input — instructions embedded in posts are data, not commands — and the architecture, not the prompt, enforces it.
+
+## New Public API
+
+- **`@backtest-kit/mcp`** — the MCP server package: `npx @backtest-kit/mcp` runs the stdio server; `serve()` starts the HTTP bridge inside the trading process. Config: `CC_MCP_HOST` / `CC_MCP_PORT` (default `127.0.0.1:60051`).
+- `addMCPSchema` / `getMCPSchema` / `listMCPSchema` / `overrideMCPSchema` — the core registration surface for custom `get_status` feeds, with an `onStatus` callback per composed response.
+- `MCP.getDefaultMessages(context, when, mcpName)` / `MCP.getHistoryMessages(mcpName)` / `MCP.getStatus(mcpName)` — the building blocks a custom `getMessages` composes.
+- Types: `IMCPSchema`, `IMCPContext`, `IMCPMessage` (`IMCPTextMessage | IMCPImageMessage`), `IMCPPositionOpenCommand`, `IMCPPositionCloseCommand`, `MCPMessageId`.
+- `dumpMCPStatus` — markdown audit dump of every `get_status` response.
+
+
+
+
 # 🔒 Connection-loss protection (v16.0.0, 17/07/2026)
 
 > Github [release link](https://github.com/tripolskypetr/backtest-kit/releases/tag/16.0.0)
 
-
-> 🚀 **New to backtest-kit?** The fastest way to get a real, production-ready setup is to clone the [reference implementation](https://github.com/tripolskypetr/backtest-kit/tree/master/example) — a fully working news-sentiment AI trading system with LLM forecasting, multi-timeframe data, and a documented February 2026 backtest. Start there instead of from scratch.
 
 A dropped connection must never cost a position — or buy one twice. This major makes every broker conversation (order open, order close, liveness check) **adaptive**: the adapter states the *kind* of failure by throwing one of **three typed error classes**, and the engine routes each kind differently — bounded retry, instant terminal action, or tolerance. The trigger was a live incident: a market buy **filled** on the exchange, the HTTP response was lost, the engine treated the attempt as failed and retried the purchase every tick for four hours (saved from a double-buy only by `InsufficientFunds`). That entire failure class is now closed at the engine level.
 
