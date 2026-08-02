@@ -54,6 +54,38 @@ const CustomStrong = (props: TypographyProps) => (
     </Typography>
 );
 
+const FILE_DOWNLOAD_ROUTE = "/api/v1/file/download/";
+
+// Custom Image component: routes markdown-relative links (../image/{id}.png)
+// through the file download endpoint. The link is passed AS IS inside a single
+// encoded path segment — a bare "../" would be collapsed by the browser's URL
+// parser before the request is sent (WHATWG treats "%2e%2e" as a dot segment
+// too), while an encoded slash keeps the segment opaque. The router decodes
+// the param back and the route's normalizePath drops the relative prefix, so
+// the same markdown renders both in VS Code and in the browser.
+const CustomImage = ({ src = "", alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+    const resolvedSrc = src.startsWith("http") || src.startsWith("data:")
+        ? src
+        : `${FILE_DOWNLOAD_ROUTE}${encodeURIComponent(src)}`;
+    return (
+        <Box
+            component="img"
+            src={resolvedSrc}
+            alt={alt || ""}
+            loading="lazy"
+            sx={{
+                display: "block",
+                maxWidth: "calc(100% - 32px)",
+                objectFit: "contain",
+                marginTop: 1,
+                marginBottom: 1,
+                borderRadius: 1,
+            }}
+            {...props}
+        />
+    );
+};
+
 // Custom Table component with a horizontally scrollable container
 const CustomTable = ({ sx, ...props }: TableProps) => (
     <PaperView
@@ -341,6 +373,9 @@ export const Markdown = ({ content }: IMarkdownProps) => {
                     },
                     strong: {
                         component: CustomStrong, // Add custom strong component
+                    },
+                    img: {
+                        component: CustomImage,
                     },
                     table: {
                         component: VirtualTable,

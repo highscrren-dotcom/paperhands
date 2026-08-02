@@ -239,6 +239,7 @@ export {
   dumpText,
   dumpError,
   dumpJson,
+  dumpMCPStatus,
 } from "./function/dump";
 export {
   runInMockContext,

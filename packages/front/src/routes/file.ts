@@ -6,7 +6,7 @@ import { createReadStream } from "fs";
 import { stat } from "fs/promises";
 import { basename, join, resolve } from "path";
 
-import { fromFile } from "file-type";
+import FileType from "file-type";
 
 import { ioc } from "../lib";
 
@@ -57,7 +57,7 @@ router.get("/api/v1/file/download/:fileName(*)", async (req, res) => {
       });
     }
 
-    const fileType = await fromFile(filePath);
+    const fileType = await FileType.fromFile(filePath);
     const mime = fileType ? fileType.mime : DEFAULT_MIME;
 
     res.setHeader("Content-Type", mime);

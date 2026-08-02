@@ -3,15 +3,52 @@ import backtest, {
   MethodContextService,
 } from "../lib";
 import { IPublicSignalRow, IScheduledSignalRow } from "../interfaces/Strategy.interface";
+import { IMCPMessage } from "../interfaces/MCP.interface";
 import { Dump } from "../classes/Dump";
 import MessageModel from "../model/Message.model";
 
+const DUMP_MCP_STATUS_METHOD_NAME = "dump.dumpMCPStatus";
 const DUMP_AGENT_ANSWER_METHOD_NAME = "dump.dumpAgentAnswer";
 const DUMP_RECORD_METHOD_NAME = "dump.dumpRecord";
 const DUMP_TABLE_METHOD_NAME = "dump.dumpTable";
 const DUMP_TEXT_METHOD_NAME = "dump.dumpText";
 const DUMP_ERROR_METHOD_NAME = "dump.dumpError";
 const DUMP_JSON_METHOD_NAME = "dump.dumpJson";
+
+/**
+ * Dumps an MCP (Model Context Protocol) status snapshot to disk.
+ *
+ * With the default markdown backend, image messages are decoded from base64
+ * and written to ./dump/image/{message.id}.png; the whole message list is
+ * rendered into a single ./dump/mcp/{Date.now()}.md - text messages inlined
+ * in order, images embedded via ![{id}](../image/{id}.png) relative links.
+ * The snapshot follows the swappable Dump backend: useDummy() silences it,
+ * useMemory() keeps a searchable text-only projection.
+ *
+ * Unlike the signal-scoped dump functions this needs no execution context -
+ * the MCP status is a portfolio-level artifact. Dump.enable() is required,
+ * as for every dump method.
+ *
+ * @param dto.messages - Status messages as returned by MCP.getStatus
+ * @returns Promise that resolves when the images and the markdown are written
+ *
+ * @example
+ * ```typescript
+ * import { MCP, dumpMCPStatus } from "backtest-kit";
+ *
+ * const messages = await MCP.getStatus("my-mcp");
+ * await dumpMCPStatus({ messages });
+ * ```
+ */
+export async function dumpMCPStatus(dto: {
+  messages: IMCPMessage[];
+}): Promise<void> {
+  const { messages } = dto;
+  backtest.loggerService.info(DUMP_MCP_STATUS_METHOD_NAME, {
+    messagesLen: messages.length,
+  });
+  await Dump.dumpMCPStatus(messages);
+}
 
 /**
  * Dumps the full agent message history scoped to the current signal.
