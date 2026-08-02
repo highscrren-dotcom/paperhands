@@ -6,7 +6,7 @@ import { createReadStream } from "fs";
 import { stat } from "fs/promises";
 import { basename, join, resolve } from "path";
 
-import FileType from "file-type";
+import mime from "mime-types";
 
 import { ioc } from "../lib";
 
@@ -57,10 +57,9 @@ router.get("/api/v1/file/download/:fileName(*)", async (req, res) => {
       });
     }
 
-    const fileType = await FileType.fromFile(filePath);
-    const mime = fileType ? fileType.mime : DEFAULT_MIME;
+    const mimeType = mime.lookup(filePath) || DEFAULT_MIME;
 
-    res.setHeader("Content-Type", mime);
+    res.setHeader("Content-Type", mimeType);
     res.setHeader("Content-Length", fileStat.size);
     res.setHeader(
       "Content-Disposition",
@@ -69,7 +68,7 @@ router.get("/api/v1/file/download/:fileName(*)", async (req, res) => {
 
     ioc.loggerService.log("/api/v1/file/download ok", {
       request: { fileName, filePath },
-      result: { mime, size: fileStat.size },
+      result: { mime: mimeType, size: fileStat.size },
     });
 
     return await micro.send(res, 200, createReadStream(filePath));
