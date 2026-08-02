@@ -16,38 +16,66 @@ const DUMP_ERROR_METHOD_NAME = "dump.dumpError";
 const DUMP_JSON_METHOD_NAME = "dump.dumpJson";
 
 /**
- * Dumps an MCP (Model Context Protocol) status snapshot to disk.
+ * Dumps an MCP (Model Context Protocol) status snapshot scoped to the
+ * registered MCP.
+ *
+ * Resolves the MCP name automatically from the schema registry — it takes
+ * the signalId slot of the dump scope, exactly as the signal-scoped dump
+ * functions resolve their signal from execution context. One registered
+ * schema is required: zero or several make the scope ambiguous and throw.
+ * MCP status is live-only, the snapshot is recorded with backtest=false.
  *
  * With the default markdown backend, image messages are decoded from base64
  * and written to ./dump/image/{message.id}.png; the whole message list is
- * rendered into a single ./dump/mcp/{Date.now()}.md - text messages inlined
+ * rendered into a single ./dump/mcp/{dumpId}.md - text messages inlined
  * in order, images embedded via ![{id}](../image/{id}.png) relative links.
  * The snapshot follows the swappable Dump backend: useDummy() silences it,
- * useMemory() keeps a searchable text-only projection.
+ * useMemory() keeps a searchable text-only projection under the mcpName.
  *
- * Unlike the signal-scoped dump functions this needs no execution context -
- * the MCP status is a portfolio-level artifact. Dump.enable() is required,
- * as for every dump method.
- *
+ * @param dto.bucketName - Bucket name grouping dumps by strategy or agent name
+ * @param dto.dumpId - Unique identifier for this dump entry
  * @param dto.messages - Status messages as returned by MCP.getStatus
- * @returns Promise that resolves when the images and the markdown are written
+ * @param dto.description - Human-readable label describing the snapshot; included in the BM25 index for Memory search
+ * @returns Promise that resolves when the dump is complete
+ * @throws Error if no MCP schema or more than one MCP schema is registered
  *
  * @example
  * ```typescript
  * import { MCP, dumpMCPStatus } from "backtest-kit";
  *
  * const messages = await MCP.getStatus("my-mcp");
- * await dumpMCPStatus({ messages });
+ * await dumpMCPStatus({ bucketName: "my-agent", dumpId: String(Date.now()), messages, description: "Portfolio snapshot before rebalance" });
  * ```
  */
 export async function dumpMCPStatus(dto: {
+  bucketName: string;
+  dumpId: string;
   messages: IMCPMessage[];
+  description: string;
 }): Promise<void> {
-  const { messages } = dto;
+  const { bucketName, dumpId, messages, description } = dto;
   backtest.loggerService.info(DUMP_MCP_STATUS_METHOD_NAME, {
+    bucketName,
+    dumpId,
     messagesLen: messages.length,
   });
-  await Dump.dumpMCPStatus(messages);
+  const mcpList = await backtest.mcpValidationService.list();
+  if (!mcpList.length) {
+    throw new Error(`dumpMCPStatus requires a registered MCP schema dumpId=${dumpId}`);
+  }
+  if (mcpList.length > 1) {
+    throw new Error(
+      `dumpMCPStatus requires exactly one registered MCP schema, got ${mcpList.length} dumpId=${dumpId}`,
+    );
+  }
+  const [{ mcpName }] = mcpList;
+  await Dump.dumpMCPStatus(messages, {
+    dumpId,
+    bucketName,
+    signalId: mcpName,
+    description,
+    backtest: false,
+  });
 }
 
 /**

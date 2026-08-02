@@ -10,14 +10,6 @@ import { signalEmitter } from "../config/emitters";
 const CREATE_KEY_FN = (signalId: string, bucketName: string) =>
   `${signalId}-${bucketName}`;
 
-/**
- * Synthetic dump scope of the MCP (Model Context Protocol) status snapshot.
- * Dump instances are signal-scoped by contract, but the status belongs to
- * the whole portfolio — every snapshot shares this fixed scope.
- */
-const DUMP_MCP_SCOPE_SIGNAL_ID = "mcp-status";
-const DUMP_MCP_SCOPE_BUCKET_NAME = "mcp";
-
 const DUMP_MEMORY_INSTANCE_METHOD_NAME_AGENT = "DumpMemoryInstance.dumpAgentAnswer";
 const DUMP_MEMORY_INSTANCE_METHOD_NAME_RECORD = "DumpMemoryInstance.dumpRecord";
 const DUMP_MEMORY_INSTANCE_METHOD_NAME_TABLE = "DumpMemoryInstance.dumpTable";
@@ -179,8 +171,10 @@ export interface IDumpInstance {
   /**
    * Persist an MCP (Model Context Protocol) status snapshot.
    * @param messages - Status messages as returned by MCP.getStatus
+   * @param dumpId - Unique identifier for this dump entry
+   * @param description - Human-readable label describing the snapshot; included in the BM25 index for Memory search
    */
-  dumpMCPStatus(messages: IMCPMessage[]): Promise<void>;
+  dumpMCPStatus(messages: IMCPMessage[], dumpId: string, description: string): Promise<void>;
   /**
    * Releases any resources held by this instance.
    */
@@ -346,18 +340,21 @@ export class DumpBothInstance implements IDumpInstance {
   /**
    * Persists an MCP (Model Context Protocol) status snapshot to both backends simultaneously.
    * Memory: text-only projection `{ content, imageIds }`, searchable via BM25.
-   * Markdown: images to ./dump/image/{id}.png, messages to ./dump/mcp/{Date.now()}.md.
+   * Markdown: images to ./dump/image/{id}.png, messages to ./dump/mcp/{dumpId}.md.
    * @param messages - Status messages as returned by MCP.getStatus
+   * @param dumpId - Unique identifier for this dump entry
+   * @param description - Human-readable label describing the snapshot; included in the BM25 index for Memory search
    */
-  public async dumpMCPStatus(messages: IMCPMessage[]): Promise<void> {
+  public async dumpMCPStatus(messages: IMCPMessage[], dumpId: string, description: string): Promise<void> {
     backtest.loggerService.info(DUMP_BOTH_INSTANCE_METHOD_NAME_MCP_STATUS, {
       signalId: this.signalId,
       bucketName: this.bucketName,
+      dumpId,
       messagesLen: messages.length,
     });
     await Promise.all([
-      this._memory.dumpMCPStatus(messages),
-      this._markdown.dumpMCPStatus(messages),
+      this._memory.dumpMCPStatus(messages, dumpId, description),
+      this._markdown.dumpMCPStatus(messages, dumpId, description),
     ]);
   }
 }
@@ -532,14 +529,17 @@ export class DumpMemoryInstance implements IDumpInstance {
    * Stores a text-only projection of the MCP (Model Context Protocol) status
    * snapshot in Memory as a `{ content, imageIds }` object — base64 image
    * payloads do not belong in the BM25 index, images are referenced by id.
-   * memoryId is the snapshot timestamp (mirrors the markdown file name).
-   * If the message list is empty, the call is a no-op.
+   * The instance signalId carries the real mcpName, so rows land under the
+   * MCP's own name. If the message list is empty, the call is a no-op.
    * @param messages - Status messages as returned by MCP.getStatus
+   * @param dumpId - Unique identifier for this dump entry
+   * @param description - BM25 index string for contextual search
    */
-  public async dumpMCPStatus(messages: IMCPMessage[]): Promise<void> {
+  public async dumpMCPStatus(messages: IMCPMessage[], dumpId: string, description: string): Promise<void> {
     backtest.loggerService.info(DUMP_MEMORY_INSTANCE_METHOD_NAME_MCP_STATUS, {
       signalId: this.signalId,
       bucketName: this.bucketName,
+      dumpId,
       messagesLen: messages.length,
     });
     if (!messages.length) {
@@ -552,11 +552,11 @@ export class DumpMemoryInstance implements IDumpInstance {
       message.type === "image" ? [message.id] : [],
     );
     await Memory.writeMemory({
-      memoryId: `${Date.now()}`,
+      memoryId: dumpId,
       bucketName: this.bucketName,
       signalId: this.signalId,
       value: { content, imageIds },
-      description: "MCP status snapshot",
+      description,
       backtest: this.backtest,
       when: new Date(0)
     });
@@ -779,18 +779,23 @@ export class DumpMarkdownInstance implements IDumpInstance {
    *
    * The .png extension is applied regardless of the source mime type (charts
    * arrive as jpeg too) - markdown viewers resolve the image by content, the
-   * extension only names the file. Fixed paths: the status is a
+   * extension only names the file. Fixed directories: the status is a
    * portfolio-level artifact, the (signalId, bucketName) scope of this
-   * instance does not participate in the layout.
+   * instance does not participate in the layout — dumpId names the file,
+   * as in every other markdown dump.
    *
    * @param messages - Status messages as returned by MCP.getStatus
+   * @param dumpId - Unique identifier for this dump entry; names the markdown file
+   * @param description - Accepted for interface parity; rendered nowhere, the markdown stays agent-clean
    */
-  public async dumpMCPStatus(messages: IMCPMessage[]): Promise<void> {
+  public async dumpMCPStatus(messages: IMCPMessage[], dumpId: string, description: string): Promise<void> {
     backtest.loggerService.info(DUMP_MARKDOWN_INSTANCE_METHOD_NAME_MCP_STATUS, {
       signalId: this.signalId,
       bucketName: this.bucketName,
+      dumpId,
       messagesLen: messages.length,
     });
+    void description;
     const imageDir = join("./dump", "image");
     const mcpDir = join("./dump", "mcp");
     await fs.mkdir(imageDir, { recursive: true });
@@ -808,7 +813,7 @@ export class DumpMarkdownInstance implements IDumpInstance {
       );
       content += `![${message.id}](../image/${message.id}.png)\n\n`;
     }
-    await fs.writeFile(join(mcpDir, `${Date.now()}.md`), content, "utf8");
+    await fs.writeFile(join(mcpDir, `${dumpId}.md`), content, "utf8");
   }
 
   /** Releases resources held by this instance. */
@@ -1064,30 +1069,22 @@ export class DumpAdapter {
 
   /**
    * Persist an MCP (Model Context Protocol) status snapshot.
-   *
-   * Routed through the swappable backend like every other dump method:
-   * useDummy() silences it, useMemory() keeps a searchable text projection,
-   * a custom adapter can reroute it. Instances are signal-scoped by
-   * contract, so the snapshot uses the fixed synthetic scope
-   * ({@link DUMP_MCP_SCOPE_SIGNAL_ID}, {@link DUMP_MCP_SCOPE_BUCKET_NAME}) —
-   * the MCP status belongs to the whole portfolio, not to any signal.
-   *
-   * @param messages - Status messages as returned by MCP.getStatus
-   * @returns Promise that resolves when the backend has persisted the snapshot
+   * The context signalId slot carries the mcpName resolved by the caller.
    */
-  public dumpMCPStatus = async (messages: IMCPMessage[]): Promise<void> => {
+  public dumpMCPStatus = async (
+    messages: IMCPMessage[],
+    context: IDumpContext,
+  ): Promise<void> => {
     if (!this.enable.hasValue()) {
       throw new Error("DumpAdapter is not enabled. Call enable() first.");
     }
     backtest.loggerService.debug(DUMP_ADAPTER_METHOD_NAME_MCP_STATUS, {
-      messagesLen: messages.length,
+      signalId: context.signalId,
+      bucketName: context.bucketName,
+      dumpId: context.dumpId,
     });
-    const instance = this.getInstance(
-      DUMP_MCP_SCOPE_SIGNAL_ID,
-      DUMP_MCP_SCOPE_BUCKET_NAME,
-      false,
-    );
-    return await instance.dumpMCPStatus(messages);
+    const instance = this.getInstance(context.signalId, context.bucketName, context.backtest);
+    return await instance.dumpMCPStatus(messages, context.dumpId, context.description);
   };
 
   /**
