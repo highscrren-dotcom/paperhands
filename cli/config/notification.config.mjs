@@ -13,7 +13,7 @@ export default {
   order_check: false,
   order_fill: true,
   order_reject: true,
-  order_continue: true,
+  order_continue: false,
   order_stop: true,
   strategy_commit: true,
 };
