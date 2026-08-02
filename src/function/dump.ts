@@ -16,28 +16,24 @@ const DUMP_ERROR_METHOD_NAME = "dump.dumpError";
 const DUMP_JSON_METHOD_NAME = "dump.dumpJson";
 
 /**
- * Dumps an MCP (Model Context Protocol) status snapshot scoped to the
- * registered MCP.
+ * Dumps an MCP (Model Context Protocol) status snapshot scoped to the current signal.
  *
- * Resolves the MCP name automatically from the schema registry — it takes
- * the signalId slot of the dump scope, exactly as the signal-scoped dump
- * functions resolve their signal from execution context. One registered
- * schema is required: zero or several make the scope ambiguous and throw.
- * MCP status is live-only, the snapshot is recorded with backtest=false.
+ * Resolves the active pending or scheduled signal automatically from execution context.
+ * Automatically detects backtest/live mode from execution context.
  *
  * With the default markdown backend, image messages are decoded from base64
  * and written to ./dump/image/{message.id}.png; the whole message list is
  * rendered into a single ./dump/mcp/{dumpId}.md - text messages inlined
  * in order, images embedded via ![{id}](../image/{id}.png) relative links.
  * The snapshot follows the swappable Dump backend: useDummy() silences it,
- * useMemory() keeps a searchable text-only projection under the mcpName.
+ * useMemory() keeps a searchable text-only projection.
  *
  * @param dto.bucketName - Bucket name grouping dumps by strategy or agent name
  * @param dto.dumpId - Unique identifier for this dump entry
  * @param dto.messages - Status messages as returned by MCP.getStatus
  * @param dto.description - Human-readable label describing the snapshot; included in the BM25 index for Memory search
  * @returns Promise that resolves when the dump is complete
- * @throws Error if no MCP schema or more than one MCP schema is registered
+ * @throws Error if no pending or scheduled signal exists
  *
  * @example
  * ```typescript
@@ -59,23 +55,53 @@ export async function dumpMCPStatus(dto: {
     dumpId,
     messagesLen: messages.length,
   });
-  const mcpList = await backtest.mcpValidationService.list();
-  if (!mcpList.length) {
-    throw new Error(`dumpMCPStatus requires a registered MCP schema dumpId=${dumpId}`);
+  if (!ExecutionContextService.hasContext()) {
+    throw new Error("dumpMCPStatus requires an execution context");
   }
-  if (mcpList.length > 1) {
-    throw new Error(
-      `dumpMCPStatus requires exactly one registered MCP schema, got ${mcpList.length} dumpId=${dumpId}`,
-    );
+  if (!MethodContextService.hasContext()) {
+    throw new Error("dumpMCPStatus requires a method context");
   }
-  const [{ mcpName }] = mcpList;
-  await Dump.dumpMCPStatus(messages, {
-    dumpId,
-    bucketName,
-    signalId: mcpName,
-    description,
-    backtest: false,
-  });
+  const { backtest: isBacktest, symbol } = backtest.executionContextService.context;
+  const { exchangeName, frameName, strategyName } =
+    backtest.methodContextService.context;
+  const currentPrice =
+    await backtest.exchangeConnectionService.getAveragePrice(symbol);
+  let signal: IPublicSignalRow | IScheduledSignalRow;
+  if (
+    signal = await backtest.strategyCoreService.getPendingSignal(
+      isBacktest,
+      symbol,
+      currentPrice,
+      { exchangeName, frameName, strategyName },
+    )
+  ) {
+    await Dump.dumpMCPStatus(messages, {
+      dumpId,
+      bucketName,
+      signalId: signal.id,
+      description,
+      backtest: isBacktest,
+    });
+    return;
+  }
+  if (
+    signal = await backtest.strategyCoreService.getScheduledSignal(
+      isBacktest,
+      symbol,
+      currentPrice,
+      { exchangeName, frameName, strategyName },
+    )
+  ) {
+    await Dump.dumpMCPStatus(messages, {
+      dumpId,
+      bucketName,
+      signalId: signal.id,
+      description,
+      backtest: isBacktest,
+    });
+    return;
+  }
+  throw new Error(`dumpMCPStatus requires a pending or scheduled signal for symbol=${symbol} dumpId=${dumpId}`);
 }
 
 /**

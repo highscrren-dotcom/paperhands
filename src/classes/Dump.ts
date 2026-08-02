@@ -529,8 +529,8 @@ export class DumpMemoryInstance implements IDumpInstance {
    * Stores a text-only projection of the MCP (Model Context Protocol) status
    * snapshot in Memory as a `{ content, imageIds }` object — base64 image
    * payloads do not belong in the BM25 index, images are referenced by id.
-   * The instance signalId carries the real mcpName, so rows land under the
-   * MCP's own name. If the message list is empty, the call is a no-op.
+   * memoryId is the dumpId passed by the caller (mirrors the markdown file
+   * name). If the message list is empty, the call is a no-op.
    * @param messages - Status messages as returned by MCP.getStatus
    * @param dumpId - Unique identifier for this dump entry
    * @param description - BM25 index string for contextual search
@@ -1069,7 +1069,8 @@ export class DumpAdapter {
 
   /**
    * Persist an MCP (Model Context Protocol) status snapshot.
-   * The context signalId slot carries the mcpName resolved by the caller.
+   * Routed through the swappable backend like every other dump method,
+   * scoped by the (signalId, bucketName) of the context.
    */
   public dumpMCPStatus = async (
     messages: IMCPMessage[],
