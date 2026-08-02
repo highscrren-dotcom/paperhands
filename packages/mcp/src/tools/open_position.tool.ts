@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import ioc from "../lib/index.js";
-import { getErrorMessage } from "functools-kit";
+import { getErrorMessage, str } from "functools-kit";
 
 /**
  * Registers the open_position tool.
@@ -16,7 +16,12 @@ import { getErrorMessage } from "functools-kit";
 export default function registerOpenPositionTool(server: McpServer) {
   server.tool(
     "open_position",
-    "Open a live trading position at the current market price. You choose only the symbol, the direction (long or short) and a note explaining the reason; entry cost, take profit and hard stop-loss levels are set by the trading engine. Fails if the symbol is not enabled for trading or a position/order for it already exists — call get_status first to check. The position stays open until its stop-loss, timeout, or an explicit close_position call.",
+    str.newline(
+      "Open a live trading position at the current market price.",
+      "You choose the symbol, the direction (long or short) and a note explaining the reason. The trading engine sets the entry cost and a distant emergency stop-loss that only caps a catastrophic loss.",
+      "There is no working take-profit: the position never closes itself on profit. The exit is yours — monitor get_status and close the position with close_position when the thesis plays out or fails; an unattended position dies by the emergency stop or the hold timeout.",
+      "Fails if the symbol is not enabled for trading or already has a position or a queued order — call get_status first.",
+    ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),
       position: z
