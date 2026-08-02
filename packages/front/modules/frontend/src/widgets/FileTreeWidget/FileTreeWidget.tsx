@@ -4,6 +4,7 @@ import {
     LoaderView,
     PaperView,
     sleep,
+    useActualCallback,
     useAsyncValue,
     useChangeSubject,
     useDebounce,
@@ -50,6 +51,15 @@ interface IFileTreeWidgetProps {
 
 const SEARCH_DEBOUNCE = 2_500;
 const CHUNK_SIZE = 10_000;
+
+const FILE_DOWNLOAD_ROUTE = "/api/v1/file/download/";
+
+// Explorer node paths are cwd-relative ("dump/image/x.png") while the file
+// route already serves from the dump dir — the leading segment is dropped.
+// The rest is passed as a single encoded path segment, same as the markdown
+// image renderer does.
+const getDownloadUrl = (node: ExplorerFile) =>
+    `${FILE_DOWNLOAD_ROUTE}${encodeURIComponent(node.path.replace(/^dump\//, ""))}`;
 
 const MAX_ROWS = 25_000;
 
@@ -176,9 +186,13 @@ export const FileTreeWidget = ({
         onLoadEnd: () => ioc.layoutService.setAppbarLoader(false),
     });
 
-    const handleOpen = async (id: string) => {
+    const handleOpen = useActualCallback(async (id: string, node: ExplorerFile) => {
+        if (node.mimeType.startsWith("image")) {
+            ioc.layoutService.downloadFile(getDownloadUrl(node), node.label);
+            return;
+        }
         await doOpen(id);
-    };
+    });
 
     const handleClear = () => {
         searchChanges.once(async () => {
@@ -214,7 +228,7 @@ export const FileTreeWidget = ({
                             [classes.accent]: idx % 2 === 1,
                         })}
                         component={ButtonBase}
-                        onClick={() => handleOpen(node.id)}
+                        onClick={() => handleOpen(node.id, node)}
                         key={node.id}
                     >
                         <ListItemAvatar>{getFileIcon(node)}</ListItemAvatar>
