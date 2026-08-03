@@ -87,6 +87,37 @@ Values passed to `setConfig()` always take precedence over env vars.
 
 </details>
 
+<details>
+<summary>Command-line arguments (stdio server)</summary>
+
+When the package runs as the **stdio MCP server** (`npx @backtest-kit/mcp`, the `backtest-kit-mcp` command, or `node build/index.mjs`), the bridge address can be passed as CLI arguments instead of env vars:
+
+```bash
+npx @backtest-kit/mcp --host 127.0.0.1 --port 60051
+```
+
+```json
+{
+  "mcpServers": {
+    "trading-signals": {
+      "command": "npx",
+      "args": ["@backtest-kit/mcp", "--host", "127.0.0.1", "--port", "60051"]
+    }
+  }
+}
+```
+
+| Argument | Overrides | Description |
+|----------|-----------|-------------|
+| `--host` | `CC_MCP_HOST` | Host of the HTTP bridge to connect to |
+| `--port` | `CC_MCP_PORT` | Port of the HTTP bridge; a non-numeric value is ignored |
+
+Resolution order: **CLI arguments → `setConfig()` → env vars → defaults** (`127.0.0.1:60051`).
+
+CLI arguments apply **only in binary mode** — an entrypoint guard (`helpers/getEntry.ts`) makes sure that when the package is imported as a library, the host process's `argv` never leaks into the configuration.
+
+</details>
+
 ---
 
 ## API reference
