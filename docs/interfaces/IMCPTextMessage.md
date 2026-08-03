@@ -9,6 +9,14 @@ Plain text message for the MCP (Model Context Protocol) agent.
 
 ## Properties
 
+### id
+
+```ts
+id: MCPMessageId
+```
+
+Unique identifier for the message (used to track delivery and deduplication)
+
 ### type
 
 ```ts

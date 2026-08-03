@@ -10,6 +10,14 @@ Payload is base64-encoded binary data with its mime type.
 
 ## Properties
 
+### id
+
+```ts
+id: MCPMessageId
+```
+
+Unique identifier for the message (used to track delivery and deduplication)
+
 ### type
 
 ```ts

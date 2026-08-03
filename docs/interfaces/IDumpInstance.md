@@ -60,6 +60,14 @@ dumpJson: (json: object, dumpId: string, description: string) => Promise<void>
 
 Persist an arbitrary nested object as a fenced JSON block.
 
+### dumpMCPStatus
+
+```ts
+dumpMCPStatus: (messages: IMCPMessage[], dumpId: string, description: string) => Promise<void>
+```
+
+Persist an MCP (Model Context Protocol) status snapshot.
+
 ### dispose
 
 ```ts

@@ -106,6 +106,16 @@ dumpJson: (json: object, context: IDumpContext) => Promise<void>
 
 Persist an arbitrary nested object as a fenced JSON block.
 
+### dumpMCPStatus
+
+```ts
+dumpMCPStatus: (messages: IMCPMessage[], context: IDumpContext) => Promise<void>
+```
+
+Persist an MCP (Model Context Protocol) status snapshot.
+Routed through the swappable backend like every other dump method,
+scoped by the (signalId, bucketName) of the context.
+
 ### useMarkdown
 
 ```ts
