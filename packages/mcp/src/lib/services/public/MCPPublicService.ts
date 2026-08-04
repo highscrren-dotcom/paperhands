@@ -21,6 +21,18 @@ export class MCPPublicService {
         return await this.mcpPrivateService.getStatus(mcpName);
     };
 
+    public getNotificationMessages = async () => {
+        this.loggerService.log("mcpPublicService getNotificationMessages");
+        const GLOBAL_CONFIG = getConfig();
+        const mcpList = await listMCPSchema();
+        if (!mcpList.length) {
+            throw new Error(`MCP Error: agent control is not configured`);
+        }
+        const [{ mcpName: fallback }] = mcpList;
+        const mcpName = GLOBAL_CONFIG.CC_MCP_NAME || fallback;
+        return await this.mcpPrivateService.getNotificationMessages(mcpName);
+    };
+
     public commitPositionOpen = async (dto: { symbol: string; position: "long" | "short"; note: string }) => {
         this.loggerService.log("mcpPublicService commitPositionOpen", {
             dto,
@@ -70,6 +82,51 @@ export class MCPPublicService {
             mcpName,
             note: dto.note,
             symbol: dto.symbol,
+        });
+    };
+
+    public commitAverageBuy = async (dto: { symbol: string }) => {
+        this.loggerService.log("mcpPublicService commitAverageBuy", {
+            dto,
+        });
+        const GLOBAL_CONFIG = getConfig();
+        const mcpList = await listMCPSchema();
+        if (!mcpList.length) {
+            throw new Error(`MCP Error: agent control is not configured`);
+        }
+        const [{ mcpName: fallback }] = mcpList;
+        const mcpName = GLOBAL_CONFIG.CC_MCP_NAME || fallback;
+        if (!dto.symbol) {
+            throw new Error(`MCP Error: symbol is required`);
+        }
+        return await this.mcpPrivateService.commitAverageBuy({
+            mcpName,
+            symbol: dto.symbol,
+        });
+    };
+
+    public commitSignalNotify = async (dto: { symbol: string; note: string; notificationId?: string }) => {
+        this.loggerService.log("mcpPublicService commitSignalNotify", {
+            dto,
+        });
+        const GLOBAL_CONFIG = getConfig();
+        const mcpList = await listMCPSchema();
+        if (!mcpList.length) {
+            throw new Error(`MCP Error: agent control is not configured`);
+        }
+        const [{ mcpName: fallback }] = mcpList;
+        const mcpName = GLOBAL_CONFIG.CC_MCP_NAME || fallback;
+        if (!dto.note) {
+            throw new Error(`MCP Error: note is required`);
+        }
+        if (!dto.symbol) {
+            throw new Error(`MCP Error: symbol is required`);
+        }
+        return await this.mcpPrivateService.commitSignalNotify({
+            mcpName,
+            symbol: dto.symbol,
+            note: dto.note,
+            notificationId: dto.notificationId,
         });
     };
 }

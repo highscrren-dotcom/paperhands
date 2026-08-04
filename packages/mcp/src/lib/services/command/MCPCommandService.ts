@@ -35,6 +35,29 @@ export class MCPCommandService {
     return data;
   };
 
+  public getNotificationMessages = async (): Promise<IMCPMessage[]> => {
+    this.loggerService.log("mcpCommandService getNotificationMessages");
+    const GLOBAL_CONFIG = getConfig();
+    const requestId = randomString();
+    const url = new URL(
+      "/api/v1/mcp/get_notification_messages",
+      `http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`,
+    );
+    const { data, error } = await fetchApi(url.toString(), {
+      method: "POST",
+      body: JSON.stringify({
+        clientId: CLIENT_ID,
+        serviceName: SERVICE_NAME,
+        userId: USER_ID,
+        requestId,
+      }),
+    });
+    if (error) {
+      throw new Error(error);
+    }
+    return data;
+  };
+
   public commitPositionOpen = async (dto: {
     symbol: string;
     position: "long" | "short";
@@ -76,6 +99,62 @@ export class MCPCommandService {
     const requestId = randomString();
     const url = new URL(
       "/api/v1/mcp/commit_position_close",
+      `http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`,
+    );
+    const { data, error } = await fetchApi(url.toString(), {
+      method: "POST",
+      body: JSON.stringify({
+        clientId: CLIENT_ID,
+        serviceName: SERVICE_NAME,
+        userId: USER_ID,
+        data: dto,
+        requestId,
+      }),
+    });
+    if (error) {
+      throw new Error(error);
+    }
+    return data;
+  };
+
+  public commitAverageBuy = async (dto: { symbol: string }) => {
+    this.loggerService.log("mcpCommandService commitAverageBuy", {
+      dto,
+    });
+    const GLOBAL_CONFIG = getConfig();
+    const requestId = randomString();
+    const url = new URL(
+      "/api/v1/mcp/commit_average_buy",
+      `http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`,
+    );
+    const { data, error } = await fetchApi(url.toString(), {
+      method: "POST",
+      body: JSON.stringify({
+        clientId: CLIENT_ID,
+        serviceName: SERVICE_NAME,
+        userId: USER_ID,
+        data: dto,
+        requestId,
+      }),
+    });
+    if (error) {
+      throw new Error(error);
+    }
+    return data;
+  };
+
+  public commitSignalNotify = async (dto: {
+    symbol: string;
+    note: string;
+    notificationId?: string;
+  }) => {
+    this.loggerService.log("mcpCommandService commitSignalNotify", {
+      dto,
+    });
+    const GLOBAL_CONFIG = getConfig();
+    const requestId = randomString();
+    const url = new URL(
+      "/api/v1/mcp/commit_signal_notify",
       `http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`,
     );
     const { data, error } = await fetchApi(url.toString(), {

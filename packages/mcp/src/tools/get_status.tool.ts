@@ -19,7 +19,7 @@ export default function registerGetStatusTool(server: McpServer) {
       "Fetch the current live trading portfolio status.",
       "Returns one message per traded symbol: current price, invested capital balance, the entry order waiting in the queue, the active position with unrealized PnL (percent and USD), peak profit and max drawdown with their timing, and the close order waiting in the queue. Empty slots are stated explicitly.",
       "Exits are manual, which is why no TP/SL levels appear here: the engine keeps only a distant emergency stop-loss. Read the PnL, the recency of peak and drawdown and the remaining hold time to decide when to call close_position.",
-      "Call this before opening or closing a position.",
+      "Call this before opening or closing a position; pair it with get_notifications to recall the notes attached to the open positions.",
     ),
     {},
     async () => {
