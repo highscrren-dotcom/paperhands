@@ -84,7 +84,6 @@ declare class MCPPublicService {
     commitSignalNotify: (dto: {
         symbol: string;
         note: string;
-        notificationId?: string;
     }) => Promise<void>;
 }
 
@@ -106,7 +105,6 @@ declare class MCPCommandService {
     commitSignalNotify: (dto: {
         symbol: string;
         note: string;
-        notificationId?: string;
     }) => Promise<any>;
 }
 
