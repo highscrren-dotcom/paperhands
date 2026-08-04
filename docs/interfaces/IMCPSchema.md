@@ -16,9 +16,10 @@ every live instance of that strategy.
   schema names one explicitly — ambiguity is an error, not a guess.
 - positionCost — entry cost in USD for commitPositionOpen; defaults to
   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
-- permissions — access levels granted to the agent; defaults to BOTH
-  "read" and "write" when omitted. Without "read" status/history throw,
-  without "write" open/close throw — the check runs per call, so an
+- permissions — per-method grants for the agent; defaults to ALL methods
+  when omitted. Listing permissions explicitly narrows the agent to
+  exactly those methods; a call to a method whose permission is missing
+  throws with an agent-readable denial. The check runs per call, so an
   overridden schema applies immediately.
 - getMessages — renders the portfolio snapshot into agent messages; when
   omitted the default renderer emits one text message per symbol.
@@ -40,7 +41,7 @@ Unique MCP (Model Context Protocol) identifier for the schema registry
 strategyName: string
 ```
 
-Strategy whose live instances this MCP observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it
+Strategy whose live instances this MCP (Model Context Protocol) observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it
 
 ### positionCost
 
@@ -64,7 +65,7 @@ Estimated time in minutes for a position to reach its TP or SL.
 permissions: MCPPermission[]
 ```
 
-Access levels granted to the agent: "read" gates status/history, "write" gates open/close. Default: both
+Per-method grants for the agent; each permission name gates the MCP (Model Context Protocol) method of the same name. Default: all methods
 
 ### getMessages
 
@@ -72,7 +73,7 @@ Access levels granted to the agent: "read" gates status/history, "write" gates o
 getMessages: (context: IMCPContext, when: Date, mcpName: string) => IMCPMessage[] | Promise<IMCPMessage[]>
 ```
 
-Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol)
+Renders the portfolio snapshot into messages for the MCP (Model Context Protocol) agent (default: text per symbol)
 
 ### callbacks
 

@@ -1,6 +1,6 @@
 import * as di_scoped from 'di-scoped';
 import * as functools_kit from 'functools-kit';
-import { TIMEOUT_SYMBOL, Subject, BehaviorSubject } from 'functools-kit';
+import { Subject, BehaviorSubject } from 'functools-kit';
 import { WriteStream } from 'fs';
 
 /**
@@ -6615,8 +6615,6 @@ interface IMCPSignalNotifyCommand {
     mcpName: MCPName;
     /** Human-readable note attached to the notification */
     note: string;
-    /** Optional correlation ID for external systems (e.g. Telegram message ID) */
-    notificationId?: string;
 }
 /**
  * Lifecycle callbacks of an MCP (Model Context Protocol) instance (all optional).
@@ -20449,7 +20447,7 @@ declare class MarkdownFileBase implements TMarkdownBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<void | typeof TIMEOUT_SYMBOL>;
+    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<symbol | void>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -20703,7 +20701,7 @@ declare class ReportBase implements TReportBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<void | typeof TIMEOUT_SYMBOL, [line: string]>;
+    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<symbol | void, [line: string]>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -32633,8 +32631,8 @@ declare class MCPUtils {
      * the caller already holds — no extra exchange or live state requests —
      * and keeps only the notifications emitted via commitSignalNotify for
      * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
-     * note, correlation id, market price and unrealized PnL at the moment of
-     * the event and the emit time per notification.
+     * note, market price and unrealized PnL at the moment of the event and
+     * the emit time per notification.
      *
      * Complements getStatus: the status shows what is open, this method shows
      * what the agent (or the strategy) annotated on the open positions, so a
@@ -32761,7 +32759,7 @@ declare class MCPUtils {
      * the live notification storage and is later readable via
      * getNotificationMessages.
      *
-     * @param dto - Notify command with symbol, mcpName, note and optional notificationId
+     * @param dto - Notify command with symbol, mcpName and note
      * @returns Promise resolving when the notification is emitted
      * @throws Error when the symbol is not live-enabled or no pending signal exists
      * @throws Error when the schema lacks the "commitSignalNotify" permission

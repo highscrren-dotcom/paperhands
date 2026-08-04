@@ -551,6 +551,8 @@ group: docs
 - [IMCPContext](interfaces/IMCPContext.md)
 - [IMCPPositionOpenCommand](interfaces/IMCPPositionOpenCommand.md)
 - [IMCPPositionCloseCommand](interfaces/IMCPPositionCloseCommand.md)
+- [IMCPAverageBuyCommand](interfaces/IMCPAverageBuyCommand.md)
+- [IMCPSignalNotifyCommand](interfaces/IMCPSignalNotifyCommand.md)
 - [IMCPCallbacks](interfaces/IMCPCallbacks.md)
 - [IMCPSchema](interfaces/IMCPSchema.md)
 - [IPositionOverlapLadder](interfaces/IPositionOverlapLadder.md)

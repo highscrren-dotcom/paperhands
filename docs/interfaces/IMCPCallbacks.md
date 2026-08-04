@@ -42,3 +42,21 @@ onPositionClose: (symbol: string, signalId: string, dto: IMCPPositionCloseComman
 
 Fired after a close commit is accepted: the id of the pending signal
 the close was queued for.
+
+### onAverageBuy
+
+```ts
+onAverageBuy: (symbol: string, signalId: string, dto: IMCPAverageBuyCommand) => void
+```
+
+Fired after a DCA entry commit is accepted: the id of the pending
+signal the entry was averaged into.
+
+### onSignalNotify
+
+```ts
+onSignalNotify: (symbol: string, signalId: string, dto: IMCPSignalNotifyCommand) => void
+```
+
+Fired after a signal notification is emitted: the id of the pending
+signal the note was attached to.

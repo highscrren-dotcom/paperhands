@@ -25,7 +25,7 @@ Trading pair symbol (e.g., "BTCUSDT")
 mcpName: string
 ```
 
-Name of the registered MCP schema issuing the command
+Name of the registered MCP (Model Context Protocol) schema issuing the command
 
 ### note
 
