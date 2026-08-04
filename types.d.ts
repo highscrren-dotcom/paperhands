@@ -6655,11 +6655,15 @@ interface IMCPCallbacks {
 }
 /**
  * Per-method access grant of an MCP (Model Context Protocol) instance.
- * Each permission name matches the MCP method it gates 1:1. A schema
- * without the permissions field grants ALL methods; listing permissions
- * explicitly narrows the agent to exactly those methods.
+ * Each permission name matches the agent-facing MCP method it gates 1:1.
+ * A schema without the permissions field grants ALL of them; listing
+ * permissions explicitly narrows the agent to exactly those methods.
+ * Composition helpers the user calls from getMessages
+ * (getDefaultMessages, getHistoryMessages, getNotificationMessages) are
+ * not gated — they only reshape data the caller already holds, and reach
+ * the agent through getStatus, which carries its own permission.
  */
-type MCPPermission = "getStatus" | "getHistoryMessages" | "getNotificationMessages" | "commitPositionOpen" | "commitPositionClose" | "commitAverageBuy" | "commitSignalNotify";
+type MCPPermission = "getStatus" | "commitPositionOpen" | "commitPositionClose" | "commitAverageBuy" | "commitSignalNotify";
 /**
  * Registration schema of an MCP (Model Context Protocol) instance.
  *
@@ -6672,11 +6676,11 @@ type MCPPermission = "getStatus" | "getHistoryMessages" | "getNotificationMessag
  *   schema names one explicitly — ambiguity is an error, not a guess.
  * - positionCost — entry cost in USD for commitPositionOpen; defaults to
  *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
- * - permissions — per-method grants for the agent; defaults to ALL methods
- *   when omitted. Listing permissions explicitly narrows the agent to
- *   exactly those methods; a call to a method whose permission is missing
- *   throws with an agent-readable denial. The check runs per call, so an
- *   overridden schema applies immediately.
+ * - permissions — per-method grants for the agent-facing methods; defaults
+ *   to ALL of them when omitted. Listing permissions explicitly narrows the
+ *   agent to exactly those methods; a call to a method whose permission is
+ *   missing throws with an agent-readable denial. The check runs per call,
+ *   so an overridden schema applies immediately.
  * - getMessages — renders the portfolio snapshot into agent messages; when
  *   omitted the default renderer emits one text message per symbol.
  * - callbacks — all optional; an omitted callback is simply never fired.
@@ -6690,7 +6694,7 @@ interface IMCPSchema {
     positionCost?: number;
     /** Estimated time in minutes for a position to reach its TP or SL. */
     minuteEstimatedTime?: number;
-    /** Per-method grants for the agent; each permission name gates the MCP (Model Context Protocol) method of the same name. Default: all methods */
+    /** Per-method grants for the agent; each permission name gates the agent-facing MCP (Model Context Protocol) method of the same name. Default: all of them */
     permissions?: MCPPermission[];
     /** Renders the portfolio snapshot into messages for the MCP (Model Context Protocol) agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;

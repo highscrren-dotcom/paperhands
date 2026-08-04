@@ -663,9 +663,9 @@ const PERMISSION_ACTION_DESCRIPTION: Record<MCPPermission, string> = {
 };
 
 /**
- * Grants applied when the schema omits the permissions field: every MCP
- * (Model Context Protocol) method is allowed. Listing permissions explicitly
- * narrows the agent to exactly the listed methods.
+ * Grants applied when the schema omits the permissions field: every
+ * agent-facing MCP (Model Context Protocol) method is allowed. Listing
+ * permissions explicitly narrows the agent to exactly the listed methods.
  */
 const DEFAULT_PERMISSIONS = Object.keys(
   PERMISSION_ACTION_DESCRIPTION,
@@ -673,9 +673,9 @@ const DEFAULT_PERMISSIONS = Object.keys(
 
 /**
  * Checks that the MCP (Model Context Protocol) schema grants the per-method
- * permission for the requested operation. Each public MCP method is gated by
- * the permission of the same name; a schema without the permissions field
- * grants ALL methods by default.
+ * permission for the requested operation. Each agent-facing MCP method is
+ * gated by the permission of the same name; a schema without the permissions
+ * field grants ALL of them by default.
  *
  * The denial error is written for an AI agent: it states the forbidden
  * action in plain words, names the missing permission and tells the agent
@@ -683,8 +683,9 @@ const DEFAULT_PERMISSIONS = Object.keys(
  *
  * Deliberately NOT memoized: overrideMCPSchema may narrow or widen the
  * grants at runtime, and the check must see the current schema on every
- * call. Pure renderer helpers (getDefaultMessages) are not gated — they
- * transform data the caller already holds.
+ * call. Composition helpers (getDefaultMessages, getHistoryMessages,
+ * getNotificationMessages) are not gated — they transform data the caller
+ * already holds and reach the agent through getStatus.
  *
  * @param mcpName - MCP (Model Context Protocol) name whose schema carries the permissions
  * @param permission - Permission required by the calling operation
