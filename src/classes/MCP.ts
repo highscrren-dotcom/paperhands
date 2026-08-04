@@ -3,11 +3,14 @@ import backtest from "../lib";
 import { Exchange } from "./Exchange";
 import { Live } from "./Live";
 import { StorageLive } from "./Storage";
+import { NotificationLive } from "./Notification";
 import {
+  IMCPAverageBuyCommand,
   IMCPContext,
   IMCPMessage,
   IMCPPositionCloseCommand,
   IMCPPositionOpenCommand,
+  IMCPSignalNotifyCommand,
   MCPName,
   MCPPermission,
 } from "../interfaces/MCP.interface";
@@ -21,8 +24,11 @@ import { GLOBAL_CONFIG } from "../config/params";
 const METHOD_NAME_GET_STATUS = "MCPUtils.getStatus";
 const METHOD_NAME_GET_DEFAULT_MESSAGES = "MCPUtils.getDefaultMessages";
 const METHOD_NAME_GET_HISTORY_MESSAGES = "MCPUtils.getHistoryMessages";
+const METHOD_NAME_GET_NOTIFICATION_MESSAGES = "MCPUtils.getNotificationMessages";
 const METHOD_NAME_COMMIT_POSITION_OPEN = "MCPUtils.commitPositionOpen";
 const METHOD_NAME_COMMIT_POSITION_CLOSE = "MCPUtils.commitPositionClose";
+const METHOD_NAME_COMMIT_AVERAGE_BUY = "MCPUtils.commitAverageBuy";
+const METHOD_NAME_COMMIT_SIGNAL_NOTIFY = "MCPUtils.commitSignalNotify";
 
 /** Grid step (percent) the hard stop-loss distance snaps to. */
 const HARD_STOP_STEP_PERCENT = 2.5;
@@ -316,6 +322,118 @@ const HISTORY_GET_MESSAGES = async (
 };
 
 /**
+ * Builds the notification feed of the active PENDING signals for an MCP
+ * (Model Context Protocol) instance from the live notification storage
+ * (NotificationLive): resolves the pending signal of every live instance of
+ * the bound strategy and keeps only the `signal.info` notifications whose
+ * signalId belongs to one of those pending signals — the notes the agent
+ * (or the strategy) attached to the positions open RIGHT NOW, not the whole
+ * historical feed. Closed positions drop out automatically: their signalId
+ * no longer matches any pending signal.
+ *
+ * Rendered newest first — one header message plus one text message per
+ * notification with the note, the correlation id, the market price and
+ * unrealized PnL at the moment of the event and the emit time.
+ *
+ * Depth: at most {@link MAX_HISTORY_ROWS} newest notifications are rendered.
+ * Rows accumulate only while a NotificationLive backend is enabled.
+ *
+ * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
+ * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @returns Promise resolving to pending-signal notification messages for the MCP agent
+ */
+const NOTIFICATION_GET_MESSAGES = async (
+  mcpName: MCPName,
+  when: Date,
+): Promise<IMCPMessage[]> => {
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    mcpName,
+    METHOD_NAME_GET_NOTIFICATION_MESSAGES,
+  );
+  const liveList = await Live.list();
+  const liveTarget = liveList.filter(
+    (live) => live.strategyName === strategyName,
+  );
+  const activeSignalIds = (
+    await Promise.all(
+      liveTarget.map(async ({ symbol, exchangeName }) => {
+        const currentPrice = await Exchange.getAveragePrice(symbol, {
+          exchangeName,
+        });
+        const pendingSignal = await Live.getPendingSignal(
+          symbol,
+          currentPrice,
+          {
+            strategyName,
+            exchangeName,
+          },
+        );
+        return pendingSignal ? [pendingSignal.id] : [];
+      }),
+    )
+  ).flat();
+  const activeIdSet = new Set(activeSignalIds);
+  if (!activeIdSet.size) {
+    return [
+      {
+        id: randomString(),
+        type: "text",
+        text: `Pending signal notifications at ${when.toISOString()}: no pending signals (no active positions), so there are no notifications to show.`,
+      },
+    ];
+  }
+  const notificationList = await NotificationLive.getData();
+  const infoList = notificationList
+    .flatMap((row) =>
+      row.type === "signal.info" &&
+      row.strategyName === strategyName &&
+      activeIdSet.has(row.signalId)
+        ? [row]
+        : [],
+    )
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_HISTORY_ROWS);
+  if (!infoList.length) {
+    return [
+      {
+        id: randomString(),
+        type: "text",
+        text: `Pending signal notifications at ${when.toISOString()}: no notifications recorded for the active pending signals yet.`,
+      },
+    ];
+  }
+  const messages: IMCPMessage[] = [
+    {
+      id: randomString(),
+      type: "text",
+      text: `Pending signal notifications at ${when.toISOString()} (last ${infoList.length} notification${infoList.length === 1 ? "" : "s"} of the active pending signals, newest first):`,
+    },
+  ];
+  for (const row of infoList) {
+    const emittedMinutesAgo = Math.max(
+      0,
+      Math.round((when.getTime() - row.timestamp) / 60_000),
+    );
+    const lines: string[] = [];
+    lines.push(`Symbol: ${row.symbol}`);
+    lines.push(`Position: ${row.position}`);
+    lines.push(`Note: ${row.note}`);
+    if (row.notificationId) {
+      lines.push(`Notification id: ${row.notificationId}`);
+    }
+    lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
+    lines.push(
+      `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
+    );
+    lines.push(
+      `Emitted at: ${new Date(row.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
+    );
+    messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
+  }
+  return messages;
+};
+
+/**
  * Wrapper to call onStatus callback with error handling.
  * Catches and logs any errors thrown by the user-provided callback —
  * a broken callback never fails getStatus itself.
@@ -477,10 +595,40 @@ const VALIDATE_SCHEMA_FN = memoize(
 );
 
 /**
- * Checks that the MCP (Model Context Protocol) schema grants a permission for the requested
- * operation: "read" gates status/history rendering, "write" gates
- * opening and closing positions. A schema without the permissions field
- * grants BOTH by default.
+ * Human-readable description of the action each per-method permission gates.
+ * Interpolated into the denial error so an AI agent reading the message
+ * understands WHAT was forbidden, not just which flag was missing.
+ */
+const PERMISSION_ACTION_DESCRIPTION: Record<MCPPermission, string> = {
+  getStatus: "Reading the portfolio status",
+  getHistoryMessages: "Reading the trade history",
+  getNotificationMessages:
+    "Reading the notifications of the active pending signal (open position)",
+  commitPositionOpen: "Opening a position",
+  commitPositionClose: "Closing a position",
+  commitAverageBuy: "Averaging the position (DCA entry)",
+  commitSignalNotify:
+    "Emitting a notification for the active pending signal (open position)",
+};
+
+/**
+ * Grants applied when the schema omits the permissions field: every MCP
+ * (Model Context Protocol) method is allowed. Listing permissions explicitly
+ * narrows the agent to exactly the listed methods.
+ */
+const DEFAULT_PERMISSIONS = Object.keys(
+  PERMISSION_ACTION_DESCRIPTION,
+) as MCPPermission[];
+
+/**
+ * Checks that the MCP (Model Context Protocol) schema grants the per-method
+ * permission for the requested operation. Each public MCP method is gated by
+ * the permission of the same name; a schema without the permissions field
+ * grants ALL methods by default.
+ *
+ * The denial error is written for an AI agent: it states the forbidden
+ * action in plain words, names the missing permission and tells the agent
+ * not to retry — only the user can widen the grants.
  *
  * Deliberately NOT memoized: overrideMCPSchema may narrow or widen the
  * grants at runtime, and the check must see the current schema on every
@@ -497,11 +645,11 @@ const CHECK_PERMISSION_FN = (
   permission: MCPPermission,
   source: string,
 ): void => {
-  const { permissions = ["read", "write"] } =
+  const { permissions = DEFAULT_PERMISSIONS } =
     backtest.mcpSchemaService.get(mcpName);
   if (!permissions.includes(permission)) {
     throw new Error(
-      `MCP Error: mcp ${mcpName} is missing the "${permission}" permission source=${source}`,
+      `MCP Error: ${PERMISSION_ACTION_DESCRIPTION[permission]} is not permitted by the user: the "${permission}" permission is missing from the mcp ${mcpName} schema. Do not retry — the call will keep failing until the user grants this permission. source=${source}`,
     );
   }
 };
@@ -738,6 +886,103 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
 };
 
 /**
+ * Adds a DCA entry at the current market price to the pending position of the
+ * command's symbol through the live strategy. The pending signal id is
+ * resolved by symbol from the live strategy state — no method context is
+ * required; the entry cost comes from the schema's positionCost.
+ *
+ * Requires the symbol to be enabled in live trading for the schema's
+ * strategy and a pending signal to exist.
+ *
+ * @param dto - Average-buy command with symbol and mcpName
+ * @returns Promise resolving to true when the DCA entry is accepted
+ * @throws Error when the symbol is not live-enabled or no pending signal exists
+ */
+const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
+  const { positionCost = GLOBAL_CONFIG.CC_POSITION_ENTRY_COST } =
+    backtest.mcpSchemaService.get(dto.mcpName);
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    dto.mcpName,
+    METHOD_NAME_COMMIT_AVERAGE_BUY,
+  );
+  const liveList = await Live.list();
+  const liveTarget = liveList.find(
+    (live) => live.strategyName === strategyName && live.symbol === dto.symbol,
+  );
+  if (liveTarget) {
+    const currentPrice = await Exchange.getAveragePrice(dto.symbol, {
+      exchangeName: liveTarget.exchangeName,
+    });
+    const pending = await Live.getPendingSignal(dto.symbol, currentPrice, {
+      exchangeName: liveTarget.exchangeName,
+      strategyName: liveTarget.strategyName,
+    });
+    if (!pending) {
+      throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
+    }
+    return await Live.commitAverageBuy(
+      dto.symbol,
+      currentPrice,
+      {
+        exchangeName: liveTarget.exchangeName,
+        strategyName: liveTarget.strategyName,
+      },
+      positionCost,
+    );
+  }
+  throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
+};
+
+/**
+ * Emits a `signal.info` notification for the pending position of the
+ * command's symbol through the live strategy. The pending signal id is
+ * resolved by symbol from the live strategy state — no method context is
+ * required.
+ *
+ * Requires the symbol to be enabled in live trading for the schema's
+ * strategy and a pending signal to exist.
+ *
+ * @param dto - Notify command with symbol, mcpName, note and optional notificationId
+ * @returns Promise resolving when the notification is emitted
+ * @throws Error when the symbol is not live-enabled or no pending signal exists
+ */
+const COMMIT_SIGNAL_NOTIFY_FN = async (dto: IMCPSignalNotifyCommand) => {
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    dto.mcpName,
+    METHOD_NAME_COMMIT_SIGNAL_NOTIFY,
+  );
+  const liveList = await Live.list();
+  const liveTarget = liveList.find(
+    (live) => live.strategyName === strategyName && live.symbol === dto.symbol,
+  );
+  if (liveTarget) {
+    const currentPrice = await Exchange.getAveragePrice(dto.symbol, {
+      exchangeName: liveTarget.exchangeName,
+    });
+    const pending = await Live.getPendingSignal(dto.symbol, currentPrice, {
+      exchangeName: liveTarget.exchangeName,
+      strategyName: liveTarget.strategyName,
+    });
+    if (!pending) {
+      throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
+    }
+    return await Live.commitSignalNotify(
+      dto.symbol,
+      currentPrice,
+      {
+        exchangeName: liveTarget.exchangeName,
+        strategyName: liveTarget.strategyName,
+      },
+      {
+        notificationNote: dto.note,
+        notificationId: dto.notificationId,
+      },
+    );
+  }
+  throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
+};
+
+/**
  * Utility class exposing live trading to an MCP (Model Context Protocol) agent.
  *
  * Provides static-like methods (via singleton instance) to observe every
@@ -854,10 +1099,62 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_HISTORY_MESSAGES);
+      CHECK_PERMISSION_FN(mcpName, "getHistoryMessages", METHOD_NAME_GET_HISTORY_MESSAGES);
     }
 
     const when = alignToInterval(new Date(), "1m");
     return await HISTORY_GET_MESSAGES(mcpName, when);
+  };
+
+  /**
+   * Renders the `signal.info` notifications of the active PENDING signals of
+   * the MCP (Model Context Protocol) instance's strategy into agent messages:
+   * resolves the pending signal id of every live instance by symbol and keeps
+   * only the notifications emitted via commitSignalNotify for those signal
+   * ids, newest first (at most {@link MAX_HISTORY_ROWS}) — note, correlation
+   * id, market price and unrealized PnL at the moment of the event and the
+   * emit time per notification.
+   *
+   * Complements getStatus: the status shows what is open, this method shows
+   * what the agent (or the strategy) annotated on the open positions, so a
+   * stateless agent can pick up its own prior reasoning about the exact
+   * position it is holding. Notifications of already-closed positions are
+   * filtered out automatically — their signal ids no longer match any
+   * pending signal.
+   *
+   * Rows accumulate only while a NotificationLive backend is enabled.
+   *
+   * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+   * @returns Promise resolving to pending-signal notification messages for the MCP agent
+   *
+   * @example
+   * ```typescript
+   * addMCPSchema({
+   *   mcpName: "my-mcp",
+   *   strategyName: "my-strategy",
+   *   getMessages: async (context, when, mcpName) => {
+   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const notifications = await MCP.getNotificationMessages(mcpName);
+   *     messages.push(...notifications);
+   *     return messages;
+   *   },
+   * });
+   * ```
+   */
+  public getNotificationMessages = async (
+    mcpName: MCPName,
+  ): Promise<IMCPMessage[]> => {
+    backtest.loggerService.log(METHOD_NAME_GET_NOTIFICATION_MESSAGES, {
+      mcpName,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_NOTIFICATION_MESSAGES);
+      CHECK_PERMISSION_FN(mcpName, "getNotificationMessages", METHOD_NAME_GET_NOTIFICATION_MESSAGES);
+    }
+
+    const when = alignToInterval(new Date(), "1m");
+    return await NOTIFICATION_GET_MESSAGES(mcpName, when);
   };
 
   /**
@@ -870,11 +1167,11 @@ export class MCPUtils {
    * text renderer). Fires the schema's onStatus callback with the snapshot
    * and the rendered messages.
    *
-   * Requires the "read" permission on the schema.
+   * Requires the "getStatus" permission on the schema.
    *
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema
    * @returns Promise resolving to messages for the MCP agent
-   * @throws Error when the schema lacks the "read" permission
+   * @throws Error when the schema lacks the "getStatus" permission
    *
    * @example
    * ```typescript
@@ -891,7 +1188,7 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_STATUS);
-      CHECK_PERMISSION_FN(mcpName, "read", METHOD_NAME_GET_STATUS);
+      CHECK_PERMISSION_FN(mcpName, "getStatus", METHOD_NAME_GET_STATUS);
     }
 
     const context = await GET_TARGET_CONTEXT_FN(mcpName);
@@ -913,7 +1210,7 @@ export class MCPUtils {
    * @param dto - Open command with symbol, direction, mcpName and note
    * @returns Promise resolving when the create-signal commit is accepted
    * @throws Error when the symbol is not live-enabled or a pending signal exists
-   * @throws Error when the schema lacks the "write" permission
+   * @throws Error when the schema lacks the "commitPositionOpen" permission
    *
    * @example
    * ```typescript
@@ -927,7 +1224,7 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_POSITION_OPEN);
-      CHECK_PERMISSION_FN(dto.mcpName, "write", METHOD_NAME_COMMIT_POSITION_OPEN);
+      CHECK_PERMISSION_FN(dto.mcpName, "commitPositionOpen", METHOD_NAME_COMMIT_POSITION_OPEN);
     }
 
     return await COMMIT_POSITION_OPEN_FN(dto);
@@ -942,7 +1239,7 @@ export class MCPUtils {
    * @param dto - Close command with symbol, mcpName and note
    * @returns Promise resolving when the close-pending commit is accepted
    * @throws Error when the symbol is not live-enabled or no pending signal exists
-   * @throws Error when the schema lacks the "write" permission
+   * @throws Error when the schema lacks the "commitPositionClose" permission
    *
    * @example
    * ```typescript
@@ -956,10 +1253,74 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_POSITION_CLOSE);
-      CHECK_PERMISSION_FN(dto.mcpName, "write", METHOD_NAME_COMMIT_POSITION_CLOSE);
+      CHECK_PERMISSION_FN(dto.mcpName, "commitPositionClose", METHOD_NAME_COMMIT_POSITION_CLOSE);
     }
 
     return await COMMIT_POSITION_CLOSE_FN(dto);
+  };
+
+  /**
+   * Adds a DCA entry to the pending position of a symbol on the agent's command.
+   *
+   * The symbol must be enabled in live trading for the schema's strategy and
+   * must have a pending signal — its id is resolved by symbol from the live
+   * strategy state, no method context is required. The entry executes at the
+   * current market price with the cost from the schema's positionCost.
+   *
+   * @param dto - Average-buy command with symbol and mcpName
+   * @returns Promise resolving to true when the DCA entry is accepted, false if rejected by validation
+   * @throws Error when the symbol is not live-enabled or no pending signal exists
+   * @throws Error when the schema lacks the "commitAverageBuy" permission
+   *
+   * @example
+   * ```typescript
+   * await MCP.commitAverageBuy({ mcpName: "my-mcp", symbol: "BTCUSDT" });
+   * ```
+   */
+  public commitAverageBuy = async (dto: IMCPAverageBuyCommand) => {
+    backtest.loggerService.log(METHOD_NAME_COMMIT_AVERAGE_BUY, {
+      dto,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_AVERAGE_BUY);
+      CHECK_PERMISSION_FN(dto.mcpName, "commitAverageBuy", METHOD_NAME_COMMIT_AVERAGE_BUY);
+    }
+
+    return await COMMIT_AVERAGE_BUY_FN(dto);
+  };
+
+  /**
+   * Emits a `signal.info` notification for the pending position of a symbol
+   * on the agent's command.
+   *
+   * The symbol must be enabled in live trading for the schema's strategy and
+   * must have a pending signal — its id is resolved by symbol from the live
+   * strategy state, no method context is required. The notification lands in
+   * the live notification storage and is later readable via
+   * getNotificationMessages.
+   *
+   * @param dto - Notify command with symbol, mcpName, note and optional notificationId
+   * @returns Promise resolving when the notification is emitted
+   * @throws Error when the symbol is not live-enabled or no pending signal exists
+   * @throws Error when the schema lacks the "commitSignalNotify" permission
+   *
+   * @example
+   * ```typescript
+   * await MCP.commitSignalNotify({ mcpName: "my-mcp", symbol: "BTCUSDT", note: "RSI crossed 70, watching for exit" });
+   * ```
+   */
+  public commitSignalNotify = async (dto: IMCPSignalNotifyCommand) => {
+    backtest.loggerService.log(METHOD_NAME_COMMIT_SIGNAL_NOTIFY, {
+      dto,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(dto.mcpName, METHOD_NAME_COMMIT_SIGNAL_NOTIFY);
+      CHECK_PERMISSION_FN(dto.mcpName, "commitSignalNotify", METHOD_NAME_COMMIT_SIGNAL_NOTIFY);
+    }
+
+    return await COMMIT_SIGNAL_NOTIFY_FN(dto);
   };
 }
 

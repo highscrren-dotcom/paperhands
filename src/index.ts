@@ -271,6 +271,8 @@ export {
 export {
   IMCPPositionOpenCommand,
   IMCPPositionCloseCommand,
+  IMCPAverageBuyCommand,
+  IMCPSignalNotifyCommand,
   IMCPImageMessage,
   IMCPTextMessage,
   IMCPMessage,

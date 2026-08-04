@@ -67,7 +67,7 @@ export interface IMCPPositionOpenCommand {
   symbol: string;
   /** Trade direction: "long" (buy) or "short" (sell) */
   position: "long" | "short";
-  /** Name of the registered MCP schema issuing the command */
+  /** Name of the registered MCP (Model Context Protocol) schema issuing the command */
   mcpName: MCPName;
   /** Human-readable reason attached to the created signal */
   note: string;
@@ -81,10 +81,41 @@ export interface IMCPPositionOpenCommand {
 export interface IMCPPositionCloseCommand {
   /** Trading pair symbol (e.g., "BTCUSDT") */
   symbol: string;
-  /** Name of the registered MCP schema issuing the command */
+  /** Name of the registered MCP (Model Context Protocol) schema issuing the command */
   mcpName: MCPName;
   /** Human-readable reason attached to the close commit */
   note: string;
+}
+
+/**
+ * Command payload for MCP.commitAverageBuy (MCP — Model Context Protocol).
+ * Adds a DCA entry at the current market price to the active pending position
+ * of a symbol enabled in live trading for the schema's strategy. The engine
+ * resolves the pending signal id by symbol; the entry cost comes from the
+ * schema's positionCost.
+ */
+export interface IMCPAverageBuyCommand {
+  /** Trading pair symbol (e.g., "BTCUSDT") */
+  symbol: string;
+  /** Name of the registered MCP (Model Context Protocol) schema issuing the command */
+  mcpName: MCPName;
+}
+
+/**
+ * Command payload for MCP.commitSignalNotify (MCP — Model Context Protocol).
+ * Emits a `signal.info` notification for the active pending position of a
+ * symbol enabled in live trading for the schema's strategy. The engine
+ * resolves the pending signal id by symbol.
+ */
+export interface IMCPSignalNotifyCommand {
+  /** Trading pair symbol (e.g., "BTCUSDT") */
+  symbol: string;
+  /** Name of the registered MCP (Model Context Protocol) schema issuing the command */
+  mcpName: MCPName;
+  /** Human-readable note attached to the notification */
+  note: string;
+  /** Optional correlation ID for external systems (e.g. Telegram message ID) */
+  notificationId?: string;
 }
 
 /**
@@ -116,11 +147,19 @@ export interface IMCPCallbacks {
 }
 
 /**
- * Access level of an MCP (Model Context Protocol) instance.
- * "read" allows status/history rendering, "write" allows opening and
- * closing positions.
+ * Per-method access grant of an MCP (Model Context Protocol) instance.
+ * Each permission name matches the MCP method it gates 1:1. A schema
+ * without the permissions field grants ALL methods; listing permissions
+ * explicitly narrows the agent to exactly those methods.
  */
-export type MCPPermission = "read" | "write";
+export type MCPPermission =
+  | "getStatus"
+  | "getHistoryMessages"
+  | "getNotificationMessages"
+  | "commitPositionOpen"
+  | "commitPositionClose"
+  | "commitAverageBuy"
+  | "commitSignalNotify";
 
 /**
  * Registration schema of an MCP (Model Context Protocol) instance.
@@ -134,9 +173,10 @@ export type MCPPermission = "read" | "write";
  *   schema names one explicitly — ambiguity is an error, not a guess.
  * - positionCost — entry cost in USD for commitPositionOpen; defaults to
  *   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
- * - permissions — access levels granted to the agent; defaults to BOTH
- *   "read" and "write" when omitted. Without "read" status/history throw,
- *   without "write" open/close throw — the check runs per call, so an
+ * - permissions — per-method grants for the agent; defaults to ALL methods
+ *   when omitted. Listing permissions explicitly narrows the agent to
+ *   exactly those methods; a call to a method whose permission is missing
+ *   throws with an agent-readable denial. The check runs per call, so an
  *   overridden schema applies immediately.
  * - getMessages — renders the portfolio snapshot into agent messages; when
  *   omitted the default renderer emits one text message per symbol.
@@ -145,15 +185,15 @@ export type MCPPermission = "read" | "write";
 export interface IMCPSchema {
     /** Unique MCP (Model Context Protocol) identifier for the schema registry */
     mcpName: MCPName;
-    /** Strategy whose live instances this MCP observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it */
+    /** Strategy whose live instances this MCP (Model Context Protocol) observes and trades. Optional: defaults to the single registered strategy; ambiguous (2+ registered) requires it */
     strategyName?: StrategyName;
     /** Entry cost in USD for opened positions. Default: GLOBAL_CONFIG.CC_POSITION_ENTRY_COST */
     positionCost?: number;
     /** Estimated time in minutes for a position to reach its TP or SL. */
     minuteEstimatedTime?: number;
-    /** Access levels granted to the agent: "read" gates status/history, "write" gates open/close. Default: both */
+    /** Per-method grants for the agent; each permission name gates the MCP (Model Context Protocol) method of the same name. Default: all methods */
     permissions?: MCPPermission[];
-    /** Renders the portfolio snapshot into messages for the MCP agent (default: text per symbol) */
+    /** Renders the portfolio snapshot into messages for the MCP (Model Context Protocol) agent (default: text per symbol) */
     getMessages?: (context: IMCPContext, when: Date, mcpName: MCPName) => IMCPMessage[] | Promise<IMCPMessage[]>;
     /** Lifecycle callbacks (all optional) */
     callbacks?: Partial<IMCPCallbacks>;
