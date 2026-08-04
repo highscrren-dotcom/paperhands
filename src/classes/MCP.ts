@@ -322,14 +322,15 @@ const HISTORY_GET_MESSAGES = async (
 };
 
 /**
- * Builds the notification feed of the active PENDING signals for an MCP
- * (Model Context Protocol) instance from the live notification storage
- * (NotificationLive): resolves the pending signal of every live instance of
- * the bound strategy and keeps only the `signal.info` notifications whose
- * signalId belongs to one of those pending signals — the notes the agent
+ * Builds the notification feed of the active positions for an MCP (Model
+ * Context Protocol) instance from the live notification storage
+ * (NotificationLive): reads the pending signal of every symbol from the
+ * ALREADY BUILT portfolio snapshot (IMCPContext) — no extra exchange or live
+ * state requests — and keeps only the `signal.info` notifications whose
+ * signalId belongs to one of those active positions: the notes the agent
  * (or the strategy) attached to the positions open RIGHT NOW, not the whole
  * historical feed. Closed positions drop out automatically: their signalId
- * no longer matches any pending signal.
+ * no longer matches any pending signal in the snapshot.
  *
  * Rendered newest first — one header message plus one text message per
  * notification with the note, the correlation id, the market price and
@@ -338,11 +339,13 @@ const HISTORY_GET_MESSAGES = async (
  * Depth: at most {@link MAX_HISTORY_ROWS} newest notifications are rendered.
  * Rows accumulate only while a NotificationLive backend is enabled.
  *
+ * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
  * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
- * @returns Promise resolving to pending-signal notification messages for the MCP agent
+ * @returns Promise resolving to active-position notification messages for the MCP agent
  */
 const NOTIFICATION_GET_MESSAGES = async (
+  context: IMCPContext,
   mcpName: MCPName,
   when: Date,
 ): Promise<IMCPMessage[]> => {
@@ -350,29 +353,11 @@ const NOTIFICATION_GET_MESSAGES = async (
     mcpName,
     METHOD_NAME_GET_NOTIFICATION_MESSAGES,
   );
-  const liveList = await Live.list();
-  const liveTarget = liveList.filter(
-    (live) => live.strategyName === strategyName,
+  const activeIdSet = new Set(
+    Object.values(context).flatMap(({ pendingSignal }) =>
+      pendingSignal ? [pendingSignal.id] : [],
+    ),
   );
-  const activeSignalIds = (
-    await Promise.all(
-      liveTarget.map(async ({ symbol, exchangeName }) => {
-        const currentPrice = await Exchange.getAveragePrice(symbol, {
-          exchangeName,
-        });
-        const pendingSignal = await Live.getPendingSignal(
-          symbol,
-          currentPrice,
-          {
-            strategyName,
-            exchangeName,
-          },
-        );
-        return pendingSignal ? [pendingSignal.id] : [];
-      }),
-    )
-  ).flat();
-  const activeIdSet = new Set(activeSignalIds);
   if (!activeIdSet.size) {
     return [
       {
@@ -1107,25 +1092,32 @@ export class MCPUtils {
   };
 
   /**
-   * Renders the `signal.info` notifications of the active PENDING signals of
-   * the MCP (Model Context Protocol) instance's strategy into agent messages:
-   * resolves the pending signal id of every live instance by symbol and keeps
-   * only the notifications emitted via commitSignalNotify for those signal
-   * ids, newest first (at most {@link MAX_HISTORY_ROWS}) — note, correlation
-   * id, market price and unrealized PnL at the moment of the event and the
-   * emit time per notification.
+   * Renders the `signal.info` notifications of the active positions of the
+   * MCP (Model Context Protocol) instance's strategy into agent messages:
+   * reads the pending signal id of every symbol from the portfolio snapshot
+   * the caller already holds — no extra exchange or live state requests —
+   * and keeps only the notifications emitted via commitSignalNotify for
+   * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
+   * note, correlation id, market price and unrealized PnL at the moment of
+   * the event and the emit time per notification.
    *
    * Complements getStatus: the status shows what is open, this method shows
    * what the agent (or the strategy) annotated on the open positions, so a
    * stateless agent can pick up its own prior reasoning about the exact
    * position it is holding. Notifications of already-closed positions are
    * filtered out automatically — their signal ids no longer match any
-   * pending signal.
+   * pending signal in the snapshot.
+   *
+   * The signature matches IMCPSchema.getMessages (async variant), so a
+   * custom renderer can await this method and append the notifications to
+   * the default output without re-fetching anything.
    *
    * Rows accumulate only while a NotificationLive backend is enabled.
    *
+   * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
+   * @param when - Snapshot time stamped into the header message
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
-   * @returns Promise resolving to pending-signal notification messages for the MCP agent
+   * @returns Promise resolving to active-position notification messages for the MCP agent
    *
    * @example
    * ```typescript
@@ -1134,7 +1126,7 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
-   *     const notifications = await MCP.getNotificationMessages(mcpName);
+   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
    *     messages.push(...notifications);
    *     return messages;
    *   },
@@ -1142,10 +1134,13 @@ export class MCPUtils {
    * ```
    */
   public getNotificationMessages = async (
+    context: IMCPContext,
+    when: Date,
     mcpName: MCPName,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_NOTIFICATION_MESSAGES, {
       mcpName,
+      when,
     });
 
     {
@@ -1153,8 +1148,7 @@ export class MCPUtils {
       CHECK_PERMISSION_FN(mcpName, "getNotificationMessages", METHOD_NAME_GET_NOTIFICATION_MESSAGES);
     }
 
-    const when = alignToInterval(new Date(), "1m");
-    return await NOTIFICATION_GET_MESSAGES(mcpName, when);
+    return await NOTIFICATION_GET_MESSAGES(context, mcpName, when);
   };
 
   /**
