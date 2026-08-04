@@ -655,9 +655,6 @@ const VALIDATE_SCHEMA_FN = memoize(
  */
 const PERMISSION_ACTION_DESCRIPTION: Record<MCPPermission, string> = {
   getStatus: "Reading the portfolio status",
-  getHistoryMessages: "Reading the trade history",
-  getNotificationMessages:
-    "Reading the notifications of the active position",
   commitPositionOpen: "Opening a position",
   commitPositionClose: "Closing a position",
   commitAverageBuy: "Averaging the position (DCA entry)",
@@ -1166,7 +1163,6 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_HISTORY_MESSAGES);
-      CHECK_PERMISSION_FN(mcpName, "getHistoryMessages", METHOD_NAME_GET_HISTORY_MESSAGES);
     }
 
     const when = alignToInterval(new Date(), "1m");
@@ -1229,7 +1225,6 @@ export class MCPUtils {
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_NOTIFICATION_MESSAGES);
-      CHECK_PERMISSION_FN(mcpName, "getNotificationMessages", METHOD_NAME_GET_NOTIFICATION_MESSAGES);
     }
 
     return await NOTIFICATION_GET_MESSAGES(context, mcpName, when);

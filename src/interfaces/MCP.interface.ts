@@ -162,8 +162,6 @@ export interface IMCPCallbacks {
  */
 export type MCPPermission =
   | "getStatus"
-  | "getHistoryMessages"
-  | "getNotificationMessages"
   | "commitPositionOpen"
   | "commitPositionClose"
   | "commitAverageBuy"
