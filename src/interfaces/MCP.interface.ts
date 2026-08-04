@@ -144,6 +144,16 @@ export interface IMCPCallbacks {
      * the close was queued for.
      */
     onPositionClose(symbol: string, signalId: string, dto: IMCPPositionCloseCommand): void;
+    /**
+     * Fired after a DCA entry commit is accepted: the id of the pending
+     * signal the entry was averaged into.
+     */
+    onAverageBuy(symbol: string, signalId: string, dto: IMCPAverageBuyCommand): void;
+    /**
+     * Fired after a signal notification is emitted: the id of the pending
+     * signal the note was attached to.
+     */
+    onSignalNotify(symbol: string, signalId: string, dto: IMCPSignalNotifyCommand): void;
 }
 
 /**

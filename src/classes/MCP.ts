@@ -524,6 +524,78 @@ const CALL_POSITION_CLOSE_CALLBACKS_FN = trycatch(
 );
 
 /**
+ * Wrapper to call onAverageBuy callback with error handling.
+ * Fires AFTER the DCA entry commit is accepted, with the id of the pending
+ * signal the entry was averaged into. Catches and logs any errors thrown
+ * by the user-provided callback — a broken callback never fails the
+ * average buy.
+ *
+ * @param symbol - Trading pair symbol the entry was added for
+ * @param signalId - Id of the pending signal the entry was averaged into
+ * @param dto - Original average-buy command from the agent
+ */
+const CALL_AVERAGE_BUY_CALLBACKS_FN = trycatch(
+  async (
+    symbol: string,
+    signalId: string,
+    dto: IMCPAverageBuyCommand,
+  ): Promise<void> => {
+    const { callbacks } = backtest.mcpSchemaService.get(dto.mcpName);
+    if (callbacks?.onAverageBuy) {
+      await callbacks.onAverageBuy(symbol, signalId, dto);
+    }
+  },
+  {
+    fallback: (error) => {
+      const message = "MCPUtils CALL_AVERAGE_BUY_CALLBACKS_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      backtest.loggerService.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  },
+);
+
+/**
+ * Wrapper to call onSignalNotify callback with error handling.
+ * Fires AFTER the signal notification is emitted, with the id of the
+ * pending signal the note was attached to. Catches and logs any errors
+ * thrown by the user-provided callback — a broken callback never fails
+ * the notify.
+ *
+ * @param symbol - Trading pair symbol the note was attached for
+ * @param signalId - Id of the pending signal the note was attached to
+ * @param dto - Original notify command from the agent
+ */
+const CALL_SIGNAL_NOTIFY_CALLBACKS_FN = trycatch(
+  async (
+    symbol: string,
+    signalId: string,
+    dto: IMCPSignalNotifyCommand,
+  ): Promise<void> => {
+    const { callbacks } = backtest.mcpSchemaService.get(dto.mcpName);
+    if (callbacks?.onSignalNotify) {
+      await callbacks.onSignalNotify(symbol, signalId, dto);
+    }
+  },
+  {
+    fallback: (error) => {
+      const message = "MCPUtils CALL_SIGNAL_NOTIFY_CALLBACKS_FN thrown";
+      const payload = {
+        error: errorData(error),
+        message: getErrorMessage(error),
+      };
+      backtest.loggerService.warn(message, payload);
+      console.warn(message, payload);
+      errorEmitter.next(error);
+    },
+  },
+);
+
+/**
  * Validates a strategy's full dependency chain — the strategy itself plus
  * its risk(s) and actions — memoized by strategy name. Shared by the
  * explicit-schema path and the single-registered-strategy resolution of
@@ -877,7 +949,8 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
  * required; the entry cost comes from the schema's positionCost.
  *
  * Requires the symbol to be enabled in live trading for the schema's
- * strategy and a pending signal to exist.
+ * strategy and a pending signal to exist. Fires the schema's onAverageBuy
+ * callback after the commit is accepted.
  *
  * @param dto - Average-buy command with symbol and mcpName
  * @returns Promise resolving to true when the DCA entry is accepted
@@ -905,7 +978,7 @@ const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
     if (!pending) {
       throw new Error(`MCP Error: no active position for ${dto.symbol}`);
     }
-    return await Live.commitAverageBuy(
+    const result = await Live.commitAverageBuy(
       dto.symbol,
       currentPrice,
       {
@@ -914,6 +987,10 @@ const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
       },
       positionCost,
     );
+    if (result) {
+      await CALL_AVERAGE_BUY_CALLBACKS_FN(dto.symbol, pending.id, dto);
+    }
+    return result;
   }
   throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
 };
@@ -925,7 +1002,8 @@ const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
  * required.
  *
  * Requires the symbol to be enabled in live trading for the schema's
- * strategy and a pending signal to exist.
+ * strategy and a pending signal to exist. Fires the schema's onSignalNotify
+ * callback after the notification is emitted.
  *
  * @param dto - Notify command with symbol, mcpName, note and optional notificationId
  * @returns Promise resolving when the notification is emitted
@@ -951,7 +1029,7 @@ const COMMIT_SIGNAL_NOTIFY_FN = async (dto: IMCPSignalNotifyCommand) => {
     if (!pending) {
       throw new Error(`MCP Error: no active position for ${dto.symbol}`);
     }
-    return await Live.commitSignalNotify(
+    const result = await Live.commitSignalNotify(
       dto.symbol,
       currentPrice,
       {
@@ -963,6 +1041,8 @@ const COMMIT_SIGNAL_NOTIFY_FN = async (dto: IMCPSignalNotifyCommand) => {
         notificationId: dto.notificationId,
       },
     );
+    await CALL_SIGNAL_NOTIFY_CALLBACKS_FN(dto.symbol, pending.id, dto);
+    return result;
   }
   throw new Error(`MCP Error: symbol ${dto.symbol} is not enabled for trading`);
 };
