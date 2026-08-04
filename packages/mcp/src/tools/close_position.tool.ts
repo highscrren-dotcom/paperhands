@@ -19,6 +19,7 @@ export default function registerClosePositionTool(server: McpServer) {
       "Close the active live position of a symbol at the current market price.",
       "This is the only way to realize profit or cut a loss: positions are exited manually by this call, nothing else closes them except the distant emergency stop-loss or the hold timeout.",
       "You choose the symbol and a note explaining the reason; the trading engine resolves which position is closed.",
+      "The close is queued and executes on a live tick: expect the position to stay visible in get_status for roughly 5 minutes after this call. The delay is not a failure — do not resubmit the close.",
       "Fails if the symbol is not enabled for trading or has no active position — call get_status first to see active positions and their unrealized PnL.",
     ),
     {

@@ -23,6 +23,7 @@ export default function registerAveragePositionTool(server: McpServer) {
       "Add a DCA (dollar-cost averaging) entry to the active live position of a symbol at the current market price.",
       "The trading engine resolves the active position by symbol and invests the configured entry cost; the effective entry price becomes the average of all entries. You only choose the symbol.",
       "Averaging applies only to a position that is already in active state: an entry order waiting to open in the queue carries no signal to average into. Call this no earlier than 5 minutes after open_position, once get_status shows an active position for the symbol.",
+      "The command is queued like any other: the new entry executes on a live tick, so the averaged entry price and balance appear in get_status only after roughly 5 minutes. An unchanged average right after the call is not a failure — do not resubmit.",
       "Use it to improve the average entry when the price moved against a thesis you still believe in — averaging a dying thesis only deepens the loss.",
       "Fails if the symbol is not enabled for trading or has no active position.",
     ),

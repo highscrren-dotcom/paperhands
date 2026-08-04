@@ -1,7 +1,7 @@
 {
   "name": "@backtest-kit/mcp",
   "type": "module",
-  "version": "18.2.0",
+  "version": "18.2.1",
   "description": "Model Context Protocol server for backtest-kit: lets an LLM agent observe the live trading portfolio and open or close positions through guarded tools",
   "keywords": [
     "mcp",
