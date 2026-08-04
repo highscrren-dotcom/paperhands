@@ -1019,13 +1019,16 @@ export class MCPUtils {
    *
    * @example
    * ```typescript
+   * // Full agent memory: portfolio status, notes of the open positions,
+   * // history of the closed trades — one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
-   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
-   *     messages.push({ id: randomString(), type: "text", text: "Custom trailer for the agent" });
-   *     return messages;
+   *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     return [...status, ...notifications, ...history];
    *   },
    * });
    * ```
@@ -1063,14 +1066,16 @@ export class MCPUtils {
    *
    * @example
    * ```typescript
+   * // Full agent memory: portfolio status, notes of the open positions,
+   * // history of the closed trades — one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
-   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
    *     const history = await MCP.getHistoryMessages(mcpName);
-   *     messages.push(...history);
-   *     return messages;
+   *     return [...status, ...notifications, ...history];
    *   },
    * });
    * ```
@@ -1121,14 +1126,16 @@ export class MCPUtils {
    *
    * @example
    * ```typescript
+   * // Full agent memory: portfolio status, notes of the open positions,
+   * // history of the closed trades — one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
-   *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const status = await MCP.getDefaultMessages(context, when, mcpName);
    *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
-   *     messages.push(...notifications);
-   *     return messages;
+   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     return [...status, ...notifications, ...history];
    *   },
    * });
    * ```
