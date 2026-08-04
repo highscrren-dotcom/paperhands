@@ -35,29 +35,6 @@ export class MCPCommandService {
     return data;
   };
 
-  public getNotificationMessages = async (): Promise<IMCPMessage[]> => {
-    this.loggerService.log("mcpCommandService getNotificationMessages");
-    const GLOBAL_CONFIG = getConfig();
-    const requestId = randomString();
-    const url = new URL(
-      "/api/v1/mcp/get_notification_messages",
-      `http://${GLOBAL_CONFIG.CC_MCP_HOST}:${GLOBAL_CONFIG.CC_MCP_PORT}`,
-    );
-    const { data, error } = await fetchApi(url.toString(), {
-      method: "POST",
-      body: JSON.stringify({
-        clientId: CLIENT_ID,
-        serviceName: SERVICE_NAME,
-        userId: USER_ID,
-        requestId,
-      }),
-    });
-    if (error) {
-      throw new Error(error);
-    }
-    return data;
-  };
-
   public commitPositionOpen = async (dto: {
     symbol: string;
     position: "long" | "short";

@@ -21,21 +21,6 @@ export class MCPPrivateService {
         });
     };
 
-    public getNotificationMessages = async (mcpName: string) => {
-        this.loggerService.log("mcpPrivateService getNotificationMessages", {
-            mcpName,
-        });
-        const messages = await MCP.getNotificationMessages(mcpName);
-        const seenIds = new Set<MCPMessageId>();
-        return messages.filter(({ id }) => {
-            if (seenIds.has(id)) {
-                return false;
-            }
-            seenIds.add(id);
-            return true;
-        });
-    };
-
     public commitPositionOpen = async (dto: IMCPPositionOpenCommand) => {
         this.loggerService.log("mcpPrivateService commitPositionOpen", {
             dto,

@@ -82,20 +82,6 @@ router.post("/api/v1/mcp/get_status", async (req, res) => {
   }
 });
 
-router.post("/api/v1/mcp/get_notification_messages", async (req, res) => {
-  try {
-    const request = <GetStatusRequest>await micro.json(req);
-    const { requestId, serviceName } = request;
-    const data = await ioc.mcpPublicService.getNotificationMessages();
-    const result = { data, status: "ok", error: "", requestId, serviceName };
-    ioc.loggerService.log("/api/v1/mcp/get_notification_messages ok", { request, result: omit(result, "data") });
-    return await micro.send(res, 200, result);
-  } catch (error) {
-    ioc.loggerService.log("/api/v1/mcp/get_notification_messages error", { error: errorData(error) });
-    return await micro.send(res, 200, { status: "error", error: getErrorMessage(error) });
-  }
-});
-
 router.post("/api/v1/mcp/commit_position_open", async (req, res) => {
   try {
     const request = <CommitPositionOpenRequest>await micro.json(req);

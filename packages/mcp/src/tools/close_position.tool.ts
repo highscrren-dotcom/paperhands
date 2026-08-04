@@ -19,7 +19,7 @@ export default function registerClosePositionTool(server: McpServer) {
       "Close the active live position of a symbol at the current market price.",
       "This is the only way to realize profit or cut a loss: positions are exited manually by this call, nothing else closes them except the distant emergency stop-loss or the hold timeout.",
       "You choose the symbol and a note explaining the reason; the trading engine resolves which position is closed.",
-      "Fails if the symbol is not enabled for trading or has no active position — call get_status first to see active positions and their unrealized PnL, and get_notifications to recall the thesis and exit criteria recorded for them.",
+      "Fails if the symbol is not enabled for trading or has no active position — call get_status first to see active positions and their unrealized PnL.",
     ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),

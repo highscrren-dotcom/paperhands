@@ -21,18 +21,6 @@ export class MCPPublicService {
         return await this.mcpPrivateService.getStatus(mcpName);
     };
 
-    public getNotificationMessages = async () => {
-        this.loggerService.log("mcpPublicService getNotificationMessages");
-        const GLOBAL_CONFIG = getConfig();
-        const mcpList = await listMCPSchema();
-        if (!mcpList.length) {
-            throw new Error(`MCP Error: agent control is not configured`);
-        }
-        const [{ mcpName: fallback }] = mcpList;
-        const mcpName = GLOBAL_CONFIG.CC_MCP_NAME || fallback;
-        return await this.mcpPrivateService.getNotificationMessages(mcpName);
-    };
-
     public commitPositionOpen = async (dto: { symbol: string; position: "long" | "short"; note: string }) => {
         this.loggerService.log("mcpPublicService commitPositionOpen", {
             dto,
