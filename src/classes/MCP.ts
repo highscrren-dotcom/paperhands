@@ -333,8 +333,8 @@ const HISTORY_GET_MESSAGES = async (
  * no longer matches any pending signal in the snapshot.
  *
  * Rendered newest first — one header message plus one text message per
- * notification with the note, the correlation id, the market price and
- * unrealized PnL at the moment of the event and the emit time.
+ * notification with the note, the market price and unrealized PnL at the
+ * moment of the event and the emit time.
  *
  * Depth: at most {@link MAX_HISTORY_ROWS} newest notifications are rendered.
  * Rows accumulate only while a NotificationLive backend is enabled.
@@ -403,9 +403,6 @@ const NOTIFICATION_GET_MESSAGES = async (
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
     lines.push(`Note: ${row.note}`);
-    if (row.notificationId) {
-      lines.push(`Notification id: ${row.notificationId}`);
-    }
     lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
     lines.push(
       `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
@@ -1005,7 +1002,7 @@ const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
  * strategy and a pending signal to exist. Fires the schema's onSignalNotify
  * callback after the notification is emitted.
  *
- * @param dto - Notify command with symbol, mcpName, note and optional notificationId
+ * @param dto - Notify command with symbol, mcpName and note
  * @returns Promise resolving when the notification is emitted
  * @throws Error when the symbol is not live-enabled or no pending signal exists
  */
@@ -1038,7 +1035,7 @@ const COMMIT_SIGNAL_NOTIFY_FN = async (dto: IMCPSignalNotifyCommand) => {
       },
       {
         notificationNote: dto.note,
-        notificationId: dto.notificationId,
+        notificationId: pending.id,
       },
     );
     await CALL_SIGNAL_NOTIFY_CALLBACKS_FN(dto.symbol, pending.id, dto);
@@ -1183,8 +1180,8 @@ export class MCPUtils {
    * the caller already holds — no extra exchange or live state requests —
    * and keeps only the notifications emitted via commitSignalNotify for
    * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
-   * note, correlation id, market price and unrealized PnL at the moment of
-   * the event and the emit time per notification.
+   * note, market price and unrealized PnL at the moment of the event and
+   * the emit time per notification.
    *
    * Complements getStatus: the status shows what is open, this method shows
    * what the agent (or the strategy) annotated on the open positions, so a
@@ -1381,7 +1378,7 @@ export class MCPUtils {
    * the live notification storage and is later readable via
    * getNotificationMessages.
    *
-   * @param dto - Notify command with symbol, mcpName, note and optional notificationId
+   * @param dto - Notify command with symbol, mcpName and note
    * @returns Promise resolving when the notification is emitted
    * @throws Error when the symbol is not live-enabled or no pending signal exists
    * @throws Error when the schema lacks the "commitSignalNotify" permission

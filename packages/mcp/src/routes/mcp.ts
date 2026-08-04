@@ -64,7 +64,6 @@ interface CommitSignalNotifyRequest {
   data: {
     symbol: string;
     note: string;
-    notificationId?: string;
   };
 }
 

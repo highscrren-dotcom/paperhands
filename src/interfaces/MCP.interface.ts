@@ -114,8 +114,6 @@ export interface IMCPSignalNotifyCommand {
   mcpName: MCPName;
   /** Human-readable note attached to the notification */
   note: string;
-  /** Optional correlation ID for external systems (e.g. Telegram message ID) */
-  notificationId?: string;
 }
 
 /**

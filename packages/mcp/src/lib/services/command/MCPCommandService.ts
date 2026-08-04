@@ -123,7 +123,6 @@ export class MCPCommandService {
   public commitSignalNotify = async (dto: {
     symbol: string;
     note: string;
-    notificationId?: string;
   }) => {
     this.loggerService.log("mcpCommandService commitSignalNotify", {
       dto,

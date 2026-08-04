@@ -93,7 +93,7 @@ export class MCPPublicService {
         });
     };
 
-    public commitSignalNotify = async (dto: { symbol: string; note: string; notificationId?: string }) => {
+    public commitSignalNotify = async (dto: { symbol: string; note: string }) => {
         this.loggerService.log("mcpPublicService commitSignalNotify", {
             dto,
         });
@@ -114,7 +114,6 @@ export class MCPPublicService {
             mcpName,
             symbol: dto.symbol,
             note: dto.note,
-            notificationId: dto.notificationId,
         });
     };
 }
