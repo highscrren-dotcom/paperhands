@@ -378,7 +378,7 @@ const NOTIFICATION_GET_MESSAGES = async (
       {
         id: randomString(),
         type: "text",
-        text: `Pending signal notifications at ${when.toISOString()}: no pending signals (no active positions), so there are no notifications to show.`,
+        text: `Active position notifications at ${when.toISOString()}: no active positions, so there are no notifications to show.`,
       },
     ];
   }
@@ -398,7 +398,7 @@ const NOTIFICATION_GET_MESSAGES = async (
       {
         id: randomString(),
         type: "text",
-        text: `Pending signal notifications at ${when.toISOString()}: no notifications recorded for the active pending signals yet.`,
+        text: `Active position notifications at ${when.toISOString()}: no notifications recorded for the active positions yet.`,
       },
     ];
   }
@@ -406,7 +406,7 @@ const NOTIFICATION_GET_MESSAGES = async (
     {
       id: randomString(),
       type: "text",
-      text: `Pending signal notifications at ${when.toISOString()} (last ${infoList.length} notification${infoList.length === 1 ? "" : "s"} of the active pending signals, newest first):`,
+      text: `Active position notifications at ${when.toISOString()} (last ${infoList.length} notification${infoList.length === 1 ? "" : "s"} of the active positions, newest first):`,
     },
   ];
   for (const row of infoList) {
@@ -603,12 +603,12 @@ const PERMISSION_ACTION_DESCRIPTION: Record<MCPPermission, string> = {
   getStatus: "Reading the portfolio status",
   getHistoryMessages: "Reading the trade history",
   getNotificationMessages:
-    "Reading the notifications of the active pending signal (open position)",
+    "Reading the notifications of the active position",
   commitPositionOpen: "Opening a position",
   commitPositionClose: "Closing a position",
   commitAverageBuy: "Averaging the position (DCA entry)",
   commitSignalNotify:
-    "Emitting a notification for the active pending signal (open position)",
+    "Emitting a notification for the active position",
 };
 
 /**
@@ -806,7 +806,7 @@ const COMMIT_POSITION_OPEN_FN = async (dto: IMCPPositionOpenCommand) => {
     const config = getConfig();
     if (pending) {
       throw new Error(
-        `MCP Error: already have pending signal for ${dto.symbol}`,
+        `MCP Error: already have an active position for ${dto.symbol}`,
       );
     }
     const percentStopLoss = COMPUTE_HARD_STOP_FN(
@@ -866,7 +866,7 @@ const COMMIT_POSITION_CLOSE_FN = async (dto: IMCPPositionCloseCommand) => {
       strategyName: liveTarget.strategyName,
     });
     if (!pending) {
-      throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
+      throw new Error(`MCP Error: no active position for ${dto.symbol}`);
     }
     const result = await Live.commitClosePending(
       dto.symbol,
@@ -918,7 +918,7 @@ const COMMIT_AVERAGE_BUY_FN = async (dto: IMCPAverageBuyCommand) => {
       strategyName: liveTarget.strategyName,
     });
     if (!pending) {
-      throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
+      throw new Error(`MCP Error: no active position for ${dto.symbol}`);
     }
     return await Live.commitAverageBuy(
       dto.symbol,
@@ -964,7 +964,7 @@ const COMMIT_SIGNAL_NOTIFY_FN = async (dto: IMCPSignalNotifyCommand) => {
       strategyName: liveTarget.strategyName,
     });
     if (!pending) {
-      throw new Error(`MCP Error: missed pending signal for ${dto.symbol}`);
+      throw new Error(`MCP Error: no active position for ${dto.symbol}`);
     }
     return await Live.commitSignalNotify(
       dto.symbol,

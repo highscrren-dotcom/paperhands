@@ -8,7 +8,7 @@ import { getErrorMessage, str } from "functools-kit";
  *
  * Queues a close of the active position of a symbol through the configured
  * MCP. The close executes at the current market price on the next live tick;
- * the engine resolves which pending signal is consumed.
+ * the engine resolves which active position is consumed.
  *
  * @param server - MCP server to register the tool on
  */

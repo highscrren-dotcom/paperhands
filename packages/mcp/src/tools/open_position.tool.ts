@@ -20,7 +20,7 @@ export default function registerOpenPositionTool(server: McpServer) {
       "Open a live trading position at the current market price.",
       "You choose the symbol, the direction (long or short) and a note explaining the reason. The trading engine sets the entry cost and a distant emergency stop-loss that only caps a catastrophic loss.",
       "There is no working take-profit: the position never closes itself on profit. The exit is yours — monitor get_status and close the position with close_position when the thesis plays out or fails; an unattended position dies by the emergency stop or the hold timeout.",
-      "The order first waits in the queue and becomes a position on a live tick. Once get_status shows the active position — at least 5 minutes after this call — record the thesis and exit criteria with notify_position so a later stateless call can pick up the reasoning.",
+      "The order first waits in the queue and becomes a position on a live tick. Once get_status shows the active position — at least 5 minutes after this call — record the thesis and exit criteria with notify_user so a later stateless call can pick up the reasoning.",
       "Fails if the symbol is not enabled for trading or already has a position or a queued order — call get_status first.",
     ),
     {

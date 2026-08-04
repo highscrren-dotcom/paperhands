@@ -7,7 +7,7 @@ import { getErrorMessage, str } from "functools-kit";
  * Registers the average_position tool.
  *
  * Adds a DCA entry to the active position of a symbol through the configured
- * MCP. The engine resolves the pending signal by symbol and owns the money:
+ * MCP. The engine resolves the active position by symbol and owns the money:
  * the entry executes at the current market price with the configured entry
  * cost — the agent only chooses the symbol.
  *

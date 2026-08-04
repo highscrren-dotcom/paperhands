@@ -4,10 +4,10 @@ import ioc from "../lib/index.js";
 import { getErrorMessage, str } from "functools-kit";
 
 /**
- * Registers the notify_position tool.
+ * Registers the notify_user tool.
  *
  * Attaches a note to the active position of a symbol through the configured
- * MCP. The engine resolves the pending signal by symbol and stores the note
+ * MCP. The engine resolves the active position by symbol and stores the note
  * as a signal notification, surfaced back through the get_status composition
  * while the position stays open. A note attaches only to an already-open
  * position — a queued entry order carries no signal to hold it, so the tool
@@ -16,13 +16,13 @@ import { getErrorMessage, str } from "functools-kit";
  *
  * @param server - MCP server to register the tool on
  */
-export default function registerNotifyPositionTool(server: McpServer) {
+export default function registerNotifyUserTool(server: McpServer) {
   server.tool(
-    "notify_position",
+    "notify_user",
     str.newline(
       "Attach a human-readable note to the active live position of a symbol.",
       "The note is stored with the position's signal and surfaces back in get_status while the position is open — record your thesis, observations and exit criteria so a later stateless call can pick up the reasoning.",
-      "A note attaches only to a position that is already open: an entry order waiting in the queue carries no signal to hold it. Usage is allowed at least 5 minutes after open_position and confirm via get_status that the symbol shows an active position before calling.",
+      "A note attaches only to a position that is already in active state: an entry order waiting to open in the queue carries no signal to hold it. Call this no earlier than 5 minutes after open_position, once get_status shows an active position for the symbol.",
       "Fails if the symbol is not enabled for trading or has no active position.",
     ),
     {

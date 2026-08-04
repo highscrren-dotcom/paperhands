@@ -140,7 +140,7 @@ Running the package binary (`npx @backtest-kit/mcp`, the installed `backtest-kit
 | Tool | Arguments | What the agent gets |
 |------|-----------|---------------------|
 | **get_status** | — | One message per traded symbol: current price, invested balance, queued entry order, active position with unrealized PnL (% and USD), queued close order. |
-| **open_position** | `symbol`, `position` (`long` \| `short`), `note` | Opens at market price with engine-computed TP/SL/cost. Fails if the symbol is not live-enabled or already has a pending signal. |
+| **open_position** | `symbol`, `position` (`long` \| `short`), `note` | Opens at market price with engine-computed TP/SL/cost. Fails if the symbol is not live-enabled or already has an active position. |
 | **close_position** | `symbol`, `note` | Queues a market close of the active position. Fails if there is nothing to close. |
 
 Every failure reaches the agent as an `isError` tool result carrying the engine's exact error message — the agent is expected to call `get_status` first and react to rejections, not retry blindly.
@@ -173,7 +173,7 @@ HTTP handlers never signal operation failure through status codes. Every respons
 
 ```json
 { "data": …, "status": "ok",    "error": "",                          "requestId": "…", "serviceName": "…" }
-{            "status": "error", "error": "MCP Error: missed pending signal for BTCUSDT" }
+{            "status": "error", "error": "MCP Error: no active position for BTCUSDT" }
 ```
 
 `MCPCommandService` throws when `error` is non-empty; the tool catches and returns the message to the agent as `isError`. Transport-level failures (engine down, wrong port) surface the same way via `fetchApi`'s exception.
