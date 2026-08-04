@@ -1,6 +1,6 @@
 import http from 'http';
 import * as backtest_kit from 'backtest-kit';
-import { IMCPPositionOpenCommand, IMCPPositionCloseCommand, IMCPMessage } from 'backtest-kit';
+import { IMCPPositionOpenCommand, IMCPPositionCloseCommand, IMCPAverageBuyCommand, IMCPSignalNotifyCommand, IMCPMessage } from 'backtest-kit';
 
 interface ILogger {
     log(topic: string, ...args: any[]): void;
@@ -61,6 +61,8 @@ declare class MCPPrivateService {
     getStatus: (mcpName: string) => Promise<backtest_kit.IMCPMessage[]>;
     commitPositionOpen: (dto: IMCPPositionOpenCommand) => Promise<void>;
     commitPositionClose: (dto: IMCPPositionCloseCommand) => Promise<void>;
+    commitAverageBuy: (dto: IMCPAverageBuyCommand) => Promise<boolean>;
+    commitSignalNotify: (dto: IMCPSignalNotifyCommand) => Promise<void>;
 }
 
 declare class MCPPublicService {
@@ -76,6 +78,14 @@ declare class MCPPublicService {
         symbol: string;
         note: string;
     }) => Promise<void>;
+    commitAverageBuy: (dto: {
+        symbol: string;
+    }) => Promise<boolean>;
+    commitSignalNotify: (dto: {
+        symbol: string;
+        note: string;
+        notificationId?: string;
+    }) => Promise<void>;
 }
 
 declare class MCPCommandService {
@@ -89,6 +99,14 @@ declare class MCPCommandService {
     commitPositionClose: (dto: {
         symbol: string;
         note: string;
+    }) => Promise<any>;
+    commitAverageBuy: (dto: {
+        symbol: string;
+    }) => Promise<any>;
+    commitSignalNotify: (dto: {
+        symbol: string;
+        note: string;
+        notificationId?: string;
     }) => Promise<any>;
 }
 

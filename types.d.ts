@@ -6644,6 +6644,16 @@ interface IMCPCallbacks {
      * the close was queued for.
      */
     onPositionClose(symbol: string, signalId: string, dto: IMCPPositionCloseCommand): void;
+    /**
+     * Fired after a DCA entry commit is accepted: the id of the pending
+     * signal the entry was averaged into.
+     */
+    onAverageBuy(symbol: string, signalId: string, dto: IMCPAverageBuyCommand): void;
+    /**
+     * Fired after a signal notification is emitted: the id of the pending
+     * signal the note was attached to.
+     */
+    onSignalNotify(symbol: string, signalId: string, dto: IMCPSignalNotifyCommand): void;
 }
 /**
  * Per-method access grant of an MCP (Model Context Protocol) instance.
@@ -32570,13 +32580,16 @@ declare class MCPUtils {
      *
      * @example
      * ```typescript
+     * // Full agent memory: portfolio status, notes of the open positions,
+     * // history of the closed trades — one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
-     *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
-     *     messages.push({ id: randomString(), type: "text", text: "Custom trailer for the agent" });
-     *     return messages;
+     *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+     *     const history = await MCP.getHistoryMessages(mcpName);
+     *     return [...status, ...notifications, ...history];
      *   },
      * });
      * ```
@@ -32598,55 +32611,66 @@ declare class MCPUtils {
      *
      * @example
      * ```typescript
+     * // Full agent memory: portfolio status, notes of the open positions,
+     * // history of the closed trades — one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
-     *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
      *     const history = await MCP.getHistoryMessages(mcpName);
-     *     messages.push(...history);
-     *     return messages;
+     *     return [...status, ...notifications, ...history];
      *   },
      * });
      * ```
      */
     getHistoryMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
-     * Renders the `signal.info` notifications of the active PENDING signals of
-     * the MCP (Model Context Protocol) instance's strategy into agent messages:
-     * resolves the pending signal id of every live instance by symbol and keeps
-     * only the notifications emitted via commitSignalNotify for those signal
-     * ids, newest first (at most {@link MAX_HISTORY_ROWS}) — note, correlation
-     * id, market price and unrealized PnL at the moment of the event and the
-     * emit time per notification.
+     * Renders the `signal.info` notifications of the active positions of the
+     * MCP (Model Context Protocol) instance's strategy into agent messages:
+     * reads the pending signal id of every symbol from the portfolio snapshot
+     * the caller already holds — no extra exchange or live state requests —
+     * and keeps only the notifications emitted via commitSignalNotify for
+     * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
+     * note, correlation id, market price and unrealized PnL at the moment of
+     * the event and the emit time per notification.
      *
      * Complements getStatus: the status shows what is open, this method shows
      * what the agent (or the strategy) annotated on the open positions, so a
      * stateless agent can pick up its own prior reasoning about the exact
      * position it is holding. Notifications of already-closed positions are
      * filtered out automatically — their signal ids no longer match any
-     * pending signal.
+     * pending signal in the snapshot.
+     *
+     * The signature matches IMCPSchema.getMessages (async variant), so a
+     * custom renderer can await this method and append the notifications to
+     * the default output without re-fetching anything.
      *
      * Rows accumulate only while a NotificationLive backend is enabled.
      *
+     * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
+     * @param when - Snapshot time stamped into the header message
      * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
-     * @returns Promise resolving to pending-signal notification messages for the MCP agent
+     * @returns Promise resolving to active-position notification messages for the MCP agent
      *
      * @example
      * ```typescript
+     * // Full agent memory: portfolio status, notes of the open positions,
+     * // history of the closed trades — one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
-     *     const messages = await MCP.getDefaultMessages(context, when, mcpName);
-     *     const notifications = await MCP.getNotificationMessages(mcpName);
-     *     messages.push(...notifications);
-     *     return messages;
+     *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+     *     const history = await MCP.getHistoryMessages(mcpName);
+     *     return [...status, ...notifications, ...history];
      *   },
      * });
      * ```
      */
-    getNotificationMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
+    getNotificationMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
      * Renders the current portfolio of the MCP (Model Context Protocol)
      * instance's strategy into agent messages.
