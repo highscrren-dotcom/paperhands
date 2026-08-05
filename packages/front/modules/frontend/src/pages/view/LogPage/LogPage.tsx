@@ -58,7 +58,12 @@ const options: IBreadcrumbs2Option[] = [
     icon: Search,
     action: "search-action",
     label: t("Search"),
-  }
+  },
+  {
+    type: Breadcrumbs2Type.Fab,
+    action: "update-now",
+    icon: Refresh,
+  },
 ];
 
 const reloadSubject = new Subject<void>();
