@@ -16,9 +16,18 @@ import {
 
 import isToday from "dayjs/plugin/isToday";
 import localeData from "dayjs/plugin/localeData";
-import enLocale from "dayjs/locale/en-gb";
 import utc from "dayjs/plugin/utc";
 import timezone from 'dayjs/plugin/timezone';
+
+import enLocale from "dayjs/locale/en-gb";
+import ruLocale from "dayjs/locale/ru";
+import trLocale from "dayjs/locale/tr";
+import zhLocale from "dayjs/locale/zh-cn";
+import hiLocale from "dayjs/locale/hi";
+import esLocale from "dayjs/locale/es";
+import ptLocale from "dayjs/locale/pt";
+
+import { getLocale } from "../i18n";
 
 ChartJS.register(
   CategoryScale,
@@ -33,10 +42,22 @@ ChartJS.register(
   Legend,
 );
 
+// Ключи совпадают с localeMap из i18n, значения - соответствующие
+// локали dayjs (en -> en-gb, zh -> zh-cn).
+const dayjsLocaleMap = {
+  en: enLocale,
+  ru: ruLocale,
+  tr: trLocale,
+  zh: zhLocale,
+  hi: hiLocale,
+  es: esLocale,
+  pt: ptLocale,
+};
+
 {
-    dayjs.extend(localeData);
-    dayjs.extend(utc);
-    dayjs.extend(isToday);
-    dayjs.extend(timezone);
-    dayjs.locale(enLocale);
+  dayjs.extend(localeData);
+  dayjs.extend(utc);
+  dayjs.extend(isToday);
+  dayjs.extend(timezone);
+  dayjs.locale(dayjsLocaleMap[getLocale()] || enLocale);
 }
