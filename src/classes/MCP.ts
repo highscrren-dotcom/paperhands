@@ -20,6 +20,7 @@ import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
 import { Position } from "./Position";
 import { GLOBAL_CONFIG } from "../config/params";
+import toPlainString from "../helpers/toPlainString";
 
 const METHOD_NAME_GET_STATUS = "MCPUtils.getStatus";
 const METHOD_NAME_GET_DEFAULT_MESSAGES = "MCPUtils.getDefaultMessages";
@@ -209,36 +210,45 @@ const DEFAULT_GET_MESSAGES = (
         createdSignal.priceOpen !== undefined
           ? `at price ${createdSignal.priceOpen}`
           : "at market price";
-      const details = [
+      const cost =
         createdSignal.cost !== undefined
-          ? `cost ${createdSignal.cost} USD`
-          : "",
-        createdSignal.note ? `note: ${createdSignal.note}` : "",
-      ]
-        .filter(Boolean)
-        .join(", ");
+          ? ` (cost ${createdSignal.cost} USD)`
+          : "";
       lines.push(
-        `Entry queue: ${createdSignal.position} order waiting to open ${entry}${details ? ` (${details})` : ""}`,
+        `Entry queue: ${createdSignal.position} order waiting to open ${entry}${cost}`,
       );
+      if (createdSignal.note) {
+        lines.push("Description:");
+        lines.push(toPlainString(createdSignal.note));
+        lines.push("");
+      }
     } else {
       lines.push("Entry queue: empty, no order waiting to open a position");
     }
     if (pendingSignal) {
-      const note = pendingSignal.note ? ` (note: ${pendingSignal.note})` : "";
-      lines.push(`Active position: ${pendingSignal.position}${note}`);
+      lines.push(`Active position: ${pendingSignal.position}`);
+      if (pendingSignal.note) {
+        lines.push("Description:");
+        lines.push(toPlainString(pendingSignal.note));
+        lines.push("");
+      }
     } else {
       lines.push("Active position: none");
     }
     if (closedSignal) {
-      const details = [
-        closedSignal.note ? `note: ${closedSignal.note}` : "",
-        closedSignal.closeNote ? `close note: ${closedSignal.closeNote}` : "",
-      ]
-        .filter(Boolean)
-        .join(", ");
       lines.push(
-        `Close queue: close order waiting for the ${closedSignal.position} position${details ? ` (${details})` : ""}`,
+        `Close queue: close order waiting for the ${closedSignal.position} position`,
       );
+      if (closedSignal.note) {
+        lines.push("Description:");
+        lines.push(toPlainString(closedSignal.note));
+        lines.push("");
+      }
+      if (closedSignal.closeNote) {
+        lines.push("Close description:");
+        lines.push(toPlainString(closedSignal.closeNote));
+        lines.push("");
+      }
     } else {
       lines.push("Close queue: empty, no order waiting to close a position");
     }
@@ -252,7 +262,7 @@ const DEFAULT_GET_MESSAGES = (
  * (StorageLive): recently CLOSED positions of the bound strategy, newest
  * first — one header message plus one text message per closed trade with
  * the dollar/percent result, direction, close reason, open/close times and
- * the note the position was opened with.
+ * the description the position was opened with.
  *
  * The anti-churn half of the agent's picture: a stateless news agent that
  * only sees open positions re-trades the same news right after closing;
@@ -315,7 +325,8 @@ const HISTORY_GET_MESSAGES = async (
     );
     lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
     if (row.note) {
-      lines.push(`Note: ${row.note}`);
+      lines.push("Description:");
+      lines.push(toPlainString(row.note));
     }
     messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
@@ -328,14 +339,15 @@ const HISTORY_GET_MESSAGES = async (
  * (NotificationLive): reads the pending signal of every symbol from the
  * ALREADY BUILT portfolio snapshot (IMCPContext) — no extra exchange or live
  * state requests — and keeps only the `signal.info` notifications whose
- * signalId belongs to one of those active positions: the notes the agent
+ * signalId belongs to one of those active positions: the descriptions the agent
  * (or the strategy) attached to the positions open RIGHT NOW, not the whole
  * historical feed. Closed positions drop out automatically: their signalId
  * no longer matches any pending signal in the snapshot.
  *
  * Rendered newest first — one header message plus one text message per
- * notification with the note, the market price and unrealized PnL at the
- * moment of the event and the emit time.
+ * notification with the market price and unrealized PnL at the moment of
+ * the event, the emit time and the description itself, rendered last on its
+ * own lines so multi-line markdown stays readable.
  *
  * Depth: at most {@link MAX_HISTORY_ROWS} newest notifications are rendered.
  * Rows accumulate only while a NotificationLive backend is enabled.
@@ -403,7 +415,6 @@ const NOTIFICATION_GET_MESSAGES = async (
     const lines: string[] = [];
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
-    lines.push(`Note: ${row.note}`);
     lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
     lines.push(
       `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
@@ -411,6 +422,10 @@ const NOTIFICATION_GET_MESSAGES = async (
     lines.push(
       `Emitted at: ${new Date(row.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
+    if (row.note) {
+      lines.push("Description:");
+      lines.push(toPlainString(row.note));
+    }
     messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
   return messages;
