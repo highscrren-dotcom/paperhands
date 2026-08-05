@@ -35,6 +35,11 @@ interface IListViewData {
     type: "backtest" | "live";
 }
 
+/**
+ * Highlight for pending (opened) signals, same tint as SignalGridWidget's rowColor
+ */
+const PENDING_ROW_COLOR = "#ffc40085";
+
 function isLightColor(hex: string) {
     // Compare contrast with black (#000000) and white (#FFFFFF)
     const contrastWithBlack = getContrastRatio(hex, "#000000");
@@ -73,7 +78,10 @@ export const ListView = ({
         async () => {
             if (type === "live") {
                 const signalList = await ioc.storageViewService.listSignalLive();
-                return signalList.filter((s) => s.status === "closed")
+                // opened signals are "pending" and get a yellow highlight, same as SignalGridWidget
+                return signalList.filter(
+                    (s) => s.status === "closed" || s.status === "opened",
+                );
             }
             const signalList =  await ioc.storageViewService.listSignalBacktest();
             return signalList.filter((s) => s.status === "closed")
@@ -149,7 +157,9 @@ export const ListView = ({
                     <ListItemButton
                         sx={{
                             background: (theme) =>
-                                idx % 2 === 1
+                                item.status === "opened"
+                                    ? PENDING_ROW_COLOR
+                                    : idx % 2 === 1
                                     ? alpha(
                                           theme.palette.getContrastText(
                                               theme.palette.background.paper,
