@@ -150,7 +150,11 @@ const createButton = (
     ),
 });
 
-const createGroup = (label: string, routes: IRoute[]): TypedField => ({
+const createGroup = (
+    label: string,
+    routes: IRoute[],
+    hideHeader = false,
+): TypedField => ({
     type: FieldType.Group,
     className: GROUP_ROOT,
     sx: {
@@ -167,7 +171,10 @@ const createGroup = (label: string, routes: IRoute[]): TypedField => ({
                 opacity: 0.5,
             },
             element: () => (
-                <Stack direction="row">
+                <Stack
+                    direction="row"
+                    sx={{ visibility: hideHeader ? "hidden" : "visible" }}
+                >
                     <Chip
                         variant="outlined"
                         size="small"
@@ -240,6 +247,9 @@ const createFields = async (): Promise<TypedField[]> => {
     // рядом друг с другом вместо одного длинного столбца.
     const CHUNK_SIZE = 4;
 
+    // Сколько групп шириной desktopColumns="3" помещается в один ряд сетки.
+    const GROUPS_PER_ROW = 4;
+
     const chunkRoutes = (routes: IRoute[]) => {
         const chunks: IRoute[][] = [];
         for (let i = 0; i < routes.length; i += CHUNK_SIZE) {
@@ -247,6 +257,15 @@ const createFields = async (): Promise<TypedField[]> => {
         }
         return chunks;
     };
+
+    // Пустая ячейка-распорка: добивает ряд до конца, чтобы следующая
+    // стратегия начиналась с новой строки и её куски не разрывались.
+    const createSpacer = (): TypedField => ({
+        type: FieldType.Component,
+        desktopColumns: "3",
+        tabletColumns: "12",
+        element: () => null,
+    });
 
     const tabletLeftColumn: TypedField[] = [];
     const tabletRightColumn: TypedField[] = [];
@@ -259,9 +278,23 @@ const createFields = async (): Promise<TypedField[]> => {
             tabletRightColumn.push(createGroup(strategy, routes));
         }
 
-        chunkRoutes(routes).forEach((chunk) => {
-            wideColumn.push(createGroup(strategy, chunk));
+        const chunks = chunkRoutes(routes);
+
+        chunks.forEach((chunk, chunkIdx) => {
+            // Имя стратегии показываем только над первым куском, у остальных
+            // заголовок скрыт, но занимает место - чтобы ряды кнопок
+            // выравнивались по одной линии.
+            wideColumn.push(createGroup(strategy, chunk, chunkIdx > 0));
         });
+
+        // Добиваем незаконченный ряд, иначе следующая стратегия влезет
+        // в остаток текущего и разорвётся между строками.
+        const tail = chunks.length % GROUPS_PER_ROW;
+        if (tail !== 0) {
+            for (let i = tail; i < GROUPS_PER_ROW; i++) {
+                wideColumn.push(createSpacer());
+            }
+        }
     });
 
     return [
