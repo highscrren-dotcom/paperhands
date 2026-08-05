@@ -1,29 +1,79 @@
-import { IOutlet, OutletView } from "react-declarative";
+import {
+    IOutlet,
+    ITabsStep,
+    TabsView,
+    History,
+    ITabsOutlet,
+} from "react-declarative";
+import { Container } from "@mui/material";
 import hasRouteMatch from "../../../utils/hasRouteMatch";
 
-import MainView from "./view/MainView";
+import Navigation from "./components/Navigation";
+import BacktestView from "./view/BacktestView";
+import LiveView from "./view/LiveView";
 import ioc from "../../../lib";
+import { t } from "../../../i18n";
+import { Background } from "../../../components/common/Background";
 
-const routes: IOutlet[] = [
+const routes: ITabsOutlet[] = [
+
     {
-        id: "main",
-        element: MainView,
+        id: "backtest",
+        element: BacktestView,
         isActive: (pathname) => hasRouteMatch(["/report"], pathname),
+    },
+    {
+        id: "backtest",
+        element: BacktestView,
+        isActive: (pathname) => hasRouteMatch(["/report/backtest"], pathname),
+    },
+    {
+        id: "live",
+        element: LiveView,
+        isActive: (pathname) => hasRouteMatch(["/report/live"], pathname),
     },
 ];
 
-interface IStatusPageProps {
-    id: string;
-}
+const tabs: ITabsStep[] = [
+    {
+        id: "backtest",
+        label: t("Backtest"),
+    },
+    {
+        id: "live",
+        label: t("Live"),
+    },
+];
 
-export const StatusPage = ({ id }: IStatusPageProps) => (
-    <OutletView
-        history={ioc.routerService}
-        onLoadStart={() => ioc.layoutService.setAppbarLoader(true)}
-        onLoadEnd={() => ioc.layoutService.setAppbarLoader(false)}
-        routes={routes}
-        params={{ id }}
-    />
-);
+export const ReportPage = () => {
 
-export default StatusPage;
+    const handleTabChange = (id: string, history: History) => {
+        if (id === "backtest") {
+            history.replace(`/report/backtest`);
+        }
+        if (id === "live") {
+            history.replace(`/report/live`);
+        }
+    };
+
+    return (
+        <Container>
+            <TabsView
+                withScroll
+                sx={{
+                    height: "calc(100vh - 105px)",
+                }}
+                BeforePaper={Navigation}
+                onLoadStart={() => ioc.layoutService.setAppbarLoader(true)}
+                onLoadEnd={() => ioc.layoutService.setAppbarLoader(false)}
+                routes={routes}
+                tabs={tabs}
+                history={ioc.routerService}
+                onTabChange={handleTabChange}
+            />
+            <Background />
+        </Container>
+    );
+};
+
+export default ReportPage;

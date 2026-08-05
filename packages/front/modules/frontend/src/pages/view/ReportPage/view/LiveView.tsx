@@ -3,33 +3,27 @@ import {
     Button,
     ButtonBase,
     Chip,
-    Container,
     darken,
     getContrastRatio,
     lighten,
-    Paper,
     Stack,
     Typography,
 } from "@mui/material";
 import {
-    Breadcrumbs2,
-    Breadcrumbs2Type,
     Center,
     FieldType,
-    IBreadcrumbs2Option,
     One,
     TypedField,
     typo,
-    openBlank,
     useAsyncValue,
+    useOnce,
     useReloadTrigger,
-    IBreadcrumbs2Action,
+    ITabsOutletProps,
 } from "react-declarative";
+import actionSubject from "../config/actionSubject";
 import { makeStyles } from "../../../../styles";
-import { KeyboardArrowLeft, Refresh } from "@mui/icons-material";
 import ioc from "../../../../lib";
 import IconPhoto from "../../../../components/common/IconPhoto";
-import IconWrapper from "../../../../components/common/IconWrapper";
 import useMarkdownReportView from "../../../../hooks/useMarkdownReportView";
 import { t } from "../../../../i18n";
 
@@ -59,32 +53,6 @@ function isLightColor(hex: string) {
     const contrastWithWhite = getContrastRatio(hex, "#FFFFFF");
     return contrastWithBlack > contrastWithWhite;
 }
-
-const options: IBreadcrumbs2Option[] = [
-    {
-        type: Breadcrumbs2Type.Link,
-        action: "back-action",
-        label: <KeyboardArrowLeft sx={{ display: "block" }} />,
-    },
-    {
-        type: Breadcrumbs2Type.Link,
-        action: "back-action",
-        label: t("Main"),
-    },
-    {
-        type: Breadcrumbs2Type.Link,
-        action: "back-action",
-        label: t("Markdown Report"),
-    },
-];
-
-const actions: IBreadcrumbs2Action[] = [
-    {
-        action: "update-now",
-        label: t("Refresh"),
-        icon: () => <IconWrapper icon={Refresh} color="#4caf50" />,
-    },
-];
 
 const createButton = (
     id: string,
@@ -299,79 +267,34 @@ const createSectionFields = (groups: Record<string, IRoute[]>): TypedField[] => 
 };
 
 const createFields = async (): Promise<TypedField[]> => {
-    const [symbolMap, backtestList, liveList] = await Promise.all([
+    const [symbolMap, itemList] = await Promise.all([
         ioc.symbolGlobalService.getSymbolMap(),
-        ioc.backtestGlobalService.list(),
         ioc.liveGlobalService.list(),
     ]);
 
-    const backtestGroups: Record<string, IRoute[]> = {};
-    const liveGroups: Record<string, IRoute[]> = {};
+    const groups: Record<string, IRoute[]> = {};
 
-    backtestList.forEach((item) => {
+    itemList.forEach((item) => {
         const symbolData = symbolMap[item.symbol];
         const strategy = item.strategyName;
-        if (!backtestGroups[strategy]) {
-            backtestGroups[strategy] = [];
+        if (!groups[strategy]) {
+            groups[strategy] = [];
         }
-        backtestGroups[strategy].push({
+        groups[strategy].push({
             symbol: item.symbol,
             label: symbolData?.displayName || item.symbol,
             color: symbolData?.color || "#ccc",
-            type: "backtest",
-            id: item.id,
-        });
-    });
-
-    liveList.forEach((item) => {
-        const symbolData = symbolMap[item.symbol];
-        const strategy = item.strategyName;
-        if (!liveGroups[strategy]) {
-            liveGroups[strategy] = [];
-        }
-        liveGroups[strategy].push({
-            symbol: item.symbol,
-            label: symbolData?.displayName || item.symbol,
-            color: symbolData?.color || "#ccc",
-            id: item.id,
             type: "live",
+            id: item.id,
         });
     });
 
-    const backtestFields = createSectionFields(backtestGroups);
-    const liveFields = createSectionFields(liveGroups);
-
-    if (!liveFields.length && !backtestFields.length) {
-        return [];
-    }
-
-    return [
-        {
-            type: FieldType.Fragment,
-            isVisible: () => !!backtestFields.length,
-            fields: [
-                {
-                    type: FieldType.Line,
-                    title: t("Backtest"),
-                },
-                ...backtestFields,
-            ],
-        },
-        {
-            type: FieldType.Fragment,
-            isVisible: () => !!liveFields.length,
-            fields: [
-                {
-                    type: FieldType.Line,
-                    title: t("Live"),
-                },
-                ...liveFields,
-            ],
-        },
-    ];
+    return createSectionFields(groups);
 };
 
-export const MainView = () => {
+export const LiveView = ({
+    setLoading,
+}: ITabsOutletProps) => {
     const { classes } = useStyles();
 
     const { reloadTrigger, doReload } = useReloadTrigger();
@@ -381,20 +304,22 @@ export const MainView = () => {
             return await createFields();
         },
         {
-            onLoadStart: () => ioc.layoutService.setAppbarLoader(true),
-            onLoadEnd: () => ioc.layoutService.setAppbarLoader(false),
+            onLoadStart: () => setLoading(true),
+            onLoadEnd: () => setLoading(false),
             deps: [reloadTrigger],
         },
     );
 
-    const handleAction = (action: string) => {
-        if (action === "back-action") {
-            ioc.routerService.push("/");
-        }
-        if (action === "update-now") {
-            doReload();
-        }
-    };
+    useOnce(() =>
+        actionSubject.subscribe((action) => {
+            if (action === "back-action") {
+                ioc.routerService.push("/");
+            }
+            if (action === "update-now") {
+                doReload();
+            }
+        }),
+    );
 
     const openMarkdownReport = useMarkdownReportView();
 
@@ -405,7 +330,7 @@ export const MainView = () => {
     const renderInner = () => {
         if (loading || !fields) {
             return (
-                <Center>
+                <Center sx={{ height: "100%" }}>
                     <Typography variant="h6" sx={{ opacity: 0.5 }}>
                         {t("Loading...")}
                     </Typography>
@@ -415,7 +340,7 @@ export const MainView = () => {
 
         if (!fields.length) {
             return (
-                <Center>
+                <Center sx={{ height: "100%" }}>
                     <Typography variant="h6" sx={{ opacity: 0.5 }}>
                         {t("No pending signals")}
                     </Typography>
@@ -438,16 +363,7 @@ export const MainView = () => {
         );
     };
 
-    return (
-        <Container>
-            <Breadcrumbs2
-                items={options}
-                actions={actions}
-                onAction={handleAction}
-            />
-            {renderInner()}
-        </Container>
-    );
+    return renderInner();
 };
 
-export default MainView;
+export default LiveView;

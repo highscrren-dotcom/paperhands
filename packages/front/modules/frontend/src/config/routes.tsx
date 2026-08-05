@@ -144,6 +144,14 @@ const dashboardRoutes: IRouteItem[] = [
         element: heavy(() => import("../pages/view/ReportPage")),
     },
     {
+        path: "/report/backtest",
+        element: heavy(() => import("../pages/view/ReportPage")),
+    },
+    {
+        path: "/report/live",
+        element: heavy(() => import("../pages/view/ReportPage")),
+    },
+    {
         path: "/dump",
         element: heavy(() => import("../pages/view/DumpPage")),
     },
