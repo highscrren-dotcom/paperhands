@@ -76,8 +76,9 @@ export const LogPage = () => {
     handler: async (limit, offset) => {
       const logList = await ioc.logViewService.getList();
       const iter = pickDocuments<ILogEntry>(limit, offset);
+      const filterRegExp = new RegExp(filterData$.current, "i");
       for (const log of logList) {
-        if (!new RegExp(filterData$.current, "i").test(log.topic)) {
+        if (!filterRegExp.test(log.topic)) {
           continue;
         }
         if (iter([log]).done) {
