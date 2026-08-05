@@ -16,11 +16,11 @@ every live instance of that strategy.
   schema names one explicitly — ambiguity is an error, not a guess.
 - positionCost — entry cost in USD for commitPositionOpen; defaults to
   GLOBAL_CONFIG.CC_POSITION_ENTRY_COST when omitted.
-- permissions — per-method grants for the agent; defaults to ALL methods
-  when omitted. Listing permissions explicitly narrows the agent to
-  exactly those methods; a call to a method whose permission is missing
-  throws with an agent-readable denial. The check runs per call, so an
-  overridden schema applies immediately.
+- permissions — per-method grants for the agent-facing methods; defaults
+  to ALL of them when omitted. Listing permissions explicitly narrows the
+  agent to exactly those methods; a call to a method whose permission is
+  missing throws with an agent-readable denial. The check runs per call,
+  so an overridden schema applies immediately.
 - getMessages — renders the portfolio snapshot into agent messages; when
   omitted the default renderer emits one text message per symbol.
 - callbacks — all optional; an omitted callback is simply never fired.
@@ -65,7 +65,7 @@ Estimated time in minutes for a position to reach its TP or SL.
 permissions: MCPPermission[]
 ```
 
-Per-method grants for the agent; each permission name gates the MCP (Model Context Protocol) method of the same name. Default: all methods
+Per-method grants for the agent; each permission name gates the agent-facing MCP (Model Context Protocol) method of the same name. Default: all of them
 
 ### getMessages
 
