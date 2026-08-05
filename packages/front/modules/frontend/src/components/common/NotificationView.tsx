@@ -490,6 +490,11 @@ export const NotificationView = () => {
                             <ListItemText
                               primary={
                                 <HtmlView
+                                  sx={{ 
+                                    whiteSpace: "nowrap",
+                                    overflow: "clip",
+                                    textOverflow: "ellipsis",
+                                  }}
                                   config={sanitize}
                                   handler={() => getNotificationTitle(item)}
                                 />
@@ -555,6 +560,11 @@ export const NotificationView = () => {
                             <ListItemText
                               primary={
                                 <HtmlView
+                                  sx={{ 
+                                    whiteSpace: "nowrap",
+                                    overflow: "clip",
+                                    textOverflow: "ellipsis",
+                                  }}
                                   config={sanitize}
                                   handler={() => getNotificationTitle(item)}
                                 />
