@@ -18,28 +18,31 @@ export default function registerClosePositionTool(server: McpServer) {
     str.newline(
       "Close the active live position of a symbol at the current market price.",
       "This is the only way to realize profit or cut a loss: positions are exited manually by this call, nothing else closes them except the distant emergency stop-loss or the hold timeout.",
-      "You choose the symbol and a note explaining the reason; the trading engine resolves which position is closed.",
+      "You choose the symbol and a description explaining the reason; the trading engine resolves which position is closed.",
+      "A detailed multi-line description is strongly preferred over a single sentence: the full markdown syntax is rendered — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links. Lay out what happened to the thesis, how the price behaved and what made you exit now.",
       "The close is queued and executes on a live tick: expect the position to stay visible in get_status for roughly 5 minutes after this call. The delay is not a failure — do not resubmit the close.",
       "Fails if the symbol is not enabled for trading or has no active position — call get_status first to see active positions and their unrealized PnL.",
     ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),
-      note: z
+      description: z
         .string()
-        .describe("Human-readable reason for closing the position"),
+        .describe(
+          "Reason for closing the position. Detailed multi-line markdown is strongly preferred: headings, lists, emphasis, code blocks and quotes all render",
+        ),
     },
-    async ({ symbol, note }) => {
+    async ({ symbol, description }) => {
       try {
         await ioc.mcpCommandService.commitPositionClose({
           symbol,
-          note,
+          note: description,
         });
 
         return {
           content: [
             {
               type: "text" as const,
-              text: `Close command accepted: the active position for ${symbol} will be closed at market price (note: ${note})`,
+              text: `Close command accepted: the active position for ${symbol} will be closed at market price`,
             },
           ],
         };
