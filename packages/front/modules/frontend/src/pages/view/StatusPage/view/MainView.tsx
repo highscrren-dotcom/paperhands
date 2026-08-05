@@ -234,20 +234,34 @@ const createFields = async (): Promise<TypedField[]> => {
         ([, a], [, b]) => b.length - a.length,
     );
 
+    // Группа шириной desktopColumns="3" вмещает два символа в ряд, то есть
+    // CHUNK_SIZE символов дают ровно два ряда. Стратегию с большим числом
+    // символов режем на несколько групп с одним именем - они встают в строку
+    // рядом друг с другом вместо одного длинного столбца.
+    const CHUNK_SIZE = 4;
+
+    const chunkRoutes = (routes: IRoute[]) => {
+        const chunks: IRoute[][] = [];
+        for (let i = 0; i < routes.length; i += CHUNK_SIZE) {
+            chunks.push(routes.slice(i, i + CHUNK_SIZE));
+        }
+        return chunks;
+    };
+
     const tabletLeftColumn: TypedField[] = [];
     const tabletRightColumn: TypedField[] = [];
     const wideColumn: TypedField[] = [];
 
     sortedGroups.forEach(([strategy, routes], idx) => {
-        const group = createGroup(strategy, routes);
-
         if (idx % 2 === 0) {
-            tabletLeftColumn.push(group);
+            tabletLeftColumn.push(createGroup(strategy, routes));
         } else {
-            tabletRightColumn.push(group);
+            tabletRightColumn.push(createGroup(strategy, routes));
         }
 
-        wideColumn.push(group);
+        chunkRoutes(routes).forEach((chunk) => {
+            wideColumn.push(createGroup(strategy, chunk));
+        });
     });
 
     return [
