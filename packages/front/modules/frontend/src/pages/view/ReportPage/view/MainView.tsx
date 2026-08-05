@@ -147,7 +147,11 @@ const createButton = (
     ),
 });
 
-const createGroup = (label: string, routes: IRoute[]): TypedField => ({
+const createGroup = (
+    label: string,
+    routes: IRoute[],
+    hideHeader = false,
+): TypedField => ({
     type: FieldType.Group,
     className: GROUP_ROOT,
     sx: {
@@ -164,7 +168,10 @@ const createGroup = (label: string, routes: IRoute[]): TypedField => ({
                 opacity: 0.5,
             },
             element: () => (
-                <Stack direction="row">
+                <Stack
+                    direction="row"
+                    sx={{ visibility: hideHeader ? "hidden" : "visible" }}
+                >
                     <Chip
                         variant="outlined"
                         size="small"
@@ -190,6 +197,106 @@ const createGroup = (label: string, routes: IRoute[]): TypedField => ({
         },
     ],
 });
+
+// Группа шириной desktopColumns="3" вмещает два символа в ряд, то есть
+// CHUNK_SIZE символов дают ровно два ряда. Стратегию с большим числом
+// символов режем на несколько групп с одним именем - они встают в строку
+// рядом друг с другом вместо одного длинного столбца.
+const CHUNK_SIZE = 4;
+
+// Сколько групп шириной desktopColumns="3" помещается в один ряд сетки.
+const GROUPS_PER_ROW = 4;
+
+const chunkRoutes = (routes: IRoute[]) => {
+    const chunks: IRoute[][] = [];
+    for (let i = 0; i < routes.length; i += CHUNK_SIZE) {
+        chunks.push(routes.slice(i, i + CHUNK_SIZE));
+    }
+    return chunks;
+};
+
+// Пустая ячейка-распорка: добивает ряд до конца, чтобы следующая
+// стратегия начиналась с новой строки и её куски не разрывались.
+const createSpacer = (): TypedField => ({
+    type: FieldType.Component,
+    desktopColumns: "3",
+    tabletColumns: "12",
+    element: () => null,
+});
+
+/**
+ * Раскладывает стратегии одной секции: на планшете - две колонки по 6,
+ * на десктопе - общий ряд на 12 колонок, где каждая стратегия нарезана
+ * на куски по CHUNK_SIZE символов и добита распорками до конца ряда.
+ * Возвращает пустой массив, если в секции нет стратегий, чтобы её
+ * заголовок не отрисовался в одиночку.
+ */
+const createSectionFields = (groups: Record<string, IRoute[]>): TypedField[] => {
+    const sortedGroups = Object.entries(groups).sort(
+        ([, a], [, b]) => b.length - a.length,
+    );
+
+    if (!sortedGroups.length) {
+        return [];
+    }
+
+    const tabletLeftColumn: TypedField[] = [];
+    const tabletRightColumn: TypedField[] = [];
+    const wideColumn: TypedField[] = [];
+
+    sortedGroups.forEach(([strategy, routes], idx) => {
+        // На планшете группа занимает всю ширину колонки, резать нечего.
+        if (idx % 2 === 0) {
+            tabletLeftColumn.push(createGroup(strategy, routes));
+        } else {
+            tabletRightColumn.push(createGroup(strategy, routes));
+        }
+
+        const chunks = chunkRoutes(routes);
+
+        chunks.forEach((chunk, chunkIdx) => {
+            // Имя стратегии показываем только над первым куском, у остальных
+            // заголовок скрыт, но занимает место - чтобы ряды кнопок
+            // выравнивались по одной линии.
+            wideColumn.push(createGroup(strategy, chunk, chunkIdx > 0));
+        });
+
+        // Добиваем незаконченный ряд, иначе следующая стратегия влезет
+        // в остаток текущего и разорвётся между строками.
+        const tail = chunks.length % GROUPS_PER_ROW;
+        if (tail !== 0) {
+            for (let i = tail; i < GROUPS_PER_ROW; i++) {
+                wideColumn.push(createSpacer());
+            }
+        }
+    });
+
+    return [
+        {
+            type: FieldType.Group,
+            columns: "6",
+            className: "tabletLeftColumn",
+            phoneHidden: true,
+            desktopHidden: true,
+            fields: tabletLeftColumn,
+        },
+        {
+            type: FieldType.Group,
+            columns: "6",
+            className: "tabletRightColumn",
+            phoneHidden: true,
+            desktopHidden: true,
+            fields: tabletRightColumn,
+        },
+        {
+            type: FieldType.Group,
+            columns: "12",
+            className: "wideColumn",
+            tabletHidden: true,
+            fields: wideColumn,
+        },
+    ];
+};
 
 const createFields = async (): Promise<TypedField[]> => {
     const [symbolMap, backtestList, liveList] = await Promise.all([
@@ -231,13 +338,8 @@ const createFields = async (): Promise<TypedField[]> => {
         });
     });
 
-    const backtestFields = Object.entries(backtestGroups)
-        .sort(([, a], [, b]) => b.length - a.length)
-        .map(([strategy, routes]) => createGroup(strategy, routes));
-
-    const liveFields = Object.entries(liveGroups)
-        .sort(([, a], [, b]) => b.length - a.length)
-        .map(([strategy, routes]) => createGroup(strategy, routes));
+    const backtestFields = createSectionFields(backtestGroups);
+    const liveFields = createSectionFields(liveGroups);
 
     if (!liveFields.length && !backtestFields.length) {
         return [];
@@ -252,11 +354,7 @@ const createFields = async (): Promise<TypedField[]> => {
                     type: FieldType.Line,
                     title: t("Backtest"),
                 },
-                {
-                    type: FieldType.Group,
-                    columns: "12",
-                    fields: backtestFields,
-                },
+                ...backtestFields,
             ],
         },
         {
@@ -267,11 +365,7 @@ const createFields = async (): Promise<TypedField[]> => {
                     type: FieldType.Line,
                     title: t("Live"),
                 },
-                {
-                    type: FieldType.Group,
-                    columns: "12",
-                    fields: liveFields,
-                },
+                ...liveFields,
             ],
         },
     ];
