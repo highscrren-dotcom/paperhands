@@ -267,15 +267,26 @@ const createFields = async (): Promise<TypedField[]> => {
         element: () => null,
     });
 
+    // Одна стратегия во вторую колонку не делится - иначе правая половина
+    // планшета остаётся пустой. Отдаём ей всю ширину.
+    const isSingleColumn = sortedGroups.length < 2;
+
     const tabletLeftColumn: TypedField[] = [];
     const tabletRightColumn: TypedField[] = [];
     const wideColumn: TypedField[] = [];
 
-    sortedGroups.forEach(([strategy, routes], idx) => {
-        if (idx % 2 === 0) {
+    // Планшетные колонки балансируем по количеству символов, а не по чётности
+    // индекса: стратегии разной высоты иначе оставляют дыру снизу.
+    let leftWeight = 0;
+    let rightWeight = 0;
+
+    sortedGroups.forEach(([strategy, routes]) => {
+        if (isSingleColumn || leftWeight <= rightWeight) {
             tabletLeftColumn.push(createGroup(strategy, routes));
+            leftWeight += routes.length;
         } else {
             tabletRightColumn.push(createGroup(strategy, routes));
+            rightWeight += routes.length;
         }
 
         const chunks = chunkRoutes(routes);
@@ -300,7 +311,7 @@ const createFields = async (): Promise<TypedField[]> => {
     return [
         {
             type: FieldType.Group,
-            columns: "6",
+            columns: isSingleColumn ? "12" : "6",
             className: "tabletLeftColumn",
             phoneHidden: true,
             desktopHidden: true,
@@ -312,6 +323,7 @@ const createFields = async (): Promise<TypedField[]> => {
             className: "tabletRightColumn",
             phoneHidden: true,
             desktopHidden: true,
+            isVisible: () => !isSingleColumn,
             fields: tabletRightColumn,
         },
         {

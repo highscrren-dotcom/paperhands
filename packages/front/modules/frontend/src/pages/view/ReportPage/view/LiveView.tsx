@@ -208,16 +208,27 @@ const createSectionFields = (groups: Record<string, IRoute[]>): TypedField[] => 
         return [];
     }
 
+    // Одна стратегия во вторую колонку не делится - иначе правая половина
+    // планшета остаётся пустой. Отдаём ей всю ширину.
+    const isSingleColumn = sortedGroups.length < 2;
+
     const tabletLeftColumn: TypedField[] = [];
     const tabletRightColumn: TypedField[] = [];
     const wideColumn: TypedField[] = [];
 
-    sortedGroups.forEach(([strategy, routes], idx) => {
+    // Планшетные колонки балансируем по количеству символов, а не по чётности
+    // индекса: стратегии разной высоты иначе оставляют дыру снизу.
+    let leftWeight = 0;
+    let rightWeight = 0;
+
+    sortedGroups.forEach(([strategy, routes]) => {
         // На планшете группа занимает всю ширину колонки, резать нечего.
-        if (idx % 2 === 0) {
+        if (isSingleColumn || leftWeight <= rightWeight) {
             tabletLeftColumn.push(createGroup(strategy, routes));
+            leftWeight += routes.length;
         } else {
             tabletRightColumn.push(createGroup(strategy, routes));
+            rightWeight += routes.length;
         }
 
         const chunks = chunkRoutes(routes);
@@ -242,7 +253,7 @@ const createSectionFields = (groups: Record<string, IRoute[]>): TypedField[] => 
     return [
         {
             type: FieldType.Group,
-            columns: "6",
+            columns: isSingleColumn ? "12" : "6",
             className: "tabletLeftColumn",
             phoneHidden: true,
             desktopHidden: true,
@@ -254,6 +265,7 @@ const createSectionFields = (groups: Record<string, IRoute[]>): TypedField[] => 
             className: "tabletRightColumn",
             phoneHidden: true,
             desktopHidden: true,
+            isVisible: () => !isSingleColumn,
             fields: tabletRightColumn,
         },
         {
