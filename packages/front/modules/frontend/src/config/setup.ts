@@ -28,6 +28,7 @@ import esLocale from "dayjs/locale/es";
 import ptLocale from "dayjs/locale/pt";
 
 import { getLocale } from "../i18n";
+import { localeChangedSubject } from "../i18n/tools/t";
 
 ChartJS.register(
   CategoryScale,
@@ -59,5 +60,13 @@ const dayjsLocaleMap = {
   dayjs.extend(utc);
   dayjs.extend(isToday);
   dayjs.extend(timezone);
+}
+
+const applyLocale = () => {
   dayjs.locale(dayjsLocaleMap[getLocale()] || enLocale);
+}
+
+{
+  applyLocale();
+  localeChangedSubject.subscribe(applyLocale);
 }
