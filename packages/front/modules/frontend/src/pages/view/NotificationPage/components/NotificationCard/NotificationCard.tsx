@@ -521,16 +521,16 @@ const hasNote = (
     return "note" in item && !!item.note;
   }
   if (item.type === "signal.info") {
-    return "note" in item && !!item.note && !!item.notificationId;;
+    return "note" in item && !!item.note;
   }
   if (item.type === "activate_scheduled.commit") {
-    return "note" in item && !!item.note && !!item.activateId;
+    return "note" in item && !!item.note;
   }
   if (item.type === "close_pending.commit") {
-    return "note" in item && !!item.note && !!item.closeId;
+    return "note" in item && !!item.note;
   }
   if (item.type === "cancel_scheduled.commit") {
-    return "note" in item && !!item.note && !!item.cancelId;
+    return "note" in item && !!item.note;
   }
   return false;
 };
