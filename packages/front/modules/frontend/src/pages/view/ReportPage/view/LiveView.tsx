@@ -19,6 +19,7 @@ import {
     useOnce,
     useReloadTrigger,
     ITabsOutletProps,
+    ScrollView,
 } from "react-declarative";
 import actionSubject from "../config/actionSubject";
 import { makeStyles } from "../../../../styles";
@@ -361,17 +362,19 @@ export const LiveView = ({
         }
 
         return (
-            <>
-                <One
-                    key={reloadTrigger}
-                    className={classes.root}
-                    fields={fields}
-                    payload={() => ({
-                        handleOpen,
-                    })}
-                />
-                <Box paddingBottom="24px" />
-            </>
+            <ScrollView withScrollbar sx={{ height: "100%" }}>
+                <div>
+                    <One
+                        key={reloadTrigger}
+                        className={classes.root}
+                        fields={fields}
+                        payload={() => ({
+                            handleOpen,
+                        })}
+                    />
+                    <Box paddingBottom="24px" />
+                </div>
+            </ScrollView>
         );
     };
 
