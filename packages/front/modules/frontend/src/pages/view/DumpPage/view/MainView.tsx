@@ -41,6 +41,12 @@ const options: IBreadcrumbs2Option[] = [
         action: "back-action",
         label: t("Dump Explorer"),
     },
+    {
+        type: Breadcrumbs2Type.Button,
+        action: "update-now",
+        label: t("Refresh"),
+        icon: Refresh,
+    },
 ];
 
 const actions: IBreadcrumbs2Action[] = [
