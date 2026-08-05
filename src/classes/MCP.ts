@@ -172,6 +172,7 @@ const DEFAULT_GET_MESSAGES = (
             `- entry ${index + 1}: price ${entry.price}, cost ${entry.cost.toFixed(2)} USD, at ${new Date(entry.timestamp).toISOString()}`,
           );
         }
+        lines.push("");
       }
       lines.push(`Current price: ${currentPrice}`);
       lines.push(
