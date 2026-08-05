@@ -87,6 +87,12 @@ const options: IBreadcrumbs2Option[] = [
     action: "back-action",
     compute: (payload) => `${t("KPI")} ${String(payload).toUpperCase()}`,
   },
+  {
+    type: Breadcrumbs2Type.Button,
+    action: "update-now",
+    label: t("Refresh"),
+    icon: Refresh,
+  },
 ];
 
 const reloadSubject = new Subject<void>();
