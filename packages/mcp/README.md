@@ -2,7 +2,7 @@
 
 # 🤖 @backtest-kit/mcp
 
-> Model Context Protocol server for [backtest-kit](https://www.npmjs.com/package/backtest-kit). Lets an LLM agent (Claude, or any MCP client) watch your live trading portfolio and open or close positions — through **three guarded tools**, while the trading engine keeps every level, limit and validation on its side.
+> Model Context Protocol server for [backtest-kit](https://www.npmjs.com/package/backtest-kit). Lets an LLM agent (Claude, or any MCP client) watch your live trading portfolio and open, average or close positions — through **five guarded tools**, while the trading engine keeps every level, limit and validation on its side.
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tripolskypetr/backtest-kit)
 [![npm](https://img.shields.io/npm/v/@backtest-kit/mcp.svg?style=flat-square)](https://npmjs.org/package/@backtest-kit/mcp)
@@ -48,13 +48,13 @@ The agent gets `get_status`, `open_position` and `close_position`. Your strategy
 
 ## Why
 
-**The agent decides *when and which way* — the engine decides *everything else*.** An LLM given raw exchange API keys is a liability: one hallucinated parameter and it buys the wrong size at the wrong price with no stop. Here the agent's whole vocabulary is three tools, and the open command carries only `symbol`, `position` and a human-readable `note`. Take profit, stop-loss and entry cost are computed by backtest-kit (fixed 50% moonbag TP; hard stop snapped to a 2.5% grid strictly below `CC_MAX_STOPLOSS_DISTANCE_PERCENT`; cost from the MCP schema). Every command passes the same validation chain — MCP → strategy → risk profiles → actions — as any other signal source, and an open against a symbol that already holds a position is rejected by the engine, not by prompt engineering.
+**The agent decides *when and which way* — the engine decides *everything else*.** An LLM given raw exchange API keys is a liability: one hallucinated parameter and it buys the wrong size at the wrong price with no stop. Here the agent's whole vocabulary is five tools, and the open command carries only `symbol`, `position` and a human-readable `description`. Take profit, stop-loss and entry cost are computed by backtest-kit (fixed 50% moonbag TP; hard stop snapped to a 2.5% grid strictly below `CC_MAX_STOPLOSS_DISTANCE_PERCENT`; cost from the MCP schema). Every command passes the same validation chain — MCP → strategy → risk profiles → actions — as any other signal source, and an open against a symbol that already holds a position is rejected by the engine, not by prompt engineering.
 
 **Text-first status built for LLM consumption.** `get_status` returns one message per traded symbol with the current price, invested balance, the queued entry order, the active position with unrealized PnL and the queued close order. Empty slots are stated explicitly ("Entry queue: empty") so the model never has to guess whether a field was omitted or just missing — the difference between an agent that reasons and one that hallucinates. A custom `getMessages` in the schema can replace or extend the default renderer, including base64 chart images, which map 1:1 onto MCP image content blocks.
 
 **Two processes, one contract.** The stdio MCP server lives in the agent's world and holds no trading state; it forwards every call over HTTP to the trading process. Handlers always answer `200` — transport success is not operation success — with the outcome in an envelope: `error` is an empty string on success and the engine's exact message (`MCP Error: symbol BTCUSDT is not enabled for trading`) on failure, which the tool relays to the agent as an `isError` result it can read and react to.
 
-- 🛠️ **Three guarded tools** — `get_status`, `open_position`, `close_position`; nothing else is exposed.
+- 🛠️ **Five guarded tools** — `get_status`, `open_position`, `close_position`, `average_position`, `notify_user`; nothing else is exposed, and `--tools` narrows even that.
 - 🧷 **Engine-owned levels** — moonbag TP/SL and entry cost are computed server-side; the agent cannot override them.
 - 💬 **Human-readable portfolio** — per-symbol text messages with explicit empty slots; images supported.
 - 🔌 **Process isolation** — stdio server ↔ HTTP bridge ↔ trading engine; stdout carries only JSON-RPC.
@@ -111,10 +111,41 @@ npx @backtest-kit/mcp --host 127.0.0.1 --port 60051
 |----------|-----------|-------------|
 | `--host` | `CC_MCP_HOST` | Host of the HTTP bridge to connect to |
 | `--port` | `CC_MCP_PORT` | Port of the HTTP bridge; a non-numeric value is ignored |
+| `--tools` | — | Comma-separated tool names to expose; omitted means all five |
 
-Resolution order: **CLI arguments → `setConfig()` → env vars → defaults** (`127.0.0.1:60051`).
+Resolution order for host and port: **CLI arguments → `setConfig()` → env vars → defaults** (`127.0.0.1:60051`).
 
 CLI arguments apply **only in binary mode** — an entrypoint guard (`helpers/getEntry.ts`) makes sure that when the package is imported as a library, the host process's `argv` never leaks into the configuration.
+
+</details>
+
+<details>
+<summary>Narrowing the tool surface with <code>--tools</code></summary>
+
+By default the stdio server registers all five tools. `--tools` takes a comma-separated list of tool names and registers **only** those — the rest never appear in the agent's tool list at all, so no prompt engineering is needed to keep the agent away from them:
+
+```bash
+# Read-only agent: it can watch the portfolio but not touch it
+npx @backtest-kit/mcp --tools get_status
+
+# Observe and exit, but never open or average
+npx @backtest-kit/mcp --tools get_status,close_position,notify_user
+```
+
+```json
+{
+  "mcpServers": {
+    "trading-signals": {
+      "command": "npx",
+      "args": ["@backtest-kit/mcp", "--tools", "get_status,close_position"]
+    }
+  }
+}
+```
+
+Valid names are exactly the tool names the agent sees: `get_status`, `open_position`, `close_position`, `average_position`, `notify_user`. An unknown name **fails the startup** with the list of unknown and available names — a typo silently dropping a tool would only surface later as odd agent behaviour.
+
+This is transport-level narrowing, independent of the engine's `permissions` field in the MCP schema. The two compose: `--tools` decides what the agent is offered, `permissions` decides what the engine accepts. Restricting a tool here is convenient for running several agents against one trading process with different mandates; enforcing the boundary for real belongs in the schema, which the agent cannot bypass.
 
 </details>
 
@@ -135,13 +166,19 @@ Running the package binary (`npx @backtest-kit/mcp`, the installed `backtest-kit
 
 ---
 
-## The 3 tools
+## The 5 tools
 
 | Tool | Arguments | What the agent gets |
 |------|-----------|---------------------|
 | **get_status** | — | One message per traded symbol: current price, invested balance, queued entry order, active position with unrealized PnL (% and USD), queued close order. |
-| **open_position** | `symbol`, `position` (`long` \| `short`), `note` | Opens at market price with engine-computed TP/SL/cost. Fails if the symbol is not live-enabled or already has an active position. |
-| **close_position** | `symbol`, `note` | Queues a market close of the active position. Fails if there is nothing to close. |
+| **open_position** | `symbol`, `position` (`long` \| `short`), `description` | Opens at market price with engine-computed TP/SL/cost. Fails if the symbol is not live-enabled or already has an active position. |
+| **close_position** | `symbol`, `description` | Queues a market close of the active position. Fails if there is nothing to close. |
+| **average_position** | `symbol` | Adds a DCA entry at market price with the configured entry cost. Fails if there is no active position. |
+| **notify_user** | `symbol`, `description` | Attaches a description to the active position, surfaced back in `get_status`. Fails if there is no active position. |
+
+Every command is queued and executes on a live tick, so its effect shows up in `get_status` after roughly 5 minutes — the tool descriptions tell the agent not to resubmit meanwhile. The `description` arguments render as markdown, so detailed multi-line write-ups are encouraged over one-liners.
+
+Use `--tools` (see Configuration) to expose only a subset of them.
 
 Every failure reaches the agent as an `isError` tool result carrying the engine's exact error message — the agent is expected to call `get_status` first and react to rejections, not retry blindly.
 
@@ -188,6 +225,8 @@ HTTP handlers never signal operation failure through status codes. Every respons
 | `/api/v1/mcp/get_status` | POST | — | `MCP.getStatus(mcpName)` |
 | `/api/v1/mcp/commit_position_open` | POST | `{ symbol, position, note }` | `MCP.commitPositionOpen(dto)` |
 | `/api/v1/mcp/commit_position_close` | POST | `{ symbol, note }` | `MCP.commitPositionClose(dto)` |
+| `/api/v1/mcp/commit_average_buy` | POST | `{ symbol }` | `MCP.commitAverageBuy(dto)` |
+| `/api/v1/mcp/commit_signal_notify` | POST | `{ symbol, note }` | `MCP.commitSignalNotify(dto)` |
 | `/api/v1/health/health_check` | GET | — | uptime / memory / CPU snapshot |
 
 Request envelope: `{ clientId, serviceName, userId, requestId, data }`. The `mcpName` is resolved server-side: `CC_MCP_NAME` if set, otherwise the first registered schema — the agent never needs to know it.
@@ -196,16 +235,16 @@ Request envelope: `{ clientId, serviceName, userId, requestId, data }`. The `mcp
 
 ---
 
-## Internal architecture (complete source map)
+## Architecture
 
 <details>
 <summary>Layers & files</summary>
 
 **Public surface** — `functions/serve.function.ts` (`serve`/`getRouter`), `functions/setup.function.ts` (`setLogger`), `config/params.ts` (`setConfig`/`getConfig`), `index.ts` re-exports + `lib` container.
 
-**Stdio server** — `main/entry.ts` (McpServer + StdioServerTransport, entrypoint-guarded via `helpers/getEntry.ts`), `tools/get_status.tool.ts`, `tools/open_position.tool.ts`, `tools/close_position.tool.ts` (zod-validated arguments, `isError` mapping).
+**Stdio server** — `main/entry.ts` (McpServer + StdioServerTransport, entrypoint-guarded via `helpers/getEntry.ts`, `--tools` selection via `helpers/getArgs.ts`), `tools/get_status.tool.ts`, `tools/open_position.tool.ts`, `tools/close_position.tool.ts`, `tools/average_position.tool.ts`, `tools/notify_user.tool.ts` (zod-validated arguments, `isError` mapping).
 
-**HTTP bridge** — `config/router.ts` (micro + router + CORS, `/api/v1/mcp/*` mount), `routes/mcp.ts` (three POST handlers, always-200 envelope), `routes/health.ts`.
+**HTTP bridge** — `config/router.ts` (micro + router + CORS, `/api/v1/mcp/*` mount), `routes/mcp.ts` (five POST handlers, always-200 envelope), `routes/health.ts`.
 
 **Service layer** (`lib/services/`):
 - `command/MCPCommandService.ts` — HTTP client used by the tools (`fetchApi` against `CC_MCP_HOST:CC_MCP_PORT`).
