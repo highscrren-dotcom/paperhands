@@ -4,6 +4,7 @@ import { Exchange } from "./Exchange";
 import { Live } from "./Live";
 import { StorageLive } from "./Storage";
 import { NotificationLive } from "./Notification";
+import { Log } from "./Log";
 import {
   IMCPAverageBuyCommand,
   IMCPContext,
@@ -26,6 +27,7 @@ const METHOD_NAME_GET_STATUS = "MCPUtils.getStatus";
 const METHOD_NAME_GET_DEFAULT_MESSAGES = "MCPUtils.getDefaultMessages";
 const METHOD_NAME_GET_HISTORY_MESSAGES = "MCPUtils.getHistoryMessages";
 const METHOD_NAME_GET_NOTIFICATION_MESSAGES = "MCPUtils.getNotificationMessages";
+const METHOD_NAME_GET_AGENT_MESSAGES = "MCPUtils.getAgentMessages";
 const METHOD_NAME_COMMIT_POSITION_OPEN = "MCPUtils.commitPositionOpen";
 const METHOD_NAME_COMMIT_POSITION_CLOSE = "MCPUtils.commitPositionClose";
 const METHOD_NAME_COMMIT_AVERAGE_BUY = "MCPUtils.commitAverageBuy";
@@ -36,6 +38,9 @@ const HARD_STOP_STEP_PERCENT = 2.5;
 
 /** Maximum closed positions included in the trade history messages. */
 const MAX_HISTORY_ROWS = 10;
+
+/** Maximum agent log entries included in the agent messages. */
+const MAX_AGENT_ROWS = 10;
 
 /**
  * Computes the hard stop-loss distance percent for an opened position.
@@ -327,6 +332,91 @@ const HISTORY_GET_MESSAGES = async (
     if (row.note) {
       lines.push("Description:");
       lines.push(toPlainString(row.note));
+    }
+    messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
+  }
+  return messages;
+};
+
+/**
+ * Builds the agent instruction feed for an MCP (Model Context Protocol)
+ * instance from the log history (Log): the `agent`-level entries written by
+ * the strategy code via `Log.agent(...)`, newest first — one header message
+ * plus one text message per entry with the topic, the emit time and the
+ * arguments the strategy attached.
+ *
+ * This is the strategy talking to the agent. Where getStatus reports numbers
+ * and getNotificationMessages replays the agent's own reasoning, this channel
+ * carries directives the strategy code decided to raise — "the position has
+ * been stagnating for an hour, look for an efficient exit", "volatility
+ * collapsed, tighten the thesis". The agent reads them as instructions from
+ * the trading system, not as its own past notes.
+ *
+ * Only LIVE entries of the bound strategy are kept: backtest runs and other
+ * strategies never leak into the agent's picture. Entries carrying no method
+ * context (written outside a strategy scope) are skipped as unattributable.
+ *
+ * Depth: at most {@link MAX_AGENT_ROWS} newest entries are rendered. Rows
+ * accumulate only while a Log adapter is enabled (memory, persist or jsonl —
+ * the dummy adapter records nothing).
+ *
+ * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
+ * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @returns Promise resolving to agent instruction messages for the MCP agent
+ */
+const AGENT_GET_MESSAGES = async (
+  mcpName: MCPName,
+  when: Date,
+): Promise<IMCPMessage[]> => {
+  const strategyName = await GET_STRATEGY_NAME_FN(
+    mcpName,
+    METHOD_NAME_GET_AGENT_MESSAGES,
+  );
+  const entryList = await Log.getList();
+  const agentList = entryList
+    .flatMap((entry) =>
+      entry.type === "agent" &&
+      entry.methodContext?.strategyName === strategyName &&
+      !entry.executionContext?.backtest
+        ? [entry]
+        : [],
+    )
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_AGENT_ROWS);
+  if (!agentList.length) {
+    return [
+      {
+        id: randomString(),
+        type: "text",
+        text: `Trading system messages at ${when.toISOString()}: no messages from the trading system yet.`,
+      },
+    ];
+  }
+  const messages: IMCPMessage[] = [
+    {
+      id: randomString(),
+      type: "text",
+      text: `Trading system messages at ${when.toISOString()} (last ${agentList.length} message${agentList.length === 1 ? "" : "s"} from the strategy, newest first). Treat them as instructions from the trading system:`,
+    },
+  ];
+  for (const entry of agentList) {
+    const emittedMinutesAgo = Math.max(
+      0,
+      Math.round((when.getTime() - entry.timestamp) / 60_000),
+    );
+    const lines: string[] = [];
+    if (entry.executionContext?.symbol) {
+      lines.push(`Symbol: ${entry.executionContext.symbol}`);
+    }
+    lines.push(
+      `Emitted at: ${new Date(entry.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
+    );
+    lines.push("Message:");
+    lines.push(toPlainString(entry.topic));
+    for (const arg of entry.args) {
+      lines.push(
+        toPlainString(typeof arg === "string" ? arg : JSON.stringify(arg)),
+      );
     }
     messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
@@ -1111,15 +1201,17 @@ export class MCPUtils {
    * @example
    * ```typescript
    * // Full agent memory: portfolio status, notes of the open positions,
-   * // history of the closed trades — one snapshot, no repeated requests
+   * // directives raised by the strategy, history of the closed trades —
+   * // one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
    *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+   *     const agent = await MCP.getAgentMessages(mcpName);
    *     const history = await MCP.getHistoryMessages(mcpName);
-   *     return [...status, ...notifications, ...history];
+   *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
    * ```
@@ -1158,15 +1250,17 @@ export class MCPUtils {
    * @example
    * ```typescript
    * // Full agent memory: portfolio status, notes of the open positions,
-   * // history of the closed trades — one snapshot, no repeated requests
+   * // directives raised by the strategy, history of the closed trades —
+   * // one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
    *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+   *     const agent = await MCP.getAgentMessages(mcpName);
    *     const history = await MCP.getHistoryMessages(mcpName);
-   *     return [...status, ...notifications, ...history];
+   *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
    * ```
@@ -1184,6 +1278,60 @@ export class MCPUtils {
 
     const when = alignToInterval(new Date(), "1m");
     return await HISTORY_GET_MESSAGES(mcpName, when);
+  };
+
+  /**
+   * Renders the messages the STRATEGY CODE addressed to the agent into agent
+   * messages: the last {@link MAX_AGENT_ROWS} `agent`-level entries of the
+   * log history written via `Log.agent(...)` under the MCP (Model Context
+   * Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
+   * time and the message text per entry.
+   *
+   * This is the strategy talking to the agent, the reverse direction of every
+   * other renderer: getStatus reports numbers, getNotificationMessages
+   * replays the agent's own notes, and this channel carries directives the
+   * strategy raised on its own — a position stagnating for an hour, collapsed
+   * volatility, an approaching session close. The agent reads them as
+   * instructions from the trading system.
+   *
+   * Backtest entries and entries of other strategies are filtered out; rows
+   * accumulate only while a Log adapter is enabled.
+   *
+   * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+   * @returns Promise resolving to trading system messages for the MCP agent
+   *
+   * @example
+   * ```typescript
+   * // In the strategy code — raise a directive for the agent
+   * if (await getPositionActiveMinutes("BTCUSDT") > 60) {
+   *   Log.agent("The BTCUSDT position has been stagnating for an hour — look for an efficient exit");
+   * }
+   *
+   * // In the MCP schema — surface those directives to the agent
+   * addMCPSchema({
+   *   mcpName: "my-mcp",
+   *   strategyName: "my-strategy",
+   *   getMessages: async (context, when, mcpName) => {
+   *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+   *     const agent = await MCP.getAgentMessages(mcpName);
+   *     return [...status, ...agent];
+   *   },
+   * });
+   * ```
+   */
+  public getAgentMessages = async (
+    mcpName: MCPName,
+  ): Promise<IMCPMessage[]> => {
+    backtest.loggerService.log(METHOD_NAME_GET_AGENT_MESSAGES, {
+      mcpName,
+    });
+
+    {
+      VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_AGENT_MESSAGES);
+    }
+
+    const when = alignToInterval(new Date(), "1m");
+    return await AGENT_GET_MESSAGES(mcpName, when);
   };
 
   /**
@@ -1217,15 +1365,17 @@ export class MCPUtils {
    * @example
    * ```typescript
    * // Full agent memory: portfolio status, notes of the open positions,
-   * // history of the closed trades — one snapshot, no repeated requests
+   * // directives raised by the strategy, history of the closed trades —
+   * // one snapshot, no repeated requests
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
    *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+   *     const agent = await MCP.getAgentMessages(mcpName);
    *     const history = await MCP.getHistoryMessages(mcpName);
-   *     return [...status, ...notifications, ...history];
+   *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
    * ```

@@ -1,19 +1,22 @@
 import {
   Breadcrumbs2,
   Breadcrumbs2Type,
+  FieldType,
   IBreadcrumbs2Action,
   IBreadcrumbs2Option,
   OneButton,
   pickDocuments,
   Subject,
+  TypedField,
   useActualState,
   useActualValue,
   useAsyncAction,
   useOffsetPaginator,
+  useOne,
   VirtualView,
 } from "react-declarative";
 import IconWrapper from "../../../components/common/IconWrapper";
-import { Download, KeyboardArrowLeft, Refresh, Search } from "@mui/icons-material";
+import { Download, FilterList, KeyboardArrowLeft, Refresh, Search } from "@mui/icons-material";
 import { Container } from "@mui/material";
 import ioc from "../../../lib";
 import { ILogEntry } from "backtest-kit";
@@ -21,11 +24,54 @@ import { CC_LIST_BUFFER_SIZE } from "../../../config/params";
 import LogCard from "./components/LogCard";
 import { t } from "../../../i18n";
 
+/**
+ * Log levels available for filtering, mirroring ILogEntry["type"].
+ * The empty value clears the filter and shows every level.
+ */
+const LEVEL_FILTERS = [
+  { level: "filter-all", type: "", label: t("All levels") },
+  { level: "filter-log", type: "log", label: t("Log") },
+  { level: "filter-debug", type: "debug", label: t("Debug") },
+  { level: "filter-info", type: "info", label: t("Info") },
+  { level: "filter-warn", type: "warn", label: t("Warn") },
+  { level: "filter-agent", type: "agent", label: t("Agent") },
+] as const;
+
+const LOG_NAME_BY_LEVEL = new Map<string, string>(
+  LEVEL_FILTERS.map(({ level, label }) => [level, label]),
+);
+
+/**
+ * Maps the combo value (an action id such as `filter-agent`) to the matching
+ * ILogEntry["type"]. The `filter-all` entry maps to an empty string, which the
+ * paginator treats as "no level filter".
+ */
+const LOG_TYPE_BY_LEVEL = new Map<string, ILogEntry["type"] | "">(
+  LEVEL_FILTERS.map(({ level, type }) => [level, type]),
+);
+
+const fields: TypedField[] = [
+  {
+    type: FieldType.Combo,
+    name: "log_level",
+    placeholder: t("Choose"),
+    title: "",
+    itemList: LEVEL_FILTERS.map(({ level }) => level),
+    tr: (level) => LOG_NAME_BY_LEVEL.get(level) || level,
+    defaultValue: "filter-all",
+  }
+];
+
 const actions: IBreadcrumbs2Action[] = [
   {
     action: "download-action",
     label: t("Download"),
     icon: () => <IconWrapper icon={Download} color="#4caf50" />
+  },
+  {
+    action: "log-level",
+    label: t("Log level"),
+    icon: () => <IconWrapper icon={FilterList} color="#4caf50" />
   },
   {
     divider: true,
@@ -64,6 +110,11 @@ const options: IBreadcrumbs2Option[] = [
     action: "update-now",
     icon: Refresh,
   },
+  {
+    type: Breadcrumbs2Type.Fab,
+    action: "log-level",
+    icon: FilterList,
+  },
 ];
 
 const reloadSubject = new Subject<void>();
@@ -71,6 +122,7 @@ const reloadSubject = new Subject<void>();
 export const LogPage = () => {
 
   const [filterData$, setFilterData] = useActualState("");
+  const [levelData$, setLevelData] = useActualState<ILogEntry["type"] | "">("");
 
   const { data, hasMore, loading, onSkip } = useOffsetPaginator({
     handler: async (limit, offset) => {
@@ -78,6 +130,9 @@ export const LogPage = () => {
       const iter = pickDocuments<ILogEntry>(limit, offset);
       const filterRegExp = new RegExp(filterData$.current, "i");
       for (const log of logList) {
+        if (levelData$.current && log.type !== levelData$.current) {
+          continue;
+        }
         if (!filterRegExp.test(log.topic)) {
           continue;
         }
@@ -90,6 +145,12 @@ export const LogPage = () => {
     onLoadStart: () => ioc.layoutService.setAppbarLoader(true),
     onLoadEnd: () => ioc.layoutService.setAppbarLoader(false),
     reloadSubject,
+  });
+
+  const pickOne = useOne({
+    title: t("Log level"),
+    large: true,
+    fields,
   });
 
   const data$ = useActualValue(data);
@@ -114,6 +175,20 @@ export const LogPage = () => {
     reloadSubject.next();
   }
 
+  const handleLevel = async () => {
+    const activeLevel = LEVEL_FILTERS.find(
+      ({ type }) => type === levelData$.current,
+    );
+    const logLevel = await pickOne({
+      handler: () => ({ log_level: activeLevel?.level || "filter-all" }),
+    }).toPromise();
+    if (!logLevel) {
+      return;
+    }
+    setLevelData(LOG_TYPE_BY_LEVEL.get(logLevel.log_level) || "");
+    await reloadSubject.next();
+  }
+
   const handleAction = async (action: string) => {
     if (action === "back-action") {
       ioc.routerService.push("/");
@@ -123,16 +198,24 @@ export const LogPage = () => {
     }
     if (action === "update-now") {
       setFilterData("");
+      setLevelData("");
       await reloadSubject.next();
     }
     if (action === "search-action") {
       handleSearch();
     }
+    if (action === "log-level") {
+      handleLevel();
+    }
   }
 
   return (
     <Container>
-      <Breadcrumbs2 items={options} actions={actions} onAction={handleAction} />
+      <Breadcrumbs2
+        items={options}
+        actions={actions}
+        onAction={handleAction}
+      />
        <VirtualView
         sx={{ height: "calc(100vh - 155px)" }}
         withScrollbar

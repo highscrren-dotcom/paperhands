@@ -14,6 +14,7 @@ import {
   Info,
   Warning,
   Article,
+  SmartToy,
 } from "@mui/icons-material";
 import { ILogEntry } from "backtest-kit";
 
@@ -32,6 +33,8 @@ const getLogColor = (item: ILogEntry): string => {
       return "#FF9800";
     case "log":
       return "#4CAF50";
+    case "agent":
+      return "#7E57C2";
     default:
       return "#9E9E9E";
   }
@@ -48,6 +51,8 @@ const getLogIcon = (item: ILogEntry) => {
       return <Warning sx={sx} />;
     case "log":
       return <Article sx={sx} />;
+    case "agent":
+      return <SmartToy sx={sx} />;
     default:
       return <Article sx={sx} />;
   }
