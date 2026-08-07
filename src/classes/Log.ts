@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import { createWriteStream, WriteStream } from "fs";
 import { join } from "path";
 import { randomString, singleshot, timeout, TIMEOUT_SYMBOL, getErrorMessage } from "functools-kit";
-import { ILogEntry, ILogger } from "../interfaces/Logger.interface";
+import { IAgentLogger, ILogEntry, ILogger } from "../interfaces/Logger.interface";
 import { PersistLogAdapter } from "./Persist";
 import backtest, { ExecutionContextService, MethodContextService } from "../lib";
 import { GLOBAL_CONFIG } from "../config/params";
@@ -15,12 +15,14 @@ const LOG_PERSIST_METHOD_NAME_LOG = "LogPersistUtils.log";
 const LOG_PERSIST_METHOD_NAME_DEBUG = "LogPersistUtils.debug";
 const LOG_PERSIST_METHOD_NAME_INFO = "LogPersistUtils.info";
 const LOG_PERSIST_METHOD_NAME_WARN = "LogPersistUtils.warn";
+const LOG_PERSIST_METHOD_NAME_AGENT = "LogPersistUtils.agent";
 const LOG_PERSIST_METHOD_NAME_GET_LIST = "LogPersistUtils.getList";
 
 const LOG_MEMORY_METHOD_NAME_LOG = "LogMemoryUtils.log";
 const LOG_MEMORY_METHOD_NAME_DEBUG = "LogMemoryUtils.debug";
 const LOG_MEMORY_METHOD_NAME_INFO = "LogMemoryUtils.info";
 const LOG_MEMORY_METHOD_NAME_WARN = "LogMemoryUtils.warn";
+const LOG_MEMORY_METHOD_NAME_AGENT = "LogMemoryUtils.agent";
 const LOG_MEMORY_METHOD_NAME_GET_LIST = "LogMemoryUtils.getList";
 
 const LOG_ADAPTER_METHOD_NAME_USE_LOGGER = "LogAdapter.useLogger";
@@ -34,6 +36,7 @@ const LOG_JSONL_METHOD_NAME_LOG = "LogJsonlUtils.log";
 const LOG_JSONL_METHOD_NAME_DEBUG = "LogJsonlUtils.debug";
 const LOG_JSONL_METHOD_NAME_INFO = "LogJsonlUtils.info";
 const LOG_JSONL_METHOD_NAME_WARN = "LogJsonlUtils.warn";
+const LOG_JSONL_METHOD_NAME_AGENT = "LogJsonlUtils.agent";
 const LOG_JSONL_METHOD_NAME_GET_LIST = "LogJsonlUtils.getList";
 
 const WAIT_FOR_INIT_SYMBOL = Symbol("wait-for-init");
@@ -77,8 +80,9 @@ const GET_EXECUTION_CONTEXT_FN = () => {
 
 /**
  * Extended logger interface with log history access.
+ * Combines the framework severity levels ({@link ILogger}) with the AI agent channel ({@link IAgentLogger}).
  */
-export interface ILog extends ILogger {
+export interface ILog extends ILogger, IAgentLogger {
   /**
    * Returns all stored log entries.
    * @returns Array of all log entries
@@ -231,6 +235,31 @@ export class LogPersistUtils implements ILog {
   };
 
   /**
+   * Logs an AI agent message.
+   * Persists entry to disk after appending.
+   * @param topic - The log topic / method name
+   * @param args - Additional arguments
+   */
+  public agent = async (topic: string, ...args: any[]): Promise<void> => {
+    backtest.loggerService.info(LOG_PERSIST_METHOD_NAME_AGENT, { topic });
+    await this.waitForInit();
+    const date = GET_DATE_FN();
+    this._entries.push({
+      id: randomString(),
+      type: "agent",
+      priority: Date.now(),
+      timestamp: getContextTimestamp(),
+      createdAt: date.toISOString(),
+      methodContext: GET_METHOD_CONTEXT_FN(),
+      executionContext: GET_EXECUTION_CONTEXT_FN(),
+      topic,
+      args,
+    });
+    this._enforceLimit();
+    await PersistLogAdapter.writeLogData(this._entries);
+  };
+
+  /**
    * Lists all stored log entries.
    * @returns Array of all log entries
    */
@@ -248,7 +277,7 @@ export class LogPersistUtils implements ILog {
  * - Stores log entries in memory only (no persistence)
  * - Maintains up to CC_MAX_LOG_LINES most recent entries
  * - Data is lost when application restarts
- * - Handles all log levels (log, debug, info, warn)
+ * - Handles all log levels (log, debug, info, warn, agent)
  *
  * Use this adapter for testing or when persistence is not required.
  */
@@ -349,6 +378,29 @@ export class LogMemoryUtils implements ILog {
     this._entries.push({
       id: randomString(),
       type: "warn",
+      priority: Date.now(),
+      timestamp: getContextTimestamp(),
+      createdAt: date.toISOString(),
+      methodContext: GET_METHOD_CONTEXT_FN(),
+      executionContext: GET_EXECUTION_CONTEXT_FN(),
+      topic,
+      args,
+    });
+    this._enforceLimit();
+  };
+
+  /**
+   * Logs an AI agent message.
+   * Appends entry to in-memory array.
+   * @param topic - The log topic / method name
+   * @param args - Additional arguments
+   */
+  public agent = async (topic: string, ...args: any[]): Promise<void> => {
+    backtest.loggerService.info(LOG_MEMORY_METHOD_NAME_AGENT, { topic });
+    const date = GET_DATE_FN();
+    this._entries.push({
+      id: randomString(),
+      type: "agent",
       priority: Date.now(),
       timestamp: getContextTimestamp(),
       createdAt: date.toISOString(),
@@ -551,6 +603,27 @@ export class LogJsonlUtils implements ILog {
   };
 
   /**
+   * Logs an AI agent message.
+   * @param topic - The log topic / method name
+   * @param args - Additional arguments
+   */
+  public agent = async (topic: string, ...args: any[]): Promise<void> => {
+    backtest.loggerService.info(LOG_JSONL_METHOD_NAME_AGENT, { topic });
+    const date = GET_DATE_FN();
+    await this._append({
+      id: randomString(),
+      type: "agent",
+      priority: Date.now(),
+      timestamp: getContextTimestamp(),
+      createdAt: date.toISOString(),
+      methodContext: GET_METHOD_CONTEXT_FN(),
+      executionContext: GET_EXECUTION_CONTEXT_FN(),
+      topic,
+      args,
+    });
+  };
+
+  /**
    * Reads all log entries from the JSONL file.
    * Returns empty array if file does not exist.
    * @returns Array of all log entries
@@ -604,6 +677,13 @@ export class LogDummyUtils implements ILog {
    * No-op handler for warning-level log.
    */
   warn() {
+    void 0;
+  }
+
+  /**
+   * No-op handler for AI agent log.
+   */
+  agent() {
     void 0;
   }
 }
@@ -693,6 +773,19 @@ export class LogAdapter implements ILog {
     const log = this.getInstance();
     if (log.warn) {
       log.warn(topic, ...args);
+    }
+  };
+
+  /**
+   * Logs an AI agent message.
+   * Proxies call to the underlying log adapter.
+   * @param topic - The log topic / method name
+   * @param args - Additional arguments
+   */
+  public agent = (topic: string, ...args: any[]) => {
+    const log = this.getInstance();
+    if (log.agent) {
+      log.agent(topic, ...args);
     }
   };
 

@@ -289,6 +289,7 @@ export {
 export {
   ILogEntry,
   ILogger,
+  IAgentLogger,
 } from "./interfaces/Logger.interface";
 
 export {
