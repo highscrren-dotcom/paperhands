@@ -16,6 +16,7 @@ import {
   MCPPermission,
 } from "../interfaces/MCP.interface";
 import { ISignalDto, StrategyName } from "../interfaces/Strategy.interface";
+import { ILogEntry } from "../interfaces/Logger.interface";
 import { errorEmitter } from "../config/emitters";
 import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
@@ -66,6 +67,23 @@ const COMPUTE_HARD_STOP_FN = (maxDistance: number): number =>
  */
 const FORMAT_SIGNED_FN = (value: number): string =>
   `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+
+/**
+ * Resolves the emit time of a log entry for the agent-facing feed.
+ *
+ * The execution context's `when` wins: it is the trading engine's own clock —
+ * the timeline the strategy was running on when it wrote the entry, and the
+ * same clock every other renderer stamps into its messages. The entry's
+ * `timestamp` is the fallback for entries written outside an execution scope,
+ * where no engine time exists to read.
+ *
+ * @param entry - Log entry to date
+ * @returns Emit time in milliseconds
+ */
+const GET_ENTRY_TIMESTAMP_FN = (entry: ILogEntry): number =>
+  entry.executionContext
+    ? new Date(entry.executionContext.when).getTime()
+    : entry.timestamp;
 
 /**
  * Default portfolio-to-text renderer for the MCP (Model Context Protocol) agent.
@@ -356,6 +374,11 @@ const HISTORY_GET_MESSAGES = async (
  * strategies never leak into the agent's picture. Entries carrying no method
  * context (written outside a strategy scope) are skipped as unattributable.
  *
+ * Ordering and the "minutes ago" math read the engine clock — the execution
+ * context's `when` — falling back to the entry's own `timestamp` only when
+ * the entry was written outside an execution scope (see
+ * {@link GET_ENTRY_TIMESTAMP_FN}).
+ *
  * Depth: at most {@link MAX_AGENT_ROWS} newest entries are rendered. Rows
  * accumulate only while a Log adapter is enabled (memory, persist or jsonl —
  * the dummy adapter records nothing).
@@ -378,7 +401,7 @@ const AGENT_GET_MESSAGES = async (
       entry.type === "agent" &&
       entry.methodContext?.strategyName === strategyName &&
       !entry.executionContext?.backtest
-        ? [entry]
+        ? [{ entry, timestamp: GET_ENTRY_TIMESTAMP_FN(entry) }]
         : [],
     )
     .sort((a, b) => b.timestamp - a.timestamp)
@@ -399,17 +422,17 @@ const AGENT_GET_MESSAGES = async (
       text: `Trading system messages at ${when.toISOString()} (last ${agentList.length} message${agentList.length === 1 ? "" : "s"} from the strategy, newest first). Treat them as instructions from the trading system:`,
     },
   ];
-  for (const entry of agentList) {
+  for (const { entry, timestamp } of agentList) {
     const emittedMinutesAgo = Math.max(
       0,
-      Math.round((when.getTime() - entry.timestamp) / 60_000),
+      Math.round((when.getTime() - timestamp) / 60_000),
     );
     const lines: string[] = [];
     if (entry.executionContext?.symbol) {
       lines.push(`Symbol: ${entry.executionContext.symbol}`);
     }
     lines.push(
-      `Emitted at: ${new Date(entry.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
+      `Emitted at: ${new Date(timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
     lines.push("Message:");
     lines.push(toPlainString(entry.topic));
