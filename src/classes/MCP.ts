@@ -250,6 +250,7 @@ const DEFAULT_GET_MESSAGES = (
     }
     if (pendingSignal) {
       lines.push(`Active position: ${pendingSignal.position}`);
+      lines.push(`Signal id: ${pendingSignal.id}`);
       if (pendingSignal.note) {
         lines.push("Description:");
         lines.push(toPlainString(pendingSignal.note));
@@ -339,6 +340,7 @@ const HISTORY_GET_MESSAGES = async (
     const lines: string[] = [];
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
+    lines.push(`Signal id: ${row.id}`);
     lines.push(
       `Result: ${FORMAT_SIGNED_FN(row.pnl.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnl.pnlPercentage)}%), net of entry and exit fees and slippage`,
     );
@@ -528,6 +530,7 @@ const NOTIFICATION_GET_MESSAGES = async (
     const lines: string[] = [];
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
+    lines.push(`Signal id: ${row.signalId}`);
     lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
     lines.push(
       `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
