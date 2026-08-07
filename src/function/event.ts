@@ -17,7 +17,7 @@ import { SignalEventContract } from "../contract/SignalEvent.contract";
 import { ActivePingContract } from "../contract/ActivePing.contract";
 import { IdlePingContract } from "../contract/IdlePing.contract";
 import { StrategyCommitContract } from "../contract/StrategyCommit.contract";
-import { not, queued } from "functools-kit";
+import { not, queued, Operator } from "functools-kit";
 import OrderSyncContract from "../contract/OrderSync.contract";
 import OrderFillContract from "../contract/OrderFill.contract";
 import OrderRejectContract from "../contract/OrderReject.contract";
@@ -96,6 +96,21 @@ const LISTEN_BEFORE_START_METHOD_NAME = "event.listenBeforeStart";
 const LISTEN_BEFORE_START_ONCE_METHOD_NAME = "event.listenBeforeStartOnce";
 const LISTEN_AFTER_END_METHOD_NAME = "event.listenAfterEnd";
 const LISTEN_AFTER_END_ONCE_METHOD_NAME = "event.listenAfterEndOnce";
+
+const LISTEN_SIGNAL_PER_SIGNAL_METHOD_NAME = "event.listenSignalPerSignal";
+const LISTEN_SIGNAL_LIVE_PER_SIGNAL_METHOD_NAME = "event.listenSignalLivePerSignal";
+const LISTEN_SIGNAL_BACKTEST_PER_SIGNAL_METHOD_NAME = "event.listenSignalBacktestPerSignal";
+const LISTEN_SIGNAL_EVENT_PER_SIGNAL_METHOD_NAME = "event.listenSignalEventPerSignal";
+const LISTEN_SCHEDULE_EVENT_PER_SIGNAL_METHOD_NAME = "event.listenScheduleEventPerSignal";
+const LISTEN_ACTIVE_PING_PER_SIGNAL_METHOD_NAME = "event.listenActivePingPerSignal";
+const LISTEN_SCHEDULE_PING_PER_SIGNAL_METHOD_NAME = "event.listenSchedulePingPerSignal";
+const LISTEN_PARTIAL_PROFIT_PER_SIGNAL_METHOD_NAME = "event.listenPartialProfitAvailablePerSignal";
+const LISTEN_PARTIAL_LOSS_PER_SIGNAL_METHOD_NAME = "event.listenPartialLossAvailablePerSignal";
+const LISTEN_BREAKEVEN_PER_SIGNAL_METHOD_NAME = "event.listenBreakevenAvailablePerSignal";
+const LISTEN_HIGHEST_PROFIT_PER_SIGNAL_METHOD_NAME = "event.listenHighestProfitPerSignal";
+const LISTEN_MAX_DRAWDOWN_PER_SIGNAL_METHOD_NAME = "event.listenMaxDrawdownPerSignal";
+const LISTEN_SIGNAL_NOTIFY_PER_SIGNAL_METHOD_NAME = "event.listenSignalNotifyPerSignal";
+const LISTEN_STRATEGY_COMMIT_PER_SIGNAL_METHOD_NAME = "event.listenStrategyCommitPerSignal";
 
 /**
  * Subscribes to all signal events with queued async processing.
@@ -2401,4 +2416,348 @@ export function listenAfterEndOnce(
   };
 
   return disposeFn = listenAfterEnd(wrappedFn);
+}
+
+/**
+ * Subscribes to signal events, delivering the callback once per new signal id.
+ *
+ * Filters by the predicate first, then collapses consecutive events sharing the
+ * same `event.signal.id`. Idle events carry `signal: null` and are skipped, so
+ * the callback always receives an event with a signal attached.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalPerSignal } from "backtest-kit";
+ *
+ * // Notify once per signal that closed in profit, no matter how many
+ * // closed events the channel replays for it
+ * const unsubscribe = listenSignalPerSignal(
+ *   (event) => event.action === "closed" && event.pnl.pnlPercentage > 0,
+ *   (event) => console.log("Profitable close:", event.signal.id)
+ * );
+ *
+ * unsubscribe();
+ * ```
+ */
+export function listenSignalPerSignal(
+  filterFn: (event: IStrategyTickResult) => boolean,
+  fn: (event: IStrategyTickResult) => void
+) {
+  backtest.loggerService.log(LISTEN_SIGNAL_PER_SIGNAL_METHOD_NAME);
+  return signalEmitter
+    .filter((event) => !!event.signal && filterFn(event))
+    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to live signal events, delivering the callback once per new signal id.
+ *
+ * Only receives events from Live.run() execution. Idle events (`signal: null`)
+ * are skipped. See the per-signal section header for the dedup semantics.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenSignalLivePerSignal(
+  filterFn: (event: IStrategyTickResult) => boolean,
+  fn: (event: IStrategyTickResult) => void
+) {
+  backtest.loggerService.log(LISTEN_SIGNAL_LIVE_PER_SIGNAL_METHOD_NAME);
+  return signalLiveEmitter
+    .filter((event) => !!event.signal && filterFn(event))
+    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to backtest signal events, delivering the callback once per new signal id.
+ *
+ * Only receives events from Backtest.run() execution. Idle events (`signal: null`)
+ * are skipped. See the per-signal section header for the dedup semantics.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenSignalBacktestPerSignal(
+  filterFn: (event: IStrategyTickResult) => boolean,
+  fn: (event: IStrategyTickResult) => void
+) {
+  backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_PER_SIGNAL_METHOD_NAME);
+  return signalBacktestEmitter
+    .filter((event) => !!event.signal && filterFn(event))
+    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to pending lifecycle events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`. Note that a single signal legitimately produces
+ * both an "opened" and a "closed" event: filter by `action` if only one of the two
+ * transitions should reach the callback.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalEventPerSignal } from "backtest-kit";
+ *
+ * listenSignalEventPerSignal(
+ *   (event) => event.action === "opened",
+ *   (event) => console.log("New position:", event.data.id, event.data.priceOpen)
+ * );
+ * ```
+ */
+export function listenSignalEventPerSignal(
+  filterFn: (event: SignalEventContract) => boolean,
+  fn: (event: SignalEventContract) => void
+) {
+  backtest.loggerService.log(LISTEN_SIGNAL_EVENT_PER_SIGNAL_METHOD_NAME);
+  return signalEventSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: SignalEventContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to scheduled lifecycle events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`. A scheduled signal may emit both "scheduled"
+ * and "cancelled": filter by `action` to isolate one transition.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenScheduleEventPerSignal(
+  filterFn: (event: ScheduleEventContract) => boolean,
+  fn: (event: ScheduleEventContract) => void
+) {
+  backtest.loggerService.log(LISTEN_SCHEDULE_EVENT_PER_SIGNAL_METHOD_NAME);
+  return scheduleEventSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: ScheduleEventContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to active ping events, delivering the callback once per new signal id.
+ *
+ * Active pings fire on every tick of a monitored position, so this is the
+ * canonical use of the per-signal form: react the first tick a position meets a
+ * condition, then stay silent for the rest of its life.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenActivePingPerSignal } from "backtest-kit";
+ *
+ * // Alert once per position when it first crosses 5% unrealized profit
+ * listenActivePingPerSignal(
+ *   (event) => event.data.position === "long" && event.currentPrice > event.data.priceOpen * 1.05,
+ *   (event) => console.log("Position up 5%:", event.data.id)
+ * );
+ * ```
+ */
+export function listenActivePingPerSignal(
+  filterFn: (event: ActivePingContract) => boolean,
+  fn: (event: ActivePingContract) => void
+) {
+  backtest.loggerService.log(LISTEN_ACTIVE_PING_PER_SIGNAL_METHOD_NAME);
+  return activePingSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: ActivePingContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to schedule ping events, delivering the callback once per new signal id.
+ *
+ * Schedule pings fire every tick while a resting entry waits for activation;
+ * this collapses them to one callback per scheduled signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenSchedulePingPerSignal(
+  filterFn: (event: SchedulePingContract) => boolean,
+  fn: (event: SchedulePingContract) => void
+) {
+  backtest.loggerService.log(LISTEN_SCHEDULE_PING_PER_SIGNAL_METHOD_NAME);
+  return schedulePingSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: SchedulePingContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to partial profit level events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`, so only the FIRST matching profit level of a
+ * signal is reported. To react to each distinct level of the same signal, key on
+ * the level instead by using {@link listenPartialProfitAvailable} with your own
+ * bookkeeping, or narrow `filterFn` to a single level.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenPartialProfitAvailablePerSignal(
+  filterFn: (event: PartialProfitContract) => boolean,
+  fn: (event: PartialProfitContract) => void
+) {
+  backtest.loggerService.log(LISTEN_PARTIAL_PROFIT_PER_SIGNAL_METHOD_NAME);
+  return partialProfitSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: PartialProfitContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to partial loss level events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id` — only the first matching loss level of a
+ * signal reaches the callback. See {@link listenPartialProfitAvailablePerSignal}
+ * for the per-level caveat.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenPartialLossAvailablePerSignal(
+  filterFn: (event: PartialLossContract) => boolean,
+  fn: (event: PartialLossContract) => void
+) {
+  backtest.loggerService.log(LISTEN_PARTIAL_LOSS_PER_SIGNAL_METHOD_NAME);
+  return partialLossSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: PartialLossContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to breakeven events, delivering the callback once per new signal id.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenBreakevenAvailablePerSignal(
+  filterFn: (event: BreakevenContract) => boolean,
+  fn: (event: BreakevenContract) => void
+) {
+  backtest.loggerService.log(LISTEN_BREAKEVEN_PER_SIGNAL_METHOD_NAME);
+  return breakevenSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: BreakevenContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to highest profit events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signal.id`. Since this channel re-emits on every new
+ * profit peak, the per-signal form reports the first peak that satisfies the
+ * predicate and then goes quiet for that signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenHighestProfitPerSignal(
+  filterFn: (event: HighestProfitContract) => boolean,
+  fn: (event: HighestProfitContract) => void
+) {
+  backtest.loggerService.log(LISTEN_HIGHEST_PROFIT_PER_SIGNAL_METHOD_NAME);
+  return highestProfitSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: HighestProfitContract) => event.signal.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to max drawdown events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signal.id` — the first drawdown matching the predicate
+ * is reported, later deeper drawdowns of the same signal are suppressed.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenMaxDrawdownPerSignal(
+  filterFn: (event: MaxDrawdownContract) => boolean,
+  fn: (event: MaxDrawdownContract) => void
+) {
+  backtest.loggerService.log(LISTEN_MAX_DRAWDOWN_PER_SIGNAL_METHOD_NAME);
+  return maxDrawdownSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: MaxDrawdownContract) => event.signal.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to signal info events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`, so a strategy spamming commitSignalInfo() for
+ * the same position notifies the subscriber only once.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenSignalNotifyPerSignal(
+  filterFn: (event: SignalInfoContract) => boolean,
+  fn: (event: SignalInfoContract) => void
+) {
+  backtest.loggerService.log(LISTEN_SIGNAL_NOTIFY_PER_SIGNAL_METHOD_NAME);
+  return signalNotifySubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: SignalInfoContract) => event.data.id))
+    .connect(queued(async (event) => fn(event)));
+}
+
+/**
+ * Subscribes to strategy management events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signalId`. Trailing commits repeat many times per
+ * position, so this reports the first commit matching the predicate per signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenStrategyCommitPerSignal } from "backtest-kit";
+ *
+ * // Report the first trailing-stop adjustment of each position
+ * listenStrategyCommitPerSignal(
+ *   (event) => event.action === "trailing-stop",
+ *   (event) => console.log("First trailing stop for", event.signalId)
+ * );
+ * ```
+ */
+export function listenStrategyCommitPerSignal(
+  filterFn: (event: StrategyCommitContract) => boolean,
+  fn: (event: StrategyCommitContract) => void
+) {
+  backtest.loggerService.log(LISTEN_STRATEGY_COMMIT_PER_SIGNAL_METHOD_NAME);
+  return strategyCommitSubject
+    .filter(filterFn)
+    .operator(Operator.distinct((event: StrategyCommitContract) => event.signalId))
+    .connect(queued(async (event) => fn(event)));
 }

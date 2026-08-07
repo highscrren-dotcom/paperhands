@@ -12314,6 +12314,506 @@ declare function listenAfterEnd(fn: (event: AfterEndContract) => void): () => vo
  * @return Unsubscribe function to cancel the listener before it fires
  */
 declare function listenAfterEndOnce(filterFn: (event: AfterEndContract) => boolean, fn: (event: AfterEndContract) => void): () => void;
+/**
+ * Subscribes to signal events, delivering the callback once per new signal id.
+ *
+ * Filters by the predicate first, then collapses consecutive events sharing the
+ * same `event.signal.id`. Idle events carry `signal: null` and are skipped, so
+ * the callback always receives an event with a signal attached.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalPerSignal } from "backtest-kit";
+ *
+ * // Notify once per signal that closed in profit, no matter how many
+ * // closed events the channel replays for it
+ * const unsubscribe = listenSignalPerSignal(
+ *   (event) => event.action === "closed" && event.pnl.pnlPercentage > 0,
+ *   (event) => console.log("Profitable close:", event.signal.id)
+ * );
+ *
+ * unsubscribe();
+ * ```
+ */
+declare function listenSignalPerSignal(filterFn: (event: IStrategyTickResult) => boolean, fn: (event: IStrategyTickResult) => void): () => void;
+/**
+ * Subscribes to live signal events, delivering the callback once per new signal id.
+ *
+ * Only receives events from Live.run() execution. Idle events (`signal: null`)
+ * are skipped. See the per-signal section header for the dedup semantics.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalLivePerSignal(filterFn: (event: IStrategyTickResult) => boolean, fn: (event: IStrategyTickResult) => void): () => void;
+/**
+ * Subscribes to backtest signal events, delivering the callback once per new signal id.
+ *
+ * Only receives events from Backtest.run() execution. Idle events (`signal: null`)
+ * are skipped. See the per-signal section header for the dedup semantics.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalBacktestPerSignal(filterFn: (event: IStrategyTickResult) => boolean, fn: (event: IStrategyTickResult) => void): () => void;
+/**
+ * Subscribes to pending lifecycle events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`. Note that a single signal legitimately produces
+ * both an "opened" and a "closed" event: filter by `action` if only one of the two
+ * transitions should reach the callback.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalEventPerSignal } from "backtest-kit";
+ *
+ * listenSignalEventPerSignal(
+ *   (event) => event.action === "opened",
+ *   (event) => console.log("New position:", event.data.id, event.data.priceOpen)
+ * );
+ * ```
+ */
+declare function listenSignalEventPerSignal(filterFn: (event: SignalEventContract) => boolean, fn: (event: SignalEventContract) => void): () => void;
+/**
+ * Subscribes to scheduled lifecycle events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`. A scheduled signal may emit both "scheduled"
+ * and "cancelled": filter by `action` to isolate one transition.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenScheduleEventPerSignal(filterFn: (event: ScheduleEventContract) => boolean, fn: (event: ScheduleEventContract) => void): () => void;
+/**
+ * Subscribes to active ping events, delivering the callback once per new signal id.
+ *
+ * Active pings fire on every tick of a monitored position, so this is the
+ * canonical use of the per-signal form: react the first tick a position meets a
+ * condition, then stay silent for the rest of its life.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenActivePingPerSignal } from "backtest-kit";
+ *
+ * // Alert once per position when it first crosses 5% unrealized profit
+ * listenActivePingPerSignal(
+ *   (event) => event.data.position === "long" && event.currentPrice > event.data.priceOpen * 1.05,
+ *   (event) => console.log("Position up 5%:", event.data.id)
+ * );
+ * ```
+ */
+declare function listenActivePingPerSignal(filterFn: (event: ActivePingContract) => boolean, fn: (event: ActivePingContract) => void): () => void;
+/**
+ * Subscribes to schedule ping events, delivering the callback once per new signal id.
+ *
+ * Schedule pings fire every tick while a resting entry waits for activation;
+ * this collapses them to one callback per scheduled signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSchedulePingPerSignal(filterFn: (event: SchedulePingContract) => boolean, fn: (event: SchedulePingContract) => void): () => void;
+/**
+ * Subscribes to partial profit level events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`, so only the FIRST matching profit level of a
+ * signal is reported. To react to each distinct level of the same signal, key on
+ * the level instead by using {@link listenPartialProfitAvailable} with your own
+ * bookkeeping, or narrow `filterFn` to a single level.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenPartialProfitAvailablePerSignal(filterFn: (event: PartialProfitContract) => boolean, fn: (event: PartialProfitContract) => void): () => void;
+/**
+ * Subscribes to partial loss level events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id` — only the first matching loss level of a
+ * signal reaches the callback. See {@link listenPartialProfitAvailablePerSignal}
+ * for the per-level caveat.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenPartialLossAvailablePerSignal(filterFn: (event: PartialLossContract) => boolean, fn: (event: PartialLossContract) => void): () => void;
+/**
+ * Subscribes to breakeven events, delivering the callback once per new signal id.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenBreakevenAvailablePerSignal(filterFn: (event: BreakevenContract) => boolean, fn: (event: BreakevenContract) => void): () => void;
+/**
+ * Subscribes to highest profit events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signal.id`. Since this channel re-emits on every new
+ * profit peak, the per-signal form reports the first peak that satisfies the
+ * predicate and then goes quiet for that signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenHighestProfitPerSignal(filterFn: (event: HighestProfitContract) => boolean, fn: (event: HighestProfitContract) => void): () => void;
+/**
+ * Subscribes to max drawdown events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signal.id` — the first drawdown matching the predicate
+ * is reported, later deeper drawdowns of the same signal are suppressed.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenMaxDrawdownPerSignal(filterFn: (event: MaxDrawdownContract) => boolean, fn: (event: MaxDrawdownContract) => void): () => void;
+/**
+ * Subscribes to signal info events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`, so a strategy spamming commitSignalInfo() for
+ * the same position notifies the subscriber only once.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalNotifyPerSignal(filterFn: (event: SignalInfoContract) => boolean, fn: (event: SignalInfoContract) => void): () => void;
+/**
+ * Subscribes to strategy management events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.signalId`. Trailing commits repeat many times per
+ * position, so this reports the first commit matching the predicate per signal.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenStrategyCommitPerSignal } from "backtest-kit";
+ *
+ * // Report the first trailing-stop adjustment of each position
+ * listenStrategyCommitPerSignal(
+ *   (event) => event.action === "trailing-stop",
+ *   (event) => console.log("First trailing stop for", event.signalId)
+ * );
+ * ```
+ */
+declare function listenStrategyCommitPerSignal(filterFn: (event: StrategyCommitContract) => boolean, fn: (event: StrategyCommitContract) => void): () => void;
+
+/**
+ * Subscribes to idle tick results (live + backtest).
+ *
+ * Fires on every tick where the strategy holds no signal at all. `event.signal` is
+ * always `null` here — there is no position to inspect, only `currentPrice` and the
+ * strategy/exchange/frame identity.
+ *
+ * @param fn - Callback receiving idle events
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalIdle } from "backtest-kit";
+ *
+ * const unsubscribe = listenSignalIdle((event) => {
+ *   console.log(`${event.symbol} idle at ${event.currentPrice}`);
+ * });
+ * ```
+ */
+declare function listenSignalIdle(fn: (event: IStrategyTickResultIdle) => void): () => void;
+/**
+ * Subscribes to scheduled tick results (live + backtest).
+ *
+ * Fires once when a scheduled signal is created — a resting entry waiting for price
+ * to reach `signal.priceOpen`. Subsequent monitoring ticks arrive as "waiting".
+ *
+ * @param fn - Callback receiving scheduled events
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalScheduled(fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to waiting tick results (live + backtest).
+ *
+ * Fires on every tick while a scheduled signal has not yet activated. High volume:
+ * one event per tick per waiting signal — see {@link listenSignalWaitingPerSignal}
+ * to collapse it to one callback per signal.
+ *
+ * @param fn - Callback receiving waiting events
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalWaiting(fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to opened tick results (live + backtest).
+ *
+ * Fires when a position is opened — either directly or by activation of a scheduled
+ * signal.
+ *
+ * @param fn - Callback receiving opened events
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalOpened } from "backtest-kit";
+ *
+ * listenSignalOpened((event) => {
+ *   // no action guard needed: signal is always present
+ *   console.log("Opened", event.signal.id, "at", event.signal.priceOpen);
+ * });
+ * ```
+ */
+declare function listenSignalOpened(fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to active tick results (live + backtest).
+ *
+ * Fires on every tick while a position is open, carrying live `pnl`, `percentTp` and
+ * `percentSl`. High volume — see {@link listenSignalActivePerSignal}.
+ *
+ * @param fn - Callback receiving active events
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalActive(fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to closed tick results (live + backtest).
+ *
+ * Fires when a position closes. `pnl`, `closeReason` and `closeTimestamp` are
+ * guaranteed present on the narrowed type.
+ *
+ * @param fn - Callback receiving closed events
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalClosed } from "backtest-kit";
+ *
+ * listenSignalClosed((event) => {
+ *   console.log(`${event.closeReason}: ${event.pnl.pnlPercentage}%`);
+ * });
+ * ```
+ */
+declare function listenSignalClosed(fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to cancelled tick results (live + backtest).
+ *
+ * Fires when a scheduled signal is dropped before ever opening a position.
+ * `reason` carries the cancellation cause.
+ *
+ * @param fn - Callback receiving cancelled events
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
+/**
+ * Subscribes to live idle tick results. Only Live.run() execution.
+ * See {@link listenSignalIdle}.
+ */
+declare function listenSignalLiveIdle(fn: (event: IStrategyTickResultIdle) => void): () => void;
+/**
+ * Subscribes to live scheduled tick results. Only Live.run() execution.
+ * See {@link listenSignalScheduled}.
+ */
+declare function listenSignalLiveScheduled(fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to live waiting tick results. Only Live.run() execution.
+ * See {@link listenSignalWaiting}.
+ */
+declare function listenSignalLiveWaiting(fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to live opened tick results. Only Live.run() execution.
+ * See {@link listenSignalOpened}.
+ */
+declare function listenSignalLiveOpened(fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to live active tick results. Only Live.run() execution.
+ * See {@link listenSignalActive}.
+ */
+declare function listenSignalLiveActive(fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to live closed tick results. Only Live.run() execution.
+ * See {@link listenSignalClosed}.
+ */
+declare function listenSignalLiveClosed(fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to live cancelled tick results. Only Live.run() execution.
+ * See {@link listenSignalCancelled}.
+ */
+declare function listenSignalLiveCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
+/**
+ * Subscribes to backtest idle tick results. Only Backtest.run() execution.
+ * See {@link listenSignalIdle}.
+ */
+declare function listenSignalBacktestIdle(fn: (event: IStrategyTickResultIdle) => void): () => void;
+/**
+ * Subscribes to backtest scheduled tick results. Only Backtest.run() execution.
+ * See {@link listenSignalScheduled}.
+ */
+declare function listenSignalBacktestScheduled(fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to backtest waiting tick results. Only Backtest.run() execution.
+ * See {@link listenSignalWaiting}.
+ */
+declare function listenSignalBacktestWaiting(fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to backtest opened tick results. Only Backtest.run() execution.
+ * See {@link listenSignalOpened}.
+ */
+declare function listenSignalBacktestOpened(fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to backtest active tick results. Only Backtest.run() execution.
+ * See {@link listenSignalActive}.
+ */
+declare function listenSignalBacktestActive(fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to backtest closed tick results. Only Backtest.run() execution.
+ * See {@link listenSignalClosed}.
+ */
+declare function listenSignalBacktestClosed(fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to backtest cancelled tick results. Only Backtest.run() execution.
+ * See {@link listenSignalCancelled}.
+ */
+declare function listenSignalBacktestCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
+/**
+ * Subscribes to scheduled tick results, once per new signal id (live + backtest).
+ *
+ * @param filterFn - Predicate selecting which scheduled events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalScheduledPerSignal(filterFn: (event: IStrategyTickResultScheduled) => boolean, fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to waiting tick results, once per new signal id (live + backtest).
+ *
+ * The canonical use: "waiting" repeats every tick, so this reports the first tick a
+ * resting entry satisfies the predicate and then stays quiet for that signal.
+ *
+ * @param filterFn - Predicate selecting which waiting events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalWaitingPerSignal(filterFn: (event: IStrategyTickResultWaiting) => boolean, fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to opened tick results, once per new signal id (live + backtest).
+ *
+ * @param filterFn - Predicate selecting which opened events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalOpenedPerSignal(filterFn: (event: IStrategyTickResultOpened) => boolean, fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to active tick results, once per new signal id (live + backtest).
+ *
+ * Active ticks repeat for the whole life of a position, so this fires the first tick
+ * the position meets the condition and then goes silent for it.
+ *
+ * @param filterFn - Predicate selecting which active events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ *
+ * @example
+ * ```typescript
+ * import { listenSignalActivePerSignal } from "backtest-kit";
+ *
+ * // Alert once per position when it first crosses 5% unrealized profit
+ * listenSignalActivePerSignal(
+ *   (event) => event.pnl.pnlPercentage > 5,
+ *   (event) => console.log("Up 5%:", event.signal.id)
+ * );
+ * ```
+ */
+declare function listenSignalActivePerSignal(filterFn: (event: IStrategyTickResultActive) => boolean, fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to closed tick results, once per new signal id (live + backtest).
+ *
+ * @param filterFn - Predicate selecting which closed events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalClosedPerSignal(filterFn: (event: IStrategyTickResultClosed) => boolean, fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to cancelled tick results, once per new signal id (live + backtest).
+ *
+ * @param filterFn - Predicate selecting which cancelled events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+declare function listenSignalCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
+/**
+ * Subscribes to live scheduled tick results, once per new signal id.
+ * See {@link listenSignalScheduledPerSignal}.
+ */
+declare function listenSignalLiveScheduledPerSignal(filterFn: (event: IStrategyTickResultScheduled) => boolean, fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to live waiting tick results, once per new signal id.
+ * See {@link listenSignalWaitingPerSignal}.
+ */
+declare function listenSignalLiveWaitingPerSignal(filterFn: (event: IStrategyTickResultWaiting) => boolean, fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to live opened tick results, once per new signal id.
+ * See {@link listenSignalOpenedPerSignal}.
+ */
+declare function listenSignalLiveOpenedPerSignal(filterFn: (event: IStrategyTickResultOpened) => boolean, fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to live active tick results, once per new signal id.
+ * See {@link listenSignalActivePerSignal}.
+ */
+declare function listenSignalLiveActivePerSignal(filterFn: (event: IStrategyTickResultActive) => boolean, fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to live closed tick results, once per new signal id.
+ * See {@link listenSignalClosedPerSignal}.
+ */
+declare function listenSignalLiveClosedPerSignal(filterFn: (event: IStrategyTickResultClosed) => boolean, fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to live cancelled tick results, once per new signal id.
+ * See {@link listenSignalCancelledPerSignal}.
+ */
+declare function listenSignalLiveCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
+/**
+ * Subscribes to backtest scheduled tick results, once per new signal id.
+ * See {@link listenSignalScheduledPerSignal}.
+ */
+declare function listenSignalBacktestScheduledPerSignal(filterFn: (event: IStrategyTickResultScheduled) => boolean, fn: (event: IStrategyTickResultScheduled) => void): () => void;
+/**
+ * Subscribes to backtest waiting tick results, once per new signal id.
+ * See {@link listenSignalWaitingPerSignal}.
+ */
+declare function listenSignalBacktestWaitingPerSignal(filterFn: (event: IStrategyTickResultWaiting) => boolean, fn: (event: IStrategyTickResultWaiting) => void): () => void;
+/**
+ * Subscribes to backtest opened tick results, once per new signal id.
+ * See {@link listenSignalOpenedPerSignal}.
+ */
+declare function listenSignalBacktestOpenedPerSignal(filterFn: (event: IStrategyTickResultOpened) => boolean, fn: (event: IStrategyTickResultOpened) => void): () => void;
+/**
+ * Subscribes to backtest active tick results, once per new signal id.
+ * See {@link listenSignalActivePerSignal}.
+ */
+declare function listenSignalBacktestActivePerSignal(filterFn: (event: IStrategyTickResultActive) => boolean, fn: (event: IStrategyTickResultActive) => void): () => void;
+/**
+ * Subscribes to backtest closed tick results, once per new signal id.
+ * See {@link listenSignalClosedPerSignal}.
+ */
+declare function listenSignalBacktestClosedPerSignal(filterFn: (event: IStrategyTickResultClosed) => boolean, fn: (event: IStrategyTickResultClosed) => void): () => void;
+/**
+ * Subscribes to backtest cancelled tick results, once per new signal id.
+ * See {@link listenSignalCancelledPerSignal}.
+ */
+declare function listenSignalBacktestCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
 
 /**
  * Checks if trade context is active (execution and method contexts).
@@ -32604,15 +33104,17 @@ declare class MCPUtils {
      * @example
      * ```typescript
      * // Full agent memory: portfolio status, notes of the open positions,
-     * // history of the closed trades — one snapshot, no repeated requests
+     * // directives raised by the strategy, history of the closed trades —
+     * // one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
      *     const status = await MCP.getDefaultMessages(context, when, mcpName);
      *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+     *     const agent = await MCP.getAgentMessages(mcpName);
      *     const history = await MCP.getHistoryMessages(mcpName);
-     *     return [...status, ...notifications, ...history];
+     *     return [...status, ...notifications, ...agent, ...history];
      *   },
      * });
      * ```
@@ -32635,20 +33137,62 @@ declare class MCPUtils {
      * @example
      * ```typescript
      * // Full agent memory: portfolio status, notes of the open positions,
-     * // history of the closed trades — one snapshot, no repeated requests
+     * // directives raised by the strategy, history of the closed trades —
+     * // one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
      *     const status = await MCP.getDefaultMessages(context, when, mcpName);
      *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+     *     const agent = await MCP.getAgentMessages(mcpName);
      *     const history = await MCP.getHistoryMessages(mcpName);
-     *     return [...status, ...notifications, ...history];
+     *     return [...status, ...notifications, ...agent, ...history];
      *   },
      * });
      * ```
      */
     getHistoryMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
+    /**
+     * Renders the messages the STRATEGY CODE addressed to the agent into agent
+     * messages: the last {@link MAX_AGENT_ROWS} `agent`-level entries of the
+     * log history written via `Log.agent(...)` under the MCP (Model Context
+     * Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
+     * time and the message text per entry.
+     *
+     * This is the strategy talking to the agent, the reverse direction of every
+     * other renderer: getStatus reports numbers, getNotificationMessages
+     * replays the agent's own notes, and this channel carries directives the
+     * strategy raised on its own — a position stagnating for an hour, collapsed
+     * volatility, an approaching session close. The agent reads them as
+     * instructions from the trading system.
+     *
+     * Backtest entries and entries of other strategies are filtered out; rows
+     * accumulate only while a Log adapter is enabled.
+     *
+     * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+     * @returns Promise resolving to trading system messages for the MCP agent
+     *
+     * @example
+     * ```typescript
+     * // In the strategy code — raise a directive for the agent
+     * if (await getPositionActiveMinutes("BTCUSDT") > 60) {
+     *   Log.agent("The BTCUSDT position has been stagnating for an hour — look for an efficient exit");
+     * }
+     *
+     * // In the MCP schema — surface those directives to the agent
+     * addMCPSchema({
+     *   mcpName: "my-mcp",
+     *   strategyName: "my-strategy",
+     *   getMessages: async (context, when, mcpName) => {
+     *     const status = await MCP.getDefaultMessages(context, when, mcpName);
+     *     const agent = await MCP.getAgentMessages(mcpName);
+     *     return [...status, ...agent];
+     *   },
+     * });
+     * ```
+     */
+    getAgentMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
     /**
      * Renders the `signal.info` notifications of the active positions of the
      * MCP (Model Context Protocol) instance's strategy into agent messages:
@@ -32680,15 +33224,17 @@ declare class MCPUtils {
      * @example
      * ```typescript
      * // Full agent memory: portfolio status, notes of the open positions,
-     * // history of the closed trades — one snapshot, no repeated requests
+     * // directives raised by the strategy, history of the closed trades —
+     * // one snapshot, no repeated requests
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
      *   getMessages: async (context, when, mcpName) => {
      *     const status = await MCP.getDefaultMessages(context, when, mcpName);
      *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
+     *     const agent = await MCP.getAgentMessages(mcpName);
      *     const history = await MCP.getHistoryMessages(mcpName);
-     *     return [...status, ...notifications, ...history];
+     *     return [...status, ...notifications, ...agent, ...history];
      *   },
      * });
      * ```
@@ -44318,4 +44864,4 @@ declare class OrderTransientError extends Error {
     static fromError(error: object): OrderTransientError;
 }
 
-export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAgentLogger, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMCPAverageBuyCommand, type IMCPContext, type IMCPImageMessage, type IMCPMessage, type IMCPPositionCloseCommand, type IMCPPositionOpenCommand, type IMCPSchema, type IMCPSignalNotifyCommand, type IMCPTextMessage, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ISweepBest, type ISweepGridAxes, type ISweepGridPoint, type ISweepIdea, type ISweepMetricReport, type ISweepPointReport, type ISweepResult, type ISweepSchema, type ISweepTrack, type ISweepTrade, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, MCP, type MCPMessageId, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sweep, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addMCPSchema, addRiskSchema, addSizingSchema, addStrategySchema, addSweepSchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpMCPStatus, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMCPSchema, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSweepSchema, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMCPSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listSweepSchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenSchedulePing, listenSchedulePingOnce, listenSignal, listenSignalBacktest, listenSignalBacktestOnce, listenSignalEvent, listenSignalEventOnce, listenSignalLive, listenSignalLiveOnce, listenSignalNotify, listenSignalNotifyOnce, listenSignalOnce, listenStrategyCommit, listenStrategyCommitOnce, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideMCPSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideSweepSchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
+export { ActionBase, type ActivateScheduledCommit, type ActivateScheduledCommitNotification, type ActivePingContract, type AfterEndContract, type AverageBuyCommit, type AverageBuyCommitNotification, BROKER_ORDER_VERDICT, Backtest, type BacktestStatisticsModel, type BeforeStartContract, Breakeven, type BreakevenAvailableNotification, type BreakevenCommit, type BreakevenCommitNotification, type BreakevenContract, type BreakevenData, type BreakevenEvent, type BreakevenStatisticsModel, Broker, type BrokerActivePingPayload, type BrokerAverageBuyPayload, BrokerBase, type BrokerBreakevenPayload, type BrokerIdlePingPayload, type BrokerOrderCheckPayload, type BrokerOrderClosePayload, type BrokerOrderOpenPayload, type BrokerPartialLossPayload, type BrokerPartialProfitPayload, type BrokerPendingClosePayload, type BrokerPendingOpenPayload, type BrokerScheduleCancelledPayload, type BrokerScheduleOpenPayload, type BrokerSchedulePingPayload, type BrokerTrailingStopPayload, type BrokerTrailingTakePayload, Cache, type CancelScheduledCommit, type CancelScheduledCommitNotification, type CandleData, type CandleInterval, type ClosePendingCommit, type ClosePendingCommitNotification, type ColumnConfig, type ColumnModel, type CommitPayload, Constant, type CriticalErrorNotification, Cron, type CronCallback, type CronEntry, type CronHandle, type DoneContract, Dump, type EntityId, Exchange, ExecutionContextService, type FrameInterval, type GlobalConfig, Heat, type HeatmapStatisticsModel, HighestProfit, type HighestProfitContract, type HighestProfitEvent, type HighestProfitStatisticsModel, type IActionSchema, type IActivateScheduledCommitRow, type IAgentLogger, type IAggregatedTradeData, type IBidData, type IBreakevenCommitRow, type IBroker, type IBrokerOrderVerdict, type ICandleData, type ICommitRow, type IDumpContext, type IDumpInstance, type IExchangeSchema, type IFrameSchema, type IHeatmapRow, type ILog, type ILogEntry, type ILogger, type IMCPAverageBuyCommand, type IMCPContext, type IMCPImageMessage, type IMCPMessage, type IMCPPositionCloseCommand, type IMCPPositionOpenCommand, type IMCPSchema, type IMCPSignalNotifyCommand, type IMCPTextMessage, type IMarkdownDumpOptions, type IMemoryInstance, type INotificationUtils, type IOrderBookData, type IPartialLossCommitRow, type IPartialProfitCommitRow, type IPersistBase, type IPersistBreakevenInstance, type IPersistCandleInstance, type IPersistIntervalInstance, type IPersistLogInstance, type IPersistMeasureInstance, type IPersistMemoryInstance, type IPersistNotificationInstance, type IPersistPartialInstance, type IPersistRecentInstance, type IPersistRiskInstance, type IPersistScheduleInstance, type IPersistSessionInstance, type IPersistSignalInstance, type IPersistStateInstance, type IPersistStorageInstance, type IPersistStrategyInstance, type IPositionSizeATRParams, type IPositionSizeFixedPercentageParams, type IPositionSizeKellyParams, type IPublicAction, type IPublicCandleData, type IPublicSignalRow, type IRecentUtils, type IReportDumpOptions, type IRiskActivePosition, type IRiskCheckArgs, type IRiskSchema, type IRiskSignalRow, type IRiskValidation, type IRiskValidationFn, type IRiskValidationPayload, type IRuntimeInfo, type IRuntimeRange, type IScheduledSignalCancelRow, type IScheduledSignalRow, type ISessionInstance, type ISignalDto, type ISignalIntervalDto, type ISignalRow, type ISizingCalculateParams, type ISizingCalculateParamsATR, type ISizingCalculateParamsFixedPercentage, type ISizingCalculateParamsKelly, type ISizingParams, type ISizingParamsATR, type ISizingParamsFixedPercentage, type ISizingParamsKelly, type ISizingSchema, type ISizingSchemaATR, type ISizingSchemaFixedPercentage, type ISizingSchemaKelly, type IStateInstance, type IStorageSignalRow, type IStorageUtils, type IStrategyPnL, type IStrategyResult, type IStrategySchema, type IStrategyTickResult, type IStrategyTickResultActive, type IStrategyTickResultCancelled, type IStrategyTickResultClosed, type IStrategyTickResultIdle, type IStrategyTickResultOpened, type IStrategyTickResultScheduled, type IStrategyTickResultWaiting, type ISweepBest, type ISweepGridAxes, type ISweepGridPoint, type ISweepIdea, type ISweepMetricReport, type ISweepPointReport, type ISweepResult, type ISweepSchema, type ISweepTrack, type ISweepTrade, type ITrailingStopCommitRow, type ITrailingTakeCommitRow, type IWalkerResults, type IWalkerSchema, type IWalkerStrategyResult, type IdlePingContract, type InfoErrorNotification, Interval, type IntervalData, Live, type LiveStatisticsModel, Log, type LogData, Lookup, MCP, type MCPMessageId, Markdown, MarkdownFileBase, MarkdownFolderBase, type MarkdownName, MarkdownWriter, MaxDrawdown, type MaxDrawdownContract, type MaxDrawdownEvent, type MaxDrawdownStatisticsModel, type MeasureData, Memory, MemoryBacktest, MemoryBacktestAdapter, type MemoryData, MemoryLive, MemoryLiveAdapter, type MessageModel, type MessageRole, type MessageToolCall, MethodContextService, type MetricStats, Notification, NotificationBacktest, type NotificationData, NotificationLive, type NotificationModel, type OrderCheckContract, type OrderCloseContract, type OrderContinueContract, OrderDeletedError, type OrderFillCloseContract, type OrderFillContract, type OrderFillOpenContract, type OrderOpenContract, type OrderRejectCloseContract, type OrderRejectContract, type OrderRejectOpenContract, OrderRejectedError, type OrderStopContract, type OrderSyncCheckNotification, type OrderSyncCloseNotification, type OrderSyncContract, type OrderSyncOpenNotification, OrderTransientError, Partial$1 as Partial, type PartialData, type PartialEvent, type PartialLossAvailableNotification, type PartialLossCommit, type PartialLossCommitNotification, type PartialLossContract, type PartialProfitAvailableNotification, type PartialProfitCommit, type PartialProfitCommitNotification, type PartialProfitContract, type PartialStatisticsModel, type PauseContract, Performance, type PerformanceContract, type PerformanceMetricType, type PerformanceStatisticsModel, PersistBase, PersistBreakevenAdapter, PersistBreakevenInstance, PersistCandleAdapter, PersistCandleInstance, PersistIntervalAdapter, PersistIntervalInstance, PersistLogAdapter, PersistLogInstance, PersistMeasureAdapter, PersistMeasureInstance, PersistMemoryAdapter, PersistMemoryInstance, PersistNotificationAdapter, PersistNotificationInstance, PersistPartialAdapter, PersistPartialInstance, PersistRecentAdapter, PersistRecentInstance, PersistRiskAdapter, PersistRiskInstance, PersistScheduleAdapter, PersistScheduleInstance, PersistSessionAdapter, PersistSessionInstance, PersistSignalAdapter, PersistSignalInstance, PersistStateAdapter, PersistStateInstance, PersistStorageAdapter, PersistStorageInstance, PersistStrategyAdapter, PersistStrategyInstance, Position, PositionSize, type ProgressBacktestContract, type ProgressWalkerContract, Recent, RecentBacktest, type RecentData, RecentLive, Reflect, Report, ReportBase, type ReportName, ReportWriter, Risk, type RiskContract, type RiskData, type RiskEvent, type RiskRejectionNotification, type RiskStatisticsModel, type RuntimeData, Schedule, type ScheduleData, type ScheduleEventContract, type SchedulePingContract, type ScheduleStatisticsModel, type ScheduledEvent, Session, SessionBacktest, type SessionData, SessionLive, type SignalCancelledNotification, type SignalClosedNotification, type SignalData, type SignalEventContract, type SignalInfoContract, type SignalInfoNotification, type SignalInterval, type SignalOpenedNotification, type SignalScheduledNotification, State, StateBacktest, StateBacktestAdapter, type StateData, StateLive, StateLiveAdapter, Storage, StorageBacktest, type StorageData, StorageLive, Strategy, type StrategyActionType, type StrategyCancelReason, type StrategyCloseReason, type StrategyCommitContract, type StrategyData, type StrategyEvent, type StrategyPauseNotification, type StrategyStatisticsModel, type StrategyStatus, Sweep, Sync, type SyncEvent, type SyncStatisticsModel, System, type TBrokerCtor, type TDumpInstanceCtor, type TLogCtor, type TMarkdownBase, type TMemoryInstanceCtor, type TNotificationUtilsCtor, type TPersistBase, type TPersistBaseCtor, type TPersistBreakevenInstanceCtor, type TPersistCandleInstanceCtor, type TPersistIntervalInstanceCtor, type TPersistLogInstanceCtor, type TPersistMeasureInstanceCtor, type TPersistMemoryInstanceCtor, type TPersistNotificationInstanceCtor, type TPersistPartialInstanceCtor, type TPersistRecentInstanceCtor, type TPersistRiskInstanceCtor, type TPersistScheduleInstanceCtor, type TPersistSessionInstanceCtor, type TPersistSignalInstanceCtor, type TPersistStateInstanceCtor, type TPersistStorageInstanceCtor, type TPersistStrategyInstanceCtor, type TRecentUtilsCtor, type TReportBase, type TSessionInstanceCtor, type TStateInstanceCtor, type TStorageUtilsCtor, type TickEvent, type TrailingStopCommit, type TrailingStopCommitNotification, type TrailingTakeCommit, type TrailingTakeCommitNotification, type ValidationErrorNotification, Walker, type WalkerCompleteContract, type WalkerContract, type WalkerMetric, type SignalData$1 as WalkerSignalData, type WalkerStatisticsModel, addActionSchema, addExchangeSchema, addFrameSchema, addMCPSchema, addRiskSchema, addSizingSchema, addStrategySchema, addSweepSchema, addWalkerSchema, alignToInterval, beginContext, beginTime, cacheCandles, checkCandles, commitActivateScheduled, commitAverageBuy, commitBreakeven, commitCancelScheduled, commitClosePending, commitCreateSignal, commitCreateStopLoss, commitCreateTakeProfit, commitPartialLoss, commitPartialLossCost, commitPartialProfit, commitPartialProfitCost, commitSignalNotify, commitTrailingStop, commitTrailingStopCost, commitTrailingTake, commitTrailingTakeCost, createSignalState, dumpAgentAnswer, dumpError, dumpJson, dumpMCPStatus, dumpRecord, dumpTable, dumpText, emitters, formatPrice, formatQuantity, get, getActionSchema, getAggregatedTrades, getAveragePrice, getBacktestTimeframe, getBreakeven, getCandles, getClosePrice, getColumns, getConfig, getContext, getDate, getDefaultColumns, getDefaultConfig, getEffectivePriceOpen, getExchangeSchema, getFrameSchema, getLatestSignal, getMCPSchema, getMaxDrawdownDistancePnlCost, getMaxDrawdownDistancePnlPercentage, getMinutesSinceLatestSignalCreated, getMode, getNextCandles, getOrderBook, getPendingSignal, getPositionActiveMinutes, getPositionCountdownMinutes, getPositionDrawdownMinutes, getPositionEffectivePrice, getPositionEntries, getPositionEntryOverlap, getPositionEstimateMinutes, getPositionHighestMaxDrawdownPnlCost, getPositionHighestMaxDrawdownPnlPercentage, getPositionHighestPnlCost, getPositionHighestPnlPercentage, getPositionHighestProfitBreakeven, getPositionHighestProfitDistancePnlCost, getPositionHighestProfitDistancePnlPercentage, getPositionHighestProfitMinutes, getPositionHighestProfitPrice, getPositionHighestProfitTimestamp, getPositionInvestedCost, getPositionInvestedCount, getPositionLevels, getPositionMaxDrawdownMinutes, getPositionMaxDrawdownPnlCost, getPositionMaxDrawdownPnlPercentage, getPositionMaxDrawdownPrice, getPositionMaxDrawdownTimestamp, getPositionPartialOverlap, getPositionPartials, getPositionPnlCost, getPositionPnlPercent, getPositionWaitingMinutes, getPriceScale, getRawCandles, getRemainingCostBasis, getRiskSchema, getRuntimeInfo, getScheduledSignal, getSessionData, getSignalState, getSizingSchema, getStrategyPaused, getStrategySchema, getStrategyStatus, getSweepSchema, getSymbol, getTimestamp, getTotalClosed, getTotalCostClosed, getTotalPercentClosed, getTotalPercentHeld, getWalkerSchema, hasNoPendingSignal, hasNoScheduledSignal, hasTradeContext, intervalStart, intervalStepMs, investedCostToPercent, backtest as lib, listExchangeSchema, listFrameSchema, listMCPSchema, listMemory, listRiskSchema, listSizingSchema, listStrategySchema, listSweepSchema, listWalkerSchema, listenActivePing, listenActivePingOnce, listenActivePingPerSignal, listenAfterEnd, listenAfterEndOnce, listenBacktestProgress, listenBeforeStart, listenBeforeStartOnce, listenBreakevenAvailable, listenBreakevenAvailableOnce, listenBreakevenAvailablePerSignal, listenCheck, listenCheckOnce, listenDoneBacktest, listenDoneBacktestOnce, listenDoneLive, listenDoneLiveOnce, listenDoneWalker, listenDoneWalkerOnce, listenError, listenExit, listenHighestProfit, listenHighestProfitOnce, listenHighestProfitPerSignal, listenIdlePing, listenIdlePingOnce, listenMaxDrawdown, listenMaxDrawdownOnce, listenMaxDrawdownPerSignal, listenOrderContinue, listenOrderContinueOnce, listenOrderFill, listenOrderFillOnce, listenOrderReject, listenOrderRejectOnce, listenOrderStop, listenOrderStopOnce, listenPartialLossAvailable, listenPartialLossAvailableOnce, listenPartialLossAvailablePerSignal, listenPartialProfitAvailable, listenPartialProfitAvailableOnce, listenPartialProfitAvailablePerSignal, listenPause, listenPauseOnce, listenPerformance, listenRisk, listenRiskOnce, listenScheduleEvent, listenScheduleEventOnce, listenScheduleEventPerSignal, listenSchedulePing, listenSchedulePingOnce, listenSchedulePingPerSignal, listenSignal, listenSignalActive, listenSignalActivePerSignal, listenSignalBacktest, listenSignalBacktestActive, listenSignalBacktestActivePerSignal, listenSignalBacktestCancelled, listenSignalBacktestCancelledPerSignal, listenSignalBacktestClosed, listenSignalBacktestClosedPerSignal, listenSignalBacktestIdle, listenSignalBacktestOnce, listenSignalBacktestOpened, listenSignalBacktestOpenedPerSignal, listenSignalBacktestPerSignal, listenSignalBacktestScheduled, listenSignalBacktestScheduledPerSignal, listenSignalBacktestWaiting, listenSignalBacktestWaitingPerSignal, listenSignalCancelled, listenSignalCancelledPerSignal, listenSignalClosed, listenSignalClosedPerSignal, listenSignalEvent, listenSignalEventOnce, listenSignalEventPerSignal, listenSignalIdle, listenSignalLive, listenSignalLiveActive, listenSignalLiveActivePerSignal, listenSignalLiveCancelled, listenSignalLiveCancelledPerSignal, listenSignalLiveClosed, listenSignalLiveClosedPerSignal, listenSignalLiveIdle, listenSignalLiveOnce, listenSignalLiveOpened, listenSignalLiveOpenedPerSignal, listenSignalLivePerSignal, listenSignalLiveScheduled, listenSignalLiveScheduledPerSignal, listenSignalLiveWaiting, listenSignalLiveWaitingPerSignal, listenSignalNotify, listenSignalNotifyOnce, listenSignalNotifyPerSignal, listenSignalOnce, listenSignalOpened, listenSignalOpenedPerSignal, listenSignalPerSignal, listenSignalScheduled, listenSignalScheduledPerSignal, listenSignalWaiting, listenSignalWaitingPerSignal, listenStrategyCommit, listenStrategyCommitOnce, listenStrategyCommitPerSignal, listenSync, listenSyncOnce, listenValidation, listenWalker, listenWalkerComplete, listenWalkerOnce, listenWalkerProgress, overrideActionSchema, overrideExchangeSchema, overrideFrameSchema, overrideMCPSchema, overrideRiskSchema, overrideSizingSchema, overrideStrategySchema, overrideSweepSchema, overrideWalkerSchema, parseArgs, percentDiff, percentToCloseCost, percentValue, readMemory, removeMemory, roundTicks, runInMockContext, searchMemory, set, setColumns, setConfig, setLogger, setSessionData, setSignalState, setStrategyPaused, shutdown, slPercentShiftToPrice, slPriceToPercentShift, stopStrategy, toPlainString, toProfitLossDto, tpPercentShiftToPrice, tpPriceToPercentShift, validate, validateCandles, validateCommonSignal, validatePendingSignal, validateScheduledSignal, validateSignal, waitForCandle, waitForReady, warmCandles, writeMemory };
