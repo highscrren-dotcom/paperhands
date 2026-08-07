@@ -12002,15 +12002,15 @@ declare function listenStrategyCommitOnce(filterFn: (event: StrategyCommitContra
  *
  * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
  * `onOrderOpenCommit` / `onOrderCloseCommit` channel):
- * - plain Error or {@link OrderTransientError} → "transient": the open retries
+ * - plain Error or OrderTransientError → "transient": the open retries
  *   identity-stably (same signalId, `event.attempt` increments) up to
  *   CC_ORDER_OPEN_RETRY_ATTEMPTS; the close retries up to
  *   CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine FORCE-CLOSES its state with the
  *   original closeReason. Exhaustion of either signals a fatal exit (exitEmitter).
- * - {@link OrderRejectedError} → "rejected", TERMINAL at once: the open is dropped
+ * - OrderRejectedError → "rejected", TERMINAL at once: the open is dropped
  *   without arming the retry; the close is force-closed immediately. No exit signal
  *   (business outcome).
- * - {@link OrderDeletedError} here is a userspace protocol violation (it belongs to
+ * - OrderDeletedError here is a userspace protocol violation (it belongs to
  *   the CHECK channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle sync events. If the function returns a promise, signal processing will wait until it resolves.
@@ -12019,10 +12019,11 @@ declare function listenStrategyCommitOnce(filterFn: (event: StrategyCommitContra
 declare function listenSync(fn: (event: OrderSyncContract) => void, warned?: boolean): () => void;
 /**
  * Subscribes to filtered signal synchronization events with one-time execution.
- * This is an order GATE: a throw from the listener rejects the open/close — see
- * {@link listenSync} for the full throw semantics (plain Error /
- * {@link OrderTransientError} = bounded "transient" retry, {@link OrderRejectedError}
- * = terminal at once, {@link OrderDeletedError} = protocol violation → transient).
+ * This is an order GATE: a throw from the listener rejects the open/close. Throw
+ * semantics are identical to the non-filtered form: a plain Error or
+ * OrderTransientError becomes a bounded "transient" retry, OrderRejectedError is
+ * terminal at once, and OrderDeletedError is a protocol violation here (it belongs
+ * to the CHECK channel) that degrades to "transient".
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -12032,7 +12033,7 @@ declare function listenSyncOnce(filterFn: (event: OrderSyncContract) => boolean,
 /**
  * Subscribes to broker-CONFIRMED order fill events with queued async processing.
  *
- * Post-verdict mirror of {@link listenSync}: fires ONLY after the onOrderSync gate
+ * Post-verdict mirror of the order-sync gate: fires ONLY after that gate
  * resolved into the "confirmed" IBrokerOrderVerdict — the broker adapter acknowledged
  * the order really executed/placed on the exchange. A transient or terminal
  * (OrderRejectedError) gate rejection does NOT fire here, and neither does a
@@ -12056,8 +12057,8 @@ declare function listenSyncOnce(filterFn: (event: OrderSyncContract) => boolean,
 declare function listenOrderFill(fn: (event: OrderFillContract) => void): () => void;
 /**
  * Subscribes to filtered broker-confirmed order fill events with one-time execution.
- * See {@link listenOrderFill} for the emission semantics (confirmed verdicts only,
- * live-only, listener throws swallowed).
+ * Emission semantics match the non-filtered form: confirmed verdicts only, live
+ * mode only, and a throw from the listener is swallowed at the emission site.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -12077,7 +12078,7 @@ declare function listenOrderFillOnce(filterFn: (event: OrderFillContract) => boo
  *
  * Live-only: backtest gates short-circuit to "confirmed" without an exchange.
  *
- * Like {@link listenOrderFill} this is a NOTIFICATION channel, not a gate: a throw
+ * Like the fill channel this is a NOTIFICATION channel, not a gate: a throw
  * from the listener is swallowed at the emission site (logged + errorEmitter) and
  * cannot affect the already-resolved verdict. Safe for telegram/webhook/audit
  * consumers.
@@ -12088,8 +12089,9 @@ declare function listenOrderFillOnce(filterFn: (event: OrderFillContract) => boo
 declare function listenOrderReject(fn: (event: OrderRejectContract) => void): () => void;
 /**
  * Subscribes to filtered terminal order rejection events with one-time execution.
- * See {@link listenOrderReject} for the emission semantics (terminal "rejected"
- * verdicts only, live-only, listener throws swallowed).
+ * Emission semantics match the non-filtered form: terminal "rejected" verdicts
+ * only, live mode only, and a throw from the listener is swallowed at the
+ * emission site.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -12099,7 +12101,7 @@ declare function listenOrderRejectOnce(filterFn: (event: OrderRejectContract) =>
 /**
  * Subscribes to post-verdict order-check CONTINUE events with queued async processing.
  *
- * Paired with {@link listenOrderStop}: the pre-verdict {@link listenCheck} fires the
+ * Paired with the order-stop channel: the pre-verdict check channel fires the
  * ping REQUEST before the broker adapter answers; this channel carries the resolved
  * NON-terminal decision — the order is confirmed still open (`event.attempt` 0) or a
  * transient check failure was tolerated (`event.attempt` > 0) and monitoring
@@ -12116,7 +12118,8 @@ declare function listenOrderRejectOnce(filterFn: (event: OrderRejectContract) =>
 declare function listenOrderContinue(fn: (event: OrderContinueContract) => void): () => void;
 /**
  * Subscribes to filtered post-verdict order-check CONTINUE events with one-time execution.
- * See {@link listenOrderContinue} for the emission semantics.
+ * Emission semantics match the non-filtered form: resolved non-terminal check
+ * decisions, live mode only, and a throw from the listener is swallowed.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -12126,7 +12129,7 @@ declare function listenOrderContinueOnce(filterFn: (event: OrderContinueContract
 /**
  * Subscribes to post-verdict order-check STOP events with queued async processing.
  *
- * Paired with {@link listenOrderContinue}: fires exactly once per monitored signal
+ * Paired with the order-continue channel: fires exactly once per monitored signal
  * when the check resolved TERMINALLY — `event.reason` "deleted" (OrderDeletedError:
  * confirmed order-not-found, bypassing the tolerance counter) or "exhausted"
  * (CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive transient failures spent, or the
@@ -12144,7 +12147,8 @@ declare function listenOrderContinueOnce(filterFn: (event: OrderContinueContract
 declare function listenOrderStop(fn: (event: OrderStopContract) => void): () => void;
 /**
  * Subscribes to filtered post-verdict order-check STOP events with one-time execution.
- * See {@link listenOrderStop} for the emission semantics.
+ * Emission semantics match the non-filtered form: terminal check decisions only,
+ * live mode only, and a throw from the listener is swallowed.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -12162,17 +12166,17 @@ declare function listenOrderStopOnce(filterFn: (event: OrderStopContract) => boo
  *
  * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
  * `onOrderActiveCheck` / `onOrderScheduleCheck` channel):
- * - plain Error or {@link OrderTransientError} → "transient": the failed check is
+ * - plain Error or OrderTransientError → "transient": the failed check is
  *   TOLERATED (order assumed still open, monitoring continues, `event.attempt`
  *   increments) up to CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures — a network
  *   blip no longer kills a live position; a successful check resets the streak.
  *   Exhaustion acts terminally (close "closed" / cancel "user") and signals a fatal
  *   exit (exitEmitter).
- * - {@link OrderDeletedError} → "deleted", TERMINAL at once, bypassing the tolerance:
+ * - OrderDeletedError → "deleted", TERMINAL at once, bypassing the tolerance:
  *   the CONFIRMED "order not found by `event.signalId`". A FILLED resting order is
  *   NOT a deleted order — confirm fills via commitActivateScheduled /
  *   commitCreateTakeProfit / commitCreateStopLoss instead.
- * - {@link OrderRejectedError} here is a userspace protocol violation (it belongs to
+ * - OrderRejectedError here is a userspace protocol violation (it belongs to
  *   the GATE channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle check events. If the function returns a promise, signal processing will wait until it resolves.
@@ -12181,11 +12185,12 @@ declare function listenOrderStopOnce(filterFn: (event: OrderStopContract) => boo
 declare function listenCheck(fn: (event: OrderCheckContract) => void, warned?: boolean): () => void;
 /**
  * Subscribes to filtered order-check ping events with one-time execution.
- * This is the order CHECK channel — see {@link listenCheck} for the full throw
- * semantics (plain Error / {@link OrderTransientError} = tolerated "transient"
- * failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, {@link OrderDeletedError} =
- * confirmed not-found terminal at once, {@link OrderRejectedError} = protocol
- * violation → transient).
+ * This is the order CHECK channel. Throw semantics are identical to the
+ * non-filtered form: a plain Error or OrderTransientError is a tolerated
+ * "transient" failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, OrderDeletedError
+ * is a confirmed not-found and terminal at once, and OrderRejectedError is a
+ * protocol violation here (it belongs to the GATE channel) that degrades to
+ * "transient".
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -12483,8 +12488,8 @@ declare function listenSchedulePingPerSignal(filterFn: (event: SchedulePingContr
  *
  * Deduplicates on `event.data.id`, so only the FIRST matching profit level of a
  * signal is reported. To react to each distinct level of the same signal, key on
- * the level instead by using {@link listenPartialProfitAvailable} with your own
- * bookkeeping, or narrow `filterFn` to a single level.
+ * the level instead by using the plain `listenPartialProfitAvailable` form with
+ * your own bookkeeping, or narrow `filterFn` to a single level.
  *
  * @param filterFn - Predicate selecting which events are considered
  * @param fn - Callback invoked once per new signal id
@@ -12495,8 +12500,8 @@ declare function listenPartialProfitAvailablePerSignal(filterFn: (event: Partial
  * Subscribes to partial loss level events, delivering the callback once per new signal id.
  *
  * Deduplicates on `event.data.id` — only the first matching loss level of a
- * signal reaches the callback. See {@link listenPartialProfitAvailablePerSignal}
- * for the per-level caveat.
+ * signal reaches the callback. The same per-level caveat as the partial-profit
+ * form applies: narrow `filterFn` to a single level if you need each one.
  *
  * @param filterFn - Predicate selecting which events are considered
  * @param fn - Callback invoked once per new signal id
@@ -12602,8 +12607,8 @@ declare function listenSignalScheduled(fn: (event: IStrategyTickResultScheduled)
  * Subscribes to waiting tick results (live + backtest).
  *
  * Fires on every tick while a scheduled signal has not yet activated. High volume:
- * one event per tick per waiting signal — see {@link listenSignalWaitingPerSignal}
- * to collapse it to one callback per signal.
+ * one event per tick per waiting signal. Use the `listenSignalWaitingPerSignal`
+ * form to collapse that down to one callback per signal.
  *
  * @param fn - Callback receiving waiting events
  * @returns Unsubscribe function to stop listening
@@ -12633,7 +12638,9 @@ declare function listenSignalOpened(fn: (event: IStrategyTickResultOpened) => vo
  * Subscribes to active tick results (live + backtest).
  *
  * Fires on every tick while a position is open, carrying live `pnl`, `percentTp` and
- * `percentSl`. High volume — see {@link listenSignalActivePerSignal}.
+ * `percentSl`. High volume: one event per tick per open position. Use the
+ * `listenSignalActivePerSignal` form to collapse that down to one callback per
+ * position.
  *
  * @param fn - Callback receiving active events
  * @returns Unsubscribe function to stop listening
@@ -12669,73 +12676,287 @@ declare function listenSignalClosed(fn: (event: IStrategyTickResultClosed) => vo
  */
 declare function listenSignalCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
 /**
- * Subscribes to live idle tick results. Only Live.run() execution.
- * See {@link listenSignalIdle}.
+ * Subscribes to idle tick results from live executions only.
+ *
+ * Fires on every tick where the strategy holds no position and nothing scheduled.
+ * `event.signal` is always `null` here, so there is nothing to inspect beyond
+ * `currentPrice`, `symbol` and the strategy/exchange/frame identity. Useful for
+ * heartbeat logging or for noticing that a strategy has gone quiet.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving idle events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveIdle(fn: (event: IStrategyTickResultIdle) => void): () => void;
 /**
- * Subscribes to live scheduled tick results. Only Live.run() execution.
- * See {@link listenSignalScheduled}.
+ * Subscribes to scheduled tick results from live executions only.
+ *
+ * Fires once, at the moment a scheduled signal is created: the strategy asked for
+ * an entry at a specific price and the engine is now waiting for the market to
+ * reach it. No position exists yet. Every later tick of that same waiting entry
+ * arrives as a "waiting" event instead, so this action marks the start of the
+ * wait, not the wait itself.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving scheduled events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveScheduled(fn: (event: IStrategyTickResultScheduled) => void): () => void;
 /**
- * Subscribes to live waiting tick results. Only Live.run() execution.
- * See {@link listenSignalWaiting}.
+ * Subscribes to waiting tick results from live executions only.
+ *
+ * Fires on every tick while a scheduled signal has not activated yet. `event.signal`
+ * describes the resting entry and `pnl` is theoretical - the position is not open,
+ * so nothing is at risk. This is a high-volume channel: one event per tick per
+ * waiting signal for as long as the entry rests.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving waiting events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveWaiting(fn: (event: IStrategyTickResultWaiting) => void): () => void;
 /**
- * Subscribes to live opened tick results. Only Live.run() execution.
- * See {@link listenSignalOpened}.
+ * Subscribes to opened tick results from live executions only.
+ *
+ * Fires when a position actually opens, either because the strategy returned an
+ * immediate signal or because a scheduled entry finally activated. `event.signal`
+ * carries the stored row with its generated id, entry price and TP/SL levels. This
+ * is the point from which the position starts costing money.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving opened events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveOpened(fn: (event: IStrategyTickResultOpened) => void): () => void;
 /**
- * Subscribes to live active tick results. Only Live.run() execution.
- * See {@link listenSignalActive}.
+ * Subscribes to active tick results from live executions only.
+ *
+ * Fires on every tick while a position is open, carrying the live `pnl` plus
+ * `percentTp` / `percentSl` - how far price has travelled toward take-profit or
+ * stop-loss. This is a high-volume channel: one event per tick per open position,
+ * for the whole life of the position.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving active events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveActive(fn: (event: IStrategyTickResultActive) => void): () => void;
 /**
- * Subscribes to live closed tick results. Only Live.run() execution.
- * See {@link listenSignalClosed}.
+ * Subscribes to closed tick results from live executions only.
+ *
+ * Fires when a position closes, for any reason. `closeReason` says which
+ * ("take_profit", "stop_loss", "time_expired" or "closed" for a user-initiated
+ * close), `closeTimestamp` says when, and `pnl` holds the realised result with fees
+ * and slippage already applied. Terminal for that signal - no further events for
+ * it will arrive on this channel.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving closed events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveClosed(fn: (event: IStrategyTickResultClosed) => void): () => void;
 /**
- * Subscribes to live cancelled tick results. Only Live.run() execution.
- * See {@link listenSignalCancelled}.
+ * Subscribes to cancelled tick results from live executions only.
+ *
+ * Fires when a scheduled signal is dropped before it ever became a position, so no
+ * money was ever at risk. `reason` explains why (the wait timed out, price moved
+ * through the entry in the wrong direction, or a user cancelled it) and `cancelId`
+ * is set for user-initiated cancellations. Terminal for that signal.
+ *
+ * Receives events from Live.run() only. Backtest replays never reach this callback,
+ * which is what makes it safe for anything with real-world side effects - order
+ * placement mirrors, alerting, notifications.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving cancelled events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
 /**
- * Subscribes to backtest idle tick results. Only Backtest.run() execution.
- * See {@link listenSignalIdle}.
+ * Subscribes to idle tick results from backtest executions only.
+ *
+ * Fires on every tick where the strategy holds no position and nothing scheduled.
+ * `event.signal` is always `null` here, so there is nothing to inspect beyond
+ * `currentPrice`, `symbol` and the strategy/exchange/frame identity. Useful for
+ * heartbeat logging or for noticing that a strategy has gone quiet.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving idle events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestIdle(fn: (event: IStrategyTickResultIdle) => void): () => void;
 /**
- * Subscribes to backtest scheduled tick results. Only Backtest.run() execution.
- * See {@link listenSignalScheduled}.
+ * Subscribes to scheduled tick results from backtest executions only.
+ *
+ * Fires once, at the moment a scheduled signal is created: the strategy asked for
+ * an entry at a specific price and the engine is now waiting for the market to
+ * reach it. No position exists yet. Every later tick of that same waiting entry
+ * arrives as a "waiting" event instead, so this action marks the start of the
+ * wait, not the wait itself.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving scheduled events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestScheduled(fn: (event: IStrategyTickResultScheduled) => void): () => void;
 /**
- * Subscribes to backtest waiting tick results. Only Backtest.run() execution.
- * See {@link listenSignalWaiting}.
+ * Subscribes to waiting tick results from backtest executions only.
+ *
+ * Fires on every tick while a scheduled signal has not activated yet. `event.signal`
+ * describes the resting entry and `pnl` is theoretical - the position is not open,
+ * so nothing is at risk. This is a high-volume channel: one event per tick per
+ * waiting signal for as long as the entry rests.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving waiting events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestWaiting(fn: (event: IStrategyTickResultWaiting) => void): () => void;
 /**
- * Subscribes to backtest opened tick results. Only Backtest.run() execution.
- * See {@link listenSignalOpened}.
+ * Subscribes to opened tick results from backtest executions only.
+ *
+ * Fires when a position actually opens, either because the strategy returned an
+ * immediate signal or because a scheduled entry finally activated. `event.signal`
+ * carries the stored row with its generated id, entry price and TP/SL levels. This
+ * is the point from which the position starts costing money.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving opened events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestOpened(fn: (event: IStrategyTickResultOpened) => void): () => void;
 /**
- * Subscribes to backtest active tick results. Only Backtest.run() execution.
- * See {@link listenSignalActive}.
+ * Subscribes to active tick results from backtest executions only.
+ *
+ * Fires on every tick while a position is open, carrying the live `pnl` plus
+ * `percentTp` / `percentSl` - how far price has travelled toward take-profit or
+ * stop-loss. This is a high-volume channel: one event per tick per open position,
+ * for the whole life of the position.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving active events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestActive(fn: (event: IStrategyTickResultActive) => void): () => void;
 /**
- * Subscribes to backtest closed tick results. Only Backtest.run() execution.
- * See {@link listenSignalClosed}.
+ * Subscribes to closed tick results from backtest executions only.
+ *
+ * Fires when a position closes, for any reason. `closeReason` says which
+ * ("take_profit", "stop_loss", "time_expired" or "closed" for a user-initiated
+ * close), `closeTimestamp` says when, and `pnl` holds the realised result with fees
+ * and slippage already applied. Terminal for that signal - no further events for
+ * it will arrive on this channel.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving closed events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestClosed(fn: (event: IStrategyTickResultClosed) => void): () => void;
 /**
- * Subscribes to backtest cancelled tick results. Only Backtest.run() execution.
- * See {@link listenSignalCancelled}.
+ * Subscribes to cancelled tick results from backtest executions only.
+ *
+ * Fires when a scheduled signal is dropped before it ever became a position, so no
+ * money was ever at risk. `reason` explains why (the wait timed out, price moved
+ * through the entry in the wrong direction, or a user cancelled it) and `cancelId`
+ * is set for user-initiated cancellations. Terminal for that signal.
+ *
+ * Receives events from Backtest.run() only. Live trading never reaches this
+ * callback, so it is the right channel for replay analysis and reporting that must
+ * not be polluted by production traffic.
+ *
+ * Because the emitter is already split by action, the callback receives the
+ * narrowed variant directly - no `if (event.action === ...)` guard is needed
+ * before reading the fields described above.
+ *
+ * @param fn - Callback receiving cancelled events
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestCancelled(fn: (event: IStrategyTickResultCancelled) => void): () => void;
 /**
@@ -12804,63 +13025,283 @@ declare function listenSignalClosedPerSignal(filterFn: (event: IStrategyTickResu
  */
 declare function listenSignalCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
 /**
- * Subscribes to live scheduled tick results, once per new signal id.
- * See {@link listenSignalScheduledPerSignal}.
+ * Subscribes to scheduled tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per resting entry that satisfies the predicate, at the moment it is
+ * created. Since "scheduled" already fires only once per signal, the dedup here is
+ * mainly a safety net against a repeated emission.
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which scheduled events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveScheduledPerSignal(filterFn: (event: IStrategyTickResultScheduled) => boolean, fn: (event: IStrategyTickResultScheduled) => void): () => void;
 /**
- * Subscribes to live waiting tick results, once per new signal id.
- * See {@link listenSignalWaitingPerSignal}.
+ * Subscribes to waiting tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * "Waiting" repeats on every tick for as long as a resting entry has not activated,
+ * so this is where the dedup earns its keep: the callback runs on the FIRST tick
+ * where the entry satisfies the predicate and then stays silent for that entry, no
+ * matter how long it keeps waiting.
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which waiting events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveWaitingPerSignal(filterFn: (event: IStrategyTickResultWaiting) => boolean, fn: (event: IStrategyTickResultWaiting) => void): () => void;
 /**
- * Subscribes to live opened tick results, once per new signal id.
- * See {@link listenSignalOpenedPerSignal}.
+ * Subscribes to opened tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per position that satisfies the predicate, at the moment it opens.
+ * Since "opened" already fires only once per signal, the dedup here is mainly a
+ * safety net against a repeated emission.
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which opened events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveOpenedPerSignal(filterFn: (event: IStrategyTickResultOpened) => boolean, fn: (event: IStrategyTickResultOpened) => void): () => void;
 /**
- * Subscribes to live active tick results, once per new signal id.
- * See {@link listenSignalActivePerSignal}.
+ * Subscribes to active tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * "Active" repeats on every tick for the whole life of a position, so this is the
+ * canonical use of the per-signal form: the callback runs on the FIRST tick where
+ * the position satisfies the predicate and then stays silent for that position.
+ * Ideal for one-shot alerts such as "this trade crossed 5% profit".
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which active events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveActivePerSignal(filterFn: (event: IStrategyTickResultActive) => boolean, fn: (event: IStrategyTickResultActive) => void): () => void;
 /**
- * Subscribes to live closed tick results, once per new signal id.
- * See {@link listenSignalClosedPerSignal}.
+ * Subscribes to closed tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per closed position that satisfies the predicate. Since "closed" is
+ * terminal and already fires once per signal, the dedup here is mainly a safety net
+ * against a repeated emission.
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which closed events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveClosedPerSignal(filterFn: (event: IStrategyTickResultClosed) => boolean, fn: (event: IStrategyTickResultClosed) => void): () => void;
 /**
- * Subscribes to live cancelled tick results, once per new signal id.
- * See {@link listenSignalCancelledPerSignal}.
+ * Subscribes to cancelled tick results from live executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per dropped resting entry that satisfies the predicate. Since
+ * "cancelled" is terminal and already fires once per signal, the dedup here is
+ * mainly a safety net against a repeated emission.
+ *
+ * Receives events from Live.run() only, so backtest replays can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which cancelled events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalLiveCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
 /**
- * Subscribes to backtest scheduled tick results, once per new signal id.
- * See {@link listenSignalScheduledPerSignal}.
+ * Subscribes to scheduled tick results from backtest executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per resting entry that satisfies the predicate, at the moment it is
+ * created. Since "scheduled" already fires only once per signal, the dedup here is
+ * mainly a safety net against a repeated emission.
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which scheduled events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestScheduledPerSignal(filterFn: (event: IStrategyTickResultScheduled) => boolean, fn: (event: IStrategyTickResultScheduled) => void): () => void;
 /**
- * Subscribes to backtest waiting tick results, once per new signal id.
- * See {@link listenSignalWaitingPerSignal}.
+ * Subscribes to waiting tick results from backtest executions only,
+ * delivering the callback at most once per signal.
+ *
+ * "Waiting" repeats on every tick for as long as a resting entry has not activated,
+ * so this is where the dedup earns its keep: the callback runs on the FIRST tick
+ * where the entry satisfies the predicate and then stays silent for that entry, no
+ * matter how long it keeps waiting.
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which waiting events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestWaitingPerSignal(filterFn: (event: IStrategyTickResultWaiting) => boolean, fn: (event: IStrategyTickResultWaiting) => void): () => void;
 /**
- * Subscribes to backtest opened tick results, once per new signal id.
- * See {@link listenSignalOpenedPerSignal}.
+ * Subscribes to opened tick results from backtest executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per position that satisfies the predicate, at the moment it opens.
+ * Since "opened" already fires only once per signal, the dedup here is mainly a
+ * safety net against a repeated emission.
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which opened events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestOpenedPerSignal(filterFn: (event: IStrategyTickResultOpened) => boolean, fn: (event: IStrategyTickResultOpened) => void): () => void;
 /**
- * Subscribes to backtest active tick results, once per new signal id.
- * See {@link listenSignalActivePerSignal}.
+ * Subscribes to active tick results from backtest executions only,
+ * delivering the callback at most once per signal.
+ *
+ * "Active" repeats on every tick for the whole life of a position, so this is the
+ * canonical use of the per-signal form: the callback runs on the FIRST tick where
+ * the position satisfies the predicate and then stays silent for that position.
+ * Ideal for one-shot alerts such as "this trade crossed 5% profit".
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which active events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestActivePerSignal(filterFn: (event: IStrategyTickResultActive) => boolean, fn: (event: IStrategyTickResultActive) => void): () => void;
 /**
- * Subscribes to backtest closed tick results, once per new signal id.
- * See {@link listenSignalClosedPerSignal}.
+ * Subscribes to closed tick results from backtest executions only, delivering the
+ * callback at most once per signal.
+ *
+ * Fires once per closed position that satisfies the predicate. Since "closed" is
+ * terminal and already fires once per signal, the dedup here is mainly a safety net
+ * against a repeated emission.
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which closed events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestClosedPerSignal(filterFn: (event: IStrategyTickResultClosed) => boolean, fn: (event: IStrategyTickResultClosed) => void): () => void;
 /**
- * Subscribes to backtest cancelled tick results, once per new signal id.
- * See {@link listenSignalCancelledPerSignal}.
+ * Subscribes to cancelled tick results from backtest executions only,
+ * delivering the callback at most once per signal.
+ *
+ * Fires once per dropped resting entry that satisfies the predicate. Since
+ * "cancelled" is terminal and already fires once per signal, the dedup here is
+ * mainly a safety net against a repeated emission.
+ *
+ * Receives events from Backtest.run() only, so live trading can never trigger it.
+ *
+ * Deduplication is per execution identity - strategy, exchange, frame, mode and
+ * symbol - so parallel strategies never suppress one another. Within one execution
+ * the listener remembers the last signal id it delivered and drops any repeat of
+ * it; a new signal id reports again.
+ *
+ * The predicate runs BEFORE the dedup, so events the predicate rejects are never
+ * remembered and cannot hide a later matching event.
+ *
+ * @param filterFn - Predicate selecting which cancelled events are considered
+ * @param fn - Callback invoked at most once per signal
+ * @returns Unsubscribe function to stop listening
  */
 declare function listenSignalBacktestCancelledPerSignal(filterFn: (event: IStrategyTickResultCancelled) => boolean, fn: (event: IStrategyTickResultCancelled) => void): () => void;
 

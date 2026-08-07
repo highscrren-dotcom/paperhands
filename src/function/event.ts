@@ -1783,15 +1783,15 @@ export function listenStrategyCommitOnce(
  *
  * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
  * `onOrderOpenCommit` / `onOrderCloseCommit` channel):
- * - plain Error or {@link OrderTransientError} → "transient": the open retries
+ * - plain Error or OrderTransientError → "transient": the open retries
  *   identity-stably (same signalId, `event.attempt` increments) up to
  *   CC_ORDER_OPEN_RETRY_ATTEMPTS; the close retries up to
  *   CC_ORDER_CLOSE_RETRY_ATTEMPTS, then the engine FORCE-CLOSES its state with the
  *   original closeReason. Exhaustion of either signals a fatal exit (exitEmitter).
- * - {@link OrderRejectedError} → "rejected", TERMINAL at once: the open is dropped
+ * - OrderRejectedError → "rejected", TERMINAL at once: the open is dropped
  *   without arming the retry; the close is force-closed immediately. No exit signal
  *   (business outcome).
- * - {@link OrderDeletedError} here is a userspace protocol violation (it belongs to
+ * - OrderDeletedError here is a userspace protocol violation (it belongs to
  *   the CHECK channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle sync events. If the function returns a promise, signal processing will wait until it resolves.
@@ -1813,10 +1813,11 @@ export function listenSync(fn: (event: OrderSyncContract) => void, warned = fals
 
 /**
  * Subscribes to filtered signal synchronization events with one-time execution.
- * This is an order GATE: a throw from the listener rejects the open/close — see
- * {@link listenSync} for the full throw semantics (plain Error /
- * {@link OrderTransientError} = bounded "transient" retry, {@link OrderRejectedError}
- * = terminal at once, {@link OrderDeletedError} = protocol violation → transient).
+ * This is an order GATE: a throw from the listener rejects the open/close. Throw
+ * semantics are identical to the non-filtered form: a plain Error or
+ * OrderTransientError becomes a bounded "transient" retry, OrderRejectedError is
+ * terminal at once, and OrderDeletedError is a protocol violation here (it belongs
+ * to the CHECK channel) that degrades to "transient".
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -1852,7 +1853,7 @@ export function listenSyncOnce(
 /**
  * Subscribes to broker-CONFIRMED order fill events with queued async processing.
  *
- * Post-verdict mirror of {@link listenSync}: fires ONLY after the onOrderSync gate
+ * Post-verdict mirror of the order-sync gate: fires ONLY after that gate
  * resolved into the "confirmed" IBrokerOrderVerdict — the broker adapter acknowledged
  * the order really executed/placed on the exchange. A transient or terminal
  * (OrderRejectedError) gate rejection does NOT fire here, and neither does a
@@ -1880,8 +1881,8 @@ export function listenOrderFill(fn: (event: OrderFillContract) => void) {
 
 /**
  * Subscribes to filtered broker-confirmed order fill events with one-time execution.
- * See {@link listenOrderFill} for the emission semantics (confirmed verdicts only,
- * live-only, listener throws swallowed).
+ * Emission semantics match the non-filtered form: confirmed verdicts only, live
+ * mode only, and a throw from the listener is swallowed at the emission site.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -1918,7 +1919,7 @@ export function listenOrderFillOnce(
  *
  * Live-only: backtest gates short-circuit to "confirmed" without an exchange.
  *
- * Like {@link listenOrderFill} this is a NOTIFICATION channel, not a gate: a throw
+ * Like the fill channel this is a NOTIFICATION channel, not a gate: a throw
  * from the listener is swallowed at the emission site (logged + errorEmitter) and
  * cannot affect the already-resolved verdict. Safe for telegram/webhook/audit
  * consumers.
@@ -1933,8 +1934,9 @@ export function listenOrderReject(fn: (event: OrderRejectContract) => void) {
 
 /**
  * Subscribes to filtered terminal order rejection events with one-time execution.
- * See {@link listenOrderReject} for the emission semantics (terminal "rejected"
- * verdicts only, live-only, listener throws swallowed).
+ * Emission semantics match the non-filtered form: terminal "rejected" verdicts
+ * only, live mode only, and a throw from the listener is swallowed at the
+ * emission site.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -1961,7 +1963,7 @@ export function listenOrderRejectOnce(
 /**
  * Subscribes to post-verdict order-check CONTINUE events with queued async processing.
  *
- * Paired with {@link listenOrderStop}: the pre-verdict {@link listenCheck} fires the
+ * Paired with the order-stop channel: the pre-verdict check channel fires the
  * ping REQUEST before the broker adapter answers; this channel carries the resolved
  * NON-terminal decision — the order is confirmed still open (`event.attempt` 0) or a
  * transient check failure was tolerated (`event.attempt` > 0) and monitoring
@@ -1982,7 +1984,8 @@ export function listenOrderContinue(fn: (event: OrderContinueContract) => void) 
 
 /**
  * Subscribes to filtered post-verdict order-check CONTINUE events with one-time execution.
- * See {@link listenOrderContinue} for the emission semantics.
+ * Emission semantics match the non-filtered form: resolved non-terminal check
+ * decisions, live mode only, and a throw from the listener is swallowed.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -2009,7 +2012,7 @@ export function listenOrderContinueOnce(
 /**
  * Subscribes to post-verdict order-check STOP events with queued async processing.
  *
- * Paired with {@link listenOrderContinue}: fires exactly once per monitored signal
+ * Paired with the order-continue channel: fires exactly once per monitored signal
  * when the check resolved TERMINALLY — `event.reason` "deleted" (OrderDeletedError:
  * confirmed order-not-found, bypassing the tolerance counter) or "exhausted"
  * (CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive transient failures spent, or the
@@ -2031,7 +2034,8 @@ export function listenOrderStop(fn: (event: OrderStopContract) => void) {
 
 /**
  * Subscribes to filtered post-verdict order-check STOP events with one-time execution.
- * See {@link listenOrderStop} for the emission semantics.
+ * Emission semantics match the non-filtered form: terminal check decisions only,
+ * live mode only, and a throw from the listener is swallowed.
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
@@ -2066,17 +2070,17 @@ export function listenOrderStopOnce(
  *
  * Throw semantics (resolved into IBrokerOrderVerdict, identical to the Broker
  * `onOrderActiveCheck` / `onOrderScheduleCheck` channel):
- * - plain Error or {@link OrderTransientError} → "transient": the failed check is
+ * - plain Error or OrderTransientError → "transient": the failed check is
  *   TOLERATED (order assumed still open, monitoring continues, `event.attempt`
  *   increments) up to CC_ORDER_CHECK_RETRY_ATTEMPTS CONSECUTIVE failures — a network
  *   blip no longer kills a live position; a successful check resets the streak.
  *   Exhaustion acts terminally (close "closed" / cancel "user") and signals a fatal
  *   exit (exitEmitter).
- * - {@link OrderDeletedError} → "deleted", TERMINAL at once, bypassing the tolerance:
+ * - OrderDeletedError → "deleted", TERMINAL at once, bypassing the tolerance:
  *   the CONFIRMED "order not found by `event.signalId`". A FILLED resting order is
  *   NOT a deleted order — confirm fills via commitActivateScheduled /
  *   commitCreateTakeProfit / commitCreateStopLoss instead.
- * - {@link OrderRejectedError} here is a userspace protocol violation (it belongs to
+ * - OrderRejectedError here is a userspace protocol violation (it belongs to
  *   the GATE channel) and intentionally degrades to "transient".
  *
  * @param fn - Callback function to handle check events. If the function returns a promise, signal processing will wait until it resolves.
@@ -2098,11 +2102,12 @@ export function listenCheck(fn: (event: OrderCheckContract) => void, warned = fa
 
 /**
  * Subscribes to filtered order-check ping events with one-time execution.
- * This is the order CHECK channel — see {@link listenCheck} for the full throw
- * semantics (plain Error / {@link OrderTransientError} = tolerated "transient"
- * failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, {@link OrderDeletedError} =
- * confirmed not-found terminal at once, {@link OrderRejectedError} = protocol
- * violation → transient).
+ * This is the order CHECK channel. Throw semantics are identical to the
+ * non-filtered form: a plain Error or OrderTransientError is a tolerated
+ * "transient" failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, OrderDeletedError
+ * is a confirmed not-found and terminal at once, and OrderRejectedError is a
+ * protocol violation here (it belongs to the GATE channel) that degrades to
+ * "transient".
  *
  * @param filterFn - Predicate to filter which events trigger the callback
  * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
@@ -2788,8 +2793,8 @@ export function listenSchedulePingPerSignal(
  *
  * Deduplicates on `event.data.id`, so only the FIRST matching profit level of a
  * signal is reported. To react to each distinct level of the same signal, key on
- * the level instead by using {@link listenPartialProfitAvailable} with your own
- * bookkeeping, or narrow `filterFn` to a single level.
+ * the level instead by using the plain `listenPartialProfitAvailable` form with
+ * your own bookkeeping, or narrow `filterFn` to a single level.
  *
  * @param filterFn - Predicate selecting which events are considered
  * @param fn - Callback invoked once per new signal id
@@ -2827,8 +2832,8 @@ export function listenPartialProfitAvailablePerSignal(
  * Subscribes to partial loss level events, delivering the callback once per new signal id.
  *
  * Deduplicates on `event.data.id` — only the first matching loss level of a
- * signal reaches the callback. See {@link listenPartialProfitAvailablePerSignal}
- * for the per-level caveat.
+ * signal reaches the callback. The same per-level caveat as the partial-profit
+ * form applies: narrow `filterFn` to a single level if you need each one.
  *
  * @param filterFn - Predicate selecting which events are considered
  * @param fn - Callback invoked once per new signal id
