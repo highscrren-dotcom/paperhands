@@ -10,8 +10,6 @@ import {
   PersistStrategyAdapter,
   PersistScheduleAdapter,
   PersistRecentAdapter,
-  listenSyncOnce,
-  listenCheckOnce,
   lib,
   MethodContextService,
 } from "../../build/index.mjs";
@@ -181,92 +179,6 @@ test("HARDENING: hung getSignal is cut by the generation timeout and tick return
   pass(`hung getSignal cut at the timeout: idle in ${elapsed}ms`);
 });
 
-/**
- * HARDENING: одноразовость listenSyncOnce/listenCheckOnce — после первого
- * сматченного события подписка снимается; второе событие того же типа
- * колбэк не получает.
- */
-test("HARDENING: listenSyncOnce and listenCheckOnce fire exactly once", async ({ pass, fail }) => {
-  const basePrice = 50000;
-  const priceOpen = 40000;
-  const t0 = new Date("2024-01-01T00:00:00Z").getTime();
-  const context = {
-    strategyName: "hardening-once-strategy",
-    exchangeName: "binance-hardening-once",
-    frameName: "",
-  };
-
-  let issues = 0;
-  let syncOnceFired = 0;
-  let checkOnceFired = 0;
-
-  makeExchange(context.exchangeName, () => basePrice);
-
-  addStrategySchema({
-    strategyName: context.strategyName,
-    interval: "1m",
-    getSignal: async () => {
-      // Два scheduled подряд: первый отменим, второй живёт — каждый даёт
-      // placement-событие (sync) и check-пинг
-      if (issues >= 2) return null;
-      issues += 1;
-      return {
-        position: "long",
-        note: `hardening once #${issues}`,
-        priceOpen,
-        priceTakeProfit: priceOpen + 25000,
-        priceStopLoss: priceOpen - 2000,
-        minuteEstimatedTime: 300,
-      };
-    },
-  });
-
-  listenSyncOnce(
-    (event) => event.strategyName === context.strategyName && event.action === "signal-open" && event.type === "schedule",
-    () => { syncOnceFired += 1; },
-    true,
-  );
-  listenCheckOnce(
-    (event) => event.strategyName === context.strategyName && event.type === "schedule",
-    () => { checkOnceFired += 1; },
-    true,
-  );
-
-  const runTick = makeRunTick(context);
-  const inCtx = (fn) => MethodContextService.runInContext(fn, context);
-
-  // Цикл #1: placement (sync-событие #1) + мониторинг (check-пинг #1)
-  const tick1 = await runTick(new Date(t0));
-  if (tick1.action !== "scheduled") {
-    fail(`tick #1 expected "scheduled", got "${tick1.action}"`);
-    return;
-  }
-  await runTick(new Date(t0 + 1 * MIN)); // waiting → check-пинг #1
-  // Отмена и второй цикл: placement #2 + пинг #2
-  await inCtx(() => lib.strategyCoreService.cancelScheduled(false, "BTCUSDT", context, { id: "once-cancel" }));
-  const tick3 = await runTick(new Date(t0 + 2 * MIN)); // дренаж отмены
-  if (tick3.action !== "cancelled") {
-    fail(`tick #3 expected "cancelled", got "${tick3.action}"`);
-    return;
-  }
-  const tick4 = await runTick(new Date(t0 + 3 * MIN)); // scheduled #2 → placement-событие #2
-  if (tick4.action !== "scheduled") {
-    fail(`tick #4 expected "scheduled" (second signal), got "${tick4.action}"`);
-    return;
-  }
-  await runTick(new Date(t0 + 4 * MIN)); // waiting → check-пинг #2
-
-  if (syncOnceFired !== 1) {
-    fail(`REGRESSION: listenSyncOnce must fire exactly once across 2 placements, got ${syncOnceFired}`);
-    return;
-  }
-  if (checkOnceFired !== 1) {
-    fail(`REGRESSION: listenCheckOnce must fire exactly once across 2 pings, got ${checkOnceFired}`);
-    return;
-  }
-
-  pass(`Once-listeners disposed after the first match: sync=1, check=1 across two cycles`);
-});
 
 /**
  * HARDENING: Infinity-холд переживает крэш — JSON сериализует Infinity как

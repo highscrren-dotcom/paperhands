@@ -653,16 +653,15 @@ wall clock не замена): restore-ветки `waitForInit` (метки ко
 
 Оба контракта несут `type: "schedule" | "active"`:
 
-- **`listenSync(fn, true)`** — `OrderSyncContract` (syncSubject). `action:
+- **`listenSync(fn)`** — `OrderSyncContract` (syncSubject). `action:
   "signal-open"` с `type: "schedule"` — РАЗМЕЩЕНИЕ resting-ордера при создании
   scheduled (throw → scheduled не регистрируется, ретрай next tick); с `type:
   "active"` — открытие позиции/филл активации (throw при активации —
   ТЕРМИНАЛЬНАЯ отмена, при свежем открытии — ретрай next tick). Фильтруйте по
   `event.type`: слушатель «на все signal-open» поймает и placement-события.
-- **`listenCheck(fn, true)`** — `OrderCheckContract` (syncPendingSubject),
+- **`listenCheck(fn)`** — `OrderCheckContract` (syncPendingSubject),
   пинг «ордер ещё жив?». Throw при `"active"` → закрытие `closed`, при
   `"schedule"` → отмена scheduled `user`. Backtest эти события не эмитит.
-- Второй аргумент `true` подавляет discouraged-предупреждения в консоли.
 - В Action-хендлере методы `orderSync`/`orderCheck` ЗАПРЕЩЕНЫ валидатором схемы —
   используйте `callbacks: { onOrderSync, onOrderCheck }` в `addActionSchema`
   или Broker-адаптер.
@@ -891,7 +890,6 @@ SHORT-зеркало новой логики (вся сессия писалас
 Дозакрытие пробелов:
 - **`callbacks.onOrderSync` в Action** — второй санкционированный гейт-канал: throw → откат троттла → next-tick retry в "1h"
 - **Таймаут getSignal** (`CC_MAX_SIGNAL_GENERATION_SECONDS` через частичный setConfig): зависший getSignal обрывается за ~1с → idle
-- **Одноразовость listenSyncOnce/listenCheckOnce**: ровно 1 срабатывание на два цикла событий
 - **Infinity-холд через крэш**: JSON null → Infinity restore, позиция active сутки спустя, estimate === Infinity (нужен `CC_MAX_SIGNAL_LIFETIME_MINUTES: Infinity`)
 - **Whipsaw через рестарт**: `_lastPendingId` восстановлен из PersistRecentAdapter (Recent записан напрямую адаптером — канал Recent-класса в тестах не активен), детерминированный id заблокирован ПОСЛЕ вызова getSignal
 - **Конкуренция за общую риск-мапу**: shared riskName + validation по `activePositionCount` — A занимает слот → B idle → A закрылась → B opened (release-точки реально возвращают слот)

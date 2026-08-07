@@ -73,17 +73,11 @@ const LISTEN_IDLE_PING_ONCE_METHOD_NAME = "event.listenIdlePingOnce";
 const LISTEN_STRATEGY_COMMIT_METHOD_NAME = "event.listenStrategyCommit";
 const LISTEN_STRATEGY_COMMIT_ONCE_METHOD_NAME = "event.listenStrategyCommitOnce";
 const LISTEN_SYNC_METHOD_NAME = "event.listenSync";
-const LISTEN_SYNC_ONCE_METHOD_NAME = "event.listenSyncOnce";
 const LISTEN_ORDER_FILL_METHOD_NAME = "event.listenOrderFill";
-const LISTEN_ORDER_FILL_ONCE_METHOD_NAME = "event.listenOrderFillOnce";
 const LISTEN_ORDER_REJECT_METHOD_NAME = "event.listenOrderReject";
-const LISTEN_ORDER_REJECT_ONCE_METHOD_NAME = "event.listenOrderRejectOnce";
 const LISTEN_ORDER_CONTINUE_METHOD_NAME = "event.listenOrderContinue";
-const LISTEN_ORDER_CONTINUE_ONCE_METHOD_NAME = "event.listenOrderContinueOnce";
 const LISTEN_ORDER_STOP_METHOD_NAME = "event.listenOrderStop";
-const LISTEN_ORDER_STOP_ONCE_METHOD_NAME = "event.listenOrderStopOnce";
 const LISTEN_CHECK_METHOD_NAME = "event.listenCheck";
-const LISTEN_CHECK_ONCE_METHOD_NAME = "event.listenCheckOnce";
 const LISTEN_HIGHEST_PROFIT_METHOD_NAME = "event.listenHighestProfit";
 const LISTEN_HIGHEST_PROFIT_ONCE_METHOD_NAME = "event.listenHighestProfitOnce";
 const LISTEN_MAX_DRAWDOWN_METHOD_NAME = "event.listenMaxDrawdown";
@@ -1797,57 +1791,16 @@ export function listenStrategyCommitOnce(
  * @param fn - Callback function to handle sync events. If the function returns a promise, signal processing will wait until it resolves.
  * @returns Unsubscribe function to stop listening
  */
-export function listenSync(fn: (event: OrderSyncContract) => void, warned = false) {
+export function listenSync(fn: (event: OrderSyncContract) => void) {
   backtest.loggerService.log(LISTEN_SYNC_METHOD_NAME);
 
-  if (!warned) {
-    console.error("listenSync is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-    console.error("If you need to implement custom logic on signal open/close, please use signal(), signalBacktest(), signalLive() in addActionSchema handler");
-    console.error("If listenSync throws the exchange will not execute the order!");
-    console.error("");
-    console.error("You have been warned!");
-  }
+  console.error("listenSync is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
+  console.error("If you need to implement custom logic on signal open/close, please use signal(), signalBacktest(), signalLive() in addActionSchema handler");
+  console.error("If listenSync throws the exchange will not execute the order!");
+  console.error("");
+  console.error("You have been warned!");
 
   return syncSubject.subscribe(queued(async (event) => fn(event)));
-}
-
-/**
- * Subscribes to filtered signal synchronization events with one-time execution.
- * This is an order GATE: a throw from the listener rejects the open/close. Throw
- * semantics are identical to the non-filtered form: a plain Error or
- * OrderTransientError becomes a bounded "transient" retry, OrderRejectedError is
- * terminal at once, and OrderDeletedError is a protocol violation here (it belongs
- * to the CHECK channel) that degrades to "transient".
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenSyncOnce(
-  filterFn: (event: OrderSyncContract) => boolean,
-  fn: (event: OrderSyncContract) => void,
-  warned = false
-) {
-  backtest.loggerService.log(LISTEN_SYNC_ONCE_METHOD_NAME);
-
-  if (!warned) {
-    console.error("listenSyncOnce is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-    console.error("If you need to implement custom logic on signal open/close, please use signal(), signalBacktest(), signalLive() in addActionSchema handler");
-    console.error("If listenSyncOnce throws the exchange will not execute the order!");
-    console.error("");
-    console.error("You have been warned!");
-  }
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderSyncContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenSync(wrappedFn, true);
 }
 
 /**
@@ -1880,33 +1833,6 @@ export function listenOrderFill(fn: (event: OrderFillContract) => void) {
 }
 
 /**
- * Subscribes to filtered broker-confirmed order fill events with one-time execution.
- * Emission semantics match the non-filtered form: confirmed verdicts only, live
- * mode only, and a throw from the listener is swallowed at the emission site.
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenOrderFillOnce(
-  filterFn: (event: OrderFillContract) => boolean,
-  fn: (event: OrderFillContract) => void
-) {
-  backtest.loggerService.log(LISTEN_ORDER_FILL_ONCE_METHOD_NAME);
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderFillContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenOrderFill(wrappedFn);
-}
-
-/**
  * Subscribes to TERMINAL order rejection events with queued async processing.
  *
  * Post-verdict mirror of the rejection branch: fires ONLY when the onOrderSync gate
@@ -1933,34 +1859,6 @@ export function listenOrderReject(fn: (event: OrderRejectContract) => void) {
 }
 
 /**
- * Subscribes to filtered terminal order rejection events with one-time execution.
- * Emission semantics match the non-filtered form: terminal "rejected" verdicts
- * only, live mode only, and a throw from the listener is swallowed at the
- * emission site.
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenOrderRejectOnce(
-  filterFn: (event: OrderRejectContract) => boolean,
-  fn: (event: OrderRejectContract) => void
-) {
-  backtest.loggerService.log(LISTEN_ORDER_REJECT_ONCE_METHOD_NAME);
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderRejectContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenOrderReject(wrappedFn);
-}
-
-/**
  * Subscribes to post-verdict order-check CONTINUE events with queued async processing.
  *
  * Paired with the order-stop channel: the pre-verdict check channel fires the
@@ -1980,33 +1878,6 @@ export function listenOrderRejectOnce(
 export function listenOrderContinue(fn: (event: OrderContinueContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_CONTINUE_METHOD_NAME);
   return orderContinueSubject.subscribe(queued(async (event) => fn(event)));
-}
-
-/**
- * Subscribes to filtered post-verdict order-check CONTINUE events with one-time execution.
- * Emission semantics match the non-filtered form: resolved non-terminal check
- * decisions, live mode only, and a throw from the listener is swallowed.
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenOrderContinueOnce(
-  filterFn: (event: OrderContinueContract) => boolean,
-  fn: (event: OrderContinueContract) => void
-) {
-  backtest.loggerService.log(LISTEN_ORDER_CONTINUE_ONCE_METHOD_NAME);
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderContinueContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenOrderContinue(wrappedFn);
 }
 
 /**
@@ -2030,33 +1901,6 @@ export function listenOrderContinueOnce(
 export function listenOrderStop(fn: (event: OrderStopContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_STOP_METHOD_NAME);
   return orderStopSubject.subscribe(queued(async (event) => fn(event)));
-}
-
-/**
- * Subscribes to filtered post-verdict order-check STOP events with one-time execution.
- * Emission semantics match the non-filtered form: terminal check decisions only,
- * live mode only, and a throw from the listener is swallowed.
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, processing waits until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenOrderStopOnce(
-  filterFn: (event: OrderStopContract) => boolean,
-  fn: (event: OrderStopContract) => void
-) {
-  backtest.loggerService.log(LISTEN_ORDER_STOP_ONCE_METHOD_NAME);
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderStopContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenOrderStop(wrappedFn);
 }
 
 /**
@@ -2086,58 +1930,16 @@ export function listenOrderStopOnce(
  * @param fn - Callback function to handle check events. If the function returns a promise, signal processing will wait until it resolves.
  * @returns Unsubscribe function to stop listening
  */
-export function listenCheck(fn: (event: OrderCheckContract) => void, warned = false) {
+export function listenCheck(fn: (event: OrderCheckContract) => void) {
   backtest.loggerService.log(LISTEN_CHECK_METHOD_NAME);
 
-  if (!warned) {
-    console.error("listenCheck is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-    console.error("If you need to check whether the order is still open on the exchange, please use Broker.useBrokerAdapter with onOrderActiveCheck / onOrderScheduleCheck");
-    console.error("If listenCheck throws the framework will close the position with closeReason \"closed\" (type \"active\") or cancel the scheduled signal (type \"schedule\")!");
-    console.error("");
-    console.error("You have been warned!");
-  }
+  console.error("listenCheck is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
+  console.error("If you need to check whether the order is still open on the exchange, please use Broker.useBrokerAdapter with onOrderActiveCheck / onOrderScheduleCheck");
+  console.error("If listenCheck throws the framework will close the position with closeReason \"closed\" (type \"active\") or cancel the scheduled signal (type \"schedule\")!");
+  console.error("");
+  console.error("You have been warned!");
 
   return syncPendingSubject.subscribe(queued(async (event) => fn(event)));
-}
-
-/**
- * Subscribes to filtered order-check ping events with one-time execution.
- * This is the order CHECK channel. Throw semantics are identical to the
- * non-filtered form: a plain Error or OrderTransientError is a tolerated
- * "transient" failure bounded by CC_ORDER_CHECK_RETRY_ATTEMPTS, OrderDeletedError
- * is a confirmed not-found and terminal at once, and OrderRejectedError is a
- * protocol violation here (it belongs to the GATE channel) that degrades to
- * "transient".
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once). If the function returns a promise, signal processing will wait until it resolves.
- * @returns Unsubscribe function to cancel the listener before it fires
- */
-export function listenCheckOnce(
-  filterFn: (event: OrderCheckContract) => boolean,
-  fn: (event: OrderCheckContract) => void,
-  warned = false
-) {
-  backtest.loggerService.log(LISTEN_CHECK_ONCE_METHOD_NAME);
-
-  if (!warned) {
-    console.error("listenCheckOnce is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-    console.error("If you need to check whether the order is still open on the exchange, please use Broker.useBrokerAdapter with onOrderActiveCheck / onOrderScheduleCheck");
-    console.error("If listenCheckOnce throws the framework will close the position with closeReason \"closed\" (type \"active\") or cancel the scheduled signal (type \"schedule\")!");
-    console.error("");
-    console.error("You have been warned!");
-  }
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: OrderCheckContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenCheck(wrappedFn, true);
 }
 
 /**
