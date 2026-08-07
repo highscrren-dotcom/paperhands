@@ -56,6 +56,12 @@ const options: IBreadcrumbs2Option[] = [
         action: "back-action",
         compute: ({ interval }) => String(interval).toUpperCase(),
     },
+    {
+        type: Breadcrumbs2Type.Button,
+        icon: Refresh,
+        action: "update-now",
+        label: t("Refresh"),
+    },
 ];
 
 const actions: IBreadcrumbs2Action[] = [

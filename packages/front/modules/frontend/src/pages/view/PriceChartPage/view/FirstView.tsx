@@ -70,6 +70,12 @@ const options: IBreadcrumbs2Option[] = [
         action: "back-action",
         label: t("Price Chart"),
     },
+    {
+        type: Breadcrumbs2Type.Button,
+        icon: Refresh,
+        action: "update-now",
+        label: t("Refresh"),
+    },
 ];
 
 const actions: IBreadcrumbs2Action[] = [

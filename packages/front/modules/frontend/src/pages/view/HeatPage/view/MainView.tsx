@@ -40,8 +40,13 @@ const options: IBreadcrumbs2Option[] = [
     },
     {
         type: Breadcrumbs2Type.Button,
+        icon: Refresh,
+        action: "update-now",
+        label: t("Refresh"),
+    },
+    {
+        type: Breadcrumbs2Type.Fab,
         action: "download-pdf",
-        label: t("Download PDF"),
         icon: PictureAsPdfOutlined,
     },
 ];
