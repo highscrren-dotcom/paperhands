@@ -26,58 +26,6 @@ import {
  */
 const SEEN_MAP_LIMIT = 200;
 
-/**
- * ============================================================================
- * ACTION-SCOPED SIGNAL LISTENERS
- * ============================================================================
- *
- * `listenSignal` / `listenSignalLive` / `listenSignalBacktest` deliver the whole
- * `IStrategyTickResult` union, which forces every subscriber to re-open the
- * same `if (event.action === "...")` branch before it can touch a variant-specific
- * field. These aliases pre-split each emitter by the `action` discriminator, so the
- * callback receives an already-narrowed member of the union: `pnl` and `closeReason`
- * are simply present on a `listenSignalClosed` event, no guard required.
- *
- * Three families, one per emitter:
- * - `listenSignal<Action>`         — all events (live + backtest)
- * - `listenSignalLive<Action>`     — Live.run() only
- * - `listenSignalBacktest<Action>` — Backtest.run() only
- *
- * Seven actions: Idle, Scheduled, Waiting, Opened, Active, Closed, Cancelled.
- *
- * Each also ships a `...PerSignal` variant taking `(filterFn, fn)`, which fires the
- * callback once per NEW signal id rather than on every emission — the same pipeline
- * used in `function/event.ts`:
- *
- *   emitter
- *     .filter(action match && filterFn) // 1. condition
- *     .filter(dedup via seenMap)        // 2. collapse repeats
- *     .connect(queued(fn))              // 3. sequential delivery
- *
- * Each subscription owns a `LimitedMap` holding, per execution identity, the last
- * signal id it delivered:
- *
- *   strategyName:exchangeName[:frameName]:backtest|live:symbol  ->  signalId
- *
- * (frameName is omitted when empty, exactly like the Cache key helper.) An event
- * passes only when the stored id for its own key differs from the incoming one.
- *
- * This is deliberately NOT `Operator.distinct`, which keeps one "previous compare
- * value" for the entire stream: a single process runs several strategies, symbols
- * and modes through the same emitter, so under `distinct` execution B's event
- * becomes the baseline and lets execution A's next repeat through as new. A
- * per-key map gives every execution independent state.
- *
- * The predicate MUST run first — the dedup filter records what it lets through, so
- * it must only ever see events the subscriber actually wants.
- *
- * `Idle` has no per-signal variant: an idle tick carries `signal: null`, so there is
- * no identity to deduplicate on. Use the plain `listenSignalIdle` form instead.
- *
- * These are plain stream subscriptions: they do not consult `hasPendingSignal`
- * before delivery. Every function returns an unsubscribe function.
- */
-
 const LISTEN_SIGNAL_IDLE_METHOD_NAME = "alias.listenSignalIdle";
 const LISTEN_SIGNAL_SCHEDULED_METHOD_NAME = "alias.listenSignalScheduled";
 const LISTEN_SIGNAL_WAITING_METHOD_NAME = "alias.listenSignalWaiting";
