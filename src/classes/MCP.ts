@@ -37,11 +37,47 @@ const METHOD_NAME_COMMIT_SIGNAL_NOTIFY = "MCPUtils.commitSignalNotify";
 /** Grid step (percent) the hard stop-loss distance snaps to. */
 const HARD_STOP_STEP_PERCENT = 2.5;
 
-/** Maximum closed positions included in the trade history messages. */
-const MAX_HISTORY_ROWS = 10;
+/**
+ * Default depth of the trade history feed (getHistoryMessages).
+ *
+ * Ten closed trades are enough to answer the question the history exists for
+ * — "have I already traded this idea, and how did it end" — while staying
+ * cheap in agent context: each row carries result, close reason, timings and
+ * the opening description. Deeper history rarely changes an exit decision but
+ * grows the prompt linearly.
+ *
+ * The caller overrides it per call via the `limit` argument. Rows are sorted
+ * newest-first before the cut, so any limit drops the OLDEST trades.
+ */
+const DEFAULT_HISTORY_LIMIT = 10;
 
-/** Maximum agent log entries included in the agent messages. */
-const MAX_AGENT_ROWS = 10;
+/**
+ * Default depth of the trading system directives feed (getAgentMessages).
+ *
+ * Directives written by the strategy via `Log.agent(...)` are instructions to
+ * act on RIGHT NOW — "this position has been stagnating for an hour, look for
+ * an efficient exit". Five keeps the freshest ones visible without letting a
+ * chatty strategy flood the prompt; older directives have usually been
+ * superseded by the newer ones anyway.
+ *
+ * The caller overrides it per call via the `limit` argument. Rows are sorted
+ * newest-first before the cut, so any limit drops the OLDEST directives.
+ */
+const DEFAULT_AGENT_LIMIT = 5;
+
+/**
+ * Default depth of the active-position notes feed (getNotificationMessages).
+ *
+ * These are the agent's own notes on positions that are open right now, so
+ * the feed is naturally bounded by the number of open positions times the
+ * notes per position. Twenty covers a portfolio of several symbols each
+ * carrying a few observations, and the closed-position notes drop out on
+ * their own once the signal id stops matching.
+ *
+ * The caller overrides it per call via the `limit` argument. Rows are sorted
+ * newest-first before the cut, so any limit drops the OLDEST notes.
+ */
+const DEFAULT_NOTIFICATION_LIMIT = 20;
 
 /**
  * Computes the hard stop-loss distance percent for an opened position.
@@ -298,18 +334,21 @@ const DEFAULT_GET_MESSAGES = (
  * only sees open positions re-trades the same news right after closing;
  * with the history it sees "this was already traded, result -2.10 USD".
  *
- * Depth: at most {@link MAX_HISTORY_ROWS} newest closed rows are rendered.
- * The underlying live bucket additionally keeps only the last CC_MAX_SIGNALS
- * rows across ALL strategies (global feed by contract), and rows accumulate
- * only while the Storage adapter is enabled.
+ * Depth: {@link DEFAULT_HISTORY_LIMIT} by default, overridable by `limit`.
+ * The cut runs AFTER the newest-first sort, so a limit drops the oldest
+ * trades and never the recent ones. The underlying live bucket additionally
+ * keeps only the last CC_MAX_SIGNALS rows across ALL strategies (global feed
+ * by contract), and rows accumulate only while the Storage adapter is enabled.
  *
  * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @param limit - Maximum trades to render, newest kept
  * @returns Promise resolving to history messages for the MCP agent
  */
 const HISTORY_GET_MESSAGES = async (
   mcpName: MCPName,
   when: Date,
+  limit: number,
 ): Promise<IMCPMessage[]> => {
   const strategyName = await GET_STRATEGY_NAME_FN(
     mcpName,
@@ -320,8 +359,9 @@ const HISTORY_GET_MESSAGES = async (
     .flatMap((row) =>
       row.strategyName === strategyName && row.status === "closed" ? [row] : [],
     )
+    // Newest first, THEN cut: the limit must drop the oldest trades
     .sort((a, b) => b.closeTimestamp - a.closeTimestamp)
-    .slice(0, MAX_HISTORY_ROWS);
+    .slice(0, limit);
   if (!closedList.length) {
     return [
       {
@@ -393,17 +433,21 @@ const HISTORY_GET_MESSAGES = async (
  * the entry was written outside an execution scope (see
  * {@link GET_ENTRY_TIMESTAMP_FN}).
  *
- * Depth: at most {@link MAX_AGENT_ROWS} newest entries are rendered. Rows
- * accumulate only while a Log adapter is enabled (memory, persist or jsonl —
- * the dummy adapter records nothing).
+ * Depth: {@link DEFAULT_AGENT_LIMIT} by default, overridable by `limit`. The
+ * cut runs AFTER the newest-first sort, so a limit drops the oldest
+ * directives and never the recent ones. Rows accumulate only while a Log
+ * adapter is enabled (memory, persist or jsonl — the dummy adapter records
+ * nothing).
  *
  * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @param limit - Maximum entries to render, newest kept
  * @returns Promise resolving to agent instruction messages for the MCP agent
  */
 const AGENT_GET_MESSAGES = async (
   mcpName: MCPName,
   when: Date,
+  limit: number,
 ): Promise<IMCPMessage[]> => {
   const strategyName = await GET_STRATEGY_NAME_FN(
     mcpName,
@@ -418,8 +462,9 @@ const AGENT_GET_MESSAGES = async (
         ? [{ entry, timestamp: GET_ENTRY_TIMESTAMP_FN(entry) }]
         : [],
     )
+    // Newest first, THEN cut: the limit must drop the oldest directives
     .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, MAX_AGENT_ROWS);
+    .slice(0, limit);
   if (!agentList.length) {
     return [
       {
@@ -476,18 +521,22 @@ const AGENT_GET_MESSAGES = async (
  * the event, the emit time and the description itself, rendered last on its
  * own lines so multi-line markdown stays readable.
  *
- * Depth: at most {@link MAX_HISTORY_ROWS} newest notifications are rendered.
- * Rows accumulate only while a NotificationLive backend is enabled.
+ * Depth: {@link DEFAULT_NOTIFICATION_LIMIT} by default, overridable by
+ * `limit`. The cut runs AFTER the newest-first sort, so a limit drops the
+ * oldest notes and never the recent ones. Rows accumulate only while a
+ * NotificationLive backend is enabled.
  *
  * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
  * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
+ * @param limit - Maximum notifications to render, newest kept
  * @returns Promise resolving to active-position notification messages for the MCP agent
  */
 const NOTIFICATION_GET_MESSAGES = async (
   context: IMCPContext,
   mcpName: MCPName,
   when: Date,
+  limit: number,
 ): Promise<IMCPMessage[]> => {
   const strategyName = await GET_STRATEGY_NAME_FN(
     mcpName,
@@ -516,8 +565,9 @@ const NOTIFICATION_GET_MESSAGES = async (
         ? [row]
         : [],
     )
+    // Newest first, THEN cut: the limit must drop the oldest notes
     .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, MAX_HISTORY_ROWS);
+    .slice(0, limit);
   if (!infoList.length) {
     return [
       {
@@ -1275,7 +1325,7 @@ export class MCPUtils {
   /**
    * Renders the trade history of the MCP (Model Context Protocol)
    * instance's strategy into agent messages:
-   * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
+   * the CLOSED positions from the live signal
    * storage, newest first — dollar/percent result, direction, close reason,
    * open/close times and the opening note per trade.
    *
@@ -1283,14 +1333,19 @@ export class MCPUtils {
    * open, the history shows what was already traded and how it ended, so
    * the agent does not re-enter the same idea right after closing it.
    *
+   * Depth defaults to {@link DEFAULT_HISTORY_LIMIT}; the newest trades are
+   * the ones kept when `limit` cuts the feed.
+   *
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+   * @param limit - Maximum trades to render, newest kept
    * @returns Promise resolving to history messages for the MCP agent
    *
    * @example
    * ```typescript
    * // Full agent memory: portfolio status, notes of the open positions,
    * // directives raised by the strategy, history of the closed trades —
-   * // one snapshot, no repeated requests
+   * // one snapshot, no repeated requests. Each feed caps itself at a sane
+   * // default; pass a `limit` to trade context size for depth
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
@@ -1306,9 +1361,11 @@ export class MCPUtils {
    */
   public getHistoryMessages = async (
     mcpName: MCPName,
+    limit = DEFAULT_HISTORY_LIMIT,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_HISTORY_MESSAGES, {
       mcpName,
+      limit,
     });
 
     {
@@ -1316,15 +1373,15 @@ export class MCPUtils {
     }
 
     const when = alignToInterval(new Date(), "1m");
-    return await HISTORY_GET_MESSAGES(mcpName, when);
+    return await HISTORY_GET_MESSAGES(mcpName, when, limit);
   };
 
   /**
    * Renders the messages the STRATEGY CODE addressed to the agent into agent
-   * messages: the last {@link MAX_AGENT_ROWS} `agent`-level entries of the
-   * log history written via `Log.agent(...)` under the MCP (Model Context
-   * Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
-   * time and the message text per entry.
+   * messages: the `agent`-level entries of the log history written via
+   * `Log.agent(...)` under the MCP (Model Context Protocol) instance's
+   * strategy in LIVE mode, newest first — symbol, emit time and the message
+   * text per entry.
    *
    * This is the strategy talking to the agent, the reverse direction of every
    * other renderer: getStatus reports numbers, getNotificationMessages
@@ -1334,9 +1391,12 @@ export class MCPUtils {
    * instructions from the trading system.
    *
    * Backtest entries and entries of other strategies are filtered out; rows
-   * accumulate only while a Log adapter is enabled.
+   * accumulate only while a Log adapter is enabled. Depth defaults to
+   * {@link DEFAULT_AGENT_LIMIT}; the newest directives are the ones kept when
+   * `limit` cuts the feed.
    *
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+   * @param limit - Maximum directives to render, newest kept
    * @returns Promise resolving to trading system messages for the MCP agent
    *
    * @example
@@ -1346,7 +1406,7 @@ export class MCPUtils {
    *   Log.agent("The BTCUSDT position has been stagnating for an hour — look for an efficient exit");
    * }
    *
-   * // In the MCP schema — surface those directives to the agent
+   * // In the MCP schema — surface the freshest directives to the agent
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
@@ -1360,9 +1420,11 @@ export class MCPUtils {
    */
   public getAgentMessages = async (
     mcpName: MCPName,
+    limit = DEFAULT_AGENT_LIMIT,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_AGENT_MESSAGES, {
       mcpName,
+      limit,
     });
 
     {
@@ -1370,7 +1432,7 @@ export class MCPUtils {
     }
 
     const when = alignToInterval(new Date(), "1m");
-    return await AGENT_GET_MESSAGES(mcpName, when);
+    return await AGENT_GET_MESSAGES(mcpName, when, limit);
   };
 
   /**
@@ -1379,9 +1441,9 @@ export class MCPUtils {
    * reads the pending signal id of every symbol from the portfolio snapshot
    * the caller already holds — no extra exchange or live state requests —
    * and keeps only the notifications emitted via commitSignalNotify for
-   * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
-   * note, market price and unrealized PnL at the moment of the event and
-   * the emit time per notification.
+   * those signal ids, newest first — market price and unrealized PnL at the
+   * moment of the event, the emit time and the description itself per
+   * notification.
    *
    * Complements getStatus: the status shows what is open, this method shows
    * what the agent (or the strategy) annotated on the open positions, so a
@@ -1394,18 +1456,22 @@ export class MCPUtils {
    * custom renderer can await this method and append the notifications to
    * the default output without re-fetching anything.
    *
-   * Rows accumulate only while a NotificationLive backend is enabled.
+   * Rows accumulate only while a NotificationLive backend is enabled. Depth
+   * defaults to {@link DEFAULT_NOTIFICATION_LIMIT}; the newest notes are the
+   * ones kept when `limit` cuts the feed.
    *
    * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
    * @param when - Snapshot time stamped into the header message
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+   * @param limit - Maximum notifications to render, newest kept
    * @returns Promise resolving to active-position notification messages for the MCP agent
    *
    * @example
    * ```typescript
    * // Full agent memory: portfolio status, notes of the open positions,
    * // directives raised by the strategy, history of the closed trades —
-   * // one snapshot, no repeated requests
+   * // one snapshot, no repeated requests. Each feed caps itself at a sane
+   * // default; pass a `limit` to trade context size for depth
    * addMCPSchema({
    *   mcpName: "my-mcp",
    *   strategyName: "my-strategy",
@@ -1423,17 +1489,19 @@ export class MCPUtils {
     context: IMCPContext,
     when: Date,
     mcpName: MCPName,
+    limit = DEFAULT_NOTIFICATION_LIMIT,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_NOTIFICATION_MESSAGES, {
       mcpName,
       when,
+      limit,
     });
 
     {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_NOTIFICATION_MESSAGES);
     }
 
-    return await NOTIFICATION_GET_MESSAGES(context, mcpName, when);
+    return await NOTIFICATION_GET_MESSAGES(context, mcpName, when, limit);
   };
 
   /**
