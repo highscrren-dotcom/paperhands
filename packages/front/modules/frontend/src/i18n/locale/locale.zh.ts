@@ -407,6 +407,8 @@ export const LOCALE: Record<string, string> = {
   "Warn": "警告",
   "Agent": "智能体",
   "Log level": "日志级别",
+  "The AGENT level carries directives the strategy addressed to the AI agent via Log.agent(...), such as a stagnating position or collapsed volatility.": "AGENT 级别承载策略通过 Log.agent(...) 发给 AI 智能体的指令，例如持仓停滞或波动率骤降。",
+  "Unlike LOG, DEBUG, INFO and WARN, which the strategy writes for you to read, these entries are fed to the agent as instructions from the trading system.": "与策略写给你阅读的 LOG、DEBUG、INFO 和 WARN 不同，这些条目会作为交易系统的指令传给智能体。",
   "No signals yet": "暂无信号",
   "Live signals will be displayed here": "实盘信号将在此处显示",
   "Backtest signals will be displayed here": "回测信号将在此处显示",

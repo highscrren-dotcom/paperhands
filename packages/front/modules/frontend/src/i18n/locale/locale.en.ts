@@ -407,6 +407,8 @@ export const LOCALE: Record<string, string> = {
   "Warn": "Warn",
   "Agent": "Agent",
   "Log level": "Log level",
+  "The AGENT level carries directives the strategy addressed to the AI agent via Log.agent(...), such as a stagnating position or collapsed volatility.": "The AGENT level carries directives the strategy addressed to the AI agent via Log.agent(...), such as a stagnating position or collapsed volatility.",
+  "Unlike LOG, DEBUG, INFO and WARN, which the strategy writes for you to read, these entries are fed to the agent as instructions from the trading system.": "Unlike LOG, DEBUG, INFO and WARN, which the strategy writes for you to read, these entries are fed to the agent as instructions from the trading system.",
   "No signals yet": "No signals yet",
   "Live signals will be displayed here": "Live signals will be displayed here",
   "Backtest signals will be displayed here": "Backtest signals will be displayed here",
