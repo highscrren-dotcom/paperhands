@@ -139,9 +139,13 @@ test("listenSignalPerSignal: a filtered-out event does not reset the dedup state
 });
 
 // ---------------------------------------------------------------------------
-// 3. Documented caveat: dedup is against the PREVIOUS accepted id only
+// 3. Dedup survives an interleaved signal on the SAME execution
+//
+// Within one execution the map holds a single slot, so A -> B -> A does report A
+// twice: the slot legitimately moved to B in between. What must NOT happen is a
+// repeat of the CURRENT signal, which test 1 covers.
 // ---------------------------------------------------------------------------
-test("listenSignalPerSignal re-reports a signal when another matching signal interleaves", async ({ pass, fail }) => {
+test("listenSignalPerSignal tracks the latest signal id per execution", async ({ pass, fail }) => {
   const seen = [];
   const unsubscribe = listenSignalPerSignal(
     (event) => event.action === "active",
@@ -155,10 +159,10 @@ test("listenSignalPerSignal re-reports a signal when another matching signal int
   unsubscribe();
 
   if (JSON.stringify(seen) !== JSON.stringify(["A", "B", "A"])) {
-    fail(`delivered ${JSON.stringify(seen)} expected ["A","B","A"] — distinct is not a full seen-set and must not behave like one`);
+    fail(`delivered ${JSON.stringify(seen)} expected ["A","B","A"]`);
     return;
   }
-  pass("A re-reported after B interleaved, matching the documented semantics");
+  pass("one slot per execution: A reported again after the slot moved to B");
 });
 
 // ---------------------------------------------------------------------------
@@ -502,6 +506,74 @@ test("listenStrategyCommitPerSignal dedups on signalId and honours the predicate
     return;
   }
   pass("trailing-stop commits collapsed to one callback per signal");
+});
+
+// ---------------------------------------------------------------------------
+// 9b. The dedup key is the full execution identity, not the bare signal id
+//
+// These subjects are process-global: several strategies / symbols / modes push
+// through them concurrently and their events interleave. With a bare-id key, an
+// event from execution B would become the dedup baseline and let execution A's
+// next event through as "new" (and vice versa). The composite key
+//   strategyName:exchangeName[:frameName]:backtest|live:symbol:signalId
+// keeps each execution's stream independent.
+// ---------------------------------------------------------------------------
+test("dedup key is scoped by execution identity, not just the signal id", async ({ pass, fail }) => {
+  const seen = [];
+  const unsubscribe = listenSignalPerSignal(
+    (event) => event.action === "active",
+    (event) => seen.push(`${event.strategyName}/${event.symbol}/${event.signal.id}`)
+  );
+
+  // SAME signal id "SHARED" under four different execution identities: every one
+  // of them is a distinct stream and must be reported.
+  await emitters.signalEmitter.next(tick("active", "SHARED", { strategyName: "alpha", symbol: "BTCUSDT" }));
+  await emitters.signalEmitter.next(tick("active", "SHARED", { strategyName: "beta", symbol: "BTCUSDT" }));
+  await emitters.signalEmitter.next(tick("active", "SHARED", { strategyName: "alpha", symbol: "ETHUSDT" }));
+  await emitters.signalEmitter.next(tick("active", "SHARED", { strategyName: "alpha", symbol: "BTCUSDT", backtest: true }));
+  await flush();
+  unsubscribe();
+
+  const expected = [
+    "alpha/BTCUSDT/SHARED",
+    "beta/BTCUSDT/SHARED",
+    "alpha/ETHUSDT/SHARED",
+    "alpha/BTCUSDT/SHARED",
+  ];
+  if (JSON.stringify(seen) !== JSON.stringify(expected)) {
+    fail(`delivered ${JSON.stringify(seen)} expected ${JSON.stringify(expected)} — a bare-id dedup key collapses distinct executions`);
+    return;
+  }
+  pass("same signal id under 4 execution identities reported separately");
+});
+
+// ---------------------------------------------------------------------------
+// 9c. Interleaving two executions must not break either one's dedup
+// ---------------------------------------------------------------------------
+test("interleaved executions keep independent dedup state", async ({ pass, fail }) => {
+  const seen = [];
+  const unsubscribe = listenSignalPerSignal(
+    (event) => event.action === "active",
+    (event) => seen.push(`${event.strategyName}:${event.signal.id}`)
+  );
+
+  // alpha/S1, beta/S2, alpha/S1 — the middle event belongs to a different
+  // execution and must leave alpha's dedup slot untouched.
+  await emitters.signalEmitter.next(tick("active", "S1", { strategyName: "alpha" }));
+  await emitters.signalEmitter.next(tick("active", "S2", { strategyName: "beta" }));
+  await emitters.signalEmitter.next(tick("active", "S1", { strategyName: "alpha" }));
+  await flush();
+  unsubscribe();
+
+  // alpha:S1 is NOT re-reported: alpha and beta own separate map slots, so
+  // beta's event cannot displace alpha's remembered id. A single shared
+  // "previous value" (Operator.distinct) would have leaked a third delivery.
+  const expected = ["alpha:S1", "beta:S2"];
+  if (JSON.stringify(seen) !== JSON.stringify(expected)) {
+    fail(`delivered ${JSON.stringify(seen)} expected ${JSON.stringify(expected)} — interleaved executions must not clobber each other's dedup state`);
+    return;
+  }
+  pass("interleaved executions kept independent dedup state");
 });
 
 // ---------------------------------------------------------------------------

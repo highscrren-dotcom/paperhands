@@ -1,4 +1,4 @@
-import { queued, Operator } from "functools-kit";
+import { queued, LimitedMap } from "functools-kit";
 import backtest from "../lib";
 import {
   signalEmitter,
@@ -6,7 +6,6 @@ import {
   signalBacktestEmitter,
 } from "../config/emitters";
 import {
-  IStrategyTickResult,
   IStrategyTickResultIdle,
   IStrategyTickResultScheduled,
   IStrategyTickResultWaiting,
@@ -15,6 +14,12 @@ import {
   IStrategyTickResultClosed,
   IStrategyTickResultCancelled,
 } from "../interfaces/Strategy.interface";
+
+/**
+ * How many execution identities one `listenXPerSignal` subscription remembers.
+ * See the note in `function/event.ts` — same bound, same eviction behaviour.
+ */
+const SEEN_MAP_LIMIT = 200;
 
 /**
  * ============================================================================
@@ -40,15 +45,26 @@ import {
  * used in `function/event.ts`:
  *
  *   emitter
- *     .filter(action match && filterFn)     // 1. condition
- *     .operator(Operator.distinct(id))      // 2. collapse repeats
- *     .connect(queued(fn))                  // 3. sequential delivery
+ *     .filter(action match && filterFn) // 1. condition
+ *     .filter(dedup via seenMap)        // 2. collapse repeats
+ *     .connect(queued(fn))              // 3. sequential delivery
  *
- * The filter MUST precede the distinct: `Operator.distinct` remembers only the
- * previous compare value, so letting unmatched events through first would reset the
- * comparison and leak duplicates. Deduplication is against the previous accepted id,
- * meaning a signal reports again if another signal's matching event interleaved
- * between two of its own.
+ * Each subscription owns a `LimitedMap` holding, per execution identity, the last
+ * signal id it delivered:
+ *
+ *   strategyName:exchangeName[:frameName]:backtest|live:symbol  ->  signalId
+ *
+ * (frameName is omitted when empty, exactly like the Cache key helper.) An event
+ * passes only when the stored id for its own key differs from the incoming one.
+ *
+ * This is deliberately NOT `Operator.distinct`, which keeps one "previous compare
+ * value" for the entire stream: a single process runs several strategies, symbols
+ * and modes through the same emitter, so under `distinct` execution B's event
+ * becomes the baseline and lets execution A's next repeat through as new. A
+ * per-key map gives every execution independent state.
+ *
+ * The predicate MUST run first — the dedup filter records what it lets through, so
+ * it must only ever see events the subscriber actually wants.
  *
  * `Idle` has no per-signal variant — `IStrategyTickResultIdle.signal` is `null`, so
  * there is no identity to deduplicate on. Use {@link listenSignalIdle} instead.
@@ -410,9 +426,26 @@ export function listenSignalScheduledPerSignal(
   fn: (event: IStrategyTickResultScheduled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_SCHEDULED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "scheduled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
 }
 
@@ -431,9 +464,26 @@ export function listenSignalWaitingPerSignal(
   fn: (event: IStrategyTickResultWaiting) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_WAITING_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "waiting" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
 }
 
@@ -449,9 +499,26 @@ export function listenSignalOpenedPerSignal(
   fn: (event: IStrategyTickResultOpened) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_OPENED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "opened" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
 }
 
@@ -481,9 +548,26 @@ export function listenSignalActivePerSignal(
   fn: (event: IStrategyTickResultActive) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_ACTIVE_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "active" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
 }
 
@@ -499,9 +583,26 @@ export function listenSignalClosedPerSignal(
   fn: (event: IStrategyTickResultClosed) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_CLOSED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "closed" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
 }
 
@@ -517,9 +618,26 @@ export function listenSignalCancelledPerSignal(
   fn: (event: IStrategyTickResultCancelled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_CANCELLED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalEmitter
     .filter((event) => event.action === "cancelled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
 }
 
@@ -532,9 +650,26 @@ export function listenSignalLiveScheduledPerSignal(
   fn: (event: IStrategyTickResultScheduled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_SCHEDULED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "scheduled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
 }
 
@@ -547,9 +682,26 @@ export function listenSignalLiveWaitingPerSignal(
   fn: (event: IStrategyTickResultWaiting) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_WAITING_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "waiting" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
 }
 
@@ -562,9 +714,26 @@ export function listenSignalLiveOpenedPerSignal(
   fn: (event: IStrategyTickResultOpened) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_OPENED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "opened" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
 }
 
@@ -577,9 +746,26 @@ export function listenSignalLiveActivePerSignal(
   fn: (event: IStrategyTickResultActive) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_ACTIVE_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "active" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
 }
 
@@ -592,9 +778,26 @@ export function listenSignalLiveClosedPerSignal(
   fn: (event: IStrategyTickResultClosed) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_CLOSED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "closed" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
 }
 
@@ -607,9 +810,26 @@ export function listenSignalLiveCancelledPerSignal(
   fn: (event: IStrategyTickResultCancelled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_LIVE_CANCELLED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalLiveEmitter
     .filter((event) => event.action === "cancelled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
 }
 
@@ -622,9 +842,26 @@ export function listenSignalBacktestScheduledPerSignal(
   fn: (event: IStrategyTickResultScheduled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_SCHEDULED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "scheduled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
 }
 
@@ -637,9 +874,26 @@ export function listenSignalBacktestWaitingPerSignal(
   fn: (event: IStrategyTickResultWaiting) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_WAITING_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "waiting" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
 }
 
@@ -652,9 +906,26 @@ export function listenSignalBacktestOpenedPerSignal(
   fn: (event: IStrategyTickResultOpened) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_OPENED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "opened" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
 }
 
@@ -667,9 +938,26 @@ export function listenSignalBacktestActivePerSignal(
   fn: (event: IStrategyTickResultActive) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_ACTIVE_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "active" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
 }
 
@@ -682,9 +970,26 @@ export function listenSignalBacktestClosedPerSignal(
   fn: (event: IStrategyTickResultClosed) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_CLOSED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "closed" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
 }
 
@@ -697,8 +1002,25 @@ export function listenSignalBacktestCancelledPerSignal(
   fn: (event: IStrategyTickResultCancelled) => void
 ) {
   backtest.loggerService.log(LISTEN_SIGNAL_BACKTEST_CANCELLED_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
   return signalBacktestEmitter
     .filter((event) => event.action === "cancelled" && filterFn(event))
-    .operator(Operator.distinct((event: IStrategyTickResult) => event.signal?.id))
+    .filter((event) => {
+      const parts = [event.strategyName, event.exchangeName];
+      if (event.frameName) parts.push(event.frameName);
+      parts.push(event.backtest ? "backtest" : "live");
+      parts.push(event.symbol);
+      const key = parts.join(":");
+      const signalId = event.signal?.id;
+      if (seenMap.get(key) === signalId) {
+        return false;
+      }
+      seenMap.set(key, signalId);
+      return true;
+    })
     .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
 }
