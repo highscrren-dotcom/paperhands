@@ -24,6 +24,7 @@ import { CC_LIST_BUFFER_SIZE } from "../../../config/params";
 import LogCard from "./components/LogCard";
 import { t } from "../../../i18n";
 import { str } from "functools-kit";
+import { defaultSlots } from "../../../components/OneSlotFactory";
 
 /**
  * Log levels available for filtering, mirroring ILogEntry["type"].
@@ -61,25 +62,35 @@ const LOG_NAME_BY_TYPE = new Map<string, string>(
 
 const fields: TypedField[] = [
   {
-    type: FieldType.Combo,
-    noDeselect: true,
-    name: "log_level",
-    placeholder: t("Choose"),
-    title: "",
-    itemList: LEVEL_FILTERS.map(({ level }) => level),
-    tr: (level) => LOG_NAME_BY_LEVEL.get(level) || level,
-    defaultValue: "filter-all",
-  },
-  {
-    type: FieldType.Typography,
-    typoVariant: "body2",
-    style: {
-      opacity: 0.5,
+    type: FieldType.Box,
+    sx: {
+      minWidth: "256px",
     },
-    placeholder: str.newline(
-      t("The AGENT level carries directives the strategy addressed to the AI agent via Log.agent(...), such as a stagnating position or collapsed volatility."),
-      t("Unlike LOG, DEBUG, INFO and WARN, which the strategy writes for you to read, these entries are fed to the agent as instructions from the trading system."),
-    ),
+    fields: [
+      {
+        type: FieldType.Combo,
+        fieldRightMargin: "0",
+        noDeselect: true,
+        name: "log_level",
+        placeholder: t("Choose"),
+        title: "",
+        itemList: LEVEL_FILTERS.map(({ level }) => level),
+        tr: (level) => LOG_NAME_BY_LEVEL.get(level) || level,
+        defaultValue: "filter-all",
+      },
+      {
+        type: FieldType.Typography,
+        fieldRightMargin: "0",
+        typoVariant: "body2",
+        style: {
+          opacity: 0.5,
+        },
+        placeholder: str.newline(
+          t("The AGENT level carries directives the strategy addressed to the AI agent via Log.agent(...), such as a stagnating position or collapsed volatility."),
+          t("Unlike LOG, DEBUG, INFO and WARN, which the strategy writes for you to read, these entries are fed to the agent as instructions from the trading system."),
+        ),
+      }
+    ]
   }
 ];
 
@@ -175,7 +186,7 @@ export const LogPage = () => {
 
   const pickOne = useOne({
     title: t("Log level"),
-    large: true,
+    slots: defaultSlots,
     fields,
   });
 
@@ -211,8 +222,7 @@ export const LogPage = () => {
     if (!logLevel) {
       return;
     }
-    const [level] = logLevel.log_level;
-    setLevelData(LOG_TYPE_BY_LEVEL.get(level) || "");
+    setLevelData(LOG_TYPE_BY_LEVEL.get(logLevel.log_level) || "");
     await reloadSubject.next();
   }
 
