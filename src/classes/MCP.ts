@@ -208,7 +208,13 @@ const DEFAULT_GET_MESSAGES = (
       lines.push(
         `Max drawdown: ${FORMAT_SIGNED_FN(maxDrawdown.pnlPercentage)}% (${fallMinutesAgo} minute${fallMinutesAgo === 1 ? "" : "s"} ago)`,
       );
-      lines.push(`Opened at: ${new Date(pendingAt).toISOString()}`);
+      const openedMinutesAgo = Math.max(
+        0,
+        Math.round((when.getTime() - pendingAt) / 60_000),
+      );
+      lines.push(
+        `Opened at: ${new Date(pendingAt).toISOString()} (${openedMinutesAgo} minute${openedMinutesAgo === 1 ? "" : "s"} ago)`,
+      );
       if (Number.isFinite(minuteEstimatedTime)) {
         const elapsedMinutes = (when.getTime() - pendingAt) / 60_000;
         const remainingMinutes = Math.max(
@@ -348,7 +354,13 @@ const HISTORY_GET_MESSAGES = async (
     lines.push(
       `Closed at: ${new Date(row.closeTimestamp).toISOString()} (${closedMinutesAgo} minute${closedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
-    lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
+    const heldMinutes = Math.max(
+      0,
+      Math.round((row.closeTimestamp - row.pendingAt) / 60_000),
+    );
+    lines.push(
+      `Opened at: ${new Date(row.pendingAt).toISOString()} (held ${heldMinutes} minute${heldMinutes === 1 ? "" : "s"})`,
+    );
     if (row.note) {
       lines.push("Description:");
       lines.push(toPlainString(row.note));
@@ -531,6 +543,7 @@ const NOTIFICATION_GET_MESSAGES = async (
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
     lines.push(`Signal id: ${row.signalId}`);
+    lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
     lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
     lines.push(
       `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
