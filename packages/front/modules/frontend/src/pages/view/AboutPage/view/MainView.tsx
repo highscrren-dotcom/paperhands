@@ -49,6 +49,12 @@ const options: IBreadcrumbs2Option[] = [
   },
   {
     type: Breadcrumbs2Type.Button,
+    action: "update-now",
+    label: t("Refresh"),
+    icon: Refresh,
+  },
+  {
+    type: Breadcrumbs2Type.Fab,
     action: "download-pdf",
     label: t("Download PDF"),
     icon: PictureAsPdfOutlined,
