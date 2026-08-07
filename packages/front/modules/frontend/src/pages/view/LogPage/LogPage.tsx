@@ -50,9 +50,18 @@ const LOG_TYPE_BY_LEVEL = new Map<string, ILogEntry["type"] | "">(
   LEVEL_FILTERS.map(({ level, type }) => [level, type]),
 );
 
+/**
+ * Maps the active ILogEntry["type"] to its human label. Keyed by log type
+ * rather than action id, as the breadcrumb payload carries the type itself.
+ */
+const LOG_NAME_BY_TYPE = new Map<string, string>(
+  LEVEL_FILTERS.map(({ type, label }) => [type, label]),
+);
+
 const fields: TypedField[] = [
   {
     type: FieldType.Combo,
+    noDeselect: true,
     name: "log_level",
     placeholder: t("Choose"),
     title: "",
@@ -98,6 +107,11 @@ const options: IBreadcrumbs2Option[] = [
     type: Breadcrumbs2Type.Link,
     action: "back-action",
     label: t("Logs"),
+  },
+  {
+    type: Breadcrumbs2Type.Link,
+    action: "back-action",
+    compute: (payload) => LOG_NAME_BY_TYPE.get(payload) || t("All levels"),
   },
   {
     type: Breadcrumbs2Type.Button,
@@ -180,12 +194,13 @@ export const LogPage = () => {
       ({ type }) => type === levelData$.current,
     );
     const logLevel = await pickOne({
-      handler: () => ({ log_level: activeLevel?.level || "filter-all" }),
+      handler: () => ({ log_level: [activeLevel?.level || "filter-all"] }),
     }).toPromise();
     if (!logLevel) {
       return;
     }
-    setLevelData(LOG_TYPE_BY_LEVEL.get(logLevel.log_level) || "");
+    const [level] = logLevel.log_level;
+    setLevelData(LOG_TYPE_BY_LEVEL.get(level) || "");
     await reloadSubject.next();
   }
 
@@ -214,6 +229,7 @@ export const LogPage = () => {
       <Breadcrumbs2
         items={options}
         actions={actions}
+        payload={levelData$.current}
         onAction={handleAction}
       />
        <VirtualView
