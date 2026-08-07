@@ -30,6 +30,10 @@ export const getArgs = singleshot(() => {
       port: {
         type: "string",
         default: "",
+      },
+      tools: {
+        type: "string",
+        default: "",
       }
     },
     strict: false,
@@ -39,6 +43,23 @@ export const getArgs = singleshot(() => {
     values,
     positionals,
   };
+});
+
+/**
+ * Parses the comma-separated `--tools` argument into a tool name list.
+ *
+ * An empty or missing value yields an empty list, which the entry point
+ * reads as "register every tool" — narrowing the surface is opt-in.
+ *
+ * @returns Tool names requested on the command line, trimmed and non-empty
+ */
+export const getToolList = singleshot((): string[] => {
+  const { values } = getArgs();
+  const toolList = typeof values.tools === "string" ? values.tools : "";
+  return toolList
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
 });
 
 export const getPositionals = singleshot((): string[] => {

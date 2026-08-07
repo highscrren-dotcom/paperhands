@@ -1,12 +1,22 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import getEntry from "../helpers/getEntry";
+import { getEntry } from "../helpers/getEntry";
+import { getToolList } from "../helpers/getArgs";
 
 import registerGetStatusTool from "../tools/get_status.tool";
 import registerOpenPositionTool from "../tools/open_position.tool";
 import registerClosePositionTool from "../tools/close_position.tool";
 import registerAveragePositionTool from "../tools/average_position.tool";
 import registerNotifyUserTool from "../tools/notify_user.tool";
+
+/** Every tool name the stdio server can expose, as the agent sees them. */
+const TOOL_LIST = [
+    "get_status",
+    "open_position",
+    "close_position",
+    "average_position",
+    "notify_user",
+];
 
 export const main = async () => {
     if (!getEntry(import.meta.url)) {
@@ -19,11 +29,29 @@ export const main = async () => {
     });
 
     {
-        registerGetStatusTool(server);
-        registerOpenPositionTool(server);
-        registerClosePositionTool(server);
-        registerAveragePositionTool(server);
-        registerNotifyUserTool(server);
+        const toolList = getToolList();
+        const unknownList = toolList.filter((tool) => !TOOL_LIST.includes(tool));
+        if (unknownList.length) {
+            console.error(`MCP Error: unknown tools requested via --tools: ${unknownList.join(", ")}. Available tools: ${TOOL_LIST.join(", ")}`);
+            process.exit(-1);
+        }
+        // An empty --tools means the argument was not passed: expose everything
+        const hasTool = (tool: string) => !toolList.length || toolList.includes(tool);
+        if (hasTool("get_status")) {
+            registerGetStatusTool(server);
+        }
+        if (hasTool("open_position")) {
+            registerOpenPositionTool(server);
+        }
+        if (hasTool("close_position")) {
+            registerClosePositionTool(server);
+        }
+        if (hasTool("average_position")) {
+            registerAveragePositionTool(server);
+        }
+        if (hasTool("notify_user")) {
+            registerNotifyUserTool(server);
+        }
     }
 
     const transport = new StdioServerTransport();
