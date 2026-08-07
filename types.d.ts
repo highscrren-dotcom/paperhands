@@ -1,6 +1,6 @@
 import * as di_scoped from 'di-scoped';
 import * as functools_kit from 'functools-kit';
-import { Subject, BehaviorSubject } from 'functools-kit';
+import { TIMEOUT_SYMBOL, Subject, BehaviorSubject } from 'functools-kit';
 import { WriteStream } from 'fs';
 
 /**
@@ -21338,7 +21338,7 @@ declare class MarkdownFileBase implements TMarkdownBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<symbol | void>;
+    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<void | typeof TIMEOUT_SYMBOL>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -21592,7 +21592,7 @@ declare class ReportBase implements TReportBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<symbol | void, [line: string]>;
+    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<void | typeof TIMEOUT_SYMBOL, [line: string]>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -33497,7 +33497,7 @@ declare class MCPUtils {
     /**
      * Renders the trade history of the MCP (Model Context Protocol)
      * instance's strategy into agent messages:
-     * the last {@link MAX_HISTORY_ROWS} CLOSED positions from the live signal
+     * the CLOSED positions from the live signal
      * storage, newest first — dollar/percent result, direction, close reason,
      * open/close times and the opening note per trade.
      *
@@ -33505,14 +33505,19 @@ declare class MCPUtils {
      * open, the history shows what was already traded and how it ended, so
      * the agent does not re-enter the same idea right after closing it.
      *
+     * Depth defaults to {@link DEFAULT_HISTORY_LIMIT}; the newest trades are
+     * the ones kept when `limit` cuts the feed.
+     *
      * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+     * @param limit - Maximum trades to render, newest kept
      * @returns Promise resolving to history messages for the MCP agent
      *
      * @example
      * ```typescript
      * // Full agent memory: portfolio status, notes of the open positions,
      * // directives raised by the strategy, history of the closed trades —
-     * // one snapshot, no repeated requests
+     * // one snapshot, no repeated requests. Each feed caps itself at a sane
+     * // default; pass a `limit` to trade context size for depth
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
@@ -33526,13 +33531,13 @@ declare class MCPUtils {
      * });
      * ```
      */
-    getHistoryMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
+    getHistoryMessages: (mcpName: MCPName, limit?: number) => Promise<IMCPMessage[]>;
     /**
      * Renders the messages the STRATEGY CODE addressed to the agent into agent
-     * messages: the last {@link MAX_AGENT_ROWS} `agent`-level entries of the
-     * log history written via `Log.agent(...)` under the MCP (Model Context
-     * Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
-     * time and the message text per entry.
+     * messages: the `agent`-level entries of the log history written via
+     * `Log.agent(...)` under the MCP (Model Context Protocol) instance's
+     * strategy in LIVE mode, newest first — symbol, emit time and the message
+     * text per entry.
      *
      * This is the strategy talking to the agent, the reverse direction of every
      * other renderer: getStatus reports numbers, getNotificationMessages
@@ -33542,9 +33547,12 @@ declare class MCPUtils {
      * instructions from the trading system.
      *
      * Backtest entries and entries of other strategies are filtered out; rows
-     * accumulate only while a Log adapter is enabled.
+     * accumulate only while a Log adapter is enabled. Depth defaults to
+     * {@link DEFAULT_AGENT_LIMIT}; the newest directives are the ones kept when
+     * `limit` cuts the feed.
      *
      * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+     * @param limit - Maximum directives to render, newest kept
      * @returns Promise resolving to trading system messages for the MCP agent
      *
      * @example
@@ -33554,7 +33562,7 @@ declare class MCPUtils {
      *   Log.agent("The BTCUSDT position has been stagnating for an hour — look for an efficient exit");
      * }
      *
-     * // In the MCP schema — surface those directives to the agent
+     * // In the MCP schema — surface the freshest directives to the agent
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
@@ -33566,16 +33574,16 @@ declare class MCPUtils {
      * });
      * ```
      */
-    getAgentMessages: (mcpName: MCPName) => Promise<IMCPMessage[]>;
+    getAgentMessages: (mcpName: MCPName, limit?: number) => Promise<IMCPMessage[]>;
     /**
      * Renders the `signal.info` notifications of the active positions of the
      * MCP (Model Context Protocol) instance's strategy into agent messages:
      * reads the pending signal id of every symbol from the portfolio snapshot
      * the caller already holds — no extra exchange or live state requests —
      * and keeps only the notifications emitted via commitSignalNotify for
-     * those signal ids, newest first (at most {@link MAX_HISTORY_ROWS}) —
-     * note, market price and unrealized PnL at the moment of the event and
-     * the emit time per notification.
+     * those signal ids, newest first — market price and unrealized PnL at the
+     * moment of the event, the emit time and the description itself per
+     * notification.
      *
      * Complements getStatus: the status shows what is open, this method shows
      * what the agent (or the strategy) annotated on the open positions, so a
@@ -33588,18 +33596,22 @@ declare class MCPUtils {
      * custom renderer can await this method and append the notifications to
      * the default output without re-fetching anything.
      *
-     * Rows accumulate only while a NotificationLive backend is enabled.
+     * Rows accumulate only while a NotificationLive backend is enabled. Depth
+     * defaults to {@link DEFAULT_NOTIFICATION_LIMIT}; the newest notes are the
+     * ones kept when `limit` cuts the feed.
      *
      * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
      * @param when - Snapshot time stamped into the header message
      * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
+     * @param limit - Maximum notifications to render, newest kept
      * @returns Promise resolving to active-position notification messages for the MCP agent
      *
      * @example
      * ```typescript
      * // Full agent memory: portfolio status, notes of the open positions,
      * // directives raised by the strategy, history of the closed trades —
-     * // one snapshot, no repeated requests
+     * // one snapshot, no repeated requests. Each feed caps itself at a sane
+     * // default; pass a `limit` to trade context size for depth
      * addMCPSchema({
      *   mcpName: "my-mcp",
      *   strategyName: "my-strategy",
@@ -33613,7 +33625,7 @@ declare class MCPUtils {
      * });
      * ```
      */
-    getNotificationMessages: (context: IMCPContext, when: Date, mcpName: MCPName) => Promise<IMCPMessage[]>;
+    getNotificationMessages: (context: IMCPContext, when: Date, mcpName: MCPName, limit?: number) => Promise<IMCPMessage[]>;
     /**
      * Renders the current portfolio of the MCP (Model Context Protocol)
      * instance's strategy into agent messages.

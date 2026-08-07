@@ -13,6 +13,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@backtest-kit/cli": "18.3.1"
+    "@backtest-kit/cli": "18.4.0"
   }
 }
