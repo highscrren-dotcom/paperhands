@@ -89,6 +89,15 @@ warn: (topic: string, ...args: any[]) => void
 Logs a warning-level message.
 Proxies call to the underlying log adapter.
 
+### agent
+
+```ts
+agent: (topic: string, ...args: any[]) => void
+```
+
+Logs an AI agent message.
+Proxies call to the underlying log adapter.
+
 ### useLogger
 
 ```ts

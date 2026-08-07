@@ -11,7 +11,7 @@ declare function listenOrderStop(fn: (event: OrderStopContract) => void): () => 
 
 Subscribes to post-verdict order-check STOP events with queued async processing.
 
-Paired with {@link listenOrderContinue}: fires exactly once per monitored signal
+Paired with the order-continue channel: fires exactly once per monitored signal
 when the check resolved TERMINALLY — `event.reason` "deleted" (OrderDeletedError:
 confirmed order-not-found, bypassing the tolerance counter) or "exhausted"
 (CC_ORDER_CHECK_RETRY_ATTEMPTS consecutive transient failures spent, or the

@@ -11,7 +11,7 @@ declare function listenOrderFill(fn: (event: OrderFillContract) => void): () => 
 
 Subscribes to broker-CONFIRMED order fill events with queued async processing.
 
-Post-verdict mirror of {@link listenSync}: fires ONLY after the onOrderSync gate
+Post-verdict mirror of the order-sync gate: fires ONLY after that gate
 resolved into the "confirmed" IBrokerOrderVerdict — the broker adapter acknowledged
 the order really executed/placed on the exchange. A transient or terminal
 (OrderRejectedError) gate rejection does NOT fire here, and neither does a

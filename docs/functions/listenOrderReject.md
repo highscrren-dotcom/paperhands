@@ -21,7 +21,7 @@ bounded budgets.
 
 Live-only: backtest gates short-circuit to "confirmed" without an exchange.
 
-Like {@link listenOrderFill} this is a NOTIFICATION channel, not a gate: a throw
+Like the fill channel this is a NOTIFICATION channel, not a gate: a throw
 from the listener is swallowed at the emission site (logged + errorEmitter) and
 cannot affect the already-resolved verdict. Safe for telegram/webhook/audit
 consumers.

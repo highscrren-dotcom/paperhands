@@ -20,7 +20,7 @@ Unique entry identifier generated via randomString
 ### type
 
 ```ts
-type: "log" | "debug" | "info" | "warn"
+type: "log" | "debug" | "info" | "warn" | "agent"
 ```
 
 Log level

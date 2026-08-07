@@ -62,6 +62,28 @@ Complements getStatus for stateless agents: the status shows what is
 open, the history shows what was already traded and how it ended, so
 the agent does not re-enter the same idea right after closing it.
 
+### getAgentMessages
+
+```ts
+getAgentMessages: (mcpName: string) => Promise<IMCPMessage[]>
+```
+
+Renders the messages the STRATEGY CODE addressed to the agent into agent
+messages: the last {@link MAX_AGENT_ROWS } `agent`-level entries of the
+log history written via `Log.agent(...)` under the MCP (Model Context
+Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
+time and the message text per entry.
+
+This is the strategy talking to the agent, the reverse direction of every
+other renderer: getStatus reports numbers, getNotificationMessages
+replays the agent's own notes, and this channel carries directives the
+strategy raised on its own — a position stagnating for an hour, collapsed
+volatility, an approaching session close. The agent reads them as
+instructions from the trading system.
+
+Backtest entries and entries of other strategies are filtered out; rows
+accumulate only while a Log adapter is enabled.
+
 ### getNotificationMessages
 
 ```ts

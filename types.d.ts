@@ -1,6 +1,6 @@
 import * as di_scoped from 'di-scoped';
 import * as functools_kit from 'functools-kit';
-import { TIMEOUT_SYMBOL, Subject, BehaviorSubject } from 'functools-kit';
+import { Subject, BehaviorSubject } from 'functools-kit';
 import { WriteStream } from 'fs';
 
 /**
@@ -12252,54 +12252,6 @@ declare function listenAfterEnd(fn: (event: AfterEndContract) => void): () => vo
  */
 declare function listenAfterEndOnce(filterFn: (event: AfterEndContract) => boolean, fn: (event: AfterEndContract) => void): () => void;
 /**
- * ============================================================================
- * PER-SIGNAL LISTENERS
- * ============================================================================
- *
- * Every channel below carries a signal identifier, so it can be collapsed to
- * "fire the callback once per NEW signal that satisfies the condition".
- *
- * The pipeline is always the same, in this exact order:
- *
- *   subject
- *     .filter(filterFn)          // 1. the condition
- *     .filter(dedup via seenMap) // 2. collapse repeats
- *     .connect(queued(fn))       // 3. sequential delivery
- *
- * THE DEDUP STATE IS PER-EXECUTION, NOT GLOBAL. Each subscription owns a
- * `LimitedMap` mapping an execution identity to the last signal id delivered for
- * it:
- *
- *   strategyName:exchangeName[:frameName]:backtest|live:symbol  ->  signalId
- *
- * (frameName is omitted when empty, exactly like the Cache key helper.) An event
- * passes only when the stored id for its own key differs from the incoming one.
- *
- * This is deliberately NOT `Operator.distinct`, which keeps a single "previous
- * compare value" for the whole stream. These subjects are process-global: several
- * strategies, symbols and modes push through them at once and their events
- * interleave. Under `distinct`, execution B's event becomes the baseline and lets
- * execution A's next repeat through as new — so A,B,A re-reports A. A per-key map
- * gives every execution independent state, so interleaving cannot resurrect an
- * already-reported signal.
- *
- * WHY THE PREDICATE COMES FIRST. The dedup filter records what it lets through,
- * so it must only ever see events the subscriber cares about. Running it before
- * `filterFn` would store ids the callback never receives and then suppress the
- * first event that actually matches.
- *
- * WHAT "ONCE PER SIGNAL" MEANS. One callback per (execution, signal id) pair, for
- * as long as that identity stays in the map. A strategy monitors one signal at a
- * time, so in practice this is exactly one callback per signal — regardless of
- * what other strategies emit in between. The map holds SEEN_MAP_LIMIT identities
- * and evicts oldest-first; an evicted identity reports its current signal once
- * more. Use the plain `listenX` variants when every emission matters, and
- * `listenXOnce` when the subscription should tear itself down after the first hit.
- *
- * Note these are lightweight stream subscriptions: unlike `listenPartialProfitAvailable`
- * and friends, they do NOT re-check `hasPendingSignal` before delivery.
- */
-/**
  * Subscribes to signal events, delivering the callback once per new signal id.
  *
  * Filters by the predicate first, then collapses consecutive events sharing the
@@ -21386,7 +21338,7 @@ declare class MarkdownFileBase implements TMarkdownBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<void | typeof TIMEOUT_SYMBOL>;
+    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<symbol | void>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -21640,7 +21592,7 @@ declare class ReportBase implements TReportBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<void | typeof TIMEOUT_SYMBOL, [line: string]>;
+    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<symbol | void, [line: string]>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.

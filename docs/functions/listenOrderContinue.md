@@ -11,7 +11,7 @@ declare function listenOrderContinue(fn: (event: OrderContinueContract) => void)
 
 Subscribes to post-verdict order-check CONTINUE events with queued async processing.
 
-Paired with {@link listenOrderStop}: the pre-verdict {@link listenCheck} fires the
+Paired with the order-stop channel: the pre-verdict check channel fires the
 ping REQUEST before the broker adapter answers; this channel carries the resolved
 NON-terminal decision — the order is confirmed still open (`event.attempt` 0) or a
 transient check failure was tolerated (`event.attempt` &gt; 0) and monitoring
