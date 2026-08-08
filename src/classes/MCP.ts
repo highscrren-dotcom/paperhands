@@ -506,34 +506,37 @@ const AGENT_GET_MESSAGES = async (
 };
 
 /**
- * Builds the notification feed of the active positions for an MCP (Model
- * Context Protocol) instance from the live notification storage
- * (NotificationLive): reads the pending signal of every symbol from the
- * ALREADY BUILT portfolio snapshot (IMCPContext) — no extra exchange or live
- * state requests — and keeps only the `signal.info` notifications whose
- * signalId belongs to one of those active positions: the descriptions the agent
- * (or the strategy) attached to the positions open RIGHT NOW, not the whole
- * historical feed. Closed positions drop out automatically: their signalId
- * no longer matches any pending signal in the snapshot.
+ * Builds the annotated event feed for an MCP (Model Context Protocol)
+ * instance from the live notification storage (NotificationLive): position
+ * opens (`signal.opened`), position closes (`signal.closed`) and mid-position
+ * notes (`signal.info`) of the bound strategy, newest first.
  *
- * Rendered newest first — one header message plus one text message per
- * notification with the market price and unrealized PnL at the moment of
- * the event, the emit time and the description itself, rendered last on its
- * own lines so multi-line markdown stays readable.
+ * ONLY events carrying a description are rendered. That is the anti-whipsaw
+ * rule: an entry or exit with no stated reason tells the agent nothing about
+ * intent, and a feed of bare "opened LONG / closed LONG" lines invites it to
+ * re-enter the trade it just left. A described open ("breakout above the
+ * range on volume") followed by a described close ("volume dried up, thesis
+ * void") reads as a finished thought the agent will not blindly repeat.
+ *
+ * The feed spans the whole strategy, not just what is open right now: a close
+ * only makes sense next to the open it terminates, and both matter after the
+ * position is gone.
+ *
+ * Rendered as one header message plus one text message per event, each with
+ * the symbol, direction, signal id, prices and PnL of the moment, and the
+ * description last on its own lines so multi-line markdown stays readable.
  *
  * Depth: {@link DEFAULT_NOTIFICATION_LIMIT} by default, overridable by
  * `limit`. The cut runs AFTER the newest-first sort, so a limit drops the
- * oldest notes and never the recent ones. Rows accumulate only while a
+ * oldest events and never the recent ones. Rows accumulate only while a
  * NotificationLive backend is enabled.
  *
- * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
  * @param mcpName - MCP (Model Context Protocol) name resolved to its bound strategy
  * @param when - Snapshot time stamped into the header and "minutes ago" math
- * @param limit - Maximum notifications to render, newest kept
- * @returns Promise resolving to active-position notification messages for the MCP agent
+ * @param limit - Maximum events to render, newest kept
+ * @returns Promise resolving to annotated event messages for the MCP agent
  */
 const NOTIFICATION_GET_MESSAGES = async (
-  context: IMCPContext,
   mcpName: MCPName,
   when: Date,
   limit: number,
@@ -542,38 +545,27 @@ const NOTIFICATION_GET_MESSAGES = async (
     mcpName,
     METHOD_NAME_GET_NOTIFICATION_MESSAGES,
   );
-  const activeIdSet = new Set(
-    Object.values(context).flatMap(({ pendingSignal }) =>
-      pendingSignal ? [pendingSignal.id] : [],
-    ),
-  );
-  if (!activeIdSet.size) {
-    return [
-      {
-        id: randomString(),
-        type: "text",
-        text: `Active position notifications at ${when.toISOString()}: no active positions, so there are no notifications to show.`,
-      },
-    ];
-  }
   const notificationList = await NotificationLive.getData();
-  const infoList = notificationList
+  const eventList = notificationList
     .flatMap((row) =>
-      row.type === "signal.info" &&
+      (row.type === "signal.info" ||
+        row.type === "signal.opened" ||
+        row.type === "signal.closed") &&
       row.strategyName === strategyName &&
-      activeIdSet.has(row.signalId)
+      // An undescribed open or close is whipsaw fuel: no intent, no lesson
+      !!row.note
         ? [row]
         : [],
     )
-    // Newest first, THEN cut: the limit must drop the oldest notes
+    // Newest first, THEN cut: the limit must drop the oldest events
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, limit);
-  if (!infoList.length) {
+  if (!eventList.length) {
     return [
       {
         id: randomString(),
         type: "text",
-        text: `Active position notifications at ${when.toISOString()}: no notifications recorded for the active positions yet.`,
+        text: `Annotated trading events at ${when.toISOString()}: no described opens, closes or notes recorded yet.`,
       },
     ];
   }
@@ -581,30 +573,46 @@ const NOTIFICATION_GET_MESSAGES = async (
     {
       id: randomString(),
       type: "text",
-      text: `Active position notifications at ${when.toISOString()} (last ${infoList.length} notification${infoList.length === 1 ? "" : "s"} of the active positions, newest first):`,
+      text: `Annotated trading events at ${when.toISOString()} (last ${eventList.length} described event${eventList.length === 1 ? "" : "s"}, newest first). Read the reasoning before opening anything: a thesis already closed for a stated reason should not be re-entered without a new one:`,
     },
   ];
-  for (const row of infoList) {
+  for (const row of eventList) {
     const emittedMinutesAgo = Math.max(
       0,
       Math.round((when.getTime() - row.timestamp) / 60_000),
     );
     const lines: string[] = [];
+    if (row.type === "signal.opened") {
+      lines.push(`Event: position opened`);
+    } else if (row.type === "signal.closed") {
+      lines.push(`Event: position closed (${row.closeReason})`);
+    } else {
+      lines.push(`Event: note on an open position`);
+    }
     lines.push(`Symbol: ${row.symbol}`);
     lines.push(`Position: ${row.position}`);
     lines.push(`Signal id: ${row.signalId}`);
     lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
-    lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
-    lines.push(
-      `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
-    );
+    if (row.type === "signal.opened") {
+      lines.push(`Entry price: ${row.priceOpen} (cost ${row.cost} USD)`);
+    } else if (row.type === "signal.closed") {
+      lines.push(
+        `Exit price: ${row.priceClose} (entry ${row.priceOpen}, held ${row.duration} minute${row.duration === 1 ? "" : "s"})`,
+      );
+      lines.push(
+        `Result: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and exit fees and slippage`,
+      );
+    } else {
+      lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
+      lines.push(
+        `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
+      );
+    }
     lines.push(
       `Emitted at: ${new Date(row.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
-    if (row.note) {
-      lines.push("Description:");
-      lines.push(toPlainString(row.note));
-    }
+    lines.push("Description:");
+    lines.push(toPlainString(row.note!));
     messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }
   return messages;
@@ -1289,7 +1297,7 @@ export class MCPUtils {
    *
    * @example
    * ```typescript
-   * // Full agent memory: portfolio status, notes of the open positions,
+   * // Full agent memory: portfolio status, described opens/closes/notes,
    * // directives raised by the strategy, history of the closed trades —
    * // one snapshot, no repeated requests
    * addMCPSchema({
@@ -1297,9 +1305,9 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
-   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
-   *     const agent = await MCP.getAgentMessages(mcpName);
-   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     const notifications = await MCP.getNotificationMessages(when, mcpName);
+   *     const agent = await MCP.getAgentMessages(when, mcpName);
+   *     const history = await MCP.getHistoryMessages(when, mcpName);
    *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
@@ -1336,13 +1344,14 @@ export class MCPUtils {
    * Depth defaults to {@link DEFAULT_HISTORY_LIMIT}; the newest trades are
    * the ones kept when `limit` cuts the feed.
    *
+   * @param when - Snapshot time stamped into the header and "minutes ago" math; pass the `when` the schema's getMessages received so every feed shares one clock
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
    * @param limit - Maximum trades to render, newest kept
    * @returns Promise resolving to history messages for the MCP agent
    *
    * @example
    * ```typescript
-   * // Full agent memory: portfolio status, notes of the open positions,
+   * // Full agent memory: portfolio status, described opens/closes/notes,
    * // directives raised by the strategy, history of the closed trades —
    * // one snapshot, no repeated requests. Each feed caps itself at a sane
    * // default; pass a `limit` to trade context size for depth
@@ -1351,20 +1360,22 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
-   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
-   *     const agent = await MCP.getAgentMessages(mcpName);
-   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     const notifications = await MCP.getNotificationMessages(when, mcpName);
+   *     const agent = await MCP.getAgentMessages(when, mcpName);
+   *     const history = await MCP.getHistoryMessages(when, mcpName);
    *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
    * ```
    */
   public getHistoryMessages = async (
+    when: Date,
     mcpName: MCPName,
     limit = DEFAULT_HISTORY_LIMIT,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_HISTORY_MESSAGES, {
       mcpName,
+      when,
       limit,
     });
 
@@ -1372,7 +1383,6 @@ export class MCPUtils {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_HISTORY_MESSAGES);
     }
 
-    const when = alignToInterval(new Date(), "1m");
     return await HISTORY_GET_MESSAGES(mcpName, when, limit);
   };
 
@@ -1395,6 +1405,7 @@ export class MCPUtils {
    * {@link DEFAULT_AGENT_LIMIT}; the newest directives are the ones kept when
    * `limit` cuts the feed.
    *
+   * @param when - Snapshot time stamped into the header and "minutes ago" math; pass the `when` the schema's getMessages received so every feed shares one clock
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
    * @param limit - Maximum directives to render, newest kept
    * @returns Promise resolving to trading system messages for the MCP agent
@@ -1412,18 +1423,20 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
-   *     const agent = await MCP.getAgentMessages(mcpName);
+   *     const agent = await MCP.getAgentMessages(when, mcpName);
    *     return [...status, ...agent];
    *   },
    * });
    * ```
    */
   public getAgentMessages = async (
+    when: Date,
     mcpName: MCPName,
     limit = DEFAULT_AGENT_LIMIT,
   ): Promise<IMCPMessage[]> => {
     backtest.loggerService.log(METHOD_NAME_GET_AGENT_MESSAGES, {
       mcpName,
+      when,
       limit,
     });
 
@@ -1431,44 +1444,36 @@ export class MCPUtils {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_AGENT_MESSAGES);
     }
 
-    const when = alignToInterval(new Date(), "1m");
     return await AGENT_GET_MESSAGES(mcpName, when, limit);
   };
 
   /**
-   * Renders the `signal.info` notifications of the active positions of the
-   * MCP (Model Context Protocol) instance's strategy into agent messages:
-   * reads the pending signal id of every symbol from the portfolio snapshot
-   * the caller already holds — no extra exchange or live state requests —
-   * and keeps only the notifications emitted via commitSignalNotify for
-   * those signal ids, newest first — market price and unrealized PnL at the
-   * moment of the event, the emit time and the description itself per
-   * notification.
+   * Renders the DESCRIBED trading events of the MCP (Model Context Protocol)
+   * instance's strategy into agent messages: position opens, position closes
+   * and mid-position notes that carry a description, newest first — symbol,
+   * direction, signal id, the prices and PnL of the moment, and the reasoning
+   * itself.
    *
-   * Complements getStatus: the status shows what is open, this method shows
-   * what the agent (or the strategy) annotated on the open positions, so a
-   * stateless agent can pick up its own prior reasoning about the exact
-   * position it is holding. Notifications of already-closed positions are
-   * filtered out automatically — their signal ids no longer match any
-   * pending signal in the snapshot.
-   *
-   * The signature matches IMCPSchema.getMessages (async variant), so a
-   * custom renderer can await this method and append the notifications to
-   * the default output without re-fetching anything.
+   * Events without a description are dropped. This is the anti-whipsaw half
+   * of the agent's memory: a bare "opened LONG / closed LONG" pair says
+   * nothing about intent and invites the agent to re-enter what it just left,
+   * while "opened: breakout on volume" followed by "closed: volume dried up,
+   * thesis void" reads as a finished thought. Unlike getStatus, the feed is
+   * not limited to what is open right now — a close only means something next
+   * to the open it terminates.
    *
    * Rows accumulate only while a NotificationLive backend is enabled. Depth
-   * defaults to {@link DEFAULT_NOTIFICATION_LIMIT}; the newest notes are the
+   * defaults to {@link DEFAULT_NOTIFICATION_LIMIT}; the newest events are the
    * ones kept when `limit` cuts the feed.
    *
-   * @param context - Portfolio snapshot keyed by traded symbol (source of the pending signal ids)
-   * @param when - Snapshot time stamped into the header message
+   * @param when - Snapshot time stamped into the header and "minutes ago" math; pass the `when` the schema's getMessages received so every feed shares one clock
    * @param mcpName - Name of the registered MCP (Model Context Protocol) schema (validated before rendering)
-   * @param limit - Maximum notifications to render, newest kept
-   * @returns Promise resolving to active-position notification messages for the MCP agent
+   * @param limit - Maximum events to render, newest kept
+   * @returns Promise resolving to annotated event messages for the MCP agent
    *
    * @example
    * ```typescript
-   * // Full agent memory: portfolio status, notes of the open positions,
+   * // Full agent memory: portfolio status, described opens/closes/notes,
    * // directives raised by the strategy, history of the closed trades —
    * // one snapshot, no repeated requests. Each feed caps itself at a sane
    * // default; pass a `limit` to trade context size for depth
@@ -1477,16 +1482,15 @@ export class MCPUtils {
    *   strategyName: "my-strategy",
    *   getMessages: async (context, when, mcpName) => {
    *     const status = await MCP.getDefaultMessages(context, when, mcpName);
-   *     const notifications = await MCP.getNotificationMessages(context, when, mcpName);
-   *     const agent = await MCP.getAgentMessages(mcpName);
-   *     const history = await MCP.getHistoryMessages(mcpName);
+   *     const notifications = await MCP.getNotificationMessages(when, mcpName);
+   *     const agent = await MCP.getAgentMessages(when, mcpName);
+   *     const history = await MCP.getHistoryMessages(when, mcpName);
    *     return [...status, ...notifications, ...agent, ...history];
    *   },
    * });
    * ```
    */
   public getNotificationMessages = async (
-    context: IMCPContext,
     when: Date,
     mcpName: MCPName,
     limit = DEFAULT_NOTIFICATION_LIMIT,
@@ -1501,7 +1505,7 @@ export class MCPUtils {
       VALIDATE_SCHEMA_FN(mcpName, METHOD_NAME_GET_NOTIFICATION_MESSAGES);
     }
 
-    return await NOTIFICATION_GET_MESSAGES(context, mcpName, when, limit);
+    return await NOTIFICATION_GET_MESSAGES(mcpName, when, limit);
   };
 
   /**
