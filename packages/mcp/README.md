@@ -112,6 +112,7 @@ npx @backtest-kit/mcp --host 127.0.0.1 --port 60051
 | `--host` | `CC_MCP_HOST` | Host of the HTTP bridge to connect to |
 | `--port` | `CC_MCP_PORT` | Port of the HTTP bridge; a non-numeric value is ignored |
 | `--tools` | — | Comma-separated tool names to expose; omitted means all five |
+| `--sse [PORT]` | — | Serve the MCP protocol over SSE instead of stdio; defaults to port `8080` |
 
 Resolution order for host and port: **CLI arguments → `setConfig()` → env vars → defaults** (`127.0.0.1:60051`).
 
@@ -146,6 +147,47 @@ npx @backtest-kit/mcp --tools get_status,close_position,notify_user
 Valid names are exactly the tool names the agent sees: `get_status`, `open_position`, `close_position`, `average_position`, `notify_user`. An unknown name **fails the startup** with the list of unknown and available names — a typo silently dropping a tool would only surface later as odd agent behaviour.
 
 This is transport-level narrowing, independent of the engine's `permissions` field in the MCP schema. The two compose: `--tools` decides what the agent is offered, `permissions` decides what the engine accepts. Restricting a tool here is convenient for running several agents against one trading process with different mandates; enforcing the boundary for real belongs in the schema, which the agent cannot bypass.
+
+</details>
+
+<details>
+<summary>Serving over the network with <code>--sse</code></summary>
+
+By default the server speaks **stdio**: the agent spawns the process and talks to it over stdin/stdout. `--sse` swaps that for **SSE over HTTP**, so a client can attach across the network instead of owning the process:
+
+```bash
+# Default port 8080
+npx @backtest-kit/mcp --sse
+
+# Explicit port
+npx @backtest-kit/mcp --sse 9000
+```
+
+Two endpoints are exposed:
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/sse` | GET | Opens the long-lived event stream; responds with the `sessionId` to post to |
+| `/messages?sessionId=…` | POST | Delivers one client→server JSON-RPC message |
+
+SSE is a two-channel transport: the `GET` stream stays open for the whole session and carries every server→client message, while the client `POST`s its own messages to the second endpoint. The `sessionId` handed out on connect correlates the two, so **several clients can attach at once** — each gets its own session and closing one does not disturb the others.
+
+Point a connector that bridges an external MCP endpoint to a local HTTP one at `http://localhost:8080/sse`. The startup line is written to **stderr**, never stdout, so the same binary can be piped either way without corrupting a JSON-RPC stream.
+
+`--sse` composes with everything else — `--tools` still narrows the surface, `--host` / `--port` still point at the trading bridge (those describe where the *engine* lives, which is unrelated to how the *agent* connects):
+
+```bash
+npx @backtest-kit/mcp --tools get_status --sse 9000
+```
+
+**The optional value is positional**, so a path immediately after the flag is read as the port:
+
+```bash
+npx @backtest-kit/mcp --sse ./strategy.ts   # ✗ fails: "./strategy.ts" is not a port
+npx @backtest-kit/mcp ./strategy.ts --sse   # ✓ path first, then the flag
+```
+
+A non-port value **fails the startup** rather than being ignored — silently treating it as "no port given" would swallow the strategy path and start with nothing loaded.
 
 </details>
 

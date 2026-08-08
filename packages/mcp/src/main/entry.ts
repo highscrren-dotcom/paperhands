@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { getEntry } from "../helpers/getEntry";
 import { getToolList } from "../helpers/getArgs";
+import { serveSse } from "./sse";
 
 import registerGetStatusTool from "../tools/get_status.tool";
 import registerOpenPositionTool from "../tools/open_position.tool";
@@ -23,11 +24,6 @@ export const main = async () => {
       return;
     }
 
-    const server = new McpServer({
-        name: "trading-signals-mcp",
-        version: "1.0.0"
-    });
-
     {
         const toolList = getToolList();
         const unknownList = toolList.filter((tool) => !TOOL_LIST.includes(tool));
@@ -35,6 +31,16 @@ export const main = async () => {
             console.error(`MCP Error: unknown tools requested via --tools: ${unknownList.join(", ")}. Available tools: ${TOOL_LIST.join(", ")}`);
             process.exit(-1);
         }
+    }
+
+    // A factory, not a single instance: SSE serves one server per session, since
+    // a server holds exactly one transport (see serveSse).
+    const createMcpServer = () => {
+        const server = new McpServer({
+            name: "trading-signals-mcp",
+            version: "1.0.0"
+        });
+        const toolList = getToolList();
         // An empty --tools means the argument was not passed: expose everything
         const hasTool = (tool: string) => !toolList.length || toolList.includes(tool);
         if (hasTool("get_status")) {
@@ -52,11 +58,17 @@ export const main = async () => {
         if (hasTool("notify_user")) {
             registerNotifyUserTool(server);
         }
+        return server;
+    };
+
+    // Serves over the network when --sse was passed, otherwise does nothing and
+    // leaves the default stdio transport below to take over.
+    if (await serveSse(createMcpServer)) {
+        return;
     }
 
     const transport = new StdioServerTransport();
-    await server.connect(transport);
-
+    await createMcpServer().connect(transport);
 }
 
 main();
