@@ -6,6 +6,7 @@ import "./r/per_signal.test.mjs";
 import "./r/alias.test.mjs";
 import "./r/parallel.test.mjs";
 import "./r/queue.test.mjs";
+import "./r/throws.test.mjs";
 
 run(import.meta.url, () => {
     console.log("All tests are finished");
