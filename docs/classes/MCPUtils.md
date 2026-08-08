@@ -49,12 +49,12 @@ instead of rebuilding it.
 ### getHistoryMessages
 
 ```ts
-getHistoryMessages: (mcpName: string) => Promise<IMCPMessage[]>
+getHistoryMessages: (mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
 Renders the trade history of the MCP (Model Context Protocol)
 instance's strategy into agent messages:
-the last {@link MAX_HISTORY_ROWS } CLOSED positions from the live signal
+the CLOSED positions from the live signal
 storage, newest first — dollar/percent result, direction, close reason,
 open/close times and the opening note per trade.
 
@@ -62,17 +62,20 @@ Complements getStatus for stateless agents: the status shows what is
 open, the history shows what was already traded and how it ended, so
 the agent does not re-enter the same idea right after closing it.
 
+Depth defaults to {@link DEFAULT_HISTORY_LIMIT }; the newest trades are
+the ones kept when `limit` cuts the feed.
+
 ### getAgentMessages
 
 ```ts
-getAgentMessages: (mcpName: string) => Promise<IMCPMessage[]>
+getAgentMessages: (mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
 Renders the messages the STRATEGY CODE addressed to the agent into agent
-messages: the last {@link MAX_AGENT_ROWS } `agent`-level entries of the
-log history written via `Log.agent(...)` under the MCP (Model Context
-Protocol) instance's strategy in LIVE mode, newest first — symbol, emit
-time and the message text per entry.
+messages: the `agent`-level entries of the log history written via
+`Log.agent(...)` under the MCP (Model Context Protocol) instance's
+strategy in LIVE mode, newest first — symbol, emit time and the message
+text per entry.
 
 This is the strategy talking to the agent, the reverse direction of every
 other renderer: getStatus reports numbers, getNotificationMessages
@@ -82,12 +85,14 @@ volatility, an approaching session close. The agent reads them as
 instructions from the trading system.
 
 Backtest entries and entries of other strategies are filtered out; rows
-accumulate only while a Log adapter is enabled.
+accumulate only while a Log adapter is enabled. Depth defaults to
+{@link DEFAULT_AGENT_LIMIT }; the newest directives are the ones kept when
+`limit` cuts the feed.
 
 ### getNotificationMessages
 
 ```ts
-getNotificationMessages: (context: IMCPContext, when: Date, mcpName: string) => Promise<IMCPMessage[]>
+getNotificationMessages: (context: IMCPContext, when: Date, mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
 Renders the `signal.info` notifications of the active positions of the
@@ -95,9 +100,9 @@ MCP (Model Context Protocol) instance's strategy into agent messages:
 reads the pending signal id of every symbol from the portfolio snapshot
 the caller already holds — no extra exchange or live state requests —
 and keeps only the notifications emitted via commitSignalNotify for
-those signal ids, newest first (at most {@link MAX_HISTORY_ROWS }) —
-note, market price and unrealized PnL at the moment of the event and
-the emit time per notification.
+those signal ids, newest first — market price and unrealized PnL at the
+moment of the event, the emit time and the description itself per
+notification.
 
 Complements getStatus: the status shows what is open, this method shows
 what the agent (or the strategy) annotated on the open positions, so a
@@ -110,7 +115,9 @@ The signature matches IMCPSchema.getMessages (async variant), so a
 custom renderer can await this method and append the notifications to
 the default output without re-fetching anything.
 
-Rows accumulate only while a NotificationLive backend is enabled.
+Rows accumulate only while a NotificationLive backend is enabled. Depth
+defaults to {@link DEFAULT_NOTIFICATION_LIMIT }; the newest notes are the
+ones kept when `limit` cuts the feed.
 
 ### getStatus
 
