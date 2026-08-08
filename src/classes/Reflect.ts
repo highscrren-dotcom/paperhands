@@ -1,3 +1,4 @@
+import { not } from "functools-kit";
 import bt from "../lib";
 import { StrategyName } from "../interfaces/Strategy.interface";
 import { ExchangeName } from "../interfaces/Exchange.interface";
@@ -59,13 +60,14 @@ export class ReflectUtils {
    * Returns the unrealized PNL percentage for the current pending signal at currentPrice.
    *
    * Accounts for partial closes, DCA entries, slippage and fees.
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param currentPrice - Current market price
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PNL percentage or null
+   * @returns Promise resolving to PNL percentage
+   * @throws If no pending signal exists
    *
    * @example
    * ```typescript
@@ -82,7 +84,7 @@ export class ReflectUtils {
     currentPrice: number,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_PNL_PERCENT, { symbol, currentPrice, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_PNL_PERCENT);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_PNL_PERCENT);
@@ -93,6 +95,11 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_PNL_PERCENT));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_PNL_PERCENT));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionPnlPercent no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionPnlPercent(backtest, symbol, currentPrice, context);
   };
 
@@ -101,13 +108,13 @@ export class ReflectUtils {
    *
    * Calculated as: pnlPercentage / 100 × totalInvestedCost.
    * Accounts for partial closes, DCA entries, slippage and fees.
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param currentPrice - Current market price
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PNL in dollars or null
+   * @returns Promise resolving to PNL in dollars
    *
    * @example
    * ```typescript
@@ -124,7 +131,7 @@ export class ReflectUtils {
     currentPrice: number,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_PNL_COST, { symbol, currentPrice, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_PNL_COST);
@@ -135,18 +142,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_PNL_COST));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionPnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionPnlCost(backtest, symbol, currentPrice, context);
   };
 
   /**
    * Returns the best price reached in the profit direction during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to price or null
+   * @returns Promise resolving to price
    *
    * @example
    * ```typescript
@@ -161,7 +173,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_PRICE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_PRICE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_PRICE);
@@ -172,18 +184,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_PRICE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_PRICE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitPrice no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestProfitPrice(backtest, symbol, context);
   };
 
   /**
    * Returns the timestamp when the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to timestamp in milliseconds or null
+   * @returns Promise resolving to timestamp in milliseconds
    *
    * @example
    * ```typescript
@@ -198,7 +215,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_TIMESTAMP, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_TIMESTAMP);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_TIMESTAMP);
@@ -209,18 +226,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_TIMESTAMP));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_TIMESTAMP));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitTimestamp no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestProfitTimestamp(backtest, symbol, context);
   };
 
   /**
    * Returns the PnL percentage at the moment the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PnL percentage or null
+   * @returns Promise resolving to PnL percentage
    *
    * @example
    * ```typescript
@@ -235,7 +257,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_PERCENTAGE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_PERCENTAGE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_PERCENTAGE);
@@ -246,18 +268,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_PERCENTAGE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_PERCENTAGE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestPnlPercentage no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestPnlPercentage(backtest, symbol, context);
   };
 
   /**
    * Returns the PnL cost (in quote currency) at the moment the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PnL cost in quote currency or null
+   * @returns Promise resolving to PnL cost in quote currency
    *
    * @example
    * ```typescript
@@ -272,7 +299,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_COST, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_COST);
@@ -283,13 +310,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PNL_COST));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestPnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestPnlCost(backtest, symbol, context);
   };
 
   /**
    * Returns whether breakeven was mathematically reachable at the highest profit price.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -326,7 +358,7 @@ export class ReflectUtils {
   /**
    * Returns the number of minutes the position has been active since it opened.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -337,7 +369,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES);
@@ -347,6 +379,11 @@ export class ReflectUtils {
       riskName && bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES);
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_ACTIVE_MINUTES));
+    }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionActiveMinutes no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
     }
     return await bt.strategyCoreService.getPositionActiveMinutes(backtest, symbol, context);
   };
@@ -365,7 +402,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_WAITING_MINUTES, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_WAITING_MINUTES);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_WAITING_MINUTES);
@@ -376,13 +413,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_WAITING_MINUTES));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_WAITING_MINUTES));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionWaitingMinutes no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionWaitingMinutes(backtest, symbol, context);
   };
 
   /**
    * Returns the number of minutes elapsed since the highest profit price was recorded.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -402,7 +444,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_DRAWDOWN_MINUTES, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_DRAWDOWN_MINUTES);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_DRAWDOWN_MINUTES);
@@ -413,6 +455,11 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_DRAWDOWN_MINUTES));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_DRAWDOWN_MINUTES));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionDrawdownMinutes no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionDrawdownMinutes(backtest, symbol, context);
   };
 
@@ -421,12 +468,12 @@ export class ReflectUtils {
    *
    * Alias for getPositionDrawdownMinutes — measures how long the position has been
    * pulling back from its peak profit level.
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to minutes since last profit peak or null
+   * @returns Promise resolving to minutes since last profit peak
    *
    * @example
    * ```typescript
@@ -441,7 +488,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_MINUTES, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_MINUTES);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_MINUTES);
@@ -452,6 +499,11 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_MINUTES));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_MINUTES));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitMinutes no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestProfitMinutes(backtest, symbol, context);
   };
 
@@ -460,12 +512,12 @@ export class ReflectUtils {
    *
    * Measures how long ago the deepest drawdown point occurred.
    * Zero when called at the exact moment the trough was set.
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to minutes since last drawdown trough or null
+   * @returns Promise resolving to minutes since last drawdown trough
    *
    * @example
    * ```typescript
@@ -480,7 +532,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_MINUTES, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_MINUTES);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_MINUTES);
@@ -491,18 +543,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_MINUTES));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_MINUTES));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionMaxDrawdownMinutes no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionMaxDrawdownMinutes(backtest, symbol, context);
   };
 
   /**
    * Returns the worst price reached in the loss direction during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to price or null
+   * @returns Promise resolving to price
    *
    * @example
    * ```typescript
@@ -517,7 +574,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PRICE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PRICE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PRICE);
@@ -528,18 +585,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PRICE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PRICE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionMaxDrawdownPrice no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionMaxDrawdownPrice(backtest, symbol, context);
   };
 
   /**
    * Returns the timestamp when the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to timestamp in milliseconds or null
+   * @returns Promise resolving to timestamp in milliseconds
    *
    * @example
    * ```typescript
@@ -554,7 +616,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_TIMESTAMP, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_TIMESTAMP);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_TIMESTAMP);
@@ -565,18 +627,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_TIMESTAMP));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_TIMESTAMP));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionMaxDrawdownTimestamp no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionMaxDrawdownTimestamp(backtest, symbol, context);
   };
 
   /**
    * Returns the PnL percentage at the moment the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PnL percentage or null
+   * @returns Promise resolving to PnL percentage
    *
    * @example
    * ```typescript
@@ -591,7 +658,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_PERCENTAGE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_PERCENTAGE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_PERCENTAGE);
@@ -602,18 +669,23 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_PERCENTAGE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_PERCENTAGE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionMaxDrawdownPnlPercentage no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionMaxDrawdownPnlPercentage(backtest, symbol, context);
   };
 
   /**
    * Returns the PnL cost (in quote currency) at the moment the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to PnL cost in quote currency or null
+   * @returns Promise resolving to PnL cost in quote currency
    *
    * @example
    * ```typescript
@@ -628,7 +700,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_COST, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_COST);
@@ -639,13 +711,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_MAX_DRAWDOWN_PNL_COST));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionMaxDrawdownPnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionMaxDrawdownPnlCost(backtest, symbol, context);
   };
 
   /**
    * Returns the distance in PnL percentage between the current price and the highest profit peak.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -665,7 +742,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_PERCENTAGE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_PERCENTAGE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_PERCENTAGE);
@@ -676,13 +753,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_PERCENTAGE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_PERCENTAGE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitDistancePnlPercentage no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestProfitDistancePnlPercentage(backtest, symbol, context);
   };
 
   /**
    * Returns the distance in PnL cost between the current price and the highest profit peak.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -702,7 +784,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_COST, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_COST);
@@ -713,13 +795,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_DISTANCE_PNL_COST));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitDistancePnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestProfitDistancePnlCost(backtest, symbol, context);
   };
 
   /**
    * Returns the distance in PnL percentage between the current price and the worst drawdown trough.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -739,7 +826,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_PERCENTAGE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_PERCENTAGE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_PERCENTAGE);
@@ -750,13 +837,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_PERCENTAGE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_PERCENTAGE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestMaxDrawdownPnlPercentage no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestMaxDrawdownPnlPercentage(backtest, symbol, context);
   };
 
   /**
    * Returns the distance in PnL cost between the current price and the worst drawdown trough.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -776,7 +868,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_COST, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_COST);
@@ -787,13 +879,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_MAX_DRAWDOWN_PNL_COST));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestMaxDrawdownPnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getPositionHighestMaxDrawdownPnlCost(backtest, symbol, context);
   };
 
   /**
    * Returns the peak-to-trough PnL percentage distance between the position's highest profit and deepest drawdown.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -813,7 +910,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_PERCENTAGE, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_PERCENTAGE);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_PERCENTAGE);
@@ -824,13 +921,18 @@ export class ReflectUtils {
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_PERCENTAGE));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_PERCENTAGE));
     }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getMaxDrawdownDistancePnlPercentage no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
     return await bt.strategyCoreService.getMaxDrawdownDistancePnlPercentage(backtest, symbol, context);
   };
 
   /**
    * Returns the peak-to-trough PnL cost distance between the position's highest profit and deepest drawdown.
    *
-   * Result is ≥ 0. Returns null if no pending signal exists.
+   * Result is ≥ 0. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
@@ -850,7 +952,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST);
@@ -860,6 +962,11 @@ export class ReflectUtils {
       riskName && bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST);
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_MAX_DRAWDOWN_DISTANCE_PNL_COST));
+    }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getMaxDrawdownDistancePnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
     }
     return await bt.strategyCoreService.getMaxDrawdownDistancePnlCost(backtest, symbol, context);
   };

@@ -1284,7 +1284,7 @@ export async function getBreakeven(
  * DCA entries added after the last partial.
  * With no DCA entries, equals the original priceOpen.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * Automatically detects backtest/live mode from execution context.
  *
@@ -1302,7 +1302,7 @@ export async function getBreakeven(
  */
 export async function getPositionEffectivePrice(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_POSITION_AVERAGE_PRICE_METHOD_NAME, {
     symbol,
   });
@@ -1315,6 +1315,19 @@ export async function getPositionEffectivePrice(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionEffectivePrice no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionEffectivePrice(
     isBacktest,
     symbol,
@@ -1328,7 +1341,7 @@ export async function getPositionEffectivePrice(
  * 1 = original entry only (no DCA).
  * Increases by 1 with each successful commitAverageBuy().
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * Automatically detects backtest/live mode from execution context.
  *
@@ -1346,7 +1359,7 @@ export async function getPositionEffectivePrice(
  */
 export async function getPositionInvestedCount(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_POSITION_INVESTED_COUNT_METHOD_NAME, {
     symbol,
   });
@@ -1359,6 +1372,19 @@ export async function getPositionInvestedCount(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionInvestedCount no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionInvestedCount(
     isBacktest,
     symbol,
@@ -1372,7 +1398,7 @@ export async function getPositionInvestedCount(
  * Equal to the sum of all _entry costs (Σ entry.cost).
  * Each entry cost is set at the time of commitAverageBuy (defaults to CC_POSITION_ENTRY_COST).
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * Automatically detects backtest/live mode from execution context.
  *
@@ -1390,7 +1416,7 @@ export async function getPositionInvestedCount(
  */
 export async function getPositionInvestedCost(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_POSITION_INVESTED_COST_METHOD_NAME, {
     symbol,
   });
@@ -1403,6 +1429,19 @@ export async function getPositionInvestedCost(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionInvestedCost no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionInvestedCost(
     isBacktest,
     symbol,
@@ -1416,13 +1455,14 @@ export async function getPositionInvestedCost(
  * Accounts for partial closes, DCA entries, slippage and fees
  * (delegates to toProfitLossDto).
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * Automatically detects backtest/live mode from execution context.
  * Automatically fetches current price via getAveragePrice.
  *
  * @param symbol - Trading pair symbol
- * @returns Promise resolving to PNL percentage or null
+ * @returns Promise resolving to PNL percentage
+ * @throws If no pending signal exists
  *
  * @example
  * ```typescript
@@ -1435,7 +1475,7 @@ export async function getPositionInvestedCost(
  */
 export async function getPositionPnlPercent(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_POSITION_PNL_PERCENT_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getPositionPnlPercent requires an execution context");
@@ -1447,6 +1487,19 @@ export async function getPositionPnlPercent(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionPnlPercent no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionPnlPercent(
     isBacktest,
     symbol,
@@ -1669,7 +1722,7 @@ export async function commitPartialLossCost(
  * Calculated as: pnlPercentage / 100 × totalInvestedCost.
  * Accounts for partial closes, DCA entries, slippage and fees.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * Automatically detects backtest/live mode from execution context.
  * Automatically fetches current price via getAveragePrice.
@@ -1688,7 +1741,7 @@ export async function commitPartialLossCost(
  */
 export async function getPositionPnlCost(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_POSITION_PNL_COST_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getPositionPnlCost requires an execution context");
@@ -1700,6 +1753,19 @@ export async function getPositionPnlCost(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionPnlCost no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionPnlCost(
     isBacktest,
     symbol,
@@ -1714,7 +1780,7 @@ export async function getPositionPnlCost(
  * The first element is always the original priceOpen (initial entry).
  * Each subsequent element is a price added by commitAverageBuy().
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  * Returns a single-element array [priceOpen] if no DCA entries were made.
  *
  * @param symbol - Trading pair symbol
@@ -1755,7 +1821,7 @@ export async function getPositionLevels(
  * Each element represents a partial profit or loss close executed via
  * commitPartialProfit / commitPartialLoss (or their Cost variants).
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  * Returns an empty array if no partials were executed yet.
  *
  * Each entry contains:
@@ -1801,7 +1867,7 @@ export async function getPositionPartials(symbol: string) {
  * Each element represents a single position entry — the initial open or a subsequent
  * DCA entry added via commitAverageBuy.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  * Returns a single-element array if no DCA entries were made.
  *
  * Each entry contains:
@@ -1844,7 +1910,7 @@ export async function getPositionEntries(symbol: string) {
  * Reflects `minuteEstimatedTime` as set in the signal DTO — the maximum
  * number of minutes the position is expected to be active before `time_expired`.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to estimated duration in minutes or null
@@ -1880,7 +1946,7 @@ export async function getPositionEstimateMinutes(symbol: string) {
  * Computes elapsed minutes since `pendingAt` and subtracts from `minuteEstimatedTime`.
  * Returns 0 once the estimate is exceeded (never negative).
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to remaining minutes (≥ 0) or null
@@ -1914,7 +1980,7 @@ export async function getPositionCountdownMinutes(symbol: string) {
 /**
  * Returns the number of minutes the position has been active since it opened.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to active minutes (≥ 0) or null
@@ -1985,7 +2051,7 @@ export async function getPositionWaitingMinutes(symbol: string) {
  * - LONG: tracks the highest price seen above effective entry
  * - SHORT: tracks the lowest price seen below effective entry
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  * Never returns null when a signal is active — always contains at least the entry price.
  *
  * @param symbol - Trading pair symbol
@@ -2019,7 +2085,7 @@ export async function getPositionHighestProfitPrice(symbol: string) {
 /**
  * Returns the timestamp when the best profit price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to timestamp in milliseconds or null
@@ -2052,7 +2118,7 @@ export async function getPositionHighestProfitTimestamp(symbol: string) {
 /**
  * Returns the PnL percentage at the moment the best profit price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to PnL percentage or null
@@ -2085,7 +2151,7 @@ export async function getPositionHighestPnlPercentage(symbol: string) {
 /**
  * Returns the PnL cost (in quote currency) at the moment the best profit price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to PnL cost or null
@@ -2118,7 +2184,7 @@ export async function getPositionHighestPnlCost(symbol: string) {
 /**
  * Returns whether breakeven was mathematically reachable at the highest profit price.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to true if breakeven was reachable at peak, false otherwise, or null
@@ -2155,7 +2221,7 @@ export async function getPositionHighestProfitBreakeven(symbol: string) {
  * Zero when called at the exact moment the peak was set.
  * Grows continuously as price moves away from the peak without setting a new record.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to drawdown duration in minutes or null
@@ -2192,7 +2258,7 @@ export async function getPositionDrawdownMinutes(symbol: string) {
  * pulling back from its peak profit level.
  * Zero when called at the exact moment the peak was set.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to minutes since last profit peak or null
@@ -2228,7 +2294,7 @@ export async function getPositionHighestProfitMinutes(symbol: string) {
  * Measures how long ago the deepest drawdown point occurred.
  * Zero when called at the exact moment the trough was set.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to minutes since last drawdown trough or null
@@ -2261,7 +2327,7 @@ export async function getPositionMaxDrawdownMinutes(symbol: string) {
 /**
  * Returns the worst price reached in the loss direction during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to price or null
@@ -2294,7 +2360,7 @@ export async function getPositionMaxDrawdownPrice(symbol: string) {
 /**
  * Returns the timestamp when the worst loss price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to timestamp in milliseconds or null
@@ -2327,7 +2393,7 @@ export async function getPositionMaxDrawdownTimestamp(symbol: string) {
 /**
  * Returns the PnL percentage at the moment the worst loss price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to PnL percentage or null
@@ -2360,7 +2426,7 @@ export async function getPositionMaxDrawdownPnlPercentage(symbol: string) {
 /**
  * Returns the PnL cost (in quote currency) at the moment the worst loss price was recorded during this position's life.
  *
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to PnL cost or null
@@ -2394,7 +2460,7 @@ export async function getPositionMaxDrawdownPnlCost(symbol: string) {
  * Returns the distance in PnL percentage between the current price and the highest profit peak.
  *
  * Computed as: max(0, peakPnlPercentage - currentPnlPercentage).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to drawdown distance in PnL% (≥ 0) or null
@@ -2428,7 +2494,7 @@ export async function getPositionHighestProfitDistancePnlPercentage(symbol: stri
  * Returns the distance in PnL cost between the current price and the highest profit peak.
  *
  * Computed as: max(0, peakPnlCost - currentPnlCost).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to drawdown distance in PnL cost (≥ 0) or null
@@ -2462,7 +2528,7 @@ export async function getPositionHighestProfitDistancePnlCost(symbol: string) {
  * Returns the distance in PnL percentage between the current price and the worst drawdown trough.
  *
  * Computed as: max(0, currentPnlPercentage - fallPnlPercentage).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to recovery distance in PnL% (≥ 0) or null
@@ -2496,7 +2562,7 @@ export async function getPositionHighestMaxDrawdownPnlPercentage(symbol: string)
  * Returns the distance in PnL cost between the current price and the worst drawdown trough.
  *
  * Computed as: max(0, currentPnlCost - fallPnlCost).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to recovery distance in PnL cost (≥ 0) or null
@@ -2530,7 +2596,7 @@ export async function getPositionHighestMaxDrawdownPnlCost(symbol: string) {
  * Returns the peak-to-trough PnL percentage distance between the position's highest profit and deepest drawdown.
  *
  * Computed as: max(0, peakPnlPercentage - fallPnlPercentage).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to peak-to-trough PnL percentage distance (≥ 0) or null
@@ -2564,7 +2630,7 @@ export async function getMaxDrawdownDistancePnlPercentage(symbol: string) {
  * Returns the peak-to-trough PnL cost distance between the position's highest profit and deepest drawdown.
  *
  * Computed as: max(0, peakPnlCost - fallPnlCost).
- * Returns null if no pending signal exists.
+ * Throws if no pending signal exists.
  *
  * @param symbol - Trading pair symbol
  * @returns Promise resolving to peak-to-trough PnL cost distance (≥ 0) or null

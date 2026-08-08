@@ -1148,11 +1148,11 @@ export class BacktestUtils {
    * Returns the effective (weighted average) entry price for the current pending signal.
    *
    * Accounts for all DCA entries via commitAverageBuy.
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Effective entry price, or null if no active position
+   * @returns Effective entry price
    */
   public getPositionEffectivePrice = async (
     symbol: string,
@@ -1161,7 +1161,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     backtest.loggerService.info(
       BACKTEST_METHOD_NAME_GET_POSITION_AVERAGE_PRICE,
       {
@@ -1202,6 +1202,16 @@ export class BacktestUtils {
         );
     }
 
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionEffectivePrice no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
+
     return await backtest.strategyCoreService.getPositionEffectivePrice(
       true,
       symbol,
@@ -1212,11 +1222,11 @@ export class BacktestUtils {
   /**
    * Returns the total number of base-asset units currently held in the position.
    *
-   * Includes units from all DCA entries. Returns null if no pending signal exists.
+   * Includes units from all DCA entries. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Total units held, or null if no active position
+   * @returns Total units held
    */
   public getPositionInvestedCount = async (
     symbol: string,
@@ -1225,7 +1235,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     backtest.loggerService.info(
       BACKTEST_METHOD_NAME_GET_POSITION_INVESTED_COUNT,
       {
@@ -1266,6 +1276,16 @@ export class BacktestUtils {
         );
     }
 
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionInvestedCount no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
+
     return await backtest.strategyCoreService.getPositionInvestedCount(
       true,
       symbol,
@@ -1276,11 +1296,11 @@ export class BacktestUtils {
   /**
    * Returns the total dollar cost invested in the current position.
    *
-   * Sum of all entry costs across DCA entries. Returns null if no pending signal exists.
+   * Sum of all entry costs across DCA entries. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Total invested cost in quote currency, or null if no active position
+   * @returns Total invested cost in quote currency
    */
   public getPositionInvestedCost = async (
     symbol: string,
@@ -1289,7 +1309,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     backtest.loggerService.info(
       BACKTEST_METHOD_NAME_GET_POSITION_INVESTED_COST,
       {
@@ -1330,6 +1350,16 @@ export class BacktestUtils {
         );
     }
 
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionInvestedCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
+
     return await backtest.strategyCoreService.getPositionInvestedCost(
       true,
       symbol,
@@ -1341,12 +1371,13 @@ export class BacktestUtils {
    * Returns the current unrealized PnL as a percentage of the invested cost.
    *
    * Calculated relative to the effective (weighted average) entry price.
-   * Positive for profit, negative for loss. Returns null if no pending signal exists.
+   * Positive for profit, negative for loss. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param currentPrice - Current market price
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns PnL percentage, or null if no active position
+   * @returns PnL percentage
+   * @throws If no pending signal exists
    */
   public getPositionPnlPercent = async (
     symbol: string,
@@ -1356,7 +1387,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     backtest.loggerService.info(BACKTEST_METHOD_NAME_GET_POSITION_PNL_PERCENT, {
       symbol,
       currentPrice,
@@ -1395,6 +1426,16 @@ export class BacktestUtils {
         );
     }
 
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionPnlPercent no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
+
     return await backtest.strategyCoreService.getPositionPnlPercent(
       true,
       symbol,
@@ -1407,12 +1448,12 @@ export class BacktestUtils {
    * Returns the current unrealized PnL in quote currency (dollar amount).
    *
    * Calculated as (currentPrice - effectiveEntry) * units for LONG,
-   * reversed for SHORT. Returns null if no pending signal exists.
+   * reversed for SHORT. Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param currentPrice - Current market price
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns PnL in quote currency, or null if no active position
+   * @returns PnL in quote currency
    */
   public getPositionPnlCost = async (
     symbol: string,
@@ -1422,7 +1463,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number | null> => {
+  ): Promise<number> => {
     backtest.loggerService.info(BACKTEST_METHOD_NAME_GET_POSITION_PNL_COST, {
       symbol,
       currentPrice,
@@ -1461,6 +1502,16 @@ export class BacktestUtils {
         );
     }
 
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionPnlCost no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
+    }
+
     return await backtest.strategyCoreService.getPositionPnlCost(
       true,
       symbol,
@@ -1474,12 +1525,12 @@ export class BacktestUtils {
    *
    * The first element is always the original priceOpen (initial entry).
    * Each subsequent element is a price added by commitAverageBuy().
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    * Returns a single-element array [priceOpen] if no DCA entries were made.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Array of entry prices, or null if no active position
+   * @returns Array of entry prices
    */
   public getPositionLevels = async (
     symbol: string,
@@ -1538,7 +1589,7 @@ export class BacktestUtils {
    *
    * Each element represents a partial profit or loss close executed via
    * commitPartialProfit / commitPartialLoss (or their Cost variants).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    * Returns an empty array if no partials were executed yet.
    *
    * Each entry contains:
@@ -1550,7 +1601,7 @@ export class BacktestUtils {
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Array of partial close records, or null if no active position
+   * @returns Array of partial close records
    */
   public getPositionPartials = async (
     symbol: string,
@@ -1610,7 +1661,7 @@ export class BacktestUtils {
    * Each element represents a single position entry — the initial open or a subsequent
    * DCA entry added via commitAverageBuy.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    * Returns a single-element array if no DCA entries were made.
    *
    * Each entry contains:
@@ -1619,7 +1670,7 @@ export class BacktestUtils {
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Array of entry records, or null if no active position
+   * @returns Array of entry records
    */
   public getPositionEntries = async (
     symbol: string,
@@ -1679,11 +1730,11 @@ export class BacktestUtils {
    * Reflects `minuteEstimatedTime` as set in the signal DTO — the maximum
    * number of minutes the position is expected to be active before `time_expired`.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Estimated duration in minutes, or null if no active position
+   * @returns Estimated duration in minutes
    */
   public getPositionEstimateMinutes = async (
     symbol: string,
@@ -1743,11 +1794,11 @@ export class BacktestUtils {
    * Computes elapsed minutes since `pendingAt` and subtracts from `minuteEstimatedTime`.
    * Returns 0 once the estimate is exceeded (never negative).
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Remaining minutes (≥ 0), or null if no active position
+   * @returns Remaining minutes (≥ 0)
    */
   public getPositionCountdownMinutes = async (
     symbol: string,
@@ -1804,11 +1855,11 @@ export class BacktestUtils {
   /**
    * Returns the number of minutes the position has been active since it opened.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Active minutes (≥ 0), or null if no active position
+   * @returns Active minutes (≥ 0)
    */
   public getPositionActiveMinutes = async (
     symbol: string,
@@ -1926,7 +1977,7 @@ export class BacktestUtils {
   /**
    * Returns the best price reached in the profit direction during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -1987,7 +2038,7 @@ export class BacktestUtils {
   /**
    * Returns the timestamp when the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2048,7 +2099,7 @@ export class BacktestUtils {
   /**
    * Returns the PnL percentage at the moment the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2109,7 +2160,7 @@ export class BacktestUtils {
   /**
    * Returns the PnL cost (in quote currency) at the moment the best profit price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2172,7 +2223,7 @@ export class BacktestUtils {
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns true if breakeven was reachable at peak, false otherwise, or null if no active position
+   * @returns true if breakeven was reachable at peak, false otherwise
    */
   public getPositionHighestProfitBreakeven = async (
     symbol: string,
@@ -2233,11 +2284,11 @@ export class BacktestUtils {
    * Zero when called at the exact moment the peak was set.
    * Grows continuously as price moves away from the peak without setting a new record.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Drawdown duration in minutes, or null if no active position
+   * @returns Drawdown duration in minutes
    */
   public getPositionDrawdownMinutes = async (
     symbol: string,
@@ -2298,11 +2349,11 @@ export class BacktestUtils {
    * pulling back from its peak profit level.
    * Zero when called at the exact moment the peak was set.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Minutes since last profit peak, or null if no active position
+   * @returns Minutes since last profit peak
    */
   public getPositionHighestProfitMinutes = async (
     symbol: string,
@@ -2362,11 +2413,11 @@ export class BacktestUtils {
    * Measures how long ago the deepest drawdown point occurred.
    * Zero when called at the exact moment the trough was set.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
-   * @returns Minutes since last drawdown trough, or null if no active position
+   * @returns Minutes since last drawdown trough
    */
   public getPositionMaxDrawdownMinutes = async (
     symbol: string,
@@ -2423,7 +2474,7 @@ export class BacktestUtils {
   /**
    * Returns the worst price reached in the loss direction during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2484,7 +2535,7 @@ export class BacktestUtils {
   /**
    * Returns the timestamp when the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2545,7 +2596,7 @@ export class BacktestUtils {
   /**
    * Returns the PnL percentage at the moment the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2606,7 +2657,7 @@ export class BacktestUtils {
   /**
    * Returns the PnL cost (in quote currency) at the moment the worst loss price was recorded during this position's life.
    *
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2668,7 +2719,7 @@ export class BacktestUtils {
    * Returns the distance in PnL percentage between the current price and the highest profit peak.
    *
    * Computed as: max(0, peakPnlPercentage - currentPnlPercentage).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2730,7 +2781,7 @@ export class BacktestUtils {
    * Returns the distance in PnL cost between the current price and the highest profit peak.
    *
    * Computed as: max(0, peakPnlCost - currentPnlCost).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2792,7 +2843,7 @@ export class BacktestUtils {
    * Returns the distance in PnL percentage between the current price and the worst drawdown trough.
    *
    * Computed as: max(0, currentPnlPercentage - fallPnlPercentage).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2854,7 +2905,7 @@ export class BacktestUtils {
    * Returns the distance in PnL cost between the current price and the worst drawdown trough.
    *
    * Computed as: max(0, currentPnlCost - fallPnlCost).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2916,7 +2967,7 @@ export class BacktestUtils {
    * Returns the peak-to-trough PnL percentage distance between the position's highest profit and deepest drawdown.
    *
    * Computed as: max(0, peakPnlPercentage - fallPnlPercentage).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
@@ -2978,7 +3029,7 @@ export class BacktestUtils {
    * Returns the peak-to-trough PnL cost distance between the position's highest profit and deepest drawdown.
    *
    * Computed as: max(0, peakPnlCost - fallPnlCost).
-   * Returns null if no pending signal exists.
+   * Throws if no pending signal exists.
    *
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
