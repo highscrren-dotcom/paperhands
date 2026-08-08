@@ -684,7 +684,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<IPublicSignalRow | null>  => {
+  ): Promise<IPublicSignalRow>  => {
     backtest.loggerService.info(BACKTEST_METHOD_NAME_GET_PENDING_SIGNAL, {
       symbol,
       context,
@@ -720,6 +720,16 @@ export class BacktestUtils {
             BACKTEST_METHOD_NAME_GET_PENDING_SIGNAL,
           ),
         );
+    }
+
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPendingSignal no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
     }
 
     return await backtest.strategyCoreService.getPendingSignal(
@@ -1539,7 +1549,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<number[] | null> => {
+  ): Promise<number[]> => {
     backtest.loggerService.info(BACKTEST_METHOD_NAME_GET_POSITION_LEVELS, {
       symbol,
       context,
@@ -1575,6 +1585,16 @@ export class BacktestUtils {
             BACKTEST_METHOD_NAME_GET_POSITION_LEVELS,
           ),
         );
+    }
+
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
+      )
+    ) {
+      throw new Error(
+        `Backtest.getPositionLevels no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
     }
 
     return await backtest.strategyCoreService.getPositionLevels(

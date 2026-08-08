@@ -85,7 +85,7 @@ export interface IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   getLatestSignal(
     symbol: string,
@@ -94,7 +94,7 @@ export interface IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null>;
+  ): Promise<IPublicSignalRow>;
   /**
    * Returns the number of minutes elapsed since the latest signal's timestamp.
    * `timestamp` doubles as the look-ahead cutoff — a signal whose `timestamp`
@@ -162,7 +162,7 @@ export class RecentPersistBacktestUtils implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -171,7 +171,7 @@ export class RecentPersistBacktestUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     lib.loggerService.info(RECENT_PERSIST_BACKTEST_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -187,7 +187,9 @@ export class RecentPersistBacktestUtils implements IRecentUtils {
       backtest,
     );
     if (!signal || signal.timestamp > when.getTime()) {
-      return null;
+      throw new Error(
+        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+      );
     }
     return signal;
   };
@@ -265,7 +267,7 @@ export class RecentMemoryBacktestUtils implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -274,7 +276,7 @@ export class RecentMemoryBacktestUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     const key = CREATE_KEY_FN(
       symbol,
       strategyName,
@@ -285,7 +287,9 @@ export class RecentMemoryBacktestUtils implements IRecentUtils {
     lib.loggerService.info(RECENT_MEMORY_BACKTEST_METHOD_NAME_GET_LATEST_SIGNAL, { key });
     const signal = this._signals.get(key) ?? null;
     if (!signal || signal.timestamp > when.getTime()) {
-      return null;
+      throw new Error(
+        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+      );
     }
     return signal;
   };
@@ -360,7 +364,7 @@ export class RecentPersistLiveUtils implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -369,7 +373,7 @@ export class RecentPersistLiveUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     lib.loggerService.info(RECENT_PERSIST_LIVE_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -385,7 +389,9 @@ export class RecentPersistLiveUtils implements IRecentUtils {
       backtest,
     );
     if (!signal || signal.timestamp > when.getTime()) {
-      return null;
+      throw new Error(
+        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+      );
     }
     return signal;
   };
@@ -464,7 +470,7 @@ export class RecentMemoryLiveUtils implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -473,12 +479,14 @@ export class RecentMemoryLiveUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     const key = CREATE_KEY_FN(symbol, strategyName, exchangeName, frameName, backtest);
     lib.loggerService.info(RECENT_MEMORY_LIVE_METHOD_NAME_GET_LATEST_SIGNAL, { key });
     const signal = this._signals.get(key) ?? null;
     if (!signal || signal.timestamp > when.getTime()) {
-      return null;
+      throw new Error(
+        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+      );
     }
     return signal;
   };
@@ -556,7 +564,7 @@ export class RecentBacktestAdapter implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -565,7 +573,7 @@ export class RecentBacktestAdapter implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     lib.loggerService.info(RECENT_BACKTEST_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -706,7 +714,7 @@ export class RecentLiveAdapter implements IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    */
   public getLatestSignal = async (
     symbol: string,
@@ -715,7 +723,7 @@ export class RecentLiveAdapter implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     lib.loggerService.info(RECENT_LIVE_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -884,7 +892,7 @@ export class RecentAdapter {
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName, and frameName
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal or null if not found / shadowed by look-ahead
+   * @returns The latest signal throws if not found / shadowed by look-ahead
    * @throws Error if RecentAdapter is not enabled
    */
   public getLatestSignal = async (
@@ -895,7 +903,7 @@ export class RecentAdapter {
       frameName: FrameName;
     },
     when: Date,
-  ): Promise<IPublicSignalRow | null> => {
+  ): Promise<IPublicSignalRow> => {
     lib.loggerService.info(RECENT_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       context,
@@ -903,32 +911,35 @@ export class RecentAdapter {
     if (!this.enable.hasValue()) {
       throw new Error("RecentAdapter is not enabled. Call enable() first.");
     }
-    let result: IPublicSignalRow | null = null;
-    if (
-      result = await RecentBacktest.getLatestSignal(
+    // Both probes now throw when they find nothing, so each is tried
+    // independently: a miss in backtest storage must still fall through to live.
+    try {
+      return await RecentBacktest.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         true,
         when,
-      )
-    ) {
-      return result;
+      );
+    } catch {
+      // fall through to live storage
     }
-    if (
-      result = await RecentLive.getLatestSignal(
+    try {
+      return await RecentLive.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         false,
         when,
-      )
-    ) {
-      return result;
+      );
+    } catch {
+      // fall through to the shared not-found error below
     }
-    return null;
+    throw new Error(
+      `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+    );
   };
 
   /**
@@ -959,30 +970,33 @@ export class RecentAdapter {
     if (!this.enable.hasValue()) {
       throw new Error("RecentAdapter is not enabled. Call enable() first.");
     }
-    let signal: IPublicSignalRow | null = null;
-    if (
-      signal = await RecentBacktest.getLatestSignal(
+    // Both probes now throw when they find nothing, so each is tried
+    // independently: a miss in backtest storage must still fall through to live.
+    try {
+      const signal = await RecentBacktest.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         true,
         when,
-      )
-    ) {
+      );
       return Math.floor((when.getTime() - signal.timestamp) / (1000 * 60));
+    } catch {
+      // fall through to live storage
     }
-    if (
-      signal = await RecentLive.getLatestSignal(
+    try {
+      const signal = await RecentLive.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         false,
         when,
-      )
-    ) {
+      );
       return Math.floor((when.getTime() - signal.timestamp) / (1000 * 60));
+    } catch {
+      // fall through to the shared not-found error below
     }
     throw new Error(
       `Recent.getMinutesSinceLatestSignalCreated no signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,

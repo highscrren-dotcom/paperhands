@@ -23,7 +23,7 @@ const GET_MINUTES_SINCE_LATEST_SIGNAL_CREATED_METHOD_NAME = "signal.getMinutesSi
  * regardless of its outcome.
  *
  * Searches backtest storage first, then live storage.
- * Returns null if no signal exists at all.
+ * Throws if no signal exists at all.
  *
  * Automatically detects backtest/live mode from execution context.
  *
@@ -42,7 +42,7 @@ const GET_MINUTES_SINCE_LATEST_SIGNAL_CREATED_METHOD_NAME = "signal.getMinutesSi
  */
 export async function getLatestSignal(
   symbol: string,
-): Promise<IPublicSignalRow | null> {
+): Promise<IPublicSignalRow> {
   backtest.loggerService.info(GET_LATEST_SIGNAL_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getLatestSignal requires an execution context");
@@ -67,13 +67,13 @@ export async function getLatestSignal(
  * whichever signal was recorded last. Useful for cooldown logic after a stop-loss.
  *
  * Searches backtest storage first, then live storage.
- * Returns null if no signal exists at all.
+ * Throws if no signal exists at all.
  *
  * Automatically detects backtest/live mode from execution context.
  *
  * @param symbol - Trading pair symbol
  * @param timestamp - Current timestamp in milliseconds
- * @returns Promise resolving to whole minutes since the latest signal was created, or null
+ * @returns Promise resolving to whole minutes since the latest signal was created
  *
  * @example
  * ```typescript
@@ -87,7 +87,7 @@ export async function getLatestSignal(
  */
 export async function getMinutesSinceLatestSignalCreated(
   symbol: string,
-): Promise<number | null> {
+): Promise<number> {
   backtest.loggerService.info(GET_MINUTES_SINCE_LATEST_SIGNAL_CREATED_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getMinutesSinceLatestSignalCreated requires an execution context");

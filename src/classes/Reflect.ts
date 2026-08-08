@@ -326,7 +326,7 @@ export class ReflectUtils {
    * @param symbol - Trading pair symbol
    * @param context - Execution context with strategyName, exchangeName and frameName
    * @param backtest - True if backtest mode, false if live mode (default: false)
-   * @returns Promise resolving to true if breakeven was reachable at peak, false otherwise, or null
+   * @returns Promise resolving to true if breakeven was reachable at peak, false otherwise
    *
    * @example
    * ```typescript
@@ -341,7 +341,7 @@ export class ReflectUtils {
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName; frameName: FrameName },
     backtest = false
-  ): Promise<boolean | null> => {
+  ): Promise<boolean> => {
     bt.loggerService.info(REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN, { symbol, context });
     bt.strategyValidationService.validate(context.strategyName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN);
     bt.exchangeValidationService.validate(context.exchangeName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN);
@@ -351,6 +351,11 @@ export class ReflectUtils {
       riskName && bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN);
       riskList && riskList.forEach((riskName) => bt.riskValidationService.validate(riskName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN));
       actions && actions.forEach((actionName) => bt.actionValidationService.validate(actionName, REFLECT_METHOD_NAME_GET_POSITION_HIGHEST_PROFIT_BREAKEVEN));
+    }
+    if (await not(bt.strategyCoreService.hasPendingSignal(backtest, symbol, context))) {
+      throw new Error(
+        `Reflect.getPositionHighestProfitBreakeven no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
+      );
     }
     return await bt.strategyCoreService.getPositionHighestProfitBreakeven(backtest, symbol, context);
   };

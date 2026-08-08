@@ -644,7 +644,7 @@ export class LiveUtils {
     symbol: string,
     currentPrice: number,
     context: { strategyName: StrategyName; exchangeName: ExchangeName },
-  ): Promise<IPublicSignalRow | null>  => {
+  ): Promise<IPublicSignalRow>  => {
     backtest.loggerService.info(LIVE_METHOD_NAME_GET_PENDING_SIGNAL, {
       symbol,
       context,
@@ -680,6 +680,20 @@ export class LiveUtils {
             LIVE_METHOD_NAME_GET_PENDING_SIGNAL,
           ),
         );
+    }
+
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(false, symbol, {
+          strategyName: context.strategyName,
+          exchangeName: context.exchangeName,
+          frameName: "",
+        }),
+      )
+    ) {
+      throw new Error(
+        `Live.getPendingSignal no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName}`,
+      );
     }
 
     return await backtest.strategyCoreService.getPendingSignal(
@@ -1509,7 +1523,7 @@ export class LiveUtils {
   public getPositionLevels = async (
     symbol: string,
     context: { strategyName: StrategyName; exchangeName: ExchangeName },
-  ): Promise<number[] | null> => {
+  ): Promise<number[]> => {
     backtest.loggerService.info(LIVE_METHOD_NAME_GET_POSITION_LEVELS, {
       symbol,
       context,
@@ -1545,6 +1559,20 @@ export class LiveUtils {
             LIVE_METHOD_NAME_GET_POSITION_LEVELS,
           ),
         );
+    }
+
+    if (
+      await not(
+        backtest.strategyCoreService.hasPendingSignal(false, symbol, {
+          strategyName: context.strategyName,
+          exchangeName: context.exchangeName,
+          frameName: "",
+        }),
+      )
+    ) {
+      throw new Error(
+        `Live.getPositionLevels no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName}`,
+      );
     }
 
     return await backtest.strategyCoreService.getPositionLevels(false, symbol, {

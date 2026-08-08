@@ -1162,7 +1162,7 @@ export async function getRemainingCostBasis(symbol: string): Promise<number> {
  * }
  * ```
  */
-export async function getPendingSignal(symbol: string): Promise<IPublicSignalRow | null>  {
+export async function getPendingSignal(symbol: string): Promise<IPublicSignalRow>  {
   backtest.loggerService.info(GET_PENDING_SIGNAL_METHOD_NAME, {
     symbol,
   });
@@ -1177,6 +1177,19 @@ export async function getPendingSignal(symbol: string): Promise<IPublicSignalRow
     backtest.methodContextService.context;
   const currentPrice =
     await backtest.exchangeConnectionService.getAveragePrice(symbol);
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPendingSignal no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPendingSignal(
     isBacktest,
     symbol,
@@ -1797,7 +1810,7 @@ export async function getPositionPnlCost(
  */
 export async function getPositionLevels(
   symbol: string,
-): Promise<number[] | null> {
+): Promise<number[]> {
   backtest.loggerService.info(GET_POSITION_LEVELS_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getPositionLevels requires an execution context");
@@ -1808,6 +1821,19 @@ export async function getPositionLevels(
   const { backtest: isBacktest } = backtest.executionContextService.context;
   const { exchangeName, frameName, strategyName } =
     backtest.methodContextService.context;
+  if (
+    await not(
+      backtest.strategyCoreService.hasPendingSignal(isBacktest, symbol, {
+        exchangeName,
+        frameName,
+        strategyName,
+      }),
+    )
+  ) {
+    throw new Error(
+      `getPositionLevels no pending signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
+    );
+  }
   return await backtest.strategyCoreService.getPositionLevels(
     isBacktest,
     symbol,
