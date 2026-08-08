@@ -11,7 +11,7 @@ declare function getPositionActiveMinutes(symbol: string): Promise<number>;
 
 Returns the number of minutes the position has been active since it opened.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

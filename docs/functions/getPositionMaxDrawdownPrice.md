@@ -11,7 +11,7 @@ declare function getPositionMaxDrawdownPrice(symbol: string): Promise<number>;
 
 Returns the worst price reached in the loss direction during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

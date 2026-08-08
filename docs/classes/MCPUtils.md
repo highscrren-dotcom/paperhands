@@ -49,7 +49,7 @@ instead of rebuilding it.
 ### getHistoryMessages
 
 ```ts
-getHistoryMessages: (mcpName: string, limit?: number) => Promise<IMCPMessage[]>
+getHistoryMessages: (when: Date, mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
 Renders the trade history of the MCP (Model Context Protocol)
@@ -68,7 +68,7 @@ the ones kept when `limit` cuts the feed.
 ### getAgentMessages
 
 ```ts
-getAgentMessages: (mcpName: string, limit?: number) => Promise<IMCPMessage[]>
+getAgentMessages: (when: Date, mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
 Renders the messages the STRATEGY CODE addressed to the agent into agent
@@ -92,31 +92,25 @@ accumulate only while a Log adapter is enabled. Depth defaults to
 ### getNotificationMessages
 
 ```ts
-getNotificationMessages: (context: IMCPContext, when: Date, mcpName: string, limit?: number) => Promise<IMCPMessage[]>
+getNotificationMessages: (when: Date, mcpName: string, limit?: number) => Promise<IMCPMessage[]>
 ```
 
-Renders the `signal.info` notifications of the active positions of the
-MCP (Model Context Protocol) instance's strategy into agent messages:
-reads the pending signal id of every symbol from the portfolio snapshot
-the caller already holds — no extra exchange or live state requests —
-and keeps only the notifications emitted via commitSignalNotify for
-those signal ids, newest first — market price and unrealized PnL at the
-moment of the event, the emit time and the description itself per
-notification.
+Renders the DESCRIBED trading events of the MCP (Model Context Protocol)
+instance's strategy into agent messages: position opens, position closes
+and mid-position notes that carry a description, newest first — symbol,
+direction, signal id, the prices and PnL of the moment, and the reasoning
+itself.
 
-Complements getStatus: the status shows what is open, this method shows
-what the agent (or the strategy) annotated on the open positions, so a
-stateless agent can pick up its own prior reasoning about the exact
-position it is holding. Notifications of already-closed positions are
-filtered out automatically — their signal ids no longer match any
-pending signal in the snapshot.
-
-The signature matches IMCPSchema.getMessages (async variant), so a
-custom renderer can await this method and append the notifications to
-the default output without re-fetching anything.
+Events without a description are dropped. This is the anti-whipsaw half
+of the agent's memory: a bare "opened LONG / closed LONG" pair says
+nothing about intent and invites the agent to re-enter what it just left,
+while "opened: breakout on volume" followed by "closed: volume dried up,
+thesis void" reads as a finished thought. Unlike getStatus, the feed is
+not limited to what is open right now — a close only means something next
+to the open it terminates.
 
 Rows accumulate only while a NotificationLive backend is enabled. Depth
-defaults to {@link DEFAULT_NOTIFICATION_LIMIT }; the newest notes are the
+defaults to {@link DEFAULT_NOTIFICATION_LIMIT }; the newest events are the
 ones kept when `limit` cuts the feed.
 
 ### getStatus

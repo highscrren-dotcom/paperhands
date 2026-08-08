@@ -14,7 +14,7 @@ Returns the original estimated duration for the current pending signal.
 Reflects `minuteEstimatedTime` as set in the signal DTO — the maximum
 number of minutes the position is expected to be active before `time_expired`.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

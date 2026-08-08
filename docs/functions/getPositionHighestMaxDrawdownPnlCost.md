@@ -12,7 +12,7 @@ declare function getPositionHighestMaxDrawdownPnlCost(symbol: string): Promise<n
 Returns the distance in PnL cost between the current price and the worst drawdown trough.
 
 Computed as: max(0, currentPnlCost - fallPnlCost).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

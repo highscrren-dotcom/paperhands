@@ -16,7 +16,7 @@ Activation produces an "opened" signal on the regular signal emitters; this cont
 covers a scheduled signal being put in place and being removed before it ever opened.
 
 Consumers:
-- User callbacks via listenScheduleEvent() / listenScheduleEventOnce()
+- User callbacks via listenOrderSchedule()
 
 ## Properties
 

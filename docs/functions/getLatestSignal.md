@@ -6,7 +6,7 @@ group: docs
 # getLatestSignal
 
 ```ts
-declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow | null>;
+declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow>;
 ```
 
 Returns the latest signal (pending or closed) for the current strategy context.
@@ -17,7 +17,7 @@ for 4 hours after a stop-loss by checking the timestamp of the latest signal
 regardless of its outcome.
 
 Searches backtest storage first, then live storage.
-Returns null if no signal exists at all.
+Throws if no signal exists at all.
 
 Automatically detects backtest/live mode from execution context.
 

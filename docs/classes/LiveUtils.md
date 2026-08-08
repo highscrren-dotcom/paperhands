@@ -132,7 +132,7 @@ getPositionEffectivePrice: (symbol: string, context: { strategyName: string; exc
 Returns the effective (weighted average) entry price for the current pending signal.
 
 Accounts for all DCA entries via commitAverageBuy.
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionInvestedCount
 
@@ -142,7 +142,7 @@ getPositionInvestedCount: (symbol: string, context: { strategyName: string; exch
 
 Returns the total number of base-asset units currently held in the position.
 
-Includes units from all DCA entries. Returns null if no pending signal exists.
+Includes units from all DCA entries. Throws if no pending signal exists.
 
 ### getPositionInvestedCost
 
@@ -152,7 +152,7 @@ getPositionInvestedCost: (symbol: string, context: { strategyName: string; excha
 
 Returns the total dollar cost invested in the current position.
 
-Sum of all entry costs across DCA entries. Returns null if no pending signal exists.
+Sum of all entry costs across DCA entries. Throws if no pending signal exists.
 
 ### getPositionPnlPercent
 
@@ -163,7 +163,7 @@ getPositionPnlPercent: (symbol: string, currentPrice: number, context: { strateg
 Returns the current unrealized PnL as a percentage of the invested cost.
 
 Calculated relative to the effective (weighted average) entry price.
-Positive for profit, negative for loss. Returns null if no pending signal exists.
+Positive for profit, negative for loss. Throws if no pending signal exists.
 
 ### getPositionPnlCost
 
@@ -174,7 +174,7 @@ getPositionPnlCost: (symbol: string, currentPrice: number, context: { strategyNa
 Returns the current unrealized PnL in quote currency (dollar amount).
 
 Calculated as (currentPrice - effectiveEntry) * units for LONG,
-reversed for SHORT. Returns null if no pending signal exists.
+reversed for SHORT. Throws if no pending signal exists.
 
 ### getPositionLevels
 
@@ -186,7 +186,7 @@ Returns the list of DCA entry prices for the current pending signal.
 
 The first element is always the original priceOpen (initial entry).
 Each subsequent element is a price added by commitAverageBuy().
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 Returns a single-element array [priceOpen] if no DCA entries were made.
 
 ### getPositionPartials
@@ -199,7 +199,7 @@ Returns the list of partial close events for the current pending signal.
 
 Each element represents a partial profit or loss close executed via
 commitPartialProfit / commitPartialLoss (or their Cost variants).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 Returns an empty array if no partials were executed yet.
 
 Each entry contains:
@@ -220,7 +220,7 @@ Returns the list of DCA entry prices and costs for the current pending signal.
 Each element represents a single position entry — the initial open or a subsequent
 DCA entry added via commitAverageBuy.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 Returns a single-element array if no DCA entries were made.
 
 Each entry contains:
@@ -238,7 +238,7 @@ Returns the original estimated duration for the current pending signal.
 Reflects `minuteEstimatedTime` as set in the signal DTO — the maximum
 number of minutes the position is expected to be active before `time_expired`.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionCountdownMinutes
 
@@ -251,7 +251,7 @@ Returns the remaining time before the position expires, clamped to zero.
 Computes elapsed minutes since `pendingAt` and subtracts from `minuteEstimatedTime`.
 Returns 0 once the estimate is exceeded (never negative).
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionActiveMinutes
 
@@ -261,7 +261,7 @@ getPositionActiveMinutes: (symbol: string, context: { strategyName: string; exch
 
 Returns the number of minutes the position has been active since it opened.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionWaitingMinutes
 
@@ -281,7 +281,7 @@ getPositionHighestProfitPrice: (symbol: string, context: { strategyName: string;
 
 Returns the best price reached in the profit direction during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestProfitTimestamp
 
@@ -291,7 +291,7 @@ getPositionHighestProfitTimestamp: (symbol: string, context: { strategyName: str
 
 Returns the timestamp when the best profit price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestPnlPercentage
 
@@ -301,7 +301,7 @@ getPositionHighestPnlPercentage: (symbol: string, context: { strategyName: strin
 
 Returns the PnL percentage at the moment the best profit price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestPnlCost
 
@@ -311,7 +311,7 @@ getPositionHighestPnlCost: (symbol: string, context: { strategyName: string; exc
 
 Returns the PnL cost (in quote currency) at the moment the best profit price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestProfitBreakeven
 
@@ -333,7 +333,7 @@ Measures how long the position has been pulling back from its peak profit level.
 Zero when called at the exact moment the peak was set.
 Grows continuously as price moves away from the peak without setting a new record.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestProfitMinutes
 
@@ -347,7 +347,7 @@ Alias for getPositionDrawdownMinutes — measures how long the position has been
 pulling back from its peak profit level.
 Zero when called at the exact moment the peak was set.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionMaxDrawdownMinutes
 
@@ -360,7 +360,7 @@ Returns the number of minutes elapsed since the worst loss price was recorded.
 Measures how long ago the deepest drawdown point occurred.
 Zero when called at the exact moment the trough was set.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionMaxDrawdownPrice
 
@@ -370,7 +370,7 @@ getPositionMaxDrawdownPrice: (symbol: string, context: { strategyName: string; e
 
 Returns the worst price reached in the loss direction during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionMaxDrawdownTimestamp
 
@@ -380,7 +380,7 @@ getPositionMaxDrawdownTimestamp: (symbol: string, context: { strategyName: strin
 
 Returns the timestamp when the worst loss price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionMaxDrawdownPnlPercentage
 
@@ -390,7 +390,7 @@ getPositionMaxDrawdownPnlPercentage: (symbol: string, context: { strategyName: s
 
 Returns the PnL percentage at the moment the worst loss price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionMaxDrawdownPnlCost
 
@@ -400,7 +400,7 @@ getPositionMaxDrawdownPnlCost: (symbol: string, context: { strategyName: string;
 
 Returns the PnL cost (in quote currency) at the moment the worst loss price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestProfitDistancePnlPercentage
 
@@ -411,7 +411,7 @@ getPositionHighestProfitDistancePnlPercentage: (symbol: string, context: { strat
 Returns the distance in PnL percentage between the current price and the highest profit peak.
 
 Computed as: max(0, peakPnlPercentage - currentPnlPercentage).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestProfitDistancePnlCost
 
@@ -422,7 +422,7 @@ getPositionHighestProfitDistancePnlCost: (symbol: string, context: { strategyNam
 Returns the distance in PnL cost between the current price and the highest profit peak.
 
 Computed as: max(0, peakPnlCost - currentPnlCost).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestMaxDrawdownPnlPercentage
 
@@ -433,7 +433,7 @@ getPositionHighestMaxDrawdownPnlPercentage: (symbol: string, context: { strategy
 Returns the distance in PnL percentage between the current price and the worst drawdown trough.
 
 Computed as: max(0, currentPnlPercentage - fallPnlPercentage).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionHighestMaxDrawdownPnlCost
 
@@ -444,7 +444,7 @@ getPositionHighestMaxDrawdownPnlCost: (symbol: string, context: { strategyName: 
 Returns the distance in PnL cost between the current price and the worst drawdown trough.
 
 Computed as: max(0, currentPnlCost - fallPnlCost).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getMaxDrawdownDistancePnlPercentage
 
@@ -455,7 +455,7 @@ getMaxDrawdownDistancePnlPercentage: (symbol: string, context: { strategyName: s
 Returns the peak-to-trough PnL percentage distance between the position's highest profit and deepest drawdown.
 
 Computed as: max(0, peakPnlPercentage - fallPnlPercentage).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getMaxDrawdownDistancePnlCost
 
@@ -466,7 +466,7 @@ getMaxDrawdownDistancePnlCost: (symbol: string, context: { strategyName: string;
 Returns the peak-to-trough PnL cost distance between the position's highest profit and deepest drawdown.
 
 Computed as: max(0, peakPnlCost - fallPnlCost).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ### getPositionEntryOverlap
 

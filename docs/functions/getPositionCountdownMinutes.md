@@ -14,7 +14,7 @@ Returns the remaining time before the position expires, clamped to zero.
 Computes elapsed minutes since `pendingAt` and subtracts from `minuteEstimatedTime`.
 Returns 0 once the estimate is exceeded (never negative).
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

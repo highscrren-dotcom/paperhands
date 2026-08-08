@@ -11,7 +11,7 @@ declare function getPositionMaxDrawdownPnlPercentage(symbol: string): Promise<nu
 
 Returns the PnL percentage at the moment the worst loss price was recorded during this position's life.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

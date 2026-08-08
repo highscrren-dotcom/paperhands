@@ -12,7 +12,7 @@ declare function getPositionHighestMaxDrawdownPnlPercentage(symbol: string): Pro
 Returns the distance in PnL percentage between the current price and the worst drawdown trough.
 
 Computed as: max(0, currentPnlPercentage - fallPnlPercentage).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

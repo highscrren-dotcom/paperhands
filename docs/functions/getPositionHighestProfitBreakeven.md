@@ -11,7 +11,7 @@ declare function getPositionHighestProfitBreakeven(symbol: string): Promise<bool
 
 Returns whether breakeven was mathematically reachable at the highest profit price.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

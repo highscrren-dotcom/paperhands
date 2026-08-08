@@ -1,12 +1,12 @@
 ---
-title: docs/function/listenScheduleEventPerSignal
+title: docs/function/listenOrderSchedulePerSignal
 group: docs
 ---
 
-# listenScheduleEventPerSignal
+# listenOrderSchedulePerSignal
 
 ```ts
-declare function listenScheduleEventPerSignal(filterFn: (event: ScheduleEventContract) => boolean, fn: (event: ScheduleEventContract) => void): () => void;
+declare function listenOrderSchedulePerSignal(filterFn: (event: ScheduleEventContract) => boolean, fn: (event: ScheduleEventContract) => void): () => void;
 ```
 
 Subscribes to scheduled lifecycle events, delivering the callback once per new signal id.

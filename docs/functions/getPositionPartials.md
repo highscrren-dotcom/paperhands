@@ -21,7 +21,7 @@ Returns the list of partial close events for the current pending signal.
 Each element represents a partial profit or loss close executed via
 commitPartialProfit / commitPartialLoss (or their Cost variants).
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 Returns an empty array if no partials were executed yet.
 
 Each entry contains:

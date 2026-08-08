@@ -12,7 +12,7 @@ declare function getPositionHighestProfitDistancePnlCost(symbol: string): Promis
 Returns the distance in PnL cost between the current price and the highest profit peak.
 
 Computed as: max(0, peakPnlCost - currentPnlCost).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

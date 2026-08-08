@@ -15,7 +15,7 @@ Measures how long the position has been pulling back from its peak profit level.
 Zero when called at the exact moment the peak was set.
 Grows continuously as price moves away from the peak without setting a new record.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

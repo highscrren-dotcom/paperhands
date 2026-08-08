@@ -18,7 +18,7 @@ Returns the list of DCA entry prices and costs for the current pending signal.
 Each element represents a single position entry — the initial open or a subsequent
 DCA entry added via commitAverageBuy.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 Returns a single-element array if no DCA entries were made.
 
 Each entry contains:

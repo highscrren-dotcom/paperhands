@@ -12,7 +12,7 @@ declare function getPositionHighestProfitDistancePnlPercentage(symbol: string): 
 Returns the distance in PnL percentage between the current price and the highest profit peak.
 
 Computed as: max(0, peakPnlPercentage - currentPnlPercentage).
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 

@@ -11,10 +11,9 @@ declare function listenSignalPerSignal(filterFn: (event: IStrategyTickResult) =>
 
 Subscribes to signal events, delivering the callback once per new signal id.
 
-Filters by the predicate first, then collapses consecutive events sharing the
-same composite key (execution identity + `event.signal.id`). Idle events carry
-`signal: null` and are skipped, so the callback always receives an event with a
-signal attached.
+Filters by the predicate first, then collapses repeats sharing the same execution
+identity and `event.signal.id`. Idle events carry `signal: null` and are skipped,
+so the callback always receives an event with a signal attached.
 
 ## Parameters
 

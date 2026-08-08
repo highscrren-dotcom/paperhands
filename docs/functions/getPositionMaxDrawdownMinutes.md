@@ -14,7 +14,7 @@ Returns the number of minutes elapsed since the worst loss price was recorded.
 Measures how long ago the deepest drawdown point occurred.
 Zero when called at the exact moment the trough was set.
 
-Returns null if no pending signal exists.
+Throws if no pending signal exists.
 
 ## Parameters
 
