@@ -457,9 +457,9 @@ test("HARDENING: stopStrategy racing the placement gate leaves no phantom state"
     },
   });
 
-  const { listenScheduleEvent, listenSync } = await import("../../build/index.mjs");
+  const { listenOrderSchedule, listenSync } = await import("../../build/index.mjs");
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.strategyName !== context.strategyName) return;
     scheduleEvents.push(event.action);
   });

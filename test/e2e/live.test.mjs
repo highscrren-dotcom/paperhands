@@ -11,7 +11,7 @@ import {
   PersistStrategyAdapter,
   PersistCandleAdapter,
   PersistRiskAdapter,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenSignal,
   listenSignalLive,
   listenSignalBacktest,
@@ -112,7 +112,7 @@ test("live schedule-ping rejection cancels the scheduled signal", async (t) => {
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action !== "scheduled") { t.fail(`tick1 ${r1.action}`); return; }
@@ -171,7 +171,7 @@ test("live scheduled signal cancels by schedule-await timeout", async (t) => {
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action !== "scheduled") { t.fail(`tick1 ${r1.action}`); return; }
@@ -256,7 +256,7 @@ test("live scheduled cancels when price breaks stop-loss before activation", asy
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const signals = [];
   listenSignal((e) => signals.push(e.action));
 

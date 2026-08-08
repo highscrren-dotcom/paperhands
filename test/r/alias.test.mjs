@@ -1,6 +1,8 @@
 import { test } from "worker-testbed";
 
 import {
+  addExchangeSchema,
+  addStrategySchema,
   listenSignalIdle,
   listenSignalScheduled,
   listenSignalWaiting,
@@ -35,6 +37,38 @@ import {
   emitters,
 } from "../../build/index.mjs";
 
+// Every signal-carrying listener now confirms the signal is still live via
+// hasPendingSignal / hasScheduledSignal, and that lookup resolves the strategy
+// through the schema registry - an unknown name throws. These tests drive the
+// subjects directly, so the strategies they name must exist. No position is ever
+// opened, so the gate answers "no" and only the ungated (terminal / idle)
+// channels deliver.
+// The files in test/r share one process and some name the same strategy, while
+// add*Schema throws on a duplicate. globalThis keeps the bookkeeping shared across
+// the modules so whichever loads first wins and the rest skip.
+const REGISTERED =
+  (globalThis.__rSuiteRegistered ??= { exchanges: new Set(), strategies: new Set() });
+
+const registerSchemas = (strategyNames, exchangeNames) => {
+  for (const exchangeName of exchangeNames) {
+    if (REGISTERED.exchanges.has(exchangeName)) continue;
+    REGISTERED.exchanges.add(exchangeName);
+    addExchangeSchema({
+      exchangeName,
+      getCandles: async () => [],
+      formatPrice: async (_symbol, price) => price.toFixed(2),
+      formatQuantity: async (_symbol, quantity) => quantity.toFixed(2),
+    });
+  }
+  for (const strategyName of strategyNames) {
+    if (REGISTERED.strategies.has(strategyName)) continue;
+    REGISTERED.strategies.add(strategyName);
+    addStrategySchema({ strategyName, interval: "1m", getSignal: async () => null });
+  }
+};
+
+registerSchemas(["r-strategy"], ["r-exchange"]);
+
 // ---------------------------------------------------------------------------
 // src/function/alias.ts splits each signal emitter by the `action` discriminator
 // so subscribers get an already-narrowed tick result instead of the whole union.
@@ -60,7 +94,7 @@ const tick = (action, id, extra = {}) => ({
   signal: id === null ? null : { id, priceOpen: 100 },
   strategyName: "r-strategy",
   exchangeName: "r-exchange",
-  frameName: "r-frame",
+  frameName: "",
   symbol: "BTCUSDT",
   currentPrice: 100,
   backtest: false,

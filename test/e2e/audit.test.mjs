@@ -22,7 +22,7 @@ import {
   StorageLive,
   Heat,
   lib,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenSync,
   MethodContextService,
 } from "../../build/index.mjs";
@@ -1532,7 +1532,7 @@ test("AUDIT: stopStrategy routes scheduled signal through cancel pipeline (broke
     },
   });
 
-  const unsubscribe = listenScheduleEvent((event) => {
+  const unsubscribe = listenOrderSchedule((event) => {
     if (event.action === "cancelled" && event.strategyName === context.strategyName) {
       cancelledEvents.push(event);
     }
@@ -1672,7 +1672,7 @@ test("AUDIT: backtest price-activation risk-reject emits cancelled schedule even
     endDate: new Date("2024-01-01T00:30:00Z"),
   });
 
-  const unsubscribe = listenScheduleEvent((event) => {
+  const unsubscribe = listenOrderSchedule((event) => {
     if (event.action === "cancelled" && event.strategyName === context.strategyName) {
       cancelledEvents.push(event);
     }
@@ -1777,7 +1777,7 @@ test("AUDIT: live price-activation risk-reject emits cancelled schedule event (b
     },
   });
 
-  const unsubscribe = listenScheduleEvent((event) => {
+  const unsubscribe = listenOrderSchedule((event) => {
     if (event.action === "cancelled" && event.strategyName === context.strategyName) {
       cancelledEvents.push(event);
     }
@@ -1884,7 +1884,7 @@ test("AUDIT: live price-activation sync-reject notifies broker channel", async (
     },
   });
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.action === "cancelled" && event.strategyName === context.strategyName) {
       cancelledEvents.push(event);
     }
@@ -2204,7 +2204,7 @@ test("AUDIT: order ping fires for scheduled signal (type schedule) and cancels o
     },
   });
 
-  const unsubscribe = listenScheduleEvent((event) => {
+  const unsubscribe = listenOrderSchedule((event) => {
     if (event.action === "cancelled" && event.strategyName === context.strategyName) {
       cancelledEvents.push(event);
     }

@@ -9,7 +9,7 @@ import {
   PersistStrategyAdapter,
   PersistCandleAdapter,
   PersistRiskAdapter,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenSignal,
   MethodContextService,
   lib,
@@ -114,7 +114,7 @@ test("stopped-activation branch: mid-tick stop race drains scheduled via cancel 
   });
 
   const scheduleEvents = [];
-  listenScheduleEvent((e) => scheduleEvents.push(e.action));
+  listenOrderSchedule((e) => scheduleEvents.push(e.action));
 
   const CTX = {
     strategyName: "stopped-strat",
@@ -296,7 +296,7 @@ test("stop raised inside placement gate defers cancel of the real resting order"
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action === "scheduled") {
@@ -345,7 +345,7 @@ test("stop raised inside risk validation routes scheduled through cancel pipelin
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action === "scheduled") {
@@ -389,7 +389,7 @@ test("backtest twin: stop flag from schedule ping cancels activation via stopped
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const results = [];
   for await (const r of Backtest.run("BTCUSDT", CTX)) {
     results.push(r.action);
@@ -421,7 +421,7 @@ test("deferred user activation under stop drains into cancel pipeline (live)", a
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const signals = [];
   listenSignal((e) => signals.push(e.action));
 
@@ -479,7 +479,7 @@ test("deferred user activation under stop drains into cancel pipeline (backtest)
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const results = [];
   for await (const r of Backtest.run("BTCUSDT", CTX)) results.push(r.action);
 
@@ -560,7 +560,7 @@ test("deferred user close and cancel drain after stop (graceful-shutdown contrac
     getSignal: async () => (emB ? null : ((emB = true), { ...SCHEDULED_DTO })),
   });
   const scheduleB = [];
-  listenScheduleEvent((e) => scheduleB.push(e.action));
+  listenOrderSchedule((e) => scheduleB.push(e.action));
 
   const b1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX_B);
   if (b1.action !== "scheduled") { t.fail(`phase B tick1 ${b1.action}`); return; }

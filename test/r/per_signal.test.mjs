@@ -7,12 +7,44 @@ import {
   listenSignalLivePerSignal,
   listenSignalBacktestPerSignal,
   listenSignalEventPerSignal,
-  listenScheduleEventPerSignal,
+  listenOrderSchedulePerSignal,
   listenHighestProfitPerSignal,
   listenMaxDrawdownPerSignal,
   listenStrategyCommitPerSignal,
   emitters,
 } from "../../build/index.mjs";
+
+// Every signal-carrying listener now confirms the signal is still live via
+// hasPendingSignal / hasScheduledSignal, and that lookup resolves the strategy
+// through the schema registry - an unknown name throws. These tests drive the
+// subjects directly, so the strategies they name must exist. No position is ever
+// opened, so the gate answers "no" and only the ungated (terminal / idle)
+// channels deliver.
+// The files in test/r share one process and some name the same strategy, while
+// add*Schema throws on a duplicate. globalThis keeps the bookkeeping shared across
+// the modules so whichever loads first wins and the rest skip.
+const REGISTERED =
+  (globalThis.__rSuiteRegistered ??= { exchanges: new Set(), strategies: new Set() });
+
+const registerSchemas = (strategyNames, exchangeNames) => {
+  for (const exchangeName of exchangeNames) {
+    if (REGISTERED.exchanges.has(exchangeName)) continue;
+    REGISTERED.exchanges.add(exchangeName);
+    addExchangeSchema({
+      exchangeName,
+      getCandles: async () => [],
+      formatPrice: async (_symbol, price) => price.toFixed(2),
+      formatQuantity: async (_symbol, quantity) => quantity.toFixed(2),
+    });
+  }
+  for (const strategyName of strategyNames) {
+    if (REGISTERED.strategies.has(strategyName)) continue;
+    REGISTERED.strategies.add(strategyName);
+    addStrategySchema({ strategyName, interval: "1m", getSignal: async () => null });
+  }
+};
+
+registerSchemas(["r-strategy", "r-gated-strategy", "alpha", "beta"], ["r-exchange", "r-gated-exchange", "ex"]);
 
 // ---------------------------------------------------------------------------
 // The `...PerSignal` listeners in src/function/event.ts all share one pipeline:
@@ -42,7 +74,7 @@ const tick = (action, id, extra = {}) => ({
   signal: id === null ? null : { id, priceOpen: 100 },
   strategyName: "r-strategy",
   exchangeName: "r-exchange",
-  frameName: "r-frame",
+  frameName: "",
   symbol: "BTCUSDT",
   currentPrice: 100,
   backtest: false,
@@ -55,7 +87,7 @@ const signalRow = (id) => ({
   id,
   strategyName: "r-strategy",
   exchangeName: "r-exchange",
-  frameName: "r-frame",
+  frameName: "",
   symbol: "BTCUSDT",
   position: "long",
   priceOpen: 100,
@@ -255,7 +287,7 @@ test("listenSignalLivePerSignal and listenSignalBacktestPerSignal stay on their 
 // synthetic event on a gated channel is correctly dropped, so asserting delivery
 // here would only be asserting the fixture.
 // ---------------------------------------------------------------------------
-test("data.id channels dedup per signal (signalEvent, scheduleEvent)", async ({ pass, fail }) => {
+test("data.id channels dedup per signal (signalEvent, orderSchedule)", async ({ pass, fail }) => {
   const cases = [
     {
       name: "listenSignalEventPerSignal",
@@ -266,8 +298,8 @@ test("data.id channels dedup per signal (signalEvent, scheduleEvent)", async ({ 
       filter: (event) => event.action === "opened",
     },
     {
-      name: "listenScheduleEventPerSignal",
-      listen: listenScheduleEventPerSignal,
+      name: "listenOrderSchedulePerSignal",
+      listen: listenOrderSchedulePerSignal,
       subject: emitters.scheduleEventSubject,
       match: { action: "scheduled" },
       skip: { action: "cancelled" },
@@ -282,7 +314,7 @@ test("data.id channels dedup per signal (signalEvent, scheduleEvent)", async ({ 
     const envelope = {
       strategyName: "r-strategy",
       exchangeName: "r-exchange",
-      frameName: "r-frame",
+      frameName: "",
       symbol: "BTCUSDT",
       currentPrice: 100,
       backtest: false,
@@ -298,7 +330,7 @@ test("data.id channels dedup per signal (signalEvent, scheduleEvent)", async ({ 
           id,
           strategyName: "r-strategy",
           exchangeName: "r-exchange",
-          frameName: "r-frame",
+          frameName: "",
           symbol: "BTCUSDT",
           position: "long",
           priceOpen: 100,
@@ -374,21 +406,6 @@ test("gated per-signal channels drop events with no live position behind them", 
     listenMaxDrawdownPerSignal(() => true, () => delivered.push("maxDrawdown")),
     listenStrategyCommitPerSignal(() => true, () => delivered.push("commit")),
   ];
-
-  // hasPendingSignal resolves the strategy through the schema registry and throws
-  // on an unknown name, so the gate can only be exercised with a real schema
-  // registered. No position is ever opened, so the gate must answer "no".
-  addExchangeSchema({
-    exchangeName: "r-gated-exchange",
-    getCandles: async () => [],
-    formatPrice: async (_symbol, price) => price.toFixed(2),
-    formatQuantity: async (_symbol, quantity) => quantity.toFixed(2),
-  });
-  addStrategySchema({
-    strategyName: "r-gated-strategy",
-    interval: "1m",
-    getSignal: async () => null,
-  });
 
   const base = {
     strategyName: "r-gated-strategy",

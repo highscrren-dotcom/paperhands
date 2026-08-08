@@ -14,13 +14,13 @@ import { IPublicSignalRow, StrategyCancelReason, StrategyName } from "../interfa
  * covers a scheduled signal being put in place and being removed before it ever opened.
  *
  * Consumers:
- * - User callbacks via listenScheduleEvent() / listenScheduleEventOnce()
+ * - User callbacks via listenOrderSchedule()
  *
  * @example
  * ```typescript
- * import { listenScheduleEvent } from "backtest-kit";
+ * import { listenOrderSchedule } from "backtest-kit";
  *
- * listenScheduleEvent((event) => {
+ * listenOrderSchedule((event) => {
  *   if (event.action === "scheduled") {
  *     console.log(`Scheduled ${event.symbol} @ ${event.data.priceOpen}`);
  *   } else {

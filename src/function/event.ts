@@ -62,8 +62,7 @@ const LISTEN_RISK_METHOD_NAME = "event.listenRisk";
 const LISTEN_RISK_ONCE_METHOD_NAME = "event.listenRiskOnce";
 const LISTEN_SCHEDULE_PING_METHOD_NAME = "event.listenSchedulePing";
 const LISTEN_SCHEDULE_PING_ONCE_METHOD_NAME = "event.listenSchedulePingOnce";
-const LISTEN_SCHEDULE_EVENT_METHOD_NAME = "event.listenScheduleEvent";
-const LISTEN_SCHEDULE_EVENT_ONCE_METHOD_NAME = "event.listenScheduleEventOnce";
+const LISTEN_ORDER_SCHEDULE_METHOD_NAME = "event.listenOrderSchedule";
 const LISTEN_SIGNAL_EVENT_METHOD_NAME = "event.listenSignalEvent";
 const LISTEN_SIGNAL_EVENT_ONCE_METHOD_NAME = "event.listenSignalEventOnce";
 const LISTEN_ACTIVE_PING_METHOD_NAME = "event.listenActivePing";
@@ -106,7 +105,7 @@ const LISTEN_SIGNAL_PER_SIGNAL_METHOD_NAME = "event.listenSignalPerSignal";
 const LISTEN_SIGNAL_LIVE_PER_SIGNAL_METHOD_NAME = "event.listenSignalLivePerSignal";
 const LISTEN_SIGNAL_BACKTEST_PER_SIGNAL_METHOD_NAME = "event.listenSignalBacktestPerSignal";
 const LISTEN_SIGNAL_EVENT_PER_SIGNAL_METHOD_NAME = "event.listenSignalEventPerSignal";
-const LISTEN_SCHEDULE_EVENT_PER_SIGNAL_METHOD_NAME = "event.listenScheduleEventPerSignal";
+const LISTEN_ORDER_SCHEDULE_PER_SIGNAL_METHOD_NAME = "event.listenOrderSchedulePerSignal";
 const LISTEN_ACTIVE_PING_PER_SIGNAL_METHOD_NAME = "event.listenActivePingPerSignal";
 const LISTEN_SCHEDULE_PING_PER_SIGNAL_METHOD_NAME = "event.listenSchedulePingPerSignal";
 const LISTEN_PARTIAL_PROFIT_PER_SIGNAL_METHOD_NAME = "event.listenPartialProfitAvailablePerSignal";
@@ -1337,13 +1336,25 @@ export function listenSchedulePingOnce(
 }
 
 /**
- * Subscribes to scheduled signal lifecycle events (creation and cancellation) with queued async processing.
+ * Subscribes to resting-entry (scheduled order) lifecycle events with queued async processing.
  *
- * Emitted when a scheduled signal is created (action "scheduled") or cancelled before activation
- * (action "cancelled" with reason "timeout" / "price_reject" / "user"), in both live and backtest.
+ * Emitted when a scheduled signal is created (action "scheduled") - the strategy asked for an
+ * entry at a specific price and the engine now waits for the market to reach it - or when that
+ * entry is dropped before activating (action "cancelled" with reason "timeout" / "price_reject" /
+ * "user"). Fires in both live and backtest.
  *
  * IMPORTANT: The scheduled -> active transition (activation) is NOT reported here. Activation
  * produces an "opened" event on the regular signal emitters (listenSignal) instead.
+ *
+ * SYSTEM CHANNEL. This is the same stream the framework itself consumes: Broker subscribes to it
+ * and fans each event out to the registered adapter as `onSignalScheduleOpen` (action "scheduled",
+ * payload BrokerScheduleOpenPayload) or `onSignalScheduleCancelled` (action "cancelled", payload
+ * BrokerScheduleCancelledPayload, carrying `reason`). Because it is systemic it is NOT gated on
+ * "is a scheduled signal still live" - every emission is delivered, including the cancellation that
+ * reports the entry is already gone.
+ *
+ * For exchange integration prefer Broker.useBrokerAdapter with those two hooks; this listener is
+ * for observation - logging, notifications, audit.
  *
  * Events are processed sequentially in order received, even if callback is async.
  *
@@ -1352,9 +1363,9 @@ export function listenSchedulePingOnce(
  *
  * @example
  * ```typescript
- * import { listenScheduleEvent } from "./function/event";
+ * import { listenOrderSchedule } from "./function/event";
  *
- * const unsubscribe = listenScheduleEvent((event) => {
+ * const unsubscribe = listenOrderSchedule((event) => {
  *   if (event.action === "scheduled") {
  *     console.log(`Scheduled ${event.symbol} @ ${event.data.priceOpen}`);
  *   } else {
@@ -1366,49 +1377,9 @@ export function listenSchedulePingOnce(
  * unsubscribe();
  * ```
  */
-export function listenScheduleEvent(fn: (event: ScheduleEventContract) => void) {
-  backtest.loggerService.log(LISTEN_SCHEDULE_EVENT_METHOD_NAME);
+export function listenOrderSchedule(fn: (event: ScheduleEventContract) => void) {
+  backtest.loggerService.log(LISTEN_ORDER_SCHEDULE_METHOD_NAME);
   return scheduleEventSubject.subscribe(queued(async (event) => fn(event)));
-}
-
-/**
- * Subscribes to filtered scheduled lifecycle events with one-time execution.
- *
- * Listens for events matching the filter predicate, then executes callback once
- * and automatically unsubscribes. Useful for waiting for a specific scheduled creation
- * or cancellation.
- *
- * @param filterFn - Predicate to filter which events trigger the callback
- * @param fn - Callback function to handle the filtered event (called only once)
- * @returns Unsubscribe function to cancel the listener before it fires
- *
- * @example
- * ```typescript
- * import { listenScheduleEventOnce } from "./function/event";
- *
- * // Wait for the first cancellation on BTCUSDT
- * listenScheduleEventOnce(
- *   (event) => event.symbol === "BTCUSDT" && event.action === "cancelled",
- *   (event) => console.log("BTCUSDT scheduled cancelled:", event.reason)
- * );
- * ```
- */
-export function listenScheduleEventOnce(
-  filterFn: (event: ScheduleEventContract) => boolean,
-  fn: (event: ScheduleEventContract) => void
-) {
-  backtest.loggerService.log(LISTEN_SCHEDULE_EVENT_ONCE_METHOD_NAME);
-
-  let disposeFn: Function;
-
-  const wrappedFn = async (event: ScheduleEventContract) => {
-    if (filterFn(event)) {
-      await fn(event);
-      disposeFn && disposeFn();
-    }
-  };
-
-  return disposeFn = listenScheduleEvent(wrappedFn);
 }
 
 /**
@@ -2518,11 +2489,11 @@ export function listenSignalEventPerSignal(
  * @param fn - Callback invoked once per new signal id
  * @returns Unsubscribe function to stop listening
  */
-export function listenScheduleEventPerSignal(
+export function listenOrderSchedulePerSignal(
   filterFn: (event: ScheduleEventContract) => boolean,
   fn: (event: ScheduleEventContract) => void
 ) {
-  backtest.loggerService.log(LISTEN_SCHEDULE_EVENT_PER_SIGNAL_METHOD_NAME);
+  backtest.loggerService.log(LISTEN_ORDER_SCHEDULE_PER_SIGNAL_METHOD_NAME);
 
   // Last delivered signal id per execution identity. Bounded so a long-lived
   // subscription over many strategies/symbols cannot grow without limit.
@@ -2551,7 +2522,7 @@ export function listenScheduleEventPerSignal(
     await fn(event);
   };
 
-  return listenScheduleEvent(wrappedFn);
+  return listenOrderSchedule(wrappedFn);
 }
 
 /**

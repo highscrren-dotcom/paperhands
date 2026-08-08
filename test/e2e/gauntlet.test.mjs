@@ -9,7 +9,7 @@ import {
   Backtest,
   listenDoneBacktest,
   listenSignalBacktest,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenStrategyCommit,
   listenSync,
   listenCheck,
@@ -91,7 +91,7 @@ test("GAUNTLET: scheduled lifecycle survives placement reject and terminal activ
     }),
   });
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.strategyName !== context.strategyName) return;
     scheduleEvents.push({ action: event.action, reason: event.reason });
   });
@@ -244,7 +244,7 @@ test("GAUNTLET: stopStrategy racing activation gate emits exactly one cancellati
     },
   });
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.strategyName !== context.strategyName) return;
     if (event.action === "cancelled") cancelledEvents.push(event);
   });
@@ -405,7 +405,7 @@ test("GAUNTLET: backtest continues after activation risk-reject and completes ne
     results.push({ action: result.action, reason: result.reason, closeReason: result.closeReason });
   });
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.strategyName !== context.strategyName) return;
     scheduleEvents.push(event.action);
   });

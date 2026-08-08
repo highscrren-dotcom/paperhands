@@ -4,7 +4,7 @@ import {
   addExchangeSchema,
   addStrategySchema,
   listenActivePing,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenSync,
   lib,
   MethodContextService,
@@ -93,7 +93,7 @@ test("SHORT: scheduled lifecycle gates mirror correctly for a short position", a
     }),
   });
 
-  const unsubscribeSchedule = listenScheduleEvent((event) => {
+  const unsubscribeSchedule = listenOrderSchedule((event) => {
     if (event.strategyName !== context.strategyName) return;
     scheduleEvents.push(event.action);
   });

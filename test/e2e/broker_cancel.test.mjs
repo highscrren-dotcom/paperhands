@@ -9,7 +9,7 @@ import {
   PersistStrategyAdapter,
   PersistCandleAdapter,
   PersistRiskAdapter,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenSignal,
   MethodContextService,
   Broker,
@@ -110,7 +110,7 @@ test("broker onOrderScheduleCheck throw cancels resting order and notifies adapt
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action !== "scheduled") { t.fail(`tick1 ${r1.action}`); return; }
@@ -225,7 +225,7 @@ test("broker openCommit throw (schedule) rejects placement and retries next tick
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
 
   const r1 = await liveTick("BTCUSDT", BASE + 1 * MIN, CTX);
   if (r1.action === "scheduled") { t.fail("placement must be rejected by the broker gate"); return; }
@@ -269,7 +269,7 @@ test("broker openCommit throw (active) at scheduled activation terminally cancel
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const signals = [];
   listenSignal((e) => signals.push(e.action));
 

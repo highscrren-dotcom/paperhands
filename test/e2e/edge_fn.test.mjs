@@ -14,7 +14,7 @@ import {
   runInMockContext,
   Broker,
   listenSignal,
-  listenScheduleEvent,
+  listenOrderSchedule,
   listenCheck,
   listenSync,
   listenError,
@@ -260,7 +260,7 @@ test("queued activation wins over a later cancelScheduled (fill already happened
   });
 
   const schedule = [];
-  listenScheduleEvent((e) => schedule.push(e.action));
+  listenOrderSchedule((e) => schedule.push(e.action));
   const signals = [];
   listenSignal((e) => signals.push(e.action));
 
