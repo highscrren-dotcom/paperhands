@@ -2,7 +2,6 @@ import { test } from "worker-testbed";
 
 import {
   listenSignalPerSignal,
-  listenActivePingPerSignal,
   listenSignalActivePerSignal,
   emitters,
 } from "../../build/index.mjs";
@@ -284,78 +283,7 @@ test("live and backtest of the same strategy dedup separately", async ({ pass, f
 });
 
 // ---------------------------------------------------------------------------
-// 6. Parallel executions on a data.id channel (active pings)
-//
-// Pings read their identity from event.data.* rather than the envelope, so the
-// key is built from a different place and deserves its own parallel case.
-// ---------------------------------------------------------------------------
-test("parallel strategies on the activePing channel dedup per execution", async ({ pass, fail }) => {
-  const STRATEGIES = ["alpha", "beta", "gamma"];
-
-  const seen = [];
-  const unsubscribe = listenActivePingPerSignal(
-    (event) => event.exchangeName === "par-6",
-    (event) => seen.push(`${event.data.strategyName}/${event.data.id}`)
-  );
-
-  const pingRow = (strategyName, id) => ({
-    id,
-    strategyName,
-    exchangeName: "par-6",
-    frameName: "r-frame",
-    symbol: "BTCUSDT",
-    position: "long",
-    priceOpen: 100,
-    priceTakeProfit: 110,
-    priceStopLoss: 90,
-    originalPriceOpen: 100,
-    originalPriceTakeProfit: 110,
-    originalPriceStopLoss: 90,
-    cost: 100,
-    totalEntries: 1,
-    totalPartials: 0,
-    partialExecuted: 0,
-    _partial: [],
-    note: "r-test",
-    scheduledAt: 1700000000000,
-    pendingAt: 1700000000000,
-    minuteEstimatedTime: 60,
-    pnl: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
-    peakProfit: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
-    maxDrawdown: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
-  });
-
-  await Promise.all(
-    STRATEGIES.map(async (strategyName) => {
-      for (let i = 0; i < 15; i += 1) {
-        await emitters.activePingSubject.next({
-          strategyName,
-          exchangeName: "par-6",
-          frameName: "r-frame",
-          symbol: "BTCUSDT",
-          currentPrice: 100,
-          backtest: false,
-          timestamp: 1700000000000,
-          data: pingRow(strategyName, `ping-${strategyName}`),
-        });
-        await yieldTick();
-      }
-    })
-  );
-  await flush();
-  unsubscribe();
-
-  const expected = STRATEGIES.map((s) => `${s}/ping-${s}`).sort();
-  const got = [...seen].sort();
-  if (JSON.stringify(got) !== JSON.stringify(expected)) {
-    fail(`delivered ${JSON.stringify([...seen])} expected ${JSON.stringify(expected)}`);
-    return;
-  }
-  pass("activePing (data.* identity) deduped per parallel strategy");
-});
-
-// ---------------------------------------------------------------------------
-// 7. The same guarantee on an action-scoped alias
+// 6. The same guarantee on an action-scoped alias
 // ---------------------------------------------------------------------------
 test("listenSignalActivePerSignal holds up across parallel strategies", async ({ pass, fail }) => {
   const STRATEGIES = ["alpha", "beta", "gamma", "delta"];

@@ -1,6 +1,6 @@
 import * as di_scoped from 'di-scoped';
 import * as functools_kit from 'functools-kit';
-import { Subject, BehaviorSubject } from 'functools-kit';
+import { TIMEOUT_SYMBOL, Subject, BehaviorSubject } from 'functools-kit';
 import { WriteStream } from 'fs';
 
 /**
@@ -12252,12 +12252,63 @@ declare function listenAfterEnd(fn: (event: AfterEndContract) => void): () => vo
  */
 declare function listenAfterEndOnce(filterFn: (event: AfterEndContract) => boolean, fn: (event: AfterEndContract) => void): () => void;
 /**
+ * ============================================================================
+ * PER-SIGNAL LISTENERS
+ * ============================================================================
+ *
+ * Every channel below carries a signal identifier, so it can be collapsed to
+ * "fire the callback once per NEW signal that satisfies the condition".
+ *
+ * Each of these wraps the matching plain `listenX` listener rather than building a
+ * private observer chain, exactly like the `listenXOnce` forms do:
+ *
+ *   listenX(async (event) => {
+ *     if (!filterFn(event)) return;   // 1. the condition
+ *     if (alreadySeen(event)) return; // 2. collapse repeats
+ *     await fn(event);                // 3. deliver
+ *   })
+ *
+ * WHY DELEGATE. The plain listener owns the single `queued()` wrapper, so all three
+ * steps run INSIDE that queue, one event at a time. A private
+ * `.filter().connect(queued())` chain would put the dedup check OUTSIDE the queue,
+ * where it is evaluated at emit time: three events emitted back-to-back would have
+ * all three dedup decisions made before the first callback even started, advancing
+ * the remembered id before the subscriber had been handed the event it stands for.
+ *
+ * THE DEDUP STATE IS PER-EXECUTION, NOT GLOBAL. Each subscription owns a
+ * `LimitedMap` mapping an execution identity to the last signal id delivered for
+ * it:
+ *
+ *   strategyName:exchangeName[:frameName]:backtest|live:symbol  ->  signalId
+ *
+ * (frameName is omitted when empty, exactly like the Cache key helper.) An event
+ * passes only when the stored id for its own key differs from the incoming one.
+ *
+ * This is deliberately NOT `Operator.distinct`, which keeps a single "previous
+ * compare value" for the whole stream. These subjects are process-global: several
+ * strategies, symbols and modes push through them at once and their events
+ * interleave. Under `distinct`, execution B's event becomes the baseline and lets
+ * execution A's next repeat through as new. A per-key map gives every execution
+ * independent state, so interleaving cannot resurrect an already-reported signal.
+ *
+ * WHAT "ONCE PER SIGNAL" MEANS. One callback per (execution, signal id) pair, for
+ * as long as that identity stays in the map. A strategy monitors one signal at a
+ * time, so in practice this is exactly one callback per signal - regardless of what
+ * other strategies emit in between. The map holds SEEN_MAP_LIMIT identities and
+ * evicts oldest-first; an evicted identity reports its current signal once more.
+ * Use the plain `listenX` variants when every emission matters, and `listenXOnce`
+ * when the subscription should tear itself down after the first hit.
+ *
+ * Because they delegate, whatever the plain listener checks before delivery applies
+ * here too: the partial-profit, partial-loss, breakeven, ping and notify channels
+ * still confirm the position is live via `hasPendingSignal` first.
+ */
+/**
  * Subscribes to signal events, delivering the callback once per new signal id.
  *
- * Filters by the predicate first, then collapses consecutive events sharing the
- * same composite key (execution identity + `event.signal.id`). Idle events carry
- * `signal: null` and are skipped, so the callback always receives an event with a
- * signal attached.
+ * Filters by the predicate first, then collapses repeats sharing the same execution
+ * identity and `event.signal.id`. Idle events carry `signal: null` and are skipped,
+ * so the callback always receives an event with a signal attached.
  *
  * @param filterFn - Predicate selecting which events are considered
  * @param fn - Callback invoked once per new signal id
@@ -21338,7 +21389,7 @@ declare class MarkdownFileBase implements TMarkdownBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<symbol | void>;
+    [WRITE_SAFE_SYMBOL]: (line: string) => Promise<void | typeof TIMEOUT_SYMBOL>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.
@@ -21592,7 +21643,7 @@ declare class ReportBase implements TReportBase {
      * Waits for drain event if write buffer is full.
      * Times out after 15 seconds and returns TIMEOUT_SYMBOL.
      */
-    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<symbol | void, [line: string]>;
+    [WRITE_SAFE_SYMBOL]: functools_kit.IWrappedQueuedFn<void | typeof TIMEOUT_SYMBOL, [line: string]>;
     /**
      * Initializes the JSONL file and write stream.
      * Safe to call multiple times - singleshot ensures one-time execution.

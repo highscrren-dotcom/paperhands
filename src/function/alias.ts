@@ -26,6 +26,56 @@ import {
  */
 const SEEN_MAP_LIMIT = 200;
 
+/**
+ * ============================================================================
+ * ACTION-SCOPED SIGNAL LISTENERS
+ * ============================================================================
+ *
+ * `listenSignal` / `listenSignalLive` / `listenSignalBacktest` deliver the whole
+ * `IStrategyTickResult` union, which forces every subscriber to re-open the same
+ * `if (event.action === "...")` branch before it can touch a variant-specific
+ * field. These aliases pre-split each emitter by the `action` discriminator, so the
+ * callback receives an already-narrowed member of the union: `pnl` and `closeReason`
+ * are simply present on a `listenSignalClosed` event, no guard required.
+ *
+ * Three families, one per emitter:
+ * - `listenSignal<Action>`         — all events (live + backtest)
+ * - `listenSignalLive<Action>`     — Live.run() only
+ * - `listenSignalBacktest<Action>` — Backtest.run() only
+ *
+ * Seven actions: Idle, Scheduled, Waiting, Opened, Active, Closed, Cancelled.
+ *
+ * Each also ships a `...PerSignal` variant taking `(filterFn, fn)`, which fires the
+ * callback once per NEW signal rather than on every emission:
+ *
+ *   listenSignal<Action>(async (event) => {
+ *     if (!filterFn(event)) return;   // 1. condition
+ *     if (alreadySeen(event)) return; // 2. collapse repeats
+ *     await fn(event);                // 3. deliver
+ *   })
+ *
+ * Each per-signal form wraps the matching plain alias rather than building its own
+ * observer chain, exactly like the `listenXOnce` forms in `function/event.ts`. The
+ * plain alias owns the single `queued()` wrapper, so the dedup check runs INSIDE
+ * that queue, in step with the callback. A private `.filter().connect(queued())`
+ * chain would evaluate the dedup at emit time instead, deciding for a whole burst
+ * of events before the first callback had run.
+ *
+ * Deduplication is keyed on the execution identity, not the bare signal id:
+ *
+ *   strategyName:exchangeName[:frameName]:backtest|live:symbol  ->  signalId
+ *
+ * (frameName is omitted when empty, exactly like the Cache key helper.) A single
+ * process runs several strategies, symbols and modes through the same emitter, so
+ * a per-execution slot is what keeps interleaved traffic from clobbering the state
+ * of another execution.
+ *
+ * `Idle` has no per-signal variant: an idle tick carries `signal: null`, so there is
+ * no identity to deduplicate on. Use the plain `listenSignalIdle` form instead.
+ *
+ * Every function returns an unsubscribe function.
+ */
+
 const LISTEN_SIGNAL_IDLE_METHOD_NAME = "alias.listenSignalIdle";
 const LISTEN_SIGNAL_SCHEDULED_METHOD_NAME = "alias.listenSignalScheduled";
 const LISTEN_SIGNAL_WAITING_METHOD_NAME = "alias.listenSignalWaiting";
@@ -600,22 +650,30 @@ export function listenSignalScheduledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "scheduled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultScheduled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalScheduled(wrappedFn);
 }
 
 /**
@@ -638,22 +696,30 @@ export function listenSignalWaitingPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "waiting" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultWaiting) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalWaiting(wrappedFn);
 }
 
 /**
@@ -673,22 +739,30 @@ export function listenSignalOpenedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "opened" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultOpened) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalOpened(wrappedFn);
 }
 
 /**
@@ -722,22 +796,30 @@ export function listenSignalActivePerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "active" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultActive) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalActive(wrappedFn);
 }
 
 /**
@@ -757,22 +839,30 @@ export function listenSignalClosedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "closed" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultClosed) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalClosed(wrappedFn);
 }
 
 /**
@@ -792,22 +882,30 @@ export function listenSignalCancelledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalEmitter
-    .filter((event) => event.action === "cancelled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultCancelled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalCancelled(wrappedFn);
 }
 
 /**
@@ -842,22 +940,30 @@ export function listenSignalLiveScheduledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "scheduled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultScheduled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveScheduled(wrappedFn);
 }
 
 /**
@@ -893,22 +999,30 @@ export function listenSignalLiveWaitingPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "waiting" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultWaiting) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveWaiting(wrappedFn);
 }
 
 /**
@@ -943,22 +1057,30 @@ export function listenSignalLiveOpenedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "opened" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultOpened) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveOpened(wrappedFn);
 }
 
 /**
@@ -994,22 +1116,30 @@ export function listenSignalLiveActivePerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "active" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultActive) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveActive(wrappedFn);
 }
 
 /**
@@ -1044,22 +1174,30 @@ export function listenSignalLiveClosedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "closed" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultClosed) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveClosed(wrappedFn);
 }
 
 /**
@@ -1094,22 +1232,30 @@ export function listenSignalLiveCancelledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalLiveEmitter
-    .filter((event) => event.action === "cancelled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultCancelled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalLiveCancelled(wrappedFn);
 }
 
 /**
@@ -1144,22 +1290,30 @@ export function listenSignalBacktestScheduledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "scheduled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultScheduled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultScheduled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestScheduled(wrappedFn);
 }
 
 /**
@@ -1195,22 +1349,30 @@ export function listenSignalBacktestWaitingPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "waiting" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultWaiting)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultWaiting) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestWaiting(wrappedFn);
 }
 
 /**
@@ -1245,22 +1407,30 @@ export function listenSignalBacktestOpenedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "opened" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultOpened)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultOpened) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestOpened(wrappedFn);
 }
 
 /**
@@ -1296,22 +1466,30 @@ export function listenSignalBacktestActivePerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "active" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultActive)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultActive) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestActive(wrappedFn);
 }
 
 /**
@@ -1346,22 +1524,30 @@ export function listenSignalBacktestClosedPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "closed" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultClosed)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultClosed) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestClosed(wrappedFn);
 }
 
 /**
@@ -1396,20 +1582,28 @@ export function listenSignalBacktestCancelledPerSignal(
   // subscription over many strategies/symbols cannot grow without limit.
   const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
 
-  return signalBacktestEmitter
-    .filter((event) => event.action === "cancelled" && filterFn(event))
-    .filter((event) => {
-      const parts = [event.strategyName, event.exchangeName];
-      if (event.frameName) parts.push(event.frameName);
-      parts.push(event.backtest ? "backtest" : "live");
-      parts.push(event.symbol);
-      const key = parts.join(":");
-      const signalId = event.signal?.id;
-      if (seenMap.get(key) === signalId) {
-        return false;
-      }
-      seenMap.set(key, signalId);
-      return true;
-    })
-    .connect(queued(async (event) => fn(event as IStrategyTickResultCancelled)));
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. A private .filter().connect(queued()) chain would instead evaluate
+  // every dedup decision up front, at emit time, while earlier callbacks were
+  // still pending - advancing the remembered id before the subscriber had actually
+  // been handed the event it stands for.
+  const wrappedFn = async (event: IStrategyTickResultCancelled) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.signal.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenSignalBacktestCancelled(wrappedFn);
 }

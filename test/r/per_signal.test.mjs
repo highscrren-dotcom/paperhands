@@ -1,19 +1,15 @@
 import { test } from "worker-testbed";
 
 import {
+  addExchangeSchema,
+  addStrategySchema,
   listenSignalPerSignal,
   listenSignalLivePerSignal,
   listenSignalBacktestPerSignal,
   listenSignalEventPerSignal,
   listenScheduleEventPerSignal,
-  listenActivePingPerSignal,
-  listenSchedulePingPerSignal,
-  listenPartialProfitAvailablePerSignal,
-  listenPartialLossAvailablePerSignal,
-  listenBreakevenAvailablePerSignal,
   listenHighestProfitPerSignal,
   listenMaxDrawdownPerSignal,
-  listenSignalNotifyPerSignal,
   listenStrategyCommitPerSignal,
   emitters,
 } from "../../build/index.mjs";
@@ -251,8 +247,15 @@ test("listenSignalLivePerSignal and listenSignalBacktestPerSignal stay on their 
 //
 // Each case emits: match(S1), duplicate(S1), filtered-out(S1), duplicate(S1),
 // match(S2) — so one pass covers dedup, the predicate, and the ordering guard.
+//
+// Only the UNGATED channels are driven with synthetic events. The per-signal forms
+// delegate to their plain listener, and the ping / partial / breakeven / notify /
+// commit listeners first confirm the position is live via hasPendingSignal, which
+// needs a registered strategy and real stored state - see test/e2e for those. A
+// synthetic event on a gated channel is correctly dropped, so asserting delivery
+// here would only be asserting the fixture.
 // ---------------------------------------------------------------------------
-test("data.id channels dedup per signal (signalEvent, scheduleEvent, pings, partials, breakeven, notify)", async ({ pass, fail }) => {
+test("data.id channels dedup per signal (signalEvent, scheduleEvent)", async ({ pass, fail }) => {
   const cases = [
     {
       name: "listenSignalEventPerSignal",
@@ -269,54 +272,6 @@ test("data.id channels dedup per signal (signalEvent, scheduleEvent, pings, part
       match: { action: "scheduled" },
       skip: { action: "cancelled" },
       filter: (event) => event.action === "scheduled",
-    },
-    {
-      name: "listenActivePingPerSignal",
-      listen: listenActivePingPerSignal,
-      subject: emitters.activePingSubject,
-      match: { backtest: true },
-      skip: { backtest: false },
-      filter: (event) => event.backtest === true,
-    },
-    {
-      name: "listenSchedulePingPerSignal",
-      listen: listenSchedulePingPerSignal,
-      subject: emitters.schedulePingSubject,
-      match: { backtest: true },
-      skip: { backtest: false },
-      filter: (event) => event.backtest === true,
-    },
-    {
-      name: "listenPartialProfitAvailablePerSignal",
-      listen: listenPartialProfitAvailablePerSignal,
-      subject: emitters.partialProfitSubject,
-      match: { level: 10 },
-      skip: { level: 20 },
-      filter: (event) => event.level === 10,
-    },
-    {
-      name: "listenPartialLossAvailablePerSignal",
-      listen: listenPartialLossAvailablePerSignal,
-      subject: emitters.partialLossSubject,
-      match: { level: 10 },
-      skip: { level: 20 },
-      filter: (event) => event.level === 10,
-    },
-    {
-      name: "listenBreakevenAvailablePerSignal",
-      listen: listenBreakevenAvailablePerSignal,
-      subject: emitters.breakevenSubject,
-      match: { backtest: true },
-      skip: { backtest: false },
-      filter: (event) => event.backtest === true,
-    },
-    {
-      name: "listenSignalNotifyPerSignal",
-      listen: listenSignalNotifyPerSignal,
-      subject: emitters.signalNotifySubject,
-      match: { note: "keep" },
-      skip: { note: "drop" },
-      filter: (event) => event.note === "keep",
     },
   ];
 
@@ -403,109 +358,79 @@ test("data.id channels dedup per signal (signalEvent, scheduleEvent, pings, part
 });
 
 // ---------------------------------------------------------------------------
-// 8. Channels keyed on `event.signal.id`
+// 8. Gated channels inherit their plain listener's hasPendingSignal check
+//
+// Because the per-signal forms delegate, the gate the plain listener applies is
+// still in force. highestProfit / maxDrawdown / commit / ping / partial /
+// breakeven / notify all confirm the position is live first, so a synthetic event
+// for a strategy that owns no position must NOT reach the callback. That is the
+// contract; end-to-end delivery on these channels is covered in test/e2e where a
+// real position exists.
 // ---------------------------------------------------------------------------
-test("signal.id channels dedup per signal (highestProfit, maxDrawdown)", async ({ pass, fail }) => {
-  const cases = [
-    {
-      name: "listenHighestProfitPerSignal",
-      listen: listenHighestProfitPerSignal,
-      subject: emitters.highestProfitSubject,
-    },
-    {
-      name: "listenMaxDrawdownPerSignal",
-      listen: listenMaxDrawdownPerSignal,
-      subject: emitters.maxDrawdownSubject,
-    },
+test("gated per-signal channels drop events with no live position behind them", async ({ pass, fail }) => {
+  const delivered = [];
+  const unsubscribes = [
+    listenHighestProfitPerSignal(() => true, () => delivered.push("highestProfit")),
+    listenMaxDrawdownPerSignal(() => true, () => delivered.push("maxDrawdown")),
+    listenStrategyCommitPerSignal(() => true, () => delivered.push("commit")),
   ];
 
-  for (const testCase of cases) {
-    const seen = [];
-    const unsubscribe = testCase.listen(
-      (event) => event.backtest === true,
-      (event) => seen.push(event.signal.id)
-    );
+  // hasPendingSignal resolves the strategy through the schema registry and throws
+  // on an unknown name, so the gate can only be exercised with a real schema
+  // registered. No position is ever opened, so the gate must answer "no".
+  addExchangeSchema({
+    exchangeName: "r-gated-exchange",
+    getCandles: async () => [],
+    formatPrice: async (_symbol, price) => price.toFixed(2),
+    formatQuantity: async (_symbol, quantity) => quantity.toFixed(2),
+  });
+  addStrategySchema({
+    strategyName: "r-gated-strategy",
+    interval: "1m",
+    getSignal: async () => null,
+  });
 
-    const base = {
-      strategyName: "r-strategy",
-      exchangeName: "r-exchange",
-      frameName: "r-frame",
-      symbol: "BTCUSDT",
-      currentPrice: 100,
-      timestamp: 1700000000000,
-    };
-    await testCase.subject.next({ ...base, backtest: true, signal: signalRow("H1") });
-    await testCase.subject.next({ ...base, backtest: true, signal: signalRow("H1") });
-    await testCase.subject.next({ ...base, backtest: false, signal: signalRow("H1") });
-    await testCase.subject.next({ ...base, backtest: true, signal: signalRow("H1") });
-    await testCase.subject.next({ ...base, backtest: true, signal: signalRow("H2") });
-    await flush();
-    unsubscribe();
-
-    if (JSON.stringify(seen) !== JSON.stringify(["H1", "H2"])) {
-      fail(`${testCase.name}: delivered ${JSON.stringify(seen)} expected ["H1","H2"]`);
-      return;
-    }
-  }
-
-  pass("highestProfit and maxDrawdown dedup on signal.id");
-});
-
-// ---------------------------------------------------------------------------
-// 9. The one remaining channel keyed on `event.signalId`
-//
-// Trailing/partial commits repeat many times per position, so the dedup here is
-// what turns a stream of commits into a single per-signal notification.
-// ---------------------------------------------------------------------------
-test("listenStrategyCommitPerSignal dedups on signalId and honours the predicate", async ({ pass, fail }) => {
-  const seen = [];
-  const unsubscribe = listenStrategyCommitPerSignal(
-    (event) => event.action === "trailing-stop",
-    (event) => seen.push(event.signalId)
-  );
-
-  const commit = (action, signalId) => ({
-    action,
-    signalId,
-    strategyName: "r-strategy",
-    exchangeName: "r-exchange",
-    frameName: "r-frame",
+  const base = {
+    strategyName: "r-gated-strategy",
+    exchangeName: "r-gated-exchange",
+    frameName: "",
     symbol: "BTCUSDT",
     currentPrice: 100,
     backtest: false,
     timestamp: 1700000000000,
-    signal: signalRow(signalId),
-    position: "long",
+  };
+
+  await emitters.highestProfitSubject.next({ ...base, signal: signalRow("G1") });
+  await emitters.maxDrawdownSubject.next({ ...base, signal: signalRow("G1") });
+  await emitters.strategyCommitSubject.next({
+    ...base,
+    action: "trailing-stop",
+    signalId: "G1",
+    signal: signalRow("G1"),
+    percentShift: 1,
     priceOpen: 100,
     priceTakeProfit: 110,
     priceStopLoss: 90,
     originalPriceOpen: 100,
     originalPriceTakeProfit: 110,
     originalPriceStopLoss: 90,
+    position: "long",
     scheduledAt: 1700000000000,
     pendingAt: 1700000000000,
-    percentShift: 1,
     totalEntries: 1,
     totalPartials: 0,
     pnl: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
     peakProfit: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
     maxDrawdown: { pnlPercentage: 0, pnlCost: 0, pnlEntries: 0, priceOpen: 100, priceClose: 100 },
   });
+  await flush(150);
+  unsubscribes.forEach((unsubscribe) => unsubscribe());
 
-  await emitters.strategyCommitSubject.next(commit("trailing-stop", "O1"));
-  await emitters.strategyCommitSubject.next(commit("trailing-stop", "O1"));
-  // a different commit action for the SAME signal must not reset the dedup state
-  await emitters.strategyCommitSubject.next(commit("partial-profit", "O1"));
-  await emitters.strategyCommitSubject.next(commit("trailing-stop", "O1"));
-  await emitters.strategyCommitSubject.next(commit("trailing-stop", "O2"));
-  await flush();
-  unsubscribe();
-
-  if (JSON.stringify(seen) !== JSON.stringify(["O1", "O2"])) {
-    fail(`delivered ${JSON.stringify(seen)} expected ["O1","O2"]`);
+  if (delivered.length !== 0) {
+    fail(`gated channels delivered ${JSON.stringify(delivered)} for a strategy with no position — the plain listener's hasPendingSignal gate was bypassed`);
     return;
   }
-  pass("trailing-stop commits collapsed to one callback per signal");
+  pass("all three gated channels withheld delivery without a live position");
 });
 
 // ---------------------------------------------------------------------------
