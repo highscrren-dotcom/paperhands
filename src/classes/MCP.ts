@@ -507,18 +507,25 @@ const AGENT_GET_MESSAGES = async (
 
 /**
  * Builds the annotated event feed for an MCP (Model Context Protocol)
- * instance from the live notification storage (NotificationLive): position
- * opens (`signal.opened`), position closes (`signal.closed`) and mid-position
- * notes (`signal.info`) of the bound strategy, newest first.
+ * instance from the live notification storage (NotificationLive), newest
+ * first. The four rendered types mirror the four writing MCP tools 1:1 —
+ * every command the agent can issue comes back as a described event:
+ *
+ * - `signal.opened` — the position opened by commitPositionOpen
+ * - `close_pending.commit` — the exit requested by commitPositionClose,
+ *   the ONLY event carrying the reason for leaving; `signal.closed` repeats
+ *   the entry description and is deliberately not rendered here
+ * - `average_buy.commit` — the DCA entry added by commitAverageBuy
+ * - `signal.info` — the mid-position note left by commitSignalNotify
  *
  * ONLY events carrying a description are rendered. That is the anti-whipsaw
  * rule: an entry or exit with no stated reason tells the agent nothing about
  * intent, and a feed of bare "opened LONG / closed LONG" lines invites it to
  * re-enter the trade it just left. A described open ("breakout above the
- * range on volume") followed by a described close ("volume dried up, thesis
+ * range on volume") followed by a described exit ("volume dried up, thesis
  * void") reads as a finished thought the agent will not blindly repeat.
  *
- * The feed spans the whole strategy, not just what is open right now: a close
+ * The feed spans the whole strategy, not just what is open right now: an exit
  * only makes sense next to the open it terminates, and both matter after the
  * position is gone.
  *
@@ -548,11 +555,12 @@ const NOTIFICATION_GET_MESSAGES = async (
   const notificationList = await NotificationLive.getData();
   const eventList = notificationList
     .flatMap((row) =>
-      (row.type === "signal.info" ||
-        row.type === "signal.opened" ||
-        row.type === "signal.closed") &&
+      (row.type === "signal.opened" ||
+        row.type === "close_pending.commit" ||
+        row.type === "average_buy.commit" ||
+        row.type === "signal.info") &&
       row.strategyName === strategyName &&
-      // An undescribed open or close is whipsaw fuel: no intent, no lesson
+      // An undescribed open or exit is whipsaw fuel: no intent, no lesson
       !!row.note
         ? [row]
         : [],
@@ -583,31 +591,36 @@ const NOTIFICATION_GET_MESSAGES = async (
     );
     const lines: string[] = [];
     if (row.type === "signal.opened") {
-      lines.push(`Event: position opened`);
-    } else if (row.type === "signal.closed") {
-      lines.push(`Event: position closed (${row.closeReason})`);
+      lines.push("Event: position opened");
+    } else if (row.type === "close_pending.commit") {
+      lines.push("Event: position close requested");
+    } else if (row.type === "average_buy.commit") {
+      lines.push("Event: position averaged (DCA entry added)");
     } else {
-      lines.push(`Event: note on an open position`);
+      lines.push("Event: note on an open position");
     }
     lines.push(`Symbol: ${row.symbol}`);
-    lines.push(`Position: ${row.position}`);
+    // close_pending.commit carries no direction or open time: it describes the
+    // command, not the position it terminates — the signal id ties them
+    if (row.type !== "close_pending.commit") {
+      lines.push(`Position: ${row.position}`);
+    }
     lines.push(`Signal id: ${row.signalId}`);
-    lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
+    if (row.type !== "close_pending.commit") {
+      lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
+    }
     if (row.type === "signal.opened") {
       lines.push(`Entry price: ${row.priceOpen} (cost ${row.cost} USD)`);
-    } else if (row.type === "signal.closed") {
+    } else if (row.type === "average_buy.commit") {
       lines.push(
-        `Exit price: ${row.priceClose} (entry ${row.priceOpen}, held ${row.duration} minute${row.duration === 1 ? "" : "s"})`,
+        `Entry added at: ${row.currentPrice} (cost ${row.cost} USD, average entry now ${row.effectivePriceOpen} across ${row.totalEntries} entries)`,
       );
-      lines.push(
-        `Result: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and exit fees and slippage`,
-      );
-    } else {
+    } else if (row.type === "signal.info") {
       lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
-      lines.push(
-        `Unrealized PnL at event: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
-      );
     }
+    lines.push(
+      `${row.type === "close_pending.commit" ? "PnL at exit" : "Unrealized PnL at event"}: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
+    );
     lines.push(
       `Emitted at: ${new Date(row.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
