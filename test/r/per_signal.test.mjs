@@ -7,6 +7,7 @@ import {
   listenSignalLivePerSignal,
   listenSignalBacktestPerSignal,
   listenSignalEventPerSignal,
+  listenOrderSchedulePerSignal,
   listenHighestProfitPerSignal,
   listenMaxDrawdownPerSignal,
   listenStrategyCommitPerSignal,
@@ -286,7 +287,7 @@ test("listenSignalLivePerSignal and listenSignalBacktestPerSignal stay on their 
 // synthetic event on a gated channel is correctly dropped, so asserting delivery
 // here would only be asserting the fixture.
 // ---------------------------------------------------------------------------
-test("data.id channels dedup per signal (signalEvent)", async ({ pass, fail }) => {
+test("data.id channels dedup per signal (signalEvent, orderSchedule)", async ({ pass, fail }) => {
   const cases = [
     {
       name: "listenSignalEventPerSignal",
@@ -295,6 +296,14 @@ test("data.id channels dedup per signal (signalEvent)", async ({ pass, fail }) =
       match: { action: "opened" },
       skip: { action: "closed" },
       filter: (event) => event.action === "opened",
+    },
+    {
+      name: "listenOrderSchedulePerSignal",
+      listen: listenOrderSchedulePerSignal,
+      subject: emitters.scheduleEventSubject,
+      match: { action: "scheduled" },
+      skip: { action: "cancelled" },
+      filter: (event) => event.action === "scheduled",
     },
   ];
 

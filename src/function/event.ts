@@ -105,6 +105,7 @@ const LISTEN_SIGNAL_PER_SIGNAL_METHOD_NAME = "event.listenSignalPerSignal";
 const LISTEN_SIGNAL_LIVE_PER_SIGNAL_METHOD_NAME = "event.listenSignalLivePerSignal";
 const LISTEN_SIGNAL_BACKTEST_PER_SIGNAL_METHOD_NAME = "event.listenSignalBacktestPerSignal";
 const LISTEN_SIGNAL_EVENT_PER_SIGNAL_METHOD_NAME = "event.listenSignalEventPerSignal";
+const LISTEN_ORDER_SCHEDULE_PER_SIGNAL_METHOD_NAME = "event.listenOrderSchedulePerSignal";
 const LISTEN_ACTIVE_PING_PER_SIGNAL_METHOD_NAME = "event.listenActivePingPerSignal";
 const LISTEN_SCHEDULE_PING_PER_SIGNAL_METHOD_NAME = "event.listenSchedulePingPerSignal";
 const LISTEN_PARTIAL_PROFIT_PER_SIGNAL_METHOD_NAME = "event.listenPartialProfitAvailablePerSignal";
@@ -1378,12 +1379,6 @@ export function listenSchedulePingOnce(
  */
 export function listenOrderSchedule(fn: (event: ScheduleEventContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_SCHEDULE_METHOD_NAME);
-
-  console.error("listenOrderSchedule is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to a resting entry being placed or dropped, please use Broker.useBrokerAdapter with onSignalScheduleOpen / onSignalScheduleCancelled");
-  console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
-  console.error("");
-  console.error("You have been warned!");
   return scheduleEventSubject.subscribe(queued(async (event) => fn(event)));
 }
 
@@ -1805,12 +1800,6 @@ export function listenSync(fn: (event: OrderSyncContract) => void) {
  */
 export function listenOrderFill(fn: (event: OrderFillContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_FILL_METHOD_NAME);
-
-  console.error("listenOrderFill is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to a broker-confirmed fill, please use Broker.useBrokerAdapter with onOrderOpenCommit / onOrderCloseCommit");
-  console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
-  console.error("");
-  console.error("You have been warned!");
   return orderFillSubject.subscribe(queued(async (event) => fn(event)));
 }
 
@@ -1837,12 +1826,6 @@ export function listenOrderFill(fn: (event: OrderFillContract) => void) {
  */
 export function listenOrderReject(fn: (event: OrderRejectContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_REJECT_METHOD_NAME);
-
-  console.error("listenOrderReject is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to a terminal order rejection, please use Broker.useBrokerAdapter with onOrderOpenCommit / onOrderCloseCommit and throw OrderRejectedError");
-  console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
-  console.error("");
-  console.error("You have been warned!");
   return orderRejectSubject.subscribe(queued(async (event) => fn(event)));
 }
 
@@ -1865,12 +1848,6 @@ export function listenOrderReject(fn: (event: OrderRejectContract) => void) {
  */
 export function listenOrderContinue(fn: (event: OrderContinueContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_CONTINUE_METHOD_NAME);
-
-  console.error("listenOrderContinue is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to an order-check verdict, please use Broker.useBrokerAdapter with onOrderActiveCheck / onOrderScheduleCheck");
-  console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
-  console.error("");
-  console.error("You have been warned!");
   return orderContinueSubject.subscribe(queued(async (event) => fn(event)));
 }
 
@@ -1894,12 +1871,6 @@ export function listenOrderContinue(fn: (event: OrderContinueContract) => void) 
  */
 export function listenOrderStop(fn: (event: OrderStopContract) => void) {
   backtest.loggerService.log(LISTEN_ORDER_STOP_METHOD_NAME);
-
-  console.error("listenOrderStop is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to an order-check verdict, please use Broker.useBrokerAdapter with onOrderActiveCheck / onOrderScheduleCheck");
-  console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
-  console.error("");
-  console.error("You have been warned!");
   return orderStopSubject.subscribe(queued(async (event) => fn(event)));
 }
 
@@ -2506,6 +2477,52 @@ export function listenSignalEventPerSignal(
   };
 
   return listenSignalEvent(wrappedFn);
+}
+
+/**
+ * Subscribes to scheduled lifecycle events, delivering the callback once per new signal id.
+ *
+ * Deduplicates on `event.data.id`. A scheduled signal may emit both "scheduled"
+ * and "cancelled": filter by `action` to isolate one transition.
+ *
+ * @param filterFn - Predicate selecting which events are considered
+ * @param fn - Callback invoked once per new signal id
+ * @returns Unsubscribe function to stop listening
+ */
+export function listenOrderSchedulePerSignal(
+  filterFn: (event: ScheduleEventContract) => boolean,
+  fn: (event: ScheduleEventContract) => void
+) {
+  backtest.loggerService.log(LISTEN_ORDER_SCHEDULE_PER_SIGNAL_METHOD_NAME);
+
+  // Last delivered signal id per execution identity. Bounded so a long-lived
+  // subscription over many strategies/symbols cannot grow without limit.
+  const seenMap = new LimitedMap<string, string>(SEEN_MAP_LIMIT);
+
+  // Delegated to the plain listener on purpose: that one owns the single queued()
+  // wrapper, so the dedup decision below runs INSIDE the queue, in step with the
+  // callback. Building a private .filter().connect(queued()) chain instead would
+  // evaluate every dedup decision up front, at emit time, while earlier callbacks
+  // were still pending - advancing the remembered id before the subscriber had
+  // actually been handed the event it stands for.
+  const wrappedFn = async (event: ScheduleEventContract) => {
+    if (!filterFn(event)) {
+      return;
+    }
+    const parts = [event.strategyName, event.exchangeName];
+    if (event.frameName) parts.push(event.frameName);
+    parts.push(event.backtest ? "backtest" : "live");
+    parts.push(event.symbol);
+    const key = parts.join(":");
+    const signalId = event.data.id;
+    if (seenMap.get(key) === signalId) {
+      return;
+    }
+    seenMap.set(key, signalId);
+    await fn(event);
+  };
+
+  return listenOrderSchedule(wrappedFn);
 }
 
 /**
