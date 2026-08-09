@@ -194,6 +194,36 @@ export const signal_cancelled_fields: TypedField[] = [
                         desktopColumns: "4",
                         tabletColumns: "4",
                         phoneColumns: "12",
+                        name: "currentPrice",
+                        title: t("Market Price"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.currentPrice,
+                        compute: (obj) =>
+                            !!obj.currentPrice
+                                ? `${obj.currentPrice.toFixed(getPriceScale(obj.currentPrice))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "cost",
+                        title: t("Cost"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.cost,
+                        compute: (obj) =>
+                            !!obj.cost
+                                ? `${obj.cost.toFixed(getPriceScale(obj.cost))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
                         name: "priceTakeProfit",
                         title: t("Take Profit"),
                         readonly: true,
@@ -294,7 +324,94 @@ export const signal_cancelled_fields: TypedField[] = [
             },
             {
                 type: FieldType.Typography,
-                                typoVariant: "h6",
+                typoVariant: "h6",
+                placeholder: t("PNL Details"),
+                isVisible: (obj) => !!obj.pnlPriceClose,
+            },
+            {
+                type: FieldType.Outline,
+                sx: { mb: 3 },
+                isVisible: (obj) => !!obj.pnlPriceClose,
+                fields: [
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "pnlPercentage",
+                        title: t("PNL %"),
+                        readonly: true,
+                        compute: (obj) => {
+                            const pnl = obj.pnlPercentage;
+                            if (pnl == null) return t("N/A");
+                            const sign = pnl >= 0 ? "+" : "";
+                            return `${sign}${pnl.toFixed(2)}%`;
+                        },
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "pnlCost",
+                        title: t("PNL ($)"),
+                        readonly: true,
+                        compute: (obj) => {
+                            const v = obj.pnlCost;
+                            if (v == null) return t("N/A");
+                            const sign = v >= 0 ? "+" : "";
+                            return `${sign}${v.toFixed(getPriceScale(v))}${t("$")}`;
+                        },
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "pnlEntries",
+                        title: t("Invested"),
+                        readonly: true,
+                        compute: (obj) =>
+                            !!obj.pnlEntries
+                                ? `${obj.pnlEntries.toFixed(getPriceScale(obj.pnlEntries))}${t("$")}`
+                                : t("N/A"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "pnlPriceOpen",
+                        title: t("PNL Entry Price"),
+                        readonly: true,
+                        compute: (obj) =>
+                            !!obj.pnlPriceOpen
+                                ? `${obj.pnlPriceOpen.toFixed(getPriceScale(obj.pnlPriceOpen))}${t("$")}`
+                                : t("N/A"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "pnlPriceClose",
+                        title: t("PNL Exit Price"),
+                        readonly: true,
+                        compute: (obj) =>
+                            !!obj.pnlPriceClose
+                                ? `${obj.pnlPriceClose.toFixed(getPriceScale(obj.pnlPriceClose))}${t("$")}`
+                                : t("N/A"),
+                    },
+                ],
+            },
+            {
+                type: FieldType.Typography,
+                typoVariant: "h6",
                 placeholder: t("Cancellation Details"),
             },
             {

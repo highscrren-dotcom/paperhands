@@ -17,6 +17,7 @@ import {
 } from "../interfaces/MCP.interface";
 import { ISignalDto, StrategyName } from "../interfaces/Strategy.interface";
 import { ILogEntry } from "../interfaces/Logger.interface";
+import { NotificationModel } from "../model/Notification.model";
 import { errorEmitter } from "../config/emitters";
 import alignToInterval from "../utils/alignToInterval";
 import { getConfig } from "../function/setup";
@@ -78,6 +79,42 @@ const DEFAULT_AGENT_LIMIT = 5;
  * newest-first before the cut, so any limit drops the OLDEST notes.
  */
 const DEFAULT_NOTIFICATION_LIMIT = 20;
+
+/**
+ * Human-readable label for every notification type the annotated event feed
+ * renders, keyed by the raw type the engine emits.
+ *
+ * The agent reads plain events ("position close requested"), never the wire
+ * names ("close_pending.commit"), so a technical identifier never leaks into
+ * the prompt. The keys double as the feed's whitelist: a type absent from
+ * this map is not rendered at all.
+ */
+const NOTIFICATION_TYPE_LABEL = {
+  "signal.opened": "position opened",
+  "close_pending.commit": "position close requested",
+  "signal.closed": "position closed",
+  "average_buy.commit": "position averaged (DCA entry added)",
+  "signal.info": "note on an open position",
+} as const;
+
+/** Notification types the annotated event feed renders. */
+type NotificationEventType = keyof typeof NOTIFICATION_TYPE_LABEL;
+
+/**
+ * Narrows a stored notification to the types the annotated event feed knows
+ * how to render.
+ *
+ * `type in NOTIFICATION_TYPE_LABEL` alone does not narrow the union for
+ * TypeScript, so the whitelist check is expressed as a type predicate — the
+ * map stays the single source of truth for which events reach the agent.
+ *
+ * @param row - Stored notification of any type
+ * @returns True when the feed renders this notification type
+ */
+const IS_EVENT_NOTIFICATION_FN = (
+  row: NotificationModel,
+): row is Extract<NotificationModel, { type: NotificationEventType }> =>
+  row.type in NOTIFICATION_TYPE_LABEL;
 
 /**
  * Computes the hard stop-loss distance percent for an opened position.
@@ -508,15 +545,21 @@ const AGENT_GET_MESSAGES = async (
 /**
  * Builds the annotated event feed for an MCP (Model Context Protocol)
  * instance from the live notification storage (NotificationLive), newest
- * first. The four rendered types mirror the four writing MCP tools 1:1 —
- * every command the agent can issue comes back as a described event:
+ * first. Four of the rendered types mirror the writing MCP tools 1:1 — every
+ * command the agent can issue comes back as a described event — and the
+ * fifth records the outcome:
  *
  * - `signal.opened` — the position opened by commitPositionOpen
  * - `close_pending.commit` — the exit requested by commitPositionClose,
- *   the ONLY event carrying the reason for leaving; `signal.closed` repeats
- *   the entry description and is deliberately not rendered here
+ *   the only event carrying the REASON for leaving
  * - `average_buy.commit` — the DCA entry added by commitAverageBuy
  * - `signal.info` — the mid-position note left by commitSignalNotify
+ * - `signal.closed` — the position actually closing, carrying the realized
+ *   result. Its description repeats the ENTRY reason, so on its own it does
+ *   not explain the exit; it is rendered anyway because a small `limit` can
+ *   rotate the matching close_pending.commit out of the feed, and a lone
+ *   "position opened" with no visible ending is exactly what makes an agent
+ *   re-enter a trade it already left
  *
  * ONLY events carrying a description are rendered. That is the anti-whipsaw
  * rule: an entry or exit with no stated reason tells the agent nothing about
@@ -555,10 +598,7 @@ const NOTIFICATION_GET_MESSAGES = async (
   const notificationList = await NotificationLive.getData();
   const eventList = notificationList
     .flatMap((row) =>
-      (row.type === "signal.opened" ||
-        row.type === "close_pending.commit" ||
-        row.type === "average_buy.commit" ||
-        row.type === "signal.info") &&
+      IS_EVENT_NOTIFICATION_FN(row) &&
       row.strategyName === strategyName &&
       // An undescribed open or exit is whipsaw fuel: no intent, no lesson
       !!row.note
@@ -590,41 +630,44 @@ const NOTIFICATION_GET_MESSAGES = async (
       Math.round((when.getTime() - row.timestamp) / 60_000),
     );
     const lines: string[] = [];
-    if (row.type === "signal.opened") {
-      lines.push("Event: position opened");
-    } else if (row.type === "close_pending.commit") {
-      lines.push("Event: position close requested");
-    } else if (row.type === "average_buy.commit") {
-      lines.push("Event: position averaged (DCA entry added)");
-    } else {
-      lines.push("Event: note on an open position");
-    }
+    lines.push(
+      `Event: ${NOTIFICATION_TYPE_LABEL[row.type]}${row.type === "signal.closed" ? ` (${row.closeReason})` : ""}`,
+    );
+    // Every rendered type carries the same identity block, so the agent reads
+    // one shape regardless of what happened
     lines.push(`Symbol: ${row.symbol}`);
-    // close_pending.commit carries no direction or open time: it describes the
-    // command, not the position it terminates — the signal id ties them
-    if (row.type !== "close_pending.commit") {
-      lines.push(`Position: ${row.position}`);
-    }
+    lines.push(`Position: ${row.position}`);
     lines.push(`Signal id: ${row.signalId}`);
-    if (row.type !== "close_pending.commit") {
-      lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
-    }
+    lines.push(`Opened at: ${new Date(row.pendingAt).toISOString()}`);
     if (row.type === "signal.opened") {
       lines.push(`Entry price: ${row.priceOpen} (cost ${row.cost} USD)`);
     } else if (row.type === "average_buy.commit") {
       lines.push(
         `Entry added at: ${row.currentPrice} (cost ${row.cost} USD, average entry now ${row.effectivePriceOpen} across ${row.totalEntries} entries)`,
       );
-    } else if (row.type === "signal.info") {
+    } else if (row.type === "signal.closed") {
+      lines.push(
+        `Exit price: ${row.priceClose} (entry ${row.priceOpen}, held ${row.duration} minute${row.duration === 1 ? "" : "s"})`,
+      );
+    } else {
       lines.push(`Price at event: ${row.currentPrice} (entry ${row.priceOpen})`);
     }
+    const isRealized =
+      row.type === "close_pending.commit" || row.type === "signal.closed";
     lines.push(
-      `${row.type === "close_pending.commit" ? "PnL at exit" : "Unrealized PnL at event"}: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and assumed exit fees and slippage`,
+      `${isRealized ? "PnL at exit" : "Unrealized PnL at event"}: ${FORMAT_SIGNED_FN(row.pnlCost)} USD (${FORMAT_SIGNED_FN(row.pnlPercentage)}%), net of entry and ${isRealized ? "exit" : "assumed exit"} fees and slippage`,
     );
     lines.push(
       `Emitted at: ${new Date(row.timestamp).toISOString()} (${emittedMinutesAgo} minute${emittedMinutesAgo === 1 ? "" : "s"} ago)`,
     );
     lines.push("Description:");
+    // signal.closed repeats the entry reason — say so, or the agent reads it
+    // as the reason for leaving and never learns why the trade was exited
+    if (row.type === "signal.closed") {
+      lines.push(
+        "(entry reason — the exit reason is in the matching close request event)",
+      );
+    }
     lines.push(toPlainString(row.note!));
     messages.push({ id: randomString(), type: "text", text: lines.join("\n") });
   }

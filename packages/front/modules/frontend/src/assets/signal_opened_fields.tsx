@@ -204,6 +204,21 @@ export const signal_opened_fields: TypedField[] = [
                         desktopColumns: "4",
                         tabletColumns: "4",
                         phoneColumns: "12",
+                        name: "currentPrice",
+                        title: t("Market Price"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.currentPrice,
+                        compute: (obj) =>
+                            !!obj.currentPrice
+                                ? `${obj.currentPrice.toFixed(getPriceScale(obj.currentPrice))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
                         name: "priceTakeProfit",
                         title: t("Take Profit"),
                         readonly: true,

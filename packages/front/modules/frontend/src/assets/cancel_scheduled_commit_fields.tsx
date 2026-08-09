@@ -108,6 +108,129 @@ export const cancel_scheduled_commit_fields: TypedField[] = [
                         desktopColumns: "4",
                         tabletColumns: "4",
                         phoneColumns: "12",
+                        name: "position",
+                        title: t("Position"),
+                        readonly: true,
+                        compute: (obj) => {
+                            if (obj.position === "long") return "LONG";
+                            if (obj.position === "short") return "SHORT";
+                            return t("Not specified");
+                        },
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "priceOpen",
+                        title: t("Entry Price"),
+                        readonly: true,
+                        compute: (obj) =>
+                            !!obj.priceOpen
+                                ? `${obj.priceOpen.toFixed(getPriceScale(obj.priceOpen))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "currentPrice",
+                        title: t("Market Price"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.currentPrice,
+                        compute: (obj) =>
+                            !!obj.currentPrice
+                                ? `${obj.currentPrice.toFixed(getPriceScale(obj.currentPrice))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "priceTakeProfit",
+                        title: t("Take Profit"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.priceTakeProfit,
+                        compute: (obj) =>
+                            !!obj.priceTakeProfit
+                                ? `${obj.priceTakeProfit.toFixed(getPriceScale(obj.priceTakeProfit))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "priceStopLoss",
+                        title: t("Stop Loss"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.priceStopLoss,
+                        compute: (obj) =>
+                            !!obj.priceStopLoss
+                                ? `${obj.priceStopLoss.toFixed(getPriceScale(obj.priceStopLoss))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "originalPriceTakeProfit",
+                        title: t("Original TP"),
+                        readonly: true,
+                        isVisible: (obj) =>
+                            !!obj.originalPriceTakeProfit &&
+                            obj.originalPriceTakeProfit !== obj.priceTakeProfit,
+                        compute: (obj) =>
+                            !!obj.originalPriceTakeProfit
+                                ? `${obj.originalPriceTakeProfit.toFixed(getPriceScale(obj.originalPriceTakeProfit))}${t("$")}`
+                                : "",
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "originalPriceStopLoss",
+                        title: t("Original SL"),
+                        readonly: true,
+                        isVisible: (obj) =>
+                            !!obj.originalPriceStopLoss &&
+                            obj.originalPriceStopLoss !== obj.priceStopLoss,
+                        compute: (obj) =>
+                            !!obj.originalPriceStopLoss
+                                ? `${obj.originalPriceStopLoss.toFixed(getPriceScale(obj.originalPriceStopLoss))}${t("$")}`
+                                : "",
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "cost",
+                        title: t("Cost"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.cost,
+                        compute: (obj) =>
+                            !!obj.cost
+                                ? `${obj.cost.toFixed(getPriceScale(obj.cost))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
                         name: "originalPriceOpen",
                         title: t("Original Entry"),
                         readonly: true,
@@ -181,6 +304,36 @@ export const cancel_scheduled_commit_fields: TypedField[] = [
                             obj.createdAt
                                 ? dayjs(obj.createdAt).format("DD/MM/YYYY HH:mm:ss")
                                 : "",
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "6",
+                        tabletColumns: "6",
+                        phoneColumns: "12",
+                        name: "scheduledAt",
+                        title: t("Scheduled"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.scheduledAt,
+                        compute: (obj) =>
+                            obj.scheduledAt
+                                ? dayjs(obj.scheduledAt).format("DD/MM/YYYY HH:mm:ss")
+                                : "",
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "6",
+                        tabletColumns: "6",
+                        phoneColumns: "12",
+                        name: "pendingAt",
+                        title: t("Activated"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.pendingAt,
+                        compute: (obj) =>
+                            obj.pendingAt
+                                ? dayjs(obj.pendingAt).format("DD/MM/YYYY HH:mm:ss")
+                                : t("N/A"),
                     },
                 ],
             },

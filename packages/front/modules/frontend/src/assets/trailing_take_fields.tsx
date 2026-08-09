@@ -135,6 +135,21 @@ export const trailing_take_fields: TypedField[] = [
                     },
                     {
                         type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
+                        name: "cost",
+                        title: t("Cost"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.cost,
+                        compute: (obj) =>
+                            !!obj.cost
+                                ? `${obj.cost.toFixed(getPriceScale(obj.cost))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
                         name: "percentShift",
                         title: t("TP Shift"),
                         desktopColumns: "4",

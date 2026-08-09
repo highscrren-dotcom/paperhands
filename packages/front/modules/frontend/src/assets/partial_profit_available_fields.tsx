@@ -138,6 +138,21 @@ export const partial_profit_available_fields: TypedField[] = [
                         desktopColumns: "4",
                         tabletColumns: "4",
                         phoneColumns: "12",
+                        name: "cost",
+                        title: t("Cost"),
+                        readonly: true,
+                        isVisible: (obj) => !!obj.cost,
+                        compute: (obj) =>
+                            !!obj.cost
+                                ? `${obj.cost.toFixed(getPriceScale(obj.cost))}${t("$")}`
+                                : t("Not specified"),
+                    },
+                    {
+                        type: FieldType.Text,
+                        outlined: false,
+                        desktopColumns: "4",
+                        tabletColumns: "4",
+                        phoneColumns: "12",
                         name: "position",
                         title: t("Position"),
                         readonly: true,
