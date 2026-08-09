@@ -6,7 +6,7 @@ import { getErrorMessage, str } from "functools-kit";
 /**
  * Registers the open_position tool.
  *
- * Opens a live position for a symbol through the configured MCP. The engine
+ * Opens a paper position for a symbol through the configured MCP. The engine
  * owns the levels: fixed 50% take profit (moonbag), hard stop-loss snapped
  * below the configured maximum, entry cost from the MCP schema — the agent
  * only chooses the symbol, the direction and the reason.
@@ -17,7 +17,9 @@ export default function registerOpenPositionTool(server: McpServer) {
   server.tool(
     "open_position",
     str.newline(
-      "Open a live trading position at the current market price. One position per symbol.",
+      "Open a PAPER trading position at the current market price. One position per symbol.",
+
+      "PAPER TRADING ONLY. This opens a simulated position with virtual capital, priced against the real live market. No exchange account is touched and no real order is placed — nothing here can lose real money. Trade it as seriously as the real thing anyway: the whole point is to produce an honest record, and a sloppy paper trade produces a worthless one.",
 
       "WHAT YOU CONTROL: the symbol, the direction (long or short), and the description explaining why. Nothing else. The trading engine computes the entry cost, and sets a distant emergency stop-loss that only caps a catastrophic loss. You cannot size the position, pick an entry price, or set your own stop — attempting to reason about those levels is wasted effort.",
 

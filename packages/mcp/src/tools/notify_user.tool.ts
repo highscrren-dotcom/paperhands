@@ -21,7 +21,7 @@ export default function registerNotifyUserTool(server: McpServer) {
   server.tool(
     "notify_user",
     str.newline(
-      "Attach a note to the active live position of a symbol. Changes nothing about the trade — it only records reasoning.",
+      "Attach a note to the active PAPER position of a symbol. Changes nothing about the trade — it only records reasoning.",
 
       "WHY IT EXISTS. open_position records why a trade started, close_position records why it ended. Everything in between — the price behaved unexpectedly, the thesis shifted, a level was reached, an averaging was done and needs justifying — has no other place to live. Without notes, a later call sees an open position, a number, and no idea what it was supposed to be doing.",
 

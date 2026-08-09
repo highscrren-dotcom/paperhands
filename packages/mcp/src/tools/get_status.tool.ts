@@ -5,7 +5,7 @@ import { getErrorMessage, str } from "functools-kit";
 /**
  * Registers the get_status tool.
  *
- * The agent's only read path: renders the live portfolio of the configured
+ * The agent's only read path: renders the paper portfolio of the configured
  * MCP plus whatever feeds the schema's getMessages composes into it — the
  * annotated event log, the trade history, directives the strategy raised.
  * IMCPMessage items map 1:1 onto MCP content blocks (text and image), so a
@@ -17,7 +17,9 @@ export default function registerGetStatusTool(server: McpServer) {
   server.tool(
     "get_status",
     str.newline(
-      "Read the live trading portfolio. This is the only way to see state: every other tool writes, this one reads.",
+      "Read the trading portfolio. This is the only way to see state: every other tool writes, this one reads.",
+
+      "PAPER TRADING ONLY. This portfolio is simulated: virtual capital priced against the real live market. No exchange account is touched, no real order is ever placed, and no real money can be won or lost here. Prices, fees and slippage are real, so the results are meaningful — but the balance is not.",
 
       "PORTFOLIO. A header message summarises the account — how many symbols hold a position, total invested, total unrealized PnL in USD with the percent of invested, and a per-symbol dollar breakdown. Dollars lead because entry prices differ between positions, so percents are not comparable across them.",
 
@@ -27,7 +29,9 @@ export default function registerGetStatusTool(server: McpServer) {
 
       "SIGNAL ID ties everything together. The same id appears on the active position, on every event about it, and on its row in the history — use it to follow one trade across the whole output rather than matching by symbol, which repeats over time.",
 
-      "TIMING. The engine applies queued commands once per minute, so a command issued now is reflected on the next pass. Two consecutive calls can therefore return different state under the same snapshot timestamp — the timestamp is the engine clock, not proof that nothing changed. Conversely, calling twice within seconds usually returns identical data; there is no value in polling faster than the minute.",
+      "TIMING. The engine applies queued commands once per minute, so a command issued now is reflected on the next pass. Two consecutive calls can therefore return different state under the same snapshot timestamp — the timestamp is the engine clock, not proof that nothing changed.",
+
+      "DO NOT CALL THIS MORE OFTEN THAN ONCE EVERY 90 SECONDS. Anything faster returns the same snapshot back, because the engine tick that would change it has not run yet. After issuing a command, wait at least 90 seconds before checking whether it landed: that is one full tick plus margin. Polling in a tight loop produces no new information, burns context on repeated output, and — worst of all — invites the false conclusion that a command failed, followed by a resubmission that duplicates it once the queue finally drains.",
 
       "NO TAKE-PROFIT EXISTS. Positions never close themselves on profit — that is why no TP/SL levels are reported here. The engine holds only a distant emergency stop that caps a catastrophic loss, plus a hold timeout. Every real exit is yours, via close_position.",
 

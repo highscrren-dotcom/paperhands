@@ -21,7 +21,9 @@ export default function registerAveragePositionTool(server: McpServer) {
   server.tool(
     "average_position",
     str.newline(
-      "Add a DCA (dollar-cost averaging) entry to the active live position of a symbol at the current market price.",
+      "Add a DCA (dollar-cost averaging) entry to the active PAPER position of a symbol at the current market price.",
+
+      "PAPER TRADING ONLY. The position and the capital added to it are simulated, priced against the real live market. No exchange account is touched and no real order is placed.",
 
       "WHAT IT DOES: invests the configured entry cost again into the same position, in the same direction. The effective entry price becomes the cost-weighted average of all entries, so the position needs a smaller move to recover — while the money at risk grows by the same amount each time. get_status then lists every entry separately (price, cost, timestamp) alongside the new average and the raised balance.",
 

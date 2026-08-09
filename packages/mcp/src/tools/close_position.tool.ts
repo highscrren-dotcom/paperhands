@@ -7,7 +7,7 @@ import { getErrorMessage, str } from "functools-kit";
  * Registers the close_position tool.
  *
  * Queues a close of the active position of a symbol through the configured
- * MCP. The close executes at the current market price on the next live tick;
+ * MCP. The close executes at the current market price on the next engine tick;
  * the engine resolves which active position is consumed. The description is
  * stored as the exit reason, separate from the entry reason the position was
  * opened with — both surface in the event log.
@@ -18,7 +18,9 @@ export default function registerClosePositionTool(server: McpServer) {
   server.tool(
     "close_position",
     str.newline(
-      "Close the active live position of a symbol at the current market price.",
+      "Close the active PAPER position of a symbol at the current market price.",
+
+      "PAPER TRADING ONLY. The position is simulated — virtual capital priced against the real live market. No exchange account is touched and no real order is placed; the realized result is recorded, not paid out.",
 
       "THIS IS THE ONLY REAL EXIT. Nothing else takes profit or cuts a loss on purpose: the position has no working take-profit, and the only automatic ends are the distant emergency stop-loss and the hold timeout — both mean the trade got away from you. Deciding when to call this IS the job.",
 
