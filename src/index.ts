@@ -188,7 +188,6 @@ export {
   listenSignalLivePerSignal,
   listenSignalBacktestPerSignal,
   listenSignalEventPerSignal,
-  listenOrderSchedulePerSignal,
   listenActivePingPerSignal,
   listenSchedulePingPerSignal,
   listenPartialProfitAvailablePerSignal,
