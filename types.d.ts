@@ -7369,7 +7369,7 @@ declare function getRemainingCostBasis(symbol: string): Promise<number>;
  * }
  * ```
  */
-declare function getPendingSignal(symbol: string): Promise<IPublicSignalRow>;
+declare function getPendingSignal(symbol: string): Promise<IPublicSignalRow | null>;
 /**
  * Returns the currently active scheduled signal for the strategy.
  * If no scheduled signal exists, returns null.
@@ -13586,7 +13586,7 @@ type Dispatch$1<Value extends object = object> = (value: Value) => Value | Promi
  * }
  * ```
  */
-declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow>;
+declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow | null>;
 /**
  * Returns the number of whole minutes elapsed since the latest signal's creation timestamp.
  *
@@ -22653,7 +22653,7 @@ declare class BacktestUtils {
         strategyName: StrategyName;
         exchangeName: ExchangeName;
         frameName: FrameName;
-    }) => Promise<IPublicSignalRow>;
+    }) => Promise<IPublicSignalRow | null>;
     /**
      * Returns the percentage of the position currently held (not closed).
      * 100 = nothing has been closed (full position), 0 = fully closed.
@@ -24315,7 +24315,7 @@ declare class LiveUtils {
     getPendingSignal: (symbol: string, currentPrice: number, context: {
         strategyName: StrategyName;
         exchangeName: ExchangeName;
-    }) => Promise<IPublicSignalRow>;
+    }) => Promise<IPublicSignalRow | null>;
     /**
      * Returns the percentage of the position currently held (not closed).
      * 100 = nothing has been closed (full position), 0 = fully closed.
@@ -29584,7 +29584,7 @@ interface IRecentUtils {
      * @param when - Logical timestamp at which the read is happening (look-ahead guard)
      * @returns The latest signal throws if not found / shadowed by look-ahead
      */
-    getLatestSignal(symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date): Promise<IPublicSignalRow>;
+    getLatestSignal(symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date): Promise<IPublicSignalRow | null>;
     /**
      * Returns the number of minutes elapsed since the latest signal's timestamp.
      * `timestamp` doubles as the look-ahead cutoff — a signal whose `timestamp`
@@ -29640,7 +29640,7 @@ declare class RecentBacktestAdapter implements IRecentUtils {
      * @param when - Logical timestamp at which the read is happening (look-ahead guard)
      * @returns The latest signal throws if not found / shadowed by look-ahead
      */
-    getLatestSignal: (symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date) => Promise<IPublicSignalRow>;
+    getLatestSignal: (symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date) => Promise<IPublicSignalRow | null>;
     /**
      * Returns the number of whole minutes elapsed since the latest signal's creation timestamp.
      * Proxies call to the underlying storage adapter. `timestamp` doubles as the
@@ -29715,7 +29715,7 @@ declare class RecentLiveAdapter implements IRecentUtils {
      * @param when - Logical timestamp at which the read is happening (look-ahead guard)
      * @returns The latest signal throws if not found / shadowed by look-ahead
      */
-    getLatestSignal: (symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date) => Promise<IPublicSignalRow>;
+    getLatestSignal: (symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date) => Promise<IPublicSignalRow | null>;
     /**
      * Returns the number of whole minutes elapsed since the latest signal's creation timestamp.
      * Proxies call to the underlying storage adapter. `timestamp` doubles as the
@@ -29791,7 +29791,7 @@ declare class RecentAdapter {
         strategyName: StrategyName;
         exchangeName: ExchangeName;
         frameName: FrameName;
-    }, when: Date) => Promise<IPublicSignalRow>;
+    }, when: Date) => Promise<IPublicSignalRow | null>;
     /**
      * Returns the number of whole minutes elapsed since the latest signal's creation timestamp.
      * Searches backtest storage first, then live storage.

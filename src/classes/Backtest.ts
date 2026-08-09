@@ -684,7 +684,7 @@ export class BacktestUtils {
       exchangeName: ExchangeName;
       frameName: FrameName;
     },
-  ): Promise<IPublicSignalRow>  => {
+  ): Promise<IPublicSignalRow | null>  => {
     backtest.loggerService.info(BACKTEST_METHOD_NAME_GET_PENDING_SIGNAL, {
       symbol,
       context,
@@ -720,16 +720,6 @@ export class BacktestUtils {
             BACKTEST_METHOD_NAME_GET_PENDING_SIGNAL,
           ),
         );
-    }
-
-    if (
-      await not(
-        backtest.strategyCoreService.hasPendingSignal(true, symbol, context),
-      )
-    ) {
-      throw new Error(
-        `Backtest.getPendingSignal no pending signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
-      );
     }
 
     return await backtest.strategyCoreService.getPendingSignal(

@@ -94,7 +94,7 @@ export interface IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow>;
+  ): Promise<IPublicSignalRow | null>;
   /**
    * Returns the number of minutes elapsed since the latest signal's timestamp.
    * `timestamp` doubles as the look-ahead cutoff — a signal whose `timestamp`
@@ -171,7 +171,7 @@ export class RecentPersistBacktestUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     lib.loggerService.info(RECENT_PERSIST_BACKTEST_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -187,9 +187,7 @@ export class RecentPersistBacktestUtils implements IRecentUtils {
       backtest,
     );
     if (!signal || signal.timestamp > when.getTime()) {
-      throw new Error(
-        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
-      );
+      return null;
     }
     return signal;
   };
@@ -276,7 +274,7 @@ export class RecentMemoryBacktestUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     const key = CREATE_KEY_FN(
       symbol,
       strategyName,
@@ -287,9 +285,7 @@ export class RecentMemoryBacktestUtils implements IRecentUtils {
     lib.loggerService.info(RECENT_MEMORY_BACKTEST_METHOD_NAME_GET_LATEST_SIGNAL, { key });
     const signal = this._signals.get(key) ?? null;
     if (!signal || signal.timestamp > when.getTime()) {
-      throw new Error(
-        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
-      );
+      return null;
     }
     return signal;
   };
@@ -373,7 +369,7 @@ export class RecentPersistLiveUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     lib.loggerService.info(RECENT_PERSIST_LIVE_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -389,9 +385,7 @@ export class RecentPersistLiveUtils implements IRecentUtils {
       backtest,
     );
     if (!signal || signal.timestamp > when.getTime()) {
-      throw new Error(
-        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
-      );
+      return null;
     }
     return signal;
   };
@@ -479,14 +473,12 @@ export class RecentMemoryLiveUtils implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     const key = CREATE_KEY_FN(symbol, strategyName, exchangeName, frameName, backtest);
     lib.loggerService.info(RECENT_MEMORY_LIVE_METHOD_NAME_GET_LATEST_SIGNAL, { key });
     const signal = this._signals.get(key) ?? null;
     if (!signal || signal.timestamp > when.getTime()) {
-      throw new Error(
-        `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${strategyName} exchangeName=${exchangeName} frameName=${frameName}`,
-      );
+      return null;
     }
     return signal;
   };
@@ -573,7 +565,7 @@ export class RecentBacktestAdapter implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     lib.loggerService.info(RECENT_BACKTEST_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -723,7 +715,7 @@ export class RecentLiveAdapter implements IRecentUtils {
     frameName: FrameName,
     backtest: boolean,
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     lib.loggerService.info(RECENT_LIVE_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       strategyName,
@@ -903,7 +895,7 @@ export class RecentAdapter {
       frameName: FrameName;
     },
     when: Date,
-  ): Promise<IPublicSignalRow> => {
+  ): Promise<IPublicSignalRow | null> => {
     lib.loggerService.info(RECENT_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL, {
       symbol,
       context,
@@ -911,35 +903,32 @@ export class RecentAdapter {
     if (!this.enable.hasValue()) {
       throw new Error("RecentAdapter is not enabled. Call enable() first.");
     }
-    // Both probes now throw when they find nothing, so each is tried
-    // independently: a miss in backtest storage must still fall through to live.
-    try {
-      return await RecentBacktest.getLatestSignal(
+    let result: IPublicSignalRow | null = null;
+    if (
+      result = await RecentBacktest.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         true,
         when,
-      );
-    } catch {
-      // fall through to live storage
+      )
+    ) {
+      return result;
     }
-    try {
-      return await RecentLive.getLatestSignal(
+    if (
+      result = await RecentLive.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         false,
         when,
-      );
-    } catch {
-      // fall through to the shared not-found error below
+      )
+    ) {
+      return result;
     }
-    throw new Error(
-      `Recent.getLatestSignal no signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
-    );
+    return null;
   };
 
   /**
@@ -970,33 +959,30 @@ export class RecentAdapter {
     if (!this.enable.hasValue()) {
       throw new Error("RecentAdapter is not enabled. Call enable() first.");
     }
-    // Both probes now throw when they find nothing, so each is tried
-    // independently: a miss in backtest storage must still fall through to live.
-    try {
-      const signal = await RecentBacktest.getLatestSignal(
+    let signal: IPublicSignalRow | null = null;
+    if (
+      signal = await RecentBacktest.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         true,
         when,
-      );
+      )
+    ) {
       return Math.floor((when.getTime() - signal.timestamp) / (1000 * 60));
-    } catch {
-      // fall through to live storage
     }
-    try {
-      const signal = await RecentLive.getLatestSignal(
+    if (
+      signal = await RecentLive.getLatestSignal(
         symbol,
         context.strategyName,
         context.exchangeName,
         context.frameName,
         false,
         when,
-      );
+      )
+    ) {
       return Math.floor((when.getTime() - signal.timestamp) / (1000 * 60));
-    } catch {
-      // fall through to the shared not-found error below
     }
     throw new Error(
       `Recent.getMinutesSinceLatestSignalCreated no signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,

@@ -42,7 +42,7 @@ const GET_MINUTES_SINCE_LATEST_SIGNAL_CREATED_METHOD_NAME = "signal.getMinutesSi
  */
 export async function getLatestSignal(
   symbol: string,
-): Promise<IPublicSignalRow> {
+): Promise<IPublicSignalRow | null> {
   backtest.loggerService.info(GET_LATEST_SIGNAL_METHOD_NAME, { symbol });
   if (!ExecutionContextService.hasContext()) {
     throw new Error("getLatestSignal requires an execution context");
