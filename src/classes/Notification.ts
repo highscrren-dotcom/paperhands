@@ -251,6 +251,7 @@ const CREATE_SIGNAL_NOTIFICATION_FN = (data: IStrategyTickResult): NotificationM
       exchangeName: data.exchangeName,
       signalId: data.signal.id,
       position: data.signal.position,
+      currentPrice: data.currentPrice,
       priceOpen: data.signal.priceOpen,
       priceTakeProfit: data.signal.priceTakeProfit,
       priceStopLoss: data.signal.priceStopLoss,
@@ -298,6 +299,8 @@ const CREATE_SIGNAL_NOTIFICATION_FN = (data: IStrategyTickResult): NotificationM
       exchangeName: data.exchangeName,
       signalId: data.signal.id,
       position: data.signal.position,
+      currentPrice: data.currentPrice,
+      cost: data.signal.cost,
       priceOpen: data.signal.priceOpen,
       priceClose: data.currentPrice,
       priceTakeProfit: data.signal.priceTakeProfit,
@@ -391,14 +394,36 @@ const CREATE_SIGNAL_NOTIFICATION_FN = (data: IStrategyTickResult): NotificationM
       exchangeName: data.exchangeName,
       signalId: data.signal.id,
       position: data.signal.position,
+      currentPrice: data.currentPrice,
       priceOpen: data.signal.priceOpen,
       priceTakeProfit: data.signal.priceTakeProfit,
       priceStopLoss: data.signal.priceStopLoss,
       originalPriceTakeProfit: data.signal.originalPriceTakeProfit,
       originalPriceStopLoss: data.signal.originalPriceStopLoss,
       originalPriceOpen: data.signal.originalPriceOpen,
+      cost: data.signal.cost,
       totalEntries: data.signal.totalEntries,
       totalPartials: data.signal.totalPartials,
+      // A scheduled signal cancelled before activation never held a position:
+      // TO_PUBLIC_SIGNAL fills these with the zero-PNL snapshot.
+      pnl: data.signal.pnl,
+      maxDrawdown: data.signal.maxDrawdown,
+      peakProfit: data.signal.peakProfit,
+      pnlPercentage: data.signal.pnl.pnlPercentage,
+      pnlPriceOpen: data.signal.pnl.priceOpen,
+      pnlPriceClose: data.signal.pnl.priceClose,
+      pnlCost: data.signal.pnl.pnlCost,
+      pnlEntries: data.signal.pnl.pnlEntries,
+      peakProfitPriceOpen: data.signal.peakProfit.priceOpen,
+      peakProfitPriceClose: data.signal.peakProfit.priceClose,
+      peakProfitPercentage: data.signal.peakProfit.pnlPercentage,
+      peakProfitCost: data.signal.peakProfit.pnlCost,
+      peakProfitEntries: data.signal.peakProfit.pnlEntries,
+      maxDrawdownPriceOpen: data.signal.maxDrawdown.priceOpen,
+      maxDrawdownPriceClose: data.signal.maxDrawdown.priceClose,
+      maxDrawdownPercentage: data.signal.maxDrawdown.pnlPercentage,
+      maxDrawdownCost: data.signal.maxDrawdown.pnlCost,
+      maxDrawdownEntries: data.signal.maxDrawdown.pnlEntries,
       cancelReason: data.reason,
       cancelId: data.cancelId,
       duration: durationMin,
@@ -418,6 +443,7 @@ const CREATE_SIGNAL_NOTIFICATION_FN = (data: IStrategyTickResult): NotificationM
  */
 const CREATE_PARTIAL_PROFIT_NOTIFICATION_FN = (data: PartialProfitContract): NotificationModel => ({
   type: "partial_profit.available",
+  cost: data.data.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -467,6 +493,7 @@ const CREATE_PARTIAL_PROFIT_NOTIFICATION_FN = (data: PartialProfitContract): Not
  */
 const CREATE_PARTIAL_LOSS_NOTIFICATION_FN = (data: PartialLossContract): NotificationModel => ({
   type: "partial_loss.available",
+  cost: data.data.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -516,6 +543,7 @@ const CREATE_PARTIAL_LOSS_NOTIFICATION_FN = (data: PartialLossContract): Notific
  */
 const CREATE_BREAKEVEN_NOTIFICATION_FN = (data: BreakevenContract): NotificationModel => ({
   type: "breakeven.available",
+  cost: data.data.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -568,6 +596,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "partial-profit") {
     return {
       type: "partial_profit.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -613,6 +642,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "partial-loss") {
     return {
       type: "partial_loss.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -658,6 +688,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "breakeven") {
     return {
       type: "breakeven.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -702,6 +733,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "trailing-stop") {
     return {
       type: "trailing_stop.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -747,6 +779,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "trailing-take") {
     return {
       type: "trailing_take.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -792,6 +825,7 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
   if (data.action === "activate-scheduled") {
     return {
       type: "activate_scheduled.commit",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -891,6 +925,20 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
       exchangeName: data.exchangeName,
       signalId: data.signalId,
       cancelId: data.cancelId,
+      // CancelScheduledCommit does not surface these at the top level (unlike the
+      // partial/trailing commits) — read them off the IPublicSignalRow snapshot
+      // so the payload stays consistent with signal.opened. currentPrice is the
+      // price the snapshot was built with (pnl.priceClose).
+      position: data.signal.position,
+      currentPrice: data.pnl.priceClose,
+      priceOpen: data.signal.priceOpen,
+      priceTakeProfit: data.signal.priceTakeProfit,
+      priceStopLoss: data.signal.priceStopLoss,
+      originalPriceTakeProfit: data.signal.originalPriceTakeProfit,
+      originalPriceStopLoss: data.signal.originalPriceStopLoss,
+      scheduledAt: data.signal.scheduledAt,
+      pendingAt: data.signal.pendingAt,
+      cost: data.signal.cost,
       totalEntries: data.totalEntries,
       totalPartials: data.totalPartials,
       originalPriceOpen: data.originalPriceOpen,
@@ -927,9 +975,23 @@ const CREATE_STRATEGY_COMMIT_NOTIFICATION_FN = (data: StrategyCommitContract): N
       exchangeName: data.exchangeName,
       signalId: data.signalId,
       closeId: data.closeId,
+      // ClosePendingCommit does not surface these at the top level (unlike the
+      // partial/trailing commits) — read them off the IPublicSignalRow snapshot
+      // so the payload stays consistent with signal.opened. currentPrice is the
+      // close price the snapshot was built with (pnl.priceClose).
+      position: data.signal.position,
+      currentPrice: data.pnl.priceClose,
+      priceOpen: data.signal.priceOpen,
+      priceTakeProfit: data.signal.priceTakeProfit,
+      priceStopLoss: data.signal.priceStopLoss,
+      originalPriceTakeProfit: data.signal.originalPriceTakeProfit,
+      originalPriceStopLoss: data.signal.originalPriceStopLoss,
       totalEntries: data.totalEntries,
       totalPartials: data.totalPartials,
       originalPriceOpen: data.originalPriceOpen,
+      cost: data.signal.cost,
+      scheduledAt: data.signal.scheduledAt,
+      pendingAt: data.signal.pendingAt,
       pnl: data.signal.pnl,
       maxDrawdown: data.signal.maxDrawdown,
       peakProfit: data.signal.peakProfit,
@@ -1012,6 +1074,7 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
   if (data.action === "signal-close") {
     return {
       type: "order_sync.close",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -1065,6 +1128,7 @@ const CREATE_SIGNAL_SYNC_NOTIFICATION_FN = (data: OrderSyncContract): Notificati
  */
 const CREATE_ORDER_CHECK_NOTIFICATION_FN = (data: OrderCheckContract): NotificationModel => ({
   type: "order_sync.check",
+  cost: data.signal.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -1116,6 +1180,7 @@ const CREATE_ORDER_CHECK_NOTIFICATION_FN = (data: OrderCheckContract): Notificat
  */
 const CREATE_ORDER_CONTINUE_NOTIFICATION_FN = (data: OrderContinueContract): NotificationModel => ({
   type: "order_continue.check",
+  cost: data.signal.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -1169,6 +1234,7 @@ const CREATE_ORDER_CONTINUE_NOTIFICATION_FN = (data: OrderContinueContract): Not
  */
 const CREATE_ORDER_STOP_NOTIFICATION_FN = (data: OrderStopContract): NotificationModel => ({
   type: "order_stop.check",
+  cost: data.signal.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,
@@ -1271,6 +1337,7 @@ const CREATE_ORDER_FILL_NOTIFICATION_FN = (data: OrderFillContract): Notificatio
   if (data.action === "signal-close") {
     return {
       type: "order_fill.close",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -1377,6 +1444,7 @@ const CREATE_ORDER_REJECT_NOTIFICATION_FN = (data: OrderRejectContract): Notific
   if (data.action === "signal-close") {
     return {
       type: "order_reject.close",
+      cost: data.signal.cost,
       id: CREATE_KEY_FN(),
       timestamp: data.timestamp,
       backtest: data.backtest,
@@ -1498,6 +1566,7 @@ const CREATE_VALIDATION_ERROR_NOTIFICATION_FN = (error: Error): NotificationMode
  */
 const CREATE_SIGNAL_INFO_NOTIFICATION_FN = (data: SignalInfoContract): NotificationModel => ({
   type: "signal.info",
+  cost: data.data.cost,
   id: CREATE_KEY_FN(),
   timestamp: data.timestamp,
   backtest: data.backtest,

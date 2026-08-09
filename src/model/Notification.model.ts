@@ -26,6 +26,8 @@ export interface SignalOpenedNotification {
   signalId: string;
   /** Trade direction: "long" (buy) or "short" (sell) */
   position: "long" | "short";
+  /** Market price (VWAP) at the moment the position was opened */
+  currentPrice: number;
   /** Entry price for the position */
   priceOpen: number;
   /** Take profit target price */
@@ -113,6 +115,8 @@ export interface SignalClosedNotification {
   signalId: string;
   /** Trade direction: "long" (buy) or "short" (sell) */
   position: "long" | "short";
+  /** Market price (VWAP) at the moment of the close — same value as priceClose, named uniformly with the other channels */
+  currentPrice: number;
   /** Entry price for the position */
   priceOpen: number;
   /** Exit price when position was closed */
@@ -131,6 +135,8 @@ export interface SignalClosedNotification {
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
   totalPartials: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Profit/loss as percentage (e.g., 1.5 for +1.5%, -2.3 for -2.3%) */
   pnlPercentage: number;
   /** Total PNL of the closed position (including all entries and partials) */
@@ -220,6 +226,8 @@ export interface PartialProfitAvailableNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -309,6 +317,8 @@ export interface PartialLossAvailableNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -396,6 +406,8 @@ export interface BreakevenAvailableNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -485,6 +497,8 @@ export interface PartialProfitCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -574,6 +588,8 @@ export interface PartialLossCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -661,6 +677,8 @@ export interface BreakevenCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -839,6 +857,8 @@ export interface ActivateScheduledCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -930,6 +950,8 @@ export interface TrailingStopCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1019,6 +1041,8 @@ export interface TrailingTakeCommitNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1241,6 +1265,8 @@ export interface OrderSyncCloseNotification {
   originalPriceStopLoss: number;
   /** Original entry price before any DCA averaging */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1305,6 +1331,8 @@ export interface OrderSyncCheckNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1407,6 +1435,8 @@ export interface OrderContinueCheckNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1510,6 +1540,8 @@ export interface OrderStopCheckNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1742,6 +1774,8 @@ export interface OrderFillCloseNotification {
   originalPriceStopLoss: number;
   /** Original entry price before any DCA averaging */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -1945,6 +1979,8 @@ export interface OrderRejectCloseNotification {
   originalPriceStopLoss: number;
   /** Original entry price before any DCA averaging */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -2116,6 +2152,8 @@ export interface SignalCancelledNotification {
   signalId: string;
   /** Trade direction: "long" (buy) or "short" (sell) */
   position: "long" | "short";
+  /** Market price (VWAP) at the moment of cancellation */
+  currentPrice: number;
   /** Take profit target price */
   priceTakeProfit: number;
   /** Stop loss exit price */
@@ -2128,10 +2166,51 @@ export interface SignalCancelledNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
   totalPartials: number;
+  /**
+   * PNL of the cancelled signal. A scheduled signal cancelled before activation
+   * never held a position, so this is the zero-PNL snapshot.
+   */
+  pnl: IStrategyPnL;
+  /** Peak profit snapshot (zero for a signal cancelled before activation) */
+  peakProfit: IStrategyPnL;
+  /** Maximum drawdown snapshot (zero for a signal cancelled before activation) */
+  maxDrawdown: IStrategyPnL;
+  /** Profit/loss as percentage (e.g., 1.5 for +1.5%, -2.3 for -2.3%) */
+  pnlPercentage: number;
+  /** Entry price from PNL calculation (effective price adjusted with slippage and fees) */
+  pnlPriceOpen: number;
+  /** Exit price from PNL calculation (adjusted with slippage and fees) */
+  pnlPriceClose: number;
+  /** Absolute profit/loss in USD */
+  pnlCost: number;
+  /** Total invested capital in USD */
+  pnlEntries: number;
+  /** Peak price reached in profit direction during the life of this position */
+  peakProfitPriceOpen: number;
+  /** Exit price for PNL calculation at the moment of peak profit */
+  peakProfitPriceClose: number;
+  /** Absolute profit/loss in USD at the moment the position reached its peak profit during the life of this position */
+  peakProfitCost: number;
+  /** Profit/loss as percentage at the moment the position reached its peak profit during the life of this position */
+  peakProfitPercentage: number;
+  /** Number of entries executed at the moment the position reached its peak profit during the life of this position */
+  peakProfitEntries: number;
+  /** Maximum drawdown price reached in loss direction during the life of this position */
+  maxDrawdownPriceOpen: number;
+  /** Exit price for PNL calculation at the moment of max drawdown */
+  maxDrawdownPriceClose: number;
+  /** Absolute profit/loss in USD at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownCost: number;
+  /** Profit/loss as percentage at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownPercentage: number;
+  /** Number of entries executed at the moment the position reached its maximum drawdown during the life of this position */
+  maxDrawdownEntries: number;
   /** Why signal was cancelled (timeout | price_reject | user) */
   cancelReason: string;
   /** Optional cancellation identifier (provided when user calls cancel()) */
@@ -2252,6 +2331,26 @@ export interface CancelScheduledCommitNotification {
   signalId: string;
   /** Optional identifier for the cancellation reason (user-provided) */
   cancelId?: string;
+  /** Trade direction: "long" (buy) or "short" (sell) */
+  position: "long" | "short";
+  /** Market price at which the scheduled signal was cancelled */
+  currentPrice: number;
+  /** Target entry price the scheduled signal was waiting for */
+  priceOpen: number;
+  /** Effective take profit price (may differ from original after trailing) */
+  priceTakeProfit: number;
+  /** Effective stop loss price (may differ from original after trailing) */
+  priceStopLoss: number;
+  /** Original take profit price before any trailing adjustments */
+  originalPriceTakeProfit: number;
+  /** Original stop loss price before any trailing adjustments */
+  originalPriceStopLoss: number;
+  /** Signal creation timestamp in milliseconds (when signal was first created/scheduled) */
+  scheduledAt: number;
+  /** Position activation timestamp in milliseconds (0 for a signal cancelled before activation) */
+  pendingAt: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
@@ -2323,12 +2422,32 @@ export interface ClosePendingCommitNotification {
   signalId: string;
   /** Optional identifier for the close reason (user-provided) */
   closeId?: string;
+  /** Trade direction: "long" (buy) or "short" (sell) */
+  position: "long" | "short";
+  /** Market price at which the pending signal was closed */
+  currentPrice: number;
+  /** Effective entry price for the position (averaged across DCA entries) */
+  priceOpen: number;
+  /** Effective take profit price (may differ from original after trailing) */
+  priceTakeProfit: number;
+  /** Effective stop loss price (may differ from original after trailing) */
+  priceStopLoss: number;
+  /** Original take profit price before any trailing adjustments */
+  originalPriceTakeProfit: number;
+  /** Original stop loss price before any trailing adjustments */
+  originalPriceStopLoss: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
   totalPartials: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (first entry, not DCA) */
+  cost: number;
+  /** Signal creation timestamp in milliseconds (when signal was first created/scheduled) */
+  scheduledAt: number;
+  /** Position activation timestamp in milliseconds (when price reached priceOpen) */
+  pendingAt: number;
   /** Total PNL of the closed position (including all entries and partials) */
   pnl: IStrategyPnL;
   /** Peak profit achieved during the life of this position up to the moment this public signal was created */
@@ -2408,6 +2527,8 @@ export interface SignalInfoNotification {
   originalPriceStopLoss: number;
   /** Original entry price at signal creation (unchanged by DCA averaging) */
   originalPriceOpen: number;
+  /** Cost of the initial position entry in USD (from signal.cost) */
+  cost: number;
   /** Total number of DCA entries (_entry.length). 1 = no averaging. */
   totalEntries: number;
   /** Total number of partial closes executed (_partial.length). 0 = no partial closes done. */
