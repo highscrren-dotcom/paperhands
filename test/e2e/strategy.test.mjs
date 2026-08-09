@@ -341,7 +341,7 @@ test("STRATEGY LIVE: activateScheduled opens at priceOpen with activate-schedule
 /**
  * STRATEGY LIVE #4: cancelScheduled — отложенная отмена дренится следующим tick:
  * результат cancelled/user с cancelId, commit "cancel-scheduled" с note,
- * broker получает onSignalScheduleCancelled.
+ * broker получает onOrderScheduleCancelled.
  */
 test("STRATEGY LIVE: cancelScheduled drains with cancelId/note and notifies the broker", async ({ pass, fail }) => {
   const basePrice = 50000;
@@ -385,7 +385,7 @@ test("STRATEGY LIVE: cancelScheduled drains with cancelId/note and notifies the 
   });
 
   Broker.useBrokerAdapter({
-    onSignalScheduleCancelled: async (p) => brokerCancels.push({ reason: p.reason, signalId: p.signalId }),
+    onOrderScheduleCancelled: async (p) => brokerCancels.push({ reason: p.reason, signalId: p.signalId }),
   });
   Broker.enable();
 

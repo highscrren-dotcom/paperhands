@@ -3732,7 +3732,7 @@ Every wiring hook is one of two kinds. This is the primary distinction to get ri
 | How you act | return normally vs throw | call a `commit*` function (or place/cancel a real order) |
 | Fires | as the framework *attempts* a transition (BEFORE it mutates state) | per-tick while monitoring, or once at a lifecycle point |
 | Mode | **live only** (backtest short-circuits the gate to "allowed") | live + backtest (per attachment point) |
-| Hooks | `onOrderOpenCommit`, `onOrderCloseCommit`, `onOrderActiveCheck`, `onOrderScheduleCheck`, `onSignalSync` (+ action `signalSync` / `orderCheck`) | `onSignalActivePing`, `onSignalSchedulePing`, `onSignalIdlePing`, `onSignalScheduleOpen/Cancelled`, `onSignalPendingOpen/Close` (+ action `onPingActive/Scheduled/Idle`, `onScheduleEvent`, `onPendingEvent`) |
+| Hooks | `onOrderOpenCommit`, `onOrderCloseCommit`, `onOrderActiveCheck`, `onOrderScheduleCheck`, `onSignalSync` (+ action `signalSync` / `orderCheck`) | `onSignalActivePing`, `onSignalSchedulePing`, `onSignalIdlePing`, `onOrderScheduleOpen/Cancelled`, `onSignalPendingOpen/Close` (+ action `onPingActive/Scheduled/Idle`, `onScheduleEvent`, `onPendingEvent`) |
 
 ### 41.3 EXCEPTION-BASED hooks (a throw drives the framework)
 
@@ -3790,8 +3790,8 @@ A throw here does **not** change strategy state — you observe the event and de
 
 | Hook (Broker / action) | Fires | Typical action |
 | --- | --- | --- |
-| `onSignalScheduleOpen` / `onScheduleEvent` (`"scheduled"`) | scheduled signal created | place the resting/limit order (tag with `signalId`) |
-| `onSignalScheduleCancelled` / `onScheduleEvent` (`"cancelled"`) | scheduled signal dropped (timeout / price_reject / user) | cancel the resting order |
+| `onOrderScheduleOpen` / `onScheduleEvent` (`"scheduled"`) | scheduled signal created | place the resting/limit order (tag with `signalId`) |
+| `onOrderScheduleCancelled` / `onScheduleEvent` (`"cancelled"`) | scheduled signal dropped (timeout / price_reject / user) | cancel the resting order |
 | `onSignalPendingOpen` / `onPendingEvent` (`"opened"`) | position opened | place entry + protective TP/SL orders |
 | `onSignalPendingClose` / `onPendingEvent` (`"closed"`) | position closed | flatten + cancel leftover orders, record PnL |
 

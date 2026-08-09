@@ -99,7 +99,7 @@ const crash = async (context) =>
 
 /**
  * RECOVERY: stopStrategy → крэш → отложенная отмена восстановлена и дренится:
- * cancelled/user + брокер получает onSignalScheduleCancelled ПОСЛЕ рестарта.
+ * cancelled/user + брокер получает onOrderScheduleCancelled ПОСЛЕ рестарта.
  * Это заявленное свойство stopStrategy-фикса («крэш до следующего tick —
  * restore и дренаж после рестарта»).
  */
@@ -134,7 +134,7 @@ test("RECOVERY: deferred cancel from stopStrategy survives a crash and reaches t
   });
 
   Broker.useBrokerAdapter({
-    onSignalScheduleCancelled: async (p) => brokerCancels.push({ reason: p.reason, signalId: p.signalId }),
+    onOrderScheduleCancelled: async (p) => brokerCancels.push({ reason: p.reason, signalId: p.signalId }),
   });
   Broker.enable();
   usePersist();

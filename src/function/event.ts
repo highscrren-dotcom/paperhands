@@ -1346,8 +1346,8 @@ export function listenSchedulePingOnce(
  * produces an "opened" event on the regular signal emitters (listenSignal) instead.
  *
  * SYSTEM CHANNEL. This is the same stream the framework itself consumes: Broker subscribes to it
- * and fans each event out to the registered adapter as `onSignalScheduleOpen` (action "scheduled",
- * payload BrokerScheduleOpenPayload) or `onSignalScheduleCancelled` (action "cancelled", payload
+ * and fans each event out to the registered adapter as `onOrderScheduleOpen` (action "scheduled",
+ * payload BrokerScheduleOpenPayload) or `onOrderScheduleCancelled` (action "cancelled", payload
  * BrokerScheduleCancelledPayload, carrying `reason`). Because it is systemic it is NOT gated on
  * "is a scheduled signal still live" - every emission is delivered, including the cancellation that
  * reports the entry is already gone.
@@ -1380,7 +1380,7 @@ export function listenOrderSchedule(fn: (event: ScheduleEventContract) => void) 
   backtest.loggerService.log(LISTEN_ORDER_SCHEDULE_METHOD_NAME);
 
   console.error("listenOrderSchedule is unwanted cause exchange integration should be implemented in Broker.useBrokerAdapter as an infrastructure domain layer");
-  console.error("If you need to react to a resting entry being placed or dropped, please use Broker.useBrokerAdapter with onSignalScheduleOpen / onSignalScheduleCancelled");
+  console.error("If you need to react to a resting entry being placed or dropped, please use Broker.useBrokerAdapter with onOrderScheduleOpen / onOrderScheduleCancelled");
   console.error("This is a NOTIFICATION channel: a throw here is swallowed and cannot affect the order!");
   console.error("");
   console.error("You have been warned!");

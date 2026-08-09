@@ -42,8 +42,8 @@ const BROKER_BASE_METHOD_NAME_ON_ORDER_SCHEDULE_CHECK = "BrokerBase.onOrderSched
 const BROKER_BASE_METHOD_NAME_ON_ACTIVE_PING = "BrokerBase.onSignalActivePing";
 const BROKER_BASE_METHOD_NAME_ON_SCHEDULE_PING = "BrokerBase.onSignalSchedulePing";
 const BROKER_BASE_METHOD_NAME_ON_IDLE_PING = "BrokerBase.onSignalIdlePing";
-const BROKER_BASE_METHOD_NAME_ON_SCHEDULE_OPEN = "BrokerBase.onSignalScheduleOpen";
-const BROKER_BASE_METHOD_NAME_ON_SCHEDULE_CANCELLED = "BrokerBase.onSignalScheduleCancelled";
+const BROKER_BASE_METHOD_NAME_ON_SCHEDULE_OPEN = "BrokerBase.onOrderScheduleOpen";
+const BROKER_BASE_METHOD_NAME_ON_SCHEDULE_CANCELLED = "BrokerBase.onOrderScheduleCancelled";
 const BROKER_BASE_METHOD_NAME_ON_PENDING_OPEN = "BrokerBase.onSignalPendingOpen";
 const BROKER_BASE_METHOD_NAME_ON_PENDING_CLOSE = "BrokerBase.onSignalPendingClose";
 const BROKER_BASE_METHOD_NAME_ON_PARTIAL_PROFIT = "BrokerBase.onPartialProfitCommit";
@@ -417,7 +417,7 @@ export type BrokerIdlePingPayload = {
  *
  * Emitted automatically via scheduleEventSubject (action "scheduled") when a new scheduled signal is
  * created and starts waiting for priceOpen activation. Forwarded to the registered IBroker adapter
- * via `onSignalScheduleOpen`. The scheduled -> active transition is NOT reported here — activation
+ * via `onOrderScheduleOpen`. The scheduled -> active transition is NOT reported here — activation
  * arrives through `onOrderOpenCommit`.
  *
  * @example
@@ -466,7 +466,7 @@ export type BrokerScheduleOpenPayload = {
  *
  * Emitted automatically via scheduleEventSubject (action "cancelled") when a scheduled signal is
  * removed before it ever activated. Forwarded to the registered IBroker adapter via
- * `onSignalScheduleCancelled`. The `reason` distinguishes timeout / price reject / user cancel.
+ * `onOrderScheduleCancelled`. The `reason` distinguishes timeout / price reject / user cancel.
  *
  * @example
  * ```typescript
@@ -1187,7 +1187,7 @@ export interface IBroker {
    * ```typescript
    * import { commitActivateScheduled, commitCancelScheduled } from "backtest-kit";
    *
-   * async onSignalScheduleOpen(payload: BrokerScheduleOpenPayload) {
+   * async onOrderScheduleOpen(payload: BrokerScheduleOpenPayload) {
    *   const order = await this.exchange.placeLimitOrder({
    *     id: payload.signalId,
    *     symbol: payload.symbol,
@@ -1199,7 +1199,7 @@ export interface IBroker {
    * }
    * ```
    */
-  onSignalScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
+  onOrderScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
 
   /**
    * Called when a scheduled signal is cancelled before it ever activated
@@ -1209,16 +1209,16 @@ export interface IBroker {
    *
    * Outbound side — the framework has already dropped the scheduled signal, so there is nothing to
    * `commitCancelScheduled` here; instead cancel the real resting order you placed in
-   * `onSignalScheduleOpen` (look it up by `payload.signalId`). `payload.reason` tells you why.
+   * `onOrderScheduleOpen` (look it up by `payload.signalId`). `payload.reason` tells you why.
    *
    * @example
    * ```typescript
-   * async onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
+   * async onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
    *   await this.exchange.cancelOrderById(payload.signalId);
    * }
    * ```
    */
-  onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
+  onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
 
   /**
    * Called when a pending position is opened (new signal / immediate / scheduled or user
@@ -1435,32 +1435,32 @@ export class BrokerProxy implements IBroker {
 
   /**
    * Forwards a scheduled-signal-open event to the underlying adapter.
-   * Silently skipped when the adapter does not implement `onSignalScheduleOpen`.
+   * Silently skipped when the adapter does not implement `onOrderScheduleOpen`.
    *
    * @param payload - Scheduled open details: symbol, signalId, position, prices, context, backtest.
    */
-  public async onSignalScheduleOpen(
+  public async onOrderScheduleOpen(
     payload: BrokerScheduleOpenPayload,
   ): Promise<void> {
-    if (this._instance.onSignalScheduleOpen) {
+    if (this._instance.onOrderScheduleOpen) {
       await this.waitForInit();
-      await this._instance.onSignalScheduleOpen(payload);
+      await this._instance.onOrderScheduleOpen(payload);
       return;
     }
   }
 
   /**
    * Forwards a scheduled-signal-cancelled event to the underlying adapter.
-   * Silently skipped when the adapter does not implement `onSignalScheduleCancelled`.
+   * Silently skipped when the adapter does not implement `onOrderScheduleCancelled`.
    *
    * @param payload - Scheduled cancel details: symbol, signalId, position, prices, reason, context, backtest.
    */
-  public async onSignalScheduleCancelled(
+  public async onOrderScheduleCancelled(
     payload: BrokerScheduleCancelledPayload,
   ): Promise<void> {
-    if (this._instance.onSignalScheduleCancelled) {
+    if (this._instance.onOrderScheduleCancelled) {
       await this.waitForInit();
-      await this._instance.onSignalScheduleCancelled(payload);
+      await this._instance.onOrderScheduleCancelled(payload);
       return;
     }
   }
@@ -1934,7 +1934,7 @@ export class BrokerAdapter {
     }
     const instance = this.getInstance();
     if (instance) {
-      await instance.onSignalScheduleOpen(payload);
+      await instance.onOrderScheduleOpen(payload);
     }
   };
 
@@ -1967,7 +1967,7 @@ export class BrokerAdapter {
     }
     const instance = this.getInstance();
     if (instance) {
-      await instance.onSignalScheduleCancelled(payload);
+      await instance.onOrderScheduleCancelled(payload);
     }
   };
 
@@ -2858,11 +2858,11 @@ class BrokerBase implements IBroker {
    *
    * Manual wiring — EVENT-BASED: fires ONCE at creation — place the real resting order (tag it with
    * `payload.signalId`) and optionally `commitActivateScheduled` / `commitCancelScheduled`. See
-   * {@link IBroker.onSignalScheduleOpen} for full guidance and example.
+   * {@link IBroker.onOrderScheduleOpen} for full guidance and example.
    *
    * @param payload - Scheduled open details: symbol, signalId, position, prices, context, backtest
    */
-  public async onSignalScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void> {
+  public async onOrderScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void> {
     bt.loggerService.info(BROKER_BASE_METHOD_NAME_ON_SCHEDULE_OPEN, {
       symbol: payload.symbol,
       context: payload.context,
@@ -2875,11 +2875,11 @@ class BrokerBase implements IBroker {
    * Override to cancel the resting/limit order on the exchange. The default logs.
    *
    * Manual wiring — EVENT-BASED (outbound): the strategy already dropped the scheduled signal — cancel the matching
-   * exchange order by `payload.signalId`. See {@link IBroker.onSignalScheduleCancelled}.
+   * exchange order by `payload.signalId`. See {@link IBroker.onOrderScheduleCancelled}.
    *
    * @param payload - Scheduled cancel details: symbol, signalId, position, prices, reason, context, backtest
    */
-  public async onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void> {
+  public async onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void> {
     bt.loggerService.info(BROKER_BASE_METHOD_NAME_ON_SCHEDULE_CANCELLED, {
       symbol: payload.symbol,
       context: payload.context,

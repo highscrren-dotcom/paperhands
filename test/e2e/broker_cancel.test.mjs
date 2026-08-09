@@ -78,7 +78,7 @@ const SCHEDULED_DTO = { position: "long", priceOpen: 49000, priceTakeProfit: 520
 const MARKET_DTO = { position: "long", priceTakeProfit: 52000, priceStopLoss: 46000, minuteEstimatedTime: 240 };
 
 // 1. Broker.onOrderScheduleCheck бросает: resting-ордер снят биржей ->
-//    scheduled отменяется, адаптер получает onSignalScheduleCancelled
+//    scheduled отменяется, адаптер получает onOrderScheduleCancelled
 test("broker onOrderScheduleCheck throw cancels resting order and notifies adapter", async (t) => {
   useMemoryPersist();
   // Legacy-инвариант «один сбой чека = терминально»: толерантность выключена
@@ -90,7 +90,7 @@ test("broker onOrderScheduleCheck throw cancels resting order and notifies adapt
   let rejectPing = false;
   const calls = [];
   Broker.useBrokerAdapter(class {
-    async onSignalScheduleOpen(p) { calls.push({ m: "scheduleOpen", id: p.signalId }); }
+    async onOrderScheduleOpen(p) { calls.push({ m: "scheduleOpen", id: p.signalId }); }
     async onOrderActiveCheck(p) { calls.push({ m: "orderCheck", type: p.type }); }
     async onOrderScheduleCheck(p) {
       calls.push({ m: "orderCheck", type: p.type });
@@ -98,7 +98,7 @@ test("broker onOrderScheduleCheck throw cancels resting order and notifies adapt
         throw new Error("exchange reports the resting order is gone");
       }
     }
-    async onSignalScheduleCancelled(p) { calls.push({ m: "scheduleCancelled", reason: p.reason }); }
+    async onOrderScheduleCancelled(p) { calls.push({ m: "scheduleCancelled", reason: p.reason }); }
   });
   Broker.enable();
 
@@ -130,7 +130,7 @@ test("broker onOrderScheduleCheck throw cancels resting order and notifies adapt
     t.fail(`adapter was not told to cancel the resting order: ${JSON.stringify(calls)}`);
     return;
   }
-  t.pass("broker check-throw cancels the scheduled order and notifies onSignalScheduleCancelled");
+  t.pass("broker check-throw cancels the scheduled order and notifies onOrderScheduleCancelled");
 });
 
 // 2. Broker.onOrderActiveCheck бросает: позиция закрыта извне ->
@@ -257,7 +257,7 @@ test("broker openCommit throw (active) at scheduled activation terminally cancel
         throw new Error("exchange reports our resting order was NOT filled");
       }
     }
-    async onSignalScheduleCancelled(p) { calls.push({ m: "scheduleCancelled", reason: p.reason }); }
+    async onOrderScheduleCancelled(p) { calls.push({ m: "scheduleCancelled", reason: p.reason }); }
   });
   Broker.enable();
 

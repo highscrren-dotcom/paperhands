@@ -45,7 +45,7 @@ const makeExchange = (exchangeName, getPrice) => {
  *
  * Проверяет, что каждый этап доходит до СВОЕГО метода IBroker в правильном порядке:
  * onOrderOpenCommit(type "schedule") [размещение лимитника, гейт] →
- * onSignalScheduleOpen [scheduled зарегистрирован] →
+ * onOrderScheduleOpen [scheduled зарегистрирован] →
  * onOrderScheduleCheck [пинг resting-ордера] →
  * onOrderOpenCommit(type "active") [филл активации, гейт] →
  * onSignalPendingOpen [позиция открыта] →
@@ -95,8 +95,8 @@ test("BROKER: full scheduled lifecycle routes every stage to the adapter in orde
     onOrderCloseCommit: async (p) => record("closeCommit", { signalId: p.signalId }),
     onOrderActiveCheck: async (p) => record("orderCheck", { type: p.type, signalId: p.signalId }),
     onOrderScheduleCheck: async (p) => record("orderCheck", { type: p.type, signalId: p.signalId }),
-    onSignalScheduleOpen: async (p) => record("scheduleOpen", { signalId: p.signalId }),
-    onSignalScheduleCancelled: async (p) => record("scheduleCancelled", { reason: p.reason }),
+    onOrderScheduleOpen: async (p) => record("scheduleOpen", { signalId: p.signalId }),
+    onOrderScheduleCancelled: async (p) => record("scheduleCancelled", { reason: p.reason }),
     onSignalPendingOpen: async (p) => record("pendingOpen", { signalId: p.signalId }),
     onSignalPendingClose: async (p) => record("pendingClose", { closeReason: p.closeReason }),
   });
@@ -168,9 +168,9 @@ test("BROKER: full scheduled lifecycle routes every stage to the adapter in orde
 
 /**
  * BROKER #2: адаптер как ГЕЙТ — throw в onOrderOpenCommit отвергает размещение
- * (scheduled не регистрируется, onSignalScheduleOpen НЕ вызывается, ретрай на
+ * (scheduled не регистрируется, onOrderScheduleOpen НЕ вызывается, ретрай на
  * следующем tick), а throw в onOrderScheduleCheck отменяет scheduled,
- * и сам адаптер получает onSignalScheduleCancelled (reason "user").
+ * и сам адаптер получает onOrderScheduleCancelled (reason "user").
  */
 test("BROKER: adapter throw gates placement and order-check cancels back into the adapter", async ({ pass, fail }) => {
   // Legacy-инвариант «один сбой чека = терминально»: толерантность выключена
@@ -221,10 +221,10 @@ test("BROKER: adapter throw gates placement and order-check cancels back into th
       scheduleChecks += 1;
       throw new Error("broker: resting order not found");
     },
-    onSignalScheduleOpen: async () => {
+    onOrderScheduleOpen: async () => {
       scheduleOpens += 1;
     },
-    onSignalScheduleCancelled: async (p) => {
+    onOrderScheduleCancelled: async (p) => {
       cancels.push({ reason: p.reason, signalId: p.signalId });
     },
   });
@@ -244,7 +244,7 @@ test("BROKER: adapter throw gates placement and order-check cancels back into th
       return;
     }
     if (scheduleOpens !== 0) {
-      fail(`REGRESSION: onSignalScheduleOpen fired for a REJECTED placement (${scheduleOpens})`);
+      fail(`REGRESSION: onOrderScheduleOpen fired for a REJECTED placement (${scheduleOpens})`);
       return;
     }
 
@@ -255,7 +255,7 @@ test("BROKER: adapter throw gates placement and order-check cancels back into th
       return;
     }
     if (scheduleOpens !== 1) {
-      fail(`expected exactly 1 onSignalScheduleOpen after accepted placement, got ${scheduleOpens}`);
+      fail(`expected exactly 1 onOrderScheduleOpen after accepted placement, got ${scheduleOpens}`);
       return;
     }
 
@@ -271,11 +271,11 @@ test("BROKER: adapter throw gates placement and order-check cancels back into th
       return;
     }
     if (cancels.length !== 1 || cancels[0].reason !== "user" || cancels[0].signalId !== "broker-gate-id") {
-      fail(`expected exactly 1 onSignalScheduleCancelled(user, broker-gate-id), got ${JSON.stringify(cancels)}`);
+      fail(`expected exactly 1 onOrderScheduleCancelled(user, broker-gate-id), got ${JSON.stringify(cancels)}`);
       return;
     }
 
-    pass(`adapter gated placement (retry worked) and its failed order-check cancelled back into onSignalScheduleCancelled`);
+    pass(`adapter gated placement (retry worked) and its failed order-check cancelled back into onOrderScheduleCancelled`);
   } finally {
     Broker.disable();
   }
@@ -335,8 +335,8 @@ test("BROKER: enabled adapter stays completely silent during backtest", async ({
     onSignalActivePing: count,
     onSignalSchedulePing: count,
     onSignalIdlePing: count,
-    onSignalScheduleOpen: count,
-    onSignalScheduleCancelled: count,
+    onOrderScheduleOpen: count,
+    onOrderScheduleCancelled: count,
     onSignalPendingOpen: count,
     onSignalPendingClose: count,
   });

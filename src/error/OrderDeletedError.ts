@@ -27,7 +27,7 @@ const ERROR_MESSAGE_DEFAULT = "OrderDeletedError";
  *   already established the order is gone, re-asking the broker would be redundant.
  * - `event.type === "schedule"` (resting entry order): the scheduled signal is
  *   cancelled with reason "user". The schedule-cancelled lifecycle event still
- *   reaches the broker adapter (`onSignalScheduleCancelled`); cancelling an
+ *   reaches the broker adapter (`onOrderScheduleCancelled`); cancelling an
  *   already-gone order there is a no-op.
  *
  * Loudness: `errorEmitter` fires. `exitEmitter` does NOT fire — a confirmed
