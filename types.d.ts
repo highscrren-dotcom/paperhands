@@ -29821,7 +29821,7 @@ declare class RecentAdapter {
      * checking first is what keeps a fresh context from looking like a failure:
      *
      * ```typescript
-     * if (await Recent.hasNoRecentSignal(symbol, context, when)) {
+     * if (await Recent.hasNoLatestSignal(symbol, context, when)) {
      *   return; // nothing traded yet, no cooldown to respect
      * }
      * const minutes = await Recent.getMinutesSinceLatestSignalCreated(symbol, context, when);
@@ -29833,7 +29833,7 @@ declare class RecentAdapter {
      * @returns True if neither storage holds a visible signal, false otherwise
      * @throws Error if RecentAdapter is not enabled
      */
-    hasNoRecentSignal: (symbol: string, context: {
+    hasNoLatestSignal: (symbol: string, context: {
         strategyName: StrategyName;
         exchangeName: ExchangeName;
         frameName: FrameName;

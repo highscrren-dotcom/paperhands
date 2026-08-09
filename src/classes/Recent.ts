@@ -42,7 +42,7 @@ const RECENT_ADAPTER_METHOD_NAME_ENABLE = "RecentAdapter.enable";
 const RECENT_ADAPTER_METHOD_NAME_DISABLE = "RecentAdapter.disable";
 const RECENT_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL = "RecentAdapter.getLatestSignal";
 const RECENT_ADAPTER_METHOD_NAME_GET_MINUTES_SINCE_LATEST_SIGNAL = "RecentAdapter.getMinutesSinceLatestSignalCreated";
-const RECENT_ADAPTER_METHOD_NAME_HAS_NO_RECENT_SIGNAL = "RecentAdapter.hasNoRecentSignal";
+const RECENT_ADAPTER_METHOD_NAME_HAS_NO_LATEST_SIGNAL = "RecentAdapter.hasNoLatestSignal";
 
 /**
  * Builds a composite storage key from context parts.
@@ -1002,7 +1002,7 @@ export class RecentAdapter {
    * checking first is what keeps a fresh context from looking like a failure:
    *
    * ```typescript
-   * if (await Recent.hasNoRecentSignal(symbol, context, when)) {
+   * if (await Recent.hasNoLatestSignal(symbol, context, when)) {
    *   return; // nothing traded yet, no cooldown to respect
    * }
    * const minutes = await Recent.getMinutesSinceLatestSignalCreated(symbol, context, when);
@@ -1014,7 +1014,7 @@ export class RecentAdapter {
    * @returns True if neither storage holds a visible signal, false otherwise
    * @throws Error if RecentAdapter is not enabled
    */
-  public hasNoRecentSignal = async (
+  public hasNoLatestSignal = async (
     symbol: string,
     context: {
       strategyName: StrategyName;
@@ -1023,7 +1023,7 @@ export class RecentAdapter {
     },
     when: Date,
   ): Promise<boolean> => {
-    lib.loggerService.info(RECENT_ADAPTER_METHOD_NAME_HAS_NO_RECENT_SIGNAL, {
+    lib.loggerService.info(RECENT_ADAPTER_METHOD_NAME_HAS_NO_LATEST_SIGNAL, {
       symbol,
       context,
     });
