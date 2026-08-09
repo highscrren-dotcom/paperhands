@@ -9,11 +9,11 @@ import { getErrorMessage, str } from "functools-kit";
  * Attaches a description to the active position of a symbol through the
  * configured MCP. The engine resolves the active position by symbol and
  * stores the description as a signal notification, surfaced back through the
- * get_status composition while the position stays open. It attaches only to
- * an already-open position — a queued entry order carries no signal to hold
- * it, so the tool description tells the agent to confirm the active position
- * via get_status at least 5 minutes after opening. Markdown is rendered, so
- * detailed multi-line descriptions are encouraged.
+ * get_status composition. It attaches only to an already-active position — a
+ * queued entry order carries no signal to hold it. This is the only way to
+ * record reasoning that is not tied to opening or closing: observations
+ * mid-trade, and the reason behind an averaging, which carries no
+ * description of its own.
  *
  * @param server - MCP server to register the tool on
  */
@@ -21,12 +21,21 @@ export default function registerNotifyUserTool(server: McpServer) {
   server.tool(
     "notify_user",
     str.newline(
-      "Attach a human-readable description to the active live position of a symbol.",
-      "The description is stored with the position's signal and surfaces back in get_status while the position is open — record your thesis, observations and exit criteria so a later stateless call can pick up the reasoning.",
-      "A detailed multi-line description is strongly preferred over a single sentence: the full markdown syntax is rendered — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links. Lay out what you observe now, how it changes the thesis and which levels decide the exit.",
-      "A description attaches only to a position that is already in active state: an entry order waiting to open in the queue carries no signal to hold it. Call this no earlier than 5 minutes after open_position, once get_status shows an active position for the symbol.",
-      "The description is queued like any other command and lands on a live tick: expect it to surface in get_status only after roughly 5 minutes. The delay is not a failure — do not resubmit it.",
-      "Fails if the symbol is not enabled for trading or has no active position.",
+      "Attach a note to the active live position of a symbol. Changes nothing about the trade — it only records reasoning.",
+
+      "WHY IT EXISTS. open_position records why a trade started, close_position records why it ended. Everything in between — the price behaved unexpectedly, the thesis shifted, a level was reached, an averaging was done and needs justifying — has no other place to live. Without notes, a later call sees an open position, a number, and no idea what it was supposed to be doing.",
+
+      "WRITE FOR A READER WITH NO MEMORY. Later calls have no recollection of this moment; they read exactly what is stored and nothing more. State what is observed NOW, how it changes (or confirms) the original thesis, and which specific levels or conditions decide the exit from here. Full markdown renders — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links.",
+
+      "USE IT AFTER AVERAGING. average_position takes no description of its own, so the DCA event inherits the description from the original entry and explains nothing about why the position was doubled. A note right after the averaging is the only record of that reasoning.",
+
+      "REQUIRES AN ALREADY-ACTIVE POSITION. An entry order still sitting in the queue is not a position and cannot hold a note. Confirm via get_status that the symbol shows an active position first — typically about a minute after open_position, allow up to five.",
+
+      "TIMING. The note is queued like every command and drains on the engine's once-per-minute pass, so it surfaces in get_status on the following pass. Do NOT resubmit while waiting — a duplicated note buries the rest of the history under repetition.",
+
+      "Notes are kept per position: they follow the signal id, so several symbols can be annotated independently, and a note never leaks onto another trade.",
+
+      "Fails if the symbol is not enabled for trading, or has no active position.",
     ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),
