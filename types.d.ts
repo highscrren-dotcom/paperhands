@@ -29582,7 +29582,7 @@ interface IRecentUtils {
      * @param frameName - Frame identifier
      * @param backtest - Flag indicating if the context is backtest or live
      * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-     * @returns The latest signal throws if not found / shadowed by look-ahead
+     * @returns The latest signal, or null if not found / shadowed by look-ahead
      */
     getLatestSignal(symbol: string, strategyName: StrategyName, exchangeName: ExchangeName, frameName: FrameName, backtest: boolean, when: Date): Promise<IPublicSignalRow | null>;
     /**
@@ -29809,6 +29809,35 @@ declare class RecentAdapter {
         exchangeName: ExchangeName;
         frameName: FrameName;
     }, when: Date) => Promise<number>;
+    /**
+     * Returns true if NO signal was recorded for the given context.
+     *
+     * Inverse of getLatestSignal presence: searches backtest storage first, then
+     * live storage, and reports whether both came back empty. A signal whose
+     * `timestamp` exceeds `when` counts as absent (look-ahead bias protection).
+     *
+     * Use it to guard the getters that throw on an empty history —
+     * `getMinutesSinceLatestSignalCreated` raises rather than returning null, so
+     * checking first is what keeps a fresh context from looking like a failure:
+     *
+     * ```typescript
+     * if (await Recent.hasNoRecentSignal(symbol, context, when)) {
+     *   return; // nothing traded yet, no cooldown to respect
+     * }
+     * const minutes = await Recent.getMinutesSinceLatestSignalCreated(symbol, context, when);
+     * ```
+     *
+     * @param symbol - Trading pair symbol
+     * @param context - Execution context with strategyName, exchangeName, and frameName
+     * @param when - Logical timestamp at which the read is happening (look-ahead guard)
+     * @returns True if neither storage holds a visible signal, false otherwise
+     * @throws Error if RecentAdapter is not enabled
+     */
+    hasNoRecentSignal: (symbol: string, context: {
+        strategyName: StrategyName;
+        exchangeName: ExchangeName;
+        frameName: FrameName;
+    }, when: Date) => Promise<boolean>;
 }
 /**
  * Global singleton instance of RecentAdapter.

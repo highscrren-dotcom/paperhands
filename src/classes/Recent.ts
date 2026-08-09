@@ -42,6 +42,7 @@ const RECENT_ADAPTER_METHOD_NAME_ENABLE = "RecentAdapter.enable";
 const RECENT_ADAPTER_METHOD_NAME_DISABLE = "RecentAdapter.disable";
 const RECENT_ADAPTER_METHOD_NAME_GET_LATEST_SIGNAL = "RecentAdapter.getLatestSignal";
 const RECENT_ADAPTER_METHOD_NAME_GET_MINUTES_SINCE_LATEST_SIGNAL = "RecentAdapter.getMinutesSinceLatestSignalCreated";
+const RECENT_ADAPTER_METHOD_NAME_HAS_NO_RECENT_SIGNAL = "RecentAdapter.hasNoRecentSignal";
 
 /**
  * Builds a composite storage key from context parts.
@@ -85,7 +86,7 @@ export interface IRecentUtils {
    * @param frameName - Frame identifier
    * @param backtest - Flag indicating if the context is backtest or live
    * @param when - Logical timestamp at which the read is happening (look-ahead guard)
-   * @returns The latest signal throws if not found / shadowed by look-ahead
+   * @returns The latest signal, or null if not found / shadowed by look-ahead
    */
   getLatestSignal(
     symbol: string,
@@ -987,6 +988,49 @@ export class RecentAdapter {
     throw new Error(
       `Recent.getMinutesSinceLatestSignalCreated no signal for symbol=${symbol} strategyName=${context.strategyName} exchangeName=${context.exchangeName} frameName=${context.frameName}`,
     );
+  };
+
+  /**
+   * Returns true if NO signal was recorded for the given context.
+   *
+   * Inverse of getLatestSignal presence: searches backtest storage first, then
+   * live storage, and reports whether both came back empty. A signal whose
+   * `timestamp` exceeds `when` counts as absent (look-ahead bias protection).
+   *
+   * Use it to guard the getters that throw on an empty history —
+   * `getMinutesSinceLatestSignalCreated` raises rather than returning null, so
+   * checking first is what keeps a fresh context from looking like a failure:
+   *
+   * ```typescript
+   * if (await Recent.hasNoRecentSignal(symbol, context, when)) {
+   *   return; // nothing traded yet, no cooldown to respect
+   * }
+   * const minutes = await Recent.getMinutesSinceLatestSignalCreated(symbol, context, when);
+   * ```
+   *
+   * @param symbol - Trading pair symbol
+   * @param context - Execution context with strategyName, exchangeName, and frameName
+   * @param when - Logical timestamp at which the read is happening (look-ahead guard)
+   * @returns True if neither storage holds a visible signal, false otherwise
+   * @throws Error if RecentAdapter is not enabled
+   */
+  public hasNoRecentSignal = async (
+    symbol: string,
+    context: {
+      strategyName: StrategyName;
+      exchangeName: ExchangeName;
+      frameName: FrameName;
+    },
+    when: Date,
+  ): Promise<boolean> => {
+    lib.loggerService.info(RECENT_ADAPTER_METHOD_NAME_HAS_NO_RECENT_SIGNAL, {
+      symbol,
+      context,
+    });
+    if (!this.enable.hasValue()) {
+      throw new Error("RecentAdapter is not enabled. Call enable() first.");
+    }
+    return !(await this.getLatestSignal(symbol, context, when));
   };
 }
 
