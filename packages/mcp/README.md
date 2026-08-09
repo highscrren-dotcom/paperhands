@@ -88,12 +88,12 @@ Values passed to `setConfig()` always take precedence over env vars.
 </details>
 
 <details>
-<summary>Command-line arguments (stdio server)</summary>
+<summary>Command-line arguments (stdio server or sse)</summary>
 
 When the package runs as the **stdio MCP server** (`npx @backtest-kit/mcp`, the `backtest-kit-mcp` command, or `node build/index.mjs`), the bridge address can be passed as CLI arguments instead of env vars:
 
 ```bash
-npx @backtest-kit/mcp --host 127.0.0.1 --port 60051
+npx -y @backtest-kit/mcp@latest --host 127.0.0.1 --port 60051
 ```
 
 ```json
@@ -101,10 +101,20 @@ npx @backtest-kit/mcp --host 127.0.0.1 --port 60051
   "mcpServers": {
     "trading-signals": {
       "command": "npx",
-      "args": ["@backtest-kit/mcp", "--host", "127.0.0.1", "--port", "60051"]
+      "args": ["@backtest-kit/mcp@latest", "--host", "127.0.0.1", "--port", "60051"]
     }
   }
 }
+```
+
+or
+
+```bash
+npx -y @backtest-kit/mcp@latest --sse 8081
+```
+
+```bash
+claude mcp add --transport sse trading-signals http://localhost:8081/sse
 ```
 
 | Argument | Overrides | Description |
