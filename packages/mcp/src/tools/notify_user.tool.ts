@@ -23,17 +23,17 @@ export default function registerNotifyUserTool(server: McpServer) {
     str.newline(
       "Attach a note to the active PAPER position of a symbol. Changes nothing about the trade — it only records reasoning.",
 
-      "WHY IT EXISTS. open_position records why a trade started, close_position records why it ended. Everything in between — the price behaved unexpectedly, the thesis shifted, a level was reached, an averaging was done and needs justifying — has no other place to live. Without notes, a later call sees an open position, a number, and no idea what it was supposed to be doing.",
+      "WHY IT EXISTS: open_position records why a trade started, close_position why it ended. Everything in between — price behaved unexpectedly, the thesis shifted, a level was reached, an averaging needs justifying — has no other place to live. Without notes a later call sees an open position, a number, and no idea what it was meant to be doing.",
 
-      "WRITE FOR A READER WITH NO MEMORY. Later calls have no recollection of this moment; they read exactly what is stored and nothing more. State what is observed NOW, how it changes (or confirms) the original thesis, and which specific levels or conditions decide the exit from here. Full markdown renders — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links.",
+      "WRITE FOR A READER WITH NO MEMORY. Later calls recall nothing of this moment; they read exactly what is stored. State what is observed NOW, how it changes or confirms the original thesis, and which levels decide the exit from here. Markdown renders.",
 
-      "USE IT AFTER AVERAGING. average_position takes no description of its own, so the DCA event inherits the description from the original entry and explains nothing about why the position was doubled. A note right after the averaging is the only record of that reasoning.",
+      "USE IT AFTER AVERAGING: average_position takes no description of its own, so the DCA event inherits the entry text and explains nothing about why the position was doubled. A note right after is the only record of that reasoning.",
 
-      "REQUIRES AN ALREADY-ACTIVE POSITION. An entry order still sitting in the queue is not a position and cannot hold a note. Confirm via get_status that the symbol shows an active position first — typically about a minute after open_position, allow up to five.",
+      "REQUIRES AN ALREADY-ACTIVE POSITION. An entry order still in the queue cannot hold a note. Confirm via get_status first.",
 
-      "TIMING. The note is queued like every command and drains on the engine's once-per-minute pass, so it surfaces in get_status on the following pass. Do NOT resubmit while waiting — a duplicated note buries the rest of the history under repetition.",
+      "TIMING: queued like every command, drains on the engine's once-per-minute pass, surfacing on the following pass. Do NOT resubmit while waiting — a duplicated note buries the rest of the history under repetition.",
 
-      "Notes are kept per position: they follow the signal id, so several symbols can be annotated independently, and a note never leaks onto another trade.",
+      "Notes follow the signal id, so symbols are annotated independently and a note never leaks onto another trade.",
 
       "Fails if the symbol is not enabled for trading, or has no active position.",
     ),

@@ -17,21 +17,21 @@ export default function registerOpenPositionTool(server: McpServer) {
   server.tool(
     "open_position",
     str.newline(
-      "Open a PAPER trading position at the current market price. One position per symbol.",
+      "Open a PAPER trading position at market price. One position per symbol.",
 
-      "PAPER TRADING ONLY. This opens a simulated position with virtual capital, priced against the real live market. No exchange account is touched and no real order is placed — nothing here can lose real money. Trade it as seriously as the real thing anyway: the whole point is to produce an honest record, and a sloppy paper trade produces a worthless one.",
+      "PAPER TRADING ONLY: virtual capital, real market prices. No exchange account, no real order, nothing here loses real money. Trade it as seriously as the real thing anyway — the deliverable is an honest record, and a sloppy paper trade produces a worthless one.",
 
-      "WHAT YOU CONTROL: the symbol, the direction (long or short), and the description explaining why. Nothing else. The trading engine computes the entry cost, and sets a distant emergency stop-loss that only caps a catastrophic loss. You cannot size the position, pick an entry price, or set your own stop — attempting to reason about those levels is wasted effort.",
+      "YOU CONTROL: symbol, direction (long or short), and the description explaining why. Nothing else. The engine computes the entry cost and sets a distant emergency stop that only caps a catastrophic loss. You cannot size the position, pick an entry price or set your own stop — reasoning about those levels is wasted effort.",
 
-      "THERE IS NO WORKING TAKE-PROFIT. The position will never close itself on profit. Left alone it dies either at the emergency stop or at the hold timeout, whichever comes first — both are bad outcomes. Every real exit is a deliberate close_position call from you.",
+      "NO WORKING TAKE-PROFIT EXISTS. The position never closes itself on profit. Left alone it dies at the emergency stop or the hold timeout — both bad outcomes. Every real exit is a deliberate close_position call.",
 
-      "DESCRIPTION IS NOT A LABEL, IT IS THE MEMORY OF THE TRADE. It is the only record of why the position exists, and it comes back to you later — in get_status while the position is open, and in the event log after it closes. A future call with no memory of this moment reads it to decide whether to hold, average or exit. Write it for that reader: the setup, the evidence behind it, the levels being watched, and what would prove the idea wrong. Full markdown renders — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links. A one-line description leaves a future call with nothing to reason from, and an undescribed trade is invisible in the event log entirely.",
+      "THE DESCRIPTION IS THE MEMORY OF THE TRADE, not a label. It is the only record of why this position exists, and it returns to you later — in get_status while open, and in the event log after it closes. A future call with no memory of this moment reads it to decide whether to hold, average or exit. Write for that reader: the setup, the evidence, the levels watched, and what would prove the idea wrong. Markdown renders. A one-liner leaves nothing to reason from; an undescribed trade is invisible in the event log entirely.",
 
-      "TIMING. The order is queued, not filled instantly. The engine drains the queue once per minute, so the position appears in get_status on the next pass — usually within a minute, allow up to five. Until then get_status shows it under 'Entry queue', not as an active position, and notify_user and average_position will both refuse it. That delay is normal: do NOT resubmit the open, or you risk a duplicate once the queue drains.",
+      "TIMING: the order is queued, not filled instantly. The engine drains the queue once a minute, so the position appears in get_status on the next pass. Until then it sits under 'Entry queue' and both notify_user and average_position will refuse it. Do NOT resubmit — you risk a duplicate once the queue drains.",
 
-      "AFTER IT OPENS. Confirm via get_status that the symbol shows an active position, note its signal id, and use notify_user to record anything the entry description could not yet know — how price reacted, what changed, what now decides the exit.",
+      "AFTER IT OPENS: confirm via get_status, note the signal id, and use notify_user for anything the entry description could not yet know.",
 
-      "Fails if the symbol is not enabled for trading, or already holds a position or a queued order. Symbols are independent: opening one never affects another, and several can be opened in the same minute. Call get_status first to see which symbols are free.",
+      "Fails if the symbol is not enabled for trading, or already holds a position or a queued order. Symbols are independent — several can be opened in the same minute.",
     ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),

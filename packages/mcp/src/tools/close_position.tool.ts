@@ -18,21 +18,21 @@ export default function registerClosePositionTool(server: McpServer) {
   server.tool(
     "close_position",
     str.newline(
-      "Close the active PAPER position of a symbol at the current market price.",
+      "Close the active PAPER position of a symbol at market price.",
 
-      "PAPER TRADING ONLY. The position is simulated — virtual capital priced against the real live market. No exchange account is touched and no real order is placed; the realized result is recorded, not paid out.",
+      "PAPER TRADING ONLY: virtual capital, real market prices. No exchange account, no real order; the realized result is recorded, not paid out.",
 
-      "THIS IS THE ONLY REAL EXIT. Nothing else takes profit or cuts a loss on purpose: the position has no working take-profit, and the only automatic ends are the distant emergency stop-loss and the hold timeout — both mean the trade got away from you. Deciding when to call this IS the job.",
+      "THIS IS THE ONLY REAL EXIT. Nothing else takes profit or cuts a loss on purpose — the position has no working take-profit, and the only automatic ends are the distant emergency stop and the hold timeout, both meaning the trade got away from you. Deciding when to call this IS the job.",
 
-      "WHAT YOU CONTROL: the symbol and the description. The engine resolves which position is being closed and executes at market price. There is no partial close and no exit price to name.",
+      "YOU CONTROL: the symbol and the description. The engine resolves which position closes and executes at market price. No partial close, no exit price to name.",
 
-      "THE DESCRIPTION IS THE EXIT REASON, AND IT IS STORED SEPARATELY FROM THE ENTRY REASON. This matters more than it looks: the event log will show this trade twice — once as it was opened, carrying the entry description, and once as this close request, carrying what you write here. If you write nothing meaningful, the log ends up showing a trade that opened for a stated reason and closed for no stated reason, which reads later as an idea still worth trying. That is exactly how the same losing trade gets re-entered. Write what happened to the thesis, how price actually behaved, and what specifically made you exit NOW rather than earlier or later. Full markdown renders — headings, bullet and numbered lists, bold and italic, inline code and fenced code blocks, blockquotes, links.",
+      "THE DESCRIPTION IS THE EXIT REASON, STORED SEPARATELY FROM THE ENTRY REASON. The event log shows this trade twice: once as opened, carrying the entry description, and once as this close request, carrying what you write here. Write nothing meaningful and the log shows a trade opened for a stated reason and closed for none — which reads later as an idea still worth trying. That is exactly how the same losing trade gets re-entered. State what happened to the thesis, how price actually behaved, and what made you exit NOW rather than earlier or later. Markdown renders.",
 
-      "TIMING. The close is queued, not immediate. The engine drains the queue once per minute, so the position stays visible in get_status until the next pass — usually within a minute, allow up to five. While it waits, the symbol shows a 'Close queue' slot carrying both descriptions. Do NOT resubmit the close during that window.",
+      "TIMING: the close is queued, not immediate. The engine drains the queue once a minute, so the position stays visible in get_status until the next pass, showing a 'Close queue' slot with both descriptions. Do NOT resubmit during that window.",
 
-      "AFTER IT EXECUTES the trade moves to the history with its realized result, close reason and how long it was held, and the symbol becomes free to open again.",
+      "AFTER IT EXECUTES the trade moves to the history with its realized result, close reason and holding time, and the symbol becomes free again.",
 
-      "Fails if the symbol is not enabled for trading, or has no active position — including when its entry order is still queued and has not become a position yet. Symbols are independent: closing one never touches another, and several can be closed in the same minute. Call get_status first to read the unrealized PnL, the peak and drawdown, and how long the position has been held.",
+      "Fails if the symbol is not enabled for trading, or has no active position — including when its entry order is still queued. Symbols are independent; several can be closed in the same minute.",
     ),
     {
       symbol: z.string().describe("Trading pair symbol (e.g., BTCUSDT)"),
