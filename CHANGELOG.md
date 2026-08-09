@@ -218,7 +218,7 @@ class MyBroker implements Partial<IBroker> {
   // Guaranteed to fire on EVERY terminal drop of a scheduled signal — user
   // cancel, timeout, frame end, risk reject, sync reject, stopStrategy — so
   // the real resting order never orphans on the exchange.
-  async onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
+  async onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
     await exchange.cancelOrderById(payload.signalId); // payload.reason says why
   }
 }

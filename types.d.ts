@@ -11760,8 +11760,8 @@ declare function listenSchedulePingOnce(filterFn: (event: SchedulePingContract) 
  * produces an "opened" event on the regular signal emitters (listenSignal) instead.
  *
  * SYSTEM CHANNEL. This is the same stream the framework itself consumes: Broker subscribes to it
- * and fans each event out to the registered adapter as `onOrderScheduleOpen` (action "scheduled",
- * payload BrokerScheduleOpenPayload) or `onOrderScheduleCancelled` (action "cancelled", payload
+ * and fans each event out to the registered adapter as `onSignalScheduleOpen` (action "scheduled",
+ * payload BrokerScheduleOpenPayload) or `onSignalScheduleCancelled` (action "cancelled", payload
  * BrokerScheduleCancelledPayload, carrying `reason`). Because it is systemic it is NOT gated on
  * "is a scheduled signal still live" - every emission is delivered, including the cancellation that
  * reports the entry is already gone.
@@ -34129,7 +34129,7 @@ type BrokerIdlePingPayload = {
  *
  * Emitted automatically via scheduleEventSubject (action "scheduled") when a new scheduled signal is
  * created and starts waiting for priceOpen activation. Forwarded to the registered IBroker adapter
- * via `onOrderScheduleOpen`. The scheduled -> active transition is NOT reported here — activation
+ * via `onSignalScheduleOpen`. The scheduled -> active transition is NOT reported here — activation
  * arrives through `onOrderOpenCommit`.
  *
  * @example
@@ -34177,7 +34177,7 @@ type BrokerScheduleOpenPayload = {
  *
  * Emitted automatically via scheduleEventSubject (action "cancelled") when a scheduled signal is
  * removed before it ever activated. Forwarded to the registered IBroker adapter via
- * `onOrderScheduleCancelled`. The `reason` distinguishes timeout / price reject / user cancel.
+ * `onSignalScheduleCancelled`. The `reason` distinguishes timeout / price reject / user cancel.
  *
  * @example
  * ```typescript
@@ -34881,7 +34881,7 @@ interface IBroker {
      * ```typescript
      * import { commitActivateScheduled, commitCancelScheduled } from "backtest-kit";
      *
-     * async onOrderScheduleOpen(payload: BrokerScheduleOpenPayload) {
+     * async onSignalScheduleOpen(payload: BrokerScheduleOpenPayload) {
      *   const order = await this.exchange.placeLimitOrder({
      *     id: payload.signalId,
      *     symbol: payload.symbol,
@@ -34893,7 +34893,7 @@ interface IBroker {
      * }
      * ```
      */
-    onOrderScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
+    onSignalScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
     /**
      * Called when a scheduled signal is cancelled before it ever activated
      * (reason: timeout / price_reject / user).
@@ -34902,16 +34902,16 @@ interface IBroker {
      *
      * Outbound side — the framework has already dropped the scheduled signal, so there is nothing to
      * `commitCancelScheduled` here; instead cancel the real resting order you placed in
-     * `onOrderScheduleOpen` (look it up by `payload.signalId`). `payload.reason` tells you why.
+     * `onSignalScheduleOpen` (look it up by `payload.signalId`). `payload.reason` tells you why.
      *
      * @example
      * ```typescript
-     * async onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
+     * async onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload) {
      *   await this.exchange.cancelOrderById(payload.signalId);
      * }
      * ```
      */
-    onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
+    onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
     /**
      * Called when a pending position is opened (new signal / immediate / scheduled or user
      * activation). Purely informational lifecycle hook for the active phase of a signal.
@@ -35628,22 +35628,22 @@ declare class BrokerBase implements IBroker {
      *
      * Manual wiring — EVENT-BASED: fires ONCE at creation — place the real resting order (tag it with
      * `payload.signalId`) and optionally `commitActivateScheduled` / `commitCancelScheduled`. See
-     * {@link IBroker.onOrderScheduleOpen} for full guidance and example.
+     * {@link IBroker.onSignalScheduleOpen} for full guidance and example.
      *
      * @param payload - Scheduled open details: symbol, signalId, position, prices, context, backtest
      */
-    onOrderScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
+    onSignalScheduleOpen(payload: BrokerScheduleOpenPayload): Promise<void>;
     /**
      * Called when a scheduled signal is cancelled before activation (timeout / price_reject / user).
      *
      * Override to cancel the resting/limit order on the exchange. The default logs.
      *
      * Manual wiring — EVENT-BASED (outbound): the strategy already dropped the scheduled signal — cancel the matching
-     * exchange order by `payload.signalId`. See {@link IBroker.onOrderScheduleCancelled}.
+     * exchange order by `payload.signalId`. See {@link IBroker.onSignalScheduleCancelled}.
      *
      * @param payload - Scheduled cancel details: symbol, signalId, position, prices, reason, context, backtest
      */
-    onOrderScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
+    onSignalScheduleCancelled(payload: BrokerScheduleCancelledPayload): Promise<void>;
     /**
      * Called when a pending position is opened (new signal / immediate / scheduled or user activation).
      *
@@ -44968,7 +44968,7 @@ declare const getPriceScale: (value: number) => number;
  *   already established the order is gone, re-asking the broker would be redundant.
  * - `event.type === "schedule"` (resting entry order): the scheduled signal is
  *   cancelled with reason "user". The schedule-cancelled lifecycle event still
- *   reaches the broker adapter (`onOrderScheduleCancelled`); cancelling an
+ *   reaches the broker adapter (`onSignalScheduleCancelled`); cancelling an
  *   already-gone order there is a no-op.
  *
  * Loudness: `errorEmitter` fires. `exitEmitter` does NOT fire — a confirmed

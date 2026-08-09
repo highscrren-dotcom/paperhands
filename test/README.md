@@ -672,7 +672,7 @@ wall clock не замена): restore-ветки `waitForInit` (метки ко
 Broker.useBrokerAdapter({            // Partial<IBroker> — только нужные методы
   onOrderOpenCommit: async (p) => { /* p.type: "schedule" | "active" */ },
   onOrderCheck: async (p) => { /* throw = ордер не найден */ },
-  onOrderScheduleCancelled: async (p) => { /* p.reason */ },
+  onSignalScheduleCancelled: async (p) => { /* p.reason */ },
 });
 Broker.enable();                     // без адаптера — throw
 try { /* тики */ } finally { Broker.disable(); }
@@ -806,7 +806,7 @@ clearTimeout(watchdog);
 ### test/e2e/broker.test.mjs
 Тесты Broker-адаптера (роутинг сабжектов → IBroker):
 - **#1**: Все 8 этапов жизненного цикла scheduled→активация→TP доходят до СВОИХ методов адаптера в строгом порядке, один signalId
-- **#2**: Адаптер как гейт: throw в `onOrderOpenCommit`/`onOrderCheck` (размещение отвергнуто + отмена с уведомлением `onOrderScheduleCancelled`)
+- **#2**: Адаптер как гейт: throw в `onOrderOpenCommit`/`onOrderCheck` (размещение отвергнуто + отмена с уведомлением `onSignalScheduleCancelled`)
 - **#3**: Backtest-тишина: 0 вызовов адаптера за полный прогон (`for await Backtest.run`)
 - **#4**: `enable()` без адаптера бросает; после `disable()` роутинг отключён, фреймворк работает
 
@@ -815,7 +815,7 @@ clearTimeout(watchdog);
 - **LIVE #1**: `createSignal` — DTO из очереди потребляется вместо getSignal (broker openCommit "active" + pendingOpen); busy-guard бросает при живой позиции
 - **LIVE #2**: `closePending` — sync-close гейт отвергает первую попытку, `_closedSignal` сохраняется и закрытие ретраится на следующем tick (closeId в результате)
 - **LIVE #3**: `activateScheduled` — вход по `priceOpen` (цена филла лимитника), commit "activate-scheduled" с activateId, broker уведомлён
-- **LIVE #4**: `cancelScheduled` — cancelled/user с cancelId, commit с note, broker `onOrderScheduleCancelled`
+- **LIVE #4**: `cancelScheduled` — cancelled/user с cancelId, commit с note, broker `onSignalScheduleCancelled`
 - **LIVE #5**: `createTakeProfit`/`createStopLoss` — закрытие ПО ЭФФЕКТИВНОМУ уровню TP/SL минуя VWAP (рынок не двигался)
 - **BACKTEST #1**: `cancelScheduled` из `onSchedulePing` — свечной цикл дренит отмену mid-frame (cancelId)
 - **BACKTEST #2**: `activateScheduled` из `onSchedulePing` — inline-открытие без касания priceOpen, базис = priceOpen, доживает до time_expired
@@ -843,7 +843,7 @@ clearTimeout(watchdog);
 
 ### test/e2e/recovery.test.mjs
 Матрица crash-recovery deferred-состояния (useJson-адаптеры локально, «крэш» = голый dispose через clear, сброс остатков прошлых прогонов null-записями):
-- **stopStrategy-отмена** переживает крэш: cancelled/user + `onOrderScheduleCancelled` в Broker-адаптер ПОСЛЕ рестарта
+- **stopStrategy-отмена** переживает крэш: cancelled/user + `onSignalScheduleCancelled` в Broker-адаптер ПОСЛЕ рестарта
 - **activateScheduled**: рестарт → opened по priceOpen с commit activate-scheduled (activateId)
 - **createTakeProfit**: рестарт → closed take_profit по эффективному TP с closeId
 - **createSignal**: DTO из очереди переживает крэш и открывается (ВАЖНО: createSignal требует посеянной цены — сначала один tick)
