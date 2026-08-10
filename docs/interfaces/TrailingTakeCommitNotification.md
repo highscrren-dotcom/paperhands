@@ -146,6 +146,14 @@ originalPriceOpen: number
 
 Original entry price at signal creation (unchanged by DCA averaging)
 
+### cost
+
+```ts
+cost: number
+```
+
+Cost of the initial position entry in USD (from signal.cost)
+
 ### totalEntries
 
 ```ts

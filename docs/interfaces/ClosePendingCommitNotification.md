@@ -82,6 +82,62 @@ closeId: string
 
 Optional identifier for the close reason (user-provided)
 
+### position
+
+```ts
+position: "long" | "short"
+```
+
+Trade direction: "long" (buy) or "short" (sell)
+
+### currentPrice
+
+```ts
+currentPrice: number
+```
+
+Market price at which the pending signal was closed
+
+### priceOpen
+
+```ts
+priceOpen: number
+```
+
+Effective entry price for the position (averaged across DCA entries)
+
+### priceTakeProfit
+
+```ts
+priceTakeProfit: number
+```
+
+Effective take profit price (may differ from original after trailing)
+
+### priceStopLoss
+
+```ts
+priceStopLoss: number
+```
+
+Effective stop loss price (may differ from original after trailing)
+
+### originalPriceTakeProfit
+
+```ts
+originalPriceTakeProfit: number
+```
+
+Original take profit price before any trailing adjustments
+
+### originalPriceStopLoss
+
+```ts
+originalPriceStopLoss: number
+```
+
+Original stop loss price before any trailing adjustments
+
 ### totalEntries
 
 ```ts
@@ -105,6 +161,30 @@ originalPriceOpen: number
 ```
 
 Original entry price at signal creation (unchanged by DCA averaging)
+
+### cost
+
+```ts
+cost: number
+```
+
+Cost of the initial position entry in USD (first entry, not DCA)
+
+### scheduledAt
+
+```ts
+scheduledAt: number
+```
+
+Signal creation timestamp in milliseconds (when signal was first created/scheduled)
+
+### pendingAt
+
+```ts
+pendingAt: number
+```
+
+Position activation timestamp in milliseconds (when price reached priceOpen)
 
 ### pnl
 

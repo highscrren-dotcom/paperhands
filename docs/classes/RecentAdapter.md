@@ -61,3 +61,26 @@ Searches backtest storage first, then live storage.
 `when` doubles as the look-ahead cutoff — a signal whose `timestamp` exceeds
 `when.getTime()` is treated as not yet visible — and as the "now" against
 which elapsed minutes are computed.
+
+### hasNoLatestSignal
+
+```ts
+hasNoLatestSignal: (symbol: string, context: { strategyName: string; exchangeName: string; frameName: string; }, when: Date) => Promise<boolean>
+```
+
+Returns true if NO signal was recorded for the given context.
+
+Inverse of getLatestSignal presence: searches backtest storage first, then
+live storage, and reports whether both came back empty. A signal whose
+`timestamp` exceeds `when` counts as absent (look-ahead bias protection).
+
+Use it to guard the getters that throw on an empty history —
+`getMinutesSinceLatestSignalCreated` raises rather than returning null, so
+checking first is what keeps a fresh context from looking like a failure:
+
+```typescript
+if (await Recent.hasNoLatestSignal(symbol, context, when)) {
+  return; // nothing traded yet, no cooldown to respect
+}
+const minutes = await Recent.getMinutesSinceLatestSignalCreated(symbol, context, when);
+```

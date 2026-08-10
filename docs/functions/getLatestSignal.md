@@ -6,7 +6,7 @@ group: docs
 # getLatestSignal
 
 ```ts
-declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow>;
+declare function getLatestSignal(symbol: string): Promise<IPublicSignalRow | null>;
 ```
 
 Returns the latest signal (pending or closed) for the current strategy context.

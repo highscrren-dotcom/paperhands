@@ -82,6 +82,14 @@ position: "long" | "short"
 
 Trade direction: "long" (buy) or "short" (sell)
 
+### currentPrice
+
+```ts
+currentPrice: number
+```
+
+Market price (VWAP) at the moment the position was opened
+
 ### priceOpen
 
 ```ts

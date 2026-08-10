@@ -82,6 +82,86 @@ cancelId: string
 
 Optional identifier for the cancellation reason (user-provided)
 
+### position
+
+```ts
+position: "long" | "short"
+```
+
+Trade direction: "long" (buy) or "short" (sell)
+
+### currentPrice
+
+```ts
+currentPrice: number
+```
+
+Market price at which the scheduled signal was cancelled
+
+### priceOpen
+
+```ts
+priceOpen: number
+```
+
+Target entry price the scheduled signal was waiting for
+
+### priceTakeProfit
+
+```ts
+priceTakeProfit: number
+```
+
+Effective take profit price (may differ from original after trailing)
+
+### priceStopLoss
+
+```ts
+priceStopLoss: number
+```
+
+Effective stop loss price (may differ from original after trailing)
+
+### originalPriceTakeProfit
+
+```ts
+originalPriceTakeProfit: number
+```
+
+Original take profit price before any trailing adjustments
+
+### originalPriceStopLoss
+
+```ts
+originalPriceStopLoss: number
+```
+
+Original stop loss price before any trailing adjustments
+
+### scheduledAt
+
+```ts
+scheduledAt: number
+```
+
+Signal creation timestamp in milliseconds (when signal was first created/scheduled)
+
+### pendingAt
+
+```ts
+pendingAt: number
+```
+
+Position activation timestamp in milliseconds (0 for a signal cancelled before activation)
+
+### cost
+
+```ts
+cost: number
+```
+
+Cost of the initial position entry in USD (from signal.cost)
+
 ### totalEntries
 
 ```ts

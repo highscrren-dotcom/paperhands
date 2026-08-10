@@ -82,6 +82,14 @@ position: "long" | "short"
 
 Trade direction: "long" (buy) or "short" (sell)
 
+### currentPrice
+
+```ts
+currentPrice: number
+```
+
+Market price (VWAP) at the moment of the close — same value as priceClose, named uniformly with the other channels
+
 ### priceOpen
 
 ```ts
@@ -153,6 +161,14 @@ totalPartials: number
 ```
 
 Total number of partial closes executed (_partial.length). 0 = no partial closes done.
+
+### cost
+
+```ts
+cost: number
+```
+
+Cost of the initial position entry in USD (from signal.cost)
 
 ### pnlPercentage
 
