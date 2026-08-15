@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import ioc from "../lib/index.js";
+import ioc from "../lib";
 import { getErrorMessage, str } from "functools-kit";
 
 /**
