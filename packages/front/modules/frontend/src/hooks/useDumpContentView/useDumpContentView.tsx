@@ -96,7 +96,7 @@ export const useDumpContentView = () => {
                         }
                         return (
                             <ActionIcon
-                                sx={{ mr: "10px" }}
+                                sx={{ display: { xs: "none", sm: "flex" }, mr: "10px" }}
                                 onClick={() => handlePrint()}
                             >
                                 <Print />
@@ -108,7 +108,7 @@ export const useDumpContentView = () => {
                     onClick={async (_, onCopy) => {
                         await handleCopy(id$.current, onCopy);
                     }}
-                    sx={{ mr: "10px", mt: "2.5px" }}
+                    sx={{ display: { xs: "none", sm: "flex" }, mr: "10px", mt: "2.5px" }}
                 />
                 <ActionIcon onClick={() => handleDownload(id$.current)}>
                     <Download />

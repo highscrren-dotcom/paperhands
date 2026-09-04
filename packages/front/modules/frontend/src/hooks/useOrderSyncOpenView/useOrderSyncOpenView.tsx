@@ -201,7 +201,7 @@ export const useOrderSyncOpenView = () => {
                 }
                 return (
                     <ActionIcon
-                        sx={{ mr: "10px" }}
+                        sx={{ display: { xs: "none", sm: "flex" }, mr: "10px" }}
                         onClick={() => ioc.markdownHelperService.printFields(
                             order_sync_open_fields,
                             order_sync_open,
@@ -220,7 +220,7 @@ export const useOrderSyncOpenView = () => {
                 }
                 return (
                     <ActionIcon
-                        sx={{ mr: "10px" }}
+                        sx={{ display: { xs: "none", sm: "flex" }, mr: "10px" }}
                         onClick={() => {
                             ctx.clear();
                             ioc.routerService.push(
@@ -237,7 +237,7 @@ export const useOrderSyncOpenView = () => {
           onClick={async (_, onCopy) => {
             await handleCopy(pathname$.current, id$.current, onCopy)
           }}
-          sx={{ mr: "10px", mt: "2.5px" }}
+          sx={{ display: { xs: "none", sm: "flex" }, mr: "10px", mt: "2.5px" }}
         />
         <MenuIcon
           sx={{ mr: "10px", mt: "0.5px" }}

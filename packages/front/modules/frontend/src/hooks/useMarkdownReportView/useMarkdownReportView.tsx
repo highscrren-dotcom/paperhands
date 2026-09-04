@@ -487,7 +487,7 @@ export const useMarkdownReportView = () => {
         AfterTitle: ({ onClose }) => (
             <Stack direction="row" gap={1}>
                 <ActionIcon
-                    sx={{ mr: "10px" }}
+                    sx={{ display: { xs: "none", sm: "flex" }, mr: "10px" }}
                     onClick={() => handlePrint()}
                 >
                     <Print />
@@ -501,7 +501,7 @@ export const useMarkdownReportView = () => {
                             onCopy,
                         );
                     }}
-                    sx={{ mr: "10px", mt: "2.5px" }}
+                    sx={{ display: { xs: "none", sm: "flex" }, mr: "10px", mt: "2.5px" }}
                 />
                 <MenuIcon
                     sx={{ mr: "10px", mt: "0.5px" }}
