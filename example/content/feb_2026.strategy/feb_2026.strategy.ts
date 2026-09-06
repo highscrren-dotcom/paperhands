@@ -11,6 +11,7 @@ import {
   getPositionHighestProfitDistancePnlPercentage,
   getPositionPnlPercent,
   Interval,
+  getLatestSignal,
   getMinutesSinceLatestSignalCreated,
 } from "backtest-kit";
 import { errorData, getErrorMessage, randomString, str } from "functools-kit";
@@ -51,10 +52,14 @@ addStrategySchema({
   strategyName: "feb_2026_strategy",
   getSignal: async (symbol, when, currentPrice) => {
 
-    const sinceEntryMinutes = await getMinutesSinceLatestSignalCreated(symbol);
+    // 18.x: getMinutesSinceLatestSignalCreated бросает на пустом дампе —
+    // сперва проверяем существование сигнала nullable-хелпером
+    if (await getLatestSignal(symbol)) {
+      const sinceEntryMinutes = await getMinutesSinceLatestSignalCreated(symbol);
 
-    if (sinceEntryMinutes && sinceEntryMinutes < NEWS_WINDOW) {
-      return null;
+      if (sinceEntryMinutes < NEWS_WINDOW) {
+        return null;
+      }
     }
 
     const forecast = await resolve(forecastSource);
